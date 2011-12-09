@@ -1,6 +1,109 @@
 #!/usr/bin/env perl
+$0 = "cobalt"
 
 use 5.14.1;
 use strict;
 use warnings;
 
+use Carp;
+
+my @root;
+my $lib;
+BEGIN {
+ @root = File::Spec->splitdir(dirname(__FILE__));
+ $lib = File::Spec->rel2abs(join '/', @root, 'lib');
+}
+use lib $lib;
+my $etc = join '/', @root, 'etc';
+croak("can't locate confdir: $etc") unless ($etc && -d $etc);
+my $var = join '/', @root, 'var';
+
+use Getopt::Long;
+my $opt_debug = 0;
+my $opt_detach = 1;
+my $loglevel = 'info';
+
+GetOptions(
+  'help' => \&show_help,
+
+  'version' => sub {
+    require Cobalt;
+    print("cobalt $Cobalt::VERSION\n"); exit 0
+  },
+
+  'config=s' => \$etc,
+
+  'debug!'  => \$opt_debug,
+  'detach!' => \$opt_detach,
+  'daemon!' => \$opt_detach,
+
+  'dumpconfig' => sub {
+    require Cobalt::Conf;
+    my $cfg = Cobalt::Conf->new(etc => $etc)->read_cfg;
+    require Data::Dumper;
+    $Data::Dumper::Sortkeys = 1;
+    $Data::Dumper::Useqq = 1;
+    print Data::Dumper::Dumper($cfg);
+    exit 0
+  },
+
+  'loglevel=s' => \$loglevel,
+);
+
+sub show_help {
+  ## FIXME
+}
+
+
+say("-> debug ON, overriding loglevel") if $opt_debug;
+
+$loglevel = lc $loglevel;
+my @loglevels = qw/debug info notice warn warning
+                   err error crit critical alert
+                   emerg emergency/;
+
+unless ($loglevel ~~ @loglevels)
+{ 
+  say("Invalid loglevel ($loglevel)");
+  say("Possible loglevels, most verbose to least: ".join(' ',@loglevels));
+  say("Setting loglevel to INFO");
+  $loglevel = 'info';
+}
+
+use Proc::PID::File;
+my $pid = Proc::PID::File->new(
+  dir => $var,
+  name => 'cobalt',
+);
+(say "cobalt appears to be already running" and exit 1) if $pid->alive();
+
+use POSIX ();
+if ($opt_detach)
+{
+  say("Starting cobalt in background");
+  my $fork = fork;
+  exit 1 if not defined $fork;
+  exit 0 if $fork;
+  POSIX::setsid();
+  $fork = fork;
+  exit 1 if not defined $fork;
+  exit 0 if $fork;
+  chdir(join('/', @root));
+  open(STDIN, '<', '/dev/null');
+  open(STDOUT, '>>', '/dev/null');
+  open(STDERR, '>>', '/dev/null');
+  umask(022);
+}
+$pid->touch();
+
+
+require Cobalt;
+require Cobalt::Conf;
+my $cfg = Cobalt::Conf->new(etc => $etc)->read_cfg;
+Cobalt->new(
+  cfg => $cfg,
+  loglevel => $loglevel, 
+  debug => $opt_debug,
+  detached => $opt_detach,
+)->init;
+POE::Kernel->run;
