@@ -1,0 +1,35 @@
+package Cobalt::Lang;
+
+use 5.14.1;
+
+use Moose;
+
+use Carp;
+
+use File::Slurp;
+
+use YAML::Syck;
+
+use namespace::autoclean;
+
+
+sub load_langset {  ## load_langset(language)
+  ## read specified language out of etc/langs/
+  ## return hash suitable for core->lang
+  my ($self) = shift;
+  my $lang = shift || croak 'no language specified?';
+
+  ## etc/langs/language.yml (lowercase expected)
+  my $path = $self->etc . "/langs/" . lc($lang) . ".yml";
+
+  return unless -f $path;
+  my $cf_lang = read_file ( $path );
+  my $langset = Load $cf_lang;
+
+  ## FIXME langset validation
+
+  return $langset->{RPL}
+}
+
+__PACKAGE__->meta->make_immutable;
+no Moose; 1;

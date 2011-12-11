@@ -16,7 +16,8 @@ use Object::Pluggable::Constants qw(:ALL);
 
 use namespace::autoclean;
 
-extends 'POE::Component::Syndicator';
+extends 'POE::Component::Syndicator',
+        'Cobalt::Lang';
 
 has 'cfg' => (
   is => 'rw',
@@ -57,6 +58,7 @@ has 'lang' => (
   ## FIXME
   ## should read $Language.yml out of etc/langs
   ## need standardized format
+  ## pull hash from Conf->load_langset
   is => 'rw',
   isa => 'HashRef',
 );
@@ -87,10 +89,15 @@ has 'Servers' => (
 sub init {
   my ($self) = @_;
 
+  my $language = $self->cfg->{core}->{Language}
+    // croak "missing Language directive?" ;
+  $self->lang( $self->load_lang($language) );
+
   my $logger = Log::Handler->create_logger("cobalt");
   my $maxlevel = $self->loglevel;
   $maxlevel = 'debug' if $self->debug;
-  my $logfile = $self->cfg->{core}->{Paths}->{Logfile};
+  my $logfile = $self->cfg->{core}->{Paths}->{Logfile}
+                // $self->etc . "/cobalt.log" ;
   $logger->add(
     file => {
      maxlevel => $maxlevel,

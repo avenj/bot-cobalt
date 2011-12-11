@@ -52,7 +52,7 @@ sub read_cfg {
     $conf->{plugin_cf}->{$pkg} = Load $cf_yml;
   }
 
-  return $conf;
+  return $conf
 }
 
 
