@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-$0 = "cobalt"
+$0 = "cobalt";
 
 use 5.14.1;
 use strict;
@@ -7,6 +7,8 @@ use warnings;
 
 use Carp;
 
+use File::Spec;
+use File::Basename;
 my @root;
 my $lib;
 BEGIN {
@@ -20,7 +22,7 @@ my $var = join '/', @root, 'var';
 
 use Getopt::Long;
 my $opt_debug = 0;
-my $opt_detach = 1;
+my $opt_detach = 0;
 my $loglevel = 'info';
 
 GetOptions(
@@ -52,6 +54,7 @@ GetOptions(
 
 sub show_help {
   ## FIXME
+  exit 0
 }
 
 

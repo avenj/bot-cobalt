@@ -3,9 +3,13 @@ package Cobalt::Conf;
 use 5.14.1;
 
 use Moose;
+
 use Carp;
+
 use File::Slurp;
+
 use YAML::Syck;
+
 use namespace::autoclean;
 
 has 'etc' => (

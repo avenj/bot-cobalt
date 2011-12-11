@@ -53,6 +53,14 @@ has 'version' => (
   default => $VERSION,
 );
 
+has 'lang' => (
+  ## FIXME
+  ## should read $Language.yml out of etc/langs
+  ## need standardized format
+  is => 'rw',
+  isa => 'HashRef',
+);
+
 has 'TimerPool' => (
   is => 'rw',
   isa => 'HashRef',
@@ -82,7 +90,7 @@ sub init {
   my $logger = Log::Handler->create_logger("cobalt");
   my $maxlevel = $self->loglevel;
   $maxlevel = 'debug' if $self->debug;
-  my $logfile = $self->cfg->{cobalt}->{System}->{Logfile}; ## FIXME
+  my $logfile = $self->cfg->{core}->{Paths}->{Logfile};
   $logger->add(
     file => {
      maxlevel => $maxlevel,
