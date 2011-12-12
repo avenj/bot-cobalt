@@ -121,7 +121,8 @@ sub _start {
 #    ),
 #  );
 
-  my $chanhash = $cfg->{Channels} // {};
+  ## the single-server plugin just grabs Main context from channels cf:
+  my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
 
   $self->irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
@@ -190,6 +191,8 @@ sub irc_public {
 
 sub Bot_send_to_context {
   ## FIXME dispatch messages based on context
+
+  return PLUGIN_EAT_NONE;
 }
 
 

@@ -2,5 +2,41 @@ NAME: english
 REV: 1   ## bump +1 on revisions please
 SPEC: 0  ## someday there'll be a langspec.
 RPL:
+  RPL_PLUGIN_LOAD:
+  RPL_PLUGIN_UNLOAD:
+  RPL_PLUGIN_ERR:
+
   RPL_CHAN_SYNC: 'Sync complete on %s'
-## FIXME quick converter for existing langsets ?
+
+  RPL_VERSION:
+  RPL_INFO:
+  RPL_OS:
+
+  RPL_DONTKNOW:
+  RPL_WHAT:
+
+  RPL_NO_ACCESS:
+  RPL_CANT:
+  RPL_UNKNOWN_ERR:
+
+  RPL_AUTH_SUCCESS:
+  RPL_AUTH_FAIL:
+  RPL_AUTH_STATUS:
+
+  RPL_USER_ADD:
+  RPL_USER_DEL:
+  RPL_USER_EXISTS:
+
+  RPL_INFO3_ADD:
+  RPL_INFO3_DEL:
+  RPL_INFO3_SEARCH:
+  RPL_INFO3_REPLACE:
+  RPL_INFO3_REPLACE_FAILED:
+  RPL_INFO3_ERR_NOSUCH:
+  RPL_INFO3_ERR_EXISTS:
+
+  RPL_RSTUFF_ADD:
+  RPL_RSTUFF_DEL:
+
+  RPL_CMD_JOIN:
+  RPL_CMD_PART:

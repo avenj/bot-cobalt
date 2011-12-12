@@ -33,6 +33,14 @@ sub read_cfg {
   my $cf_core = read_file( $conf->{path_cobalt_cf} );
   $conf->{core} = Load $cf_core;
 
+  ## Channels
+  $conf->{path_chan_cf} = $conf->{path}."/channels.conf" ;
+  croak "cannot find channels.conf at $conf->{path}"
+    unless -f $conf->{path_chan_cf};
+
+  my $cf_chan = read_file( $conf->{path_chan_cf} );
+  $conf->{channels} = Load $cf_chan;
+
   ## Plugins
   $conf->{path_plugins_cf} = $conf->{path}."/plugins.conf";
   croak "can't find plugins.conf at $conf->{path}" unless -f $conf->{path_plugins_cf};
