@@ -73,6 +73,12 @@ sub _start_irc {
 
   $self->core->log->info("Spawning IRC, server: ($nick) $server $port");
 
+  ## FIXME: conf:
+  ##  usessl
+  ##  localaddr
+  ##  password
+  ##  ipv6 ?
+
   my $i = POE::Component::IRC::State->spawn(
     nick     => $nick,
     username => $cfg->{IRC}->{Username} || 'cobalt',
@@ -96,14 +102,32 @@ sub _start_irc {
     object_states => [
       $self => [
         '_start',
+
+        'irc_connected',
+        'irc_disconnected',
+        'irc_error',
+
         'irc_chan_sync',
+
         'irc_public',
+        'irc_msg',
+        'irc_notice',
+
+        'irc_kick',
+        'irc_mode',
+        'irc_topic',
+
+        'irc_nick',
+        'irc_join',
+        'irc_part',
+        'irc_quit',
       ],
     ],
   );
 
   $self->core->log->debug("IRC Session created");
 }
+
 
  ### IRC EVENTS ###
 
@@ -168,7 +192,7 @@ sub irc_public {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
-  ## FIXME create a msg packet like circe and send_event to self->core
+  ## create a msg packet and send_event to self->core
 
   my $msg = {
     context => 'Main',  # server context
@@ -189,13 +213,25 @@ sub irc_public {
   $self->core->send_event( 'public_msg', $msg );
 }
 
-## FIXME moar irc events
+sub irc_connected {}
+sub irc_disconnected {}
+sub irc_error {}
+sub irc_msg {}
+sub irc_notice {}
+sub irc_kick {}
+sub irc_mode {}
+sub irc_topic {}
+sub irc_nick {}
+sub irc_join {}
+sub irc_part {}
+sub irc_quit {}
 
 
  ### COBALT EVENTS ###
 
 sub Bot_send_to_context {
-  ## FIXME dispatch messages based on context
+  ## dispatch messages based on context
+  ## (ours is Main)
 
   return PLUGIN_EAT_NONE;
 }
@@ -204,3 +240,4 @@ sub Bot_send_to_context {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+
