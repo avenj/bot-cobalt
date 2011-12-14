@@ -19,6 +19,8 @@ use namespace::autoclean;
 extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
 
+use Cobalt::IRC;
+
 has 'cfg' => (
   is => 'rw',
   isa => 'HashRef',
@@ -50,7 +52,7 @@ has 'detached' => (
 
 has 'version' => (
   is => 'ro',
-  isa => 'Num',
+  isa => 'Str',
   default => $VERSION,
 );
 
@@ -78,12 +80,15 @@ has 'TimerPool' => (
 ## track hashes for our servers here.
 ## Servers->{$alias} = {
 ##   Name => servername,
+##   PreferredNick => nick,
 ##   Object => poco-obj,
 ##   ConnectedAt => time(),
 ## }
+
 has 'Servers' => (
   is => 'rw',
   isa => 'HashRef',
+  default => sub { {} },
 );
 
 sub init {
@@ -91,7 +96,7 @@ sub init {
 
   my $language = $self->cfg->{core}->{Language}
     // croak "missing Language directive?" ;
-  $self->lang( $self->load_lang($language) );
+  $self->lang( $self->load_langset($language) );
 
   my $logger = Log::Handler->create_logger("cobalt");
   my $maxlevel = $self->loglevel;
@@ -165,13 +170,13 @@ sub syndicator_started {
 
   ## FIXME load databases
 
+  $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
   $self->plugin_add('IRC', Cobalt::IRC->new);
 
   $poe_kernel->yield('timer_check_db');
 
   ## add configurable plugins
-  $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Initializing plugins . . .");
 
   my $i = 0;

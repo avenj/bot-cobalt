@@ -20,7 +20,7 @@ sub load_langset {  ## load_langset(language)
   my $lang = shift || croak 'no language specified?';
 
   ## etc/langs/language.yml (lowercase expected)
-  my $path = $self->etc . "/langs/" . lc($lang) . ".yml";
+  my $path = $self->cfg->{path} . "/langs/" . lc($lang) . ".yml";
 
   return unless -f $path;
   my $cf_lang = read_file ( $path );

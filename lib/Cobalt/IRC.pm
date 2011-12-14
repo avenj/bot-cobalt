@@ -45,7 +45,7 @@ sub Cobalt_register {
     [ 'all' ],
   );
 
-  $self->core->log->info(__PACKAGE__." registered");
+  $core->log->info(__PACKAGE__." registered");
   return PLUGIN_EAT_NONE
 }
 
@@ -55,23 +55,30 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_plugins_initialized {
+  my ($self, $core) = splice @_, 0, 2;
+  ## wait until plugins are all loaded, start IRC session
+  $self->_start_irc();
+  return PLUGIN_EAT_NONE
+}
+
 sub _start_irc {
   my ($self) = @_;
-  my $pkg = __PACKAGE__;
-  $self->core->log->info(" --> $pkg spawning IRC");
   my $cfg = $self->core->cfg->{core};
 
-  my $server = $cfg->{IRC}->{ServerAddr} // 'irc.cobaltirc.org';
-  my $port   = $cfg->{IRC}->{ServerPort} // 6667;
+  my $server = $cfg->{IRC}->{ServerAddr} // 'irc.cobaltirc.org' ;
+  my $port   = $cfg->{IRC}->{ServerPort} // 6667 ;
 
-  my $nick = $cfg->{IRC}->{Nickname} // 'Cobalt',
+  my $nick = $cfg->{IRC}->{Nickname} // 'Cobalt' ;
+
+  $self->core->log->info("Spawning IRC, server: ($nick) $server $port");
 
   my $i = POE::Component::IRC::State->spawn(
     nick     => $nick,
     username => $cfg->{IRC}->{Username} || 'cobalt',
     ircname  => $cfg->{IRC}->{Realname}  || 'http://cobaltirc.org',
-    server   => $server ,
-    port     => $port ,
+    server   => $server,
+    port     => $port,
     raw => 0,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
@@ -94,13 +101,8 @@ sub _start_irc {
       ],
     ],
   );
-}
 
-sub Bot_plugins_initialized {
-  my ($self, $core) = splice @_, 0, 2;
-  ## wait until plugins are all loaded, start IRC session
-  $self->_start_irc();
-  return PLUGIN_EAT_NONE
+  $self->core->log->debug("IRC Session created");
 }
 
  ### IRC EVENTS ###
@@ -108,6 +110,8 @@ sub Bot_plugins_initialized {
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $cfg = $self->core->cfg->{core};
+
+  $self->core->log->debug("pocoirc plugin load");
 
   $self->irc->plugin_add('Connector' =>
     POE::Component::IRC::Plugin::Connector->new);
@@ -126,7 +130,7 @@ sub _start {
 
   $self->irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
-      Channels => [ keys $chanhash ],
+      Channels => [ keys %$chanhash ],
       RejoinOnKick => 1,
       Rejoin_delay => 5,  ## FIXME: configurables
       NickServ_delay => 1,
@@ -141,19 +145,20 @@ sub _start {
   );
 
   $self->irc->yield(register => 'all');
+  $self->core->log->debug("pocoirc connect issued");
   $self->irc->yield(connect => { });
 }
 
 sub irc_chan_sync {
   my ($self, $chan) = @_[OBJECT, ARG0];
 
-  ## FIXME langset
   my $resp = sprintf( $self->core->lang->{RPL_CHAN_SYNC}, $chan );
 
   ## issue Bot_chan_sync
   $self->core->send_event( 'chan_sync', $chan );
 
-  $self->irc->yield(privmsg => $chan => $resp);  ## FIXME configurable
+  $self->irc->yield(privmsg => $chan => $resp)
+    if $self->core->cfg->{core}->{Opts}->{NotifyOnSync};
 }
 
 sub irc_public {
