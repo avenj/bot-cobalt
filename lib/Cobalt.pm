@@ -2,7 +2,7 @@ package Cobalt;
 
 our $VERSION = '2.0_001';
 
-use 5.14.1;
+use 5.12.1;
 use Moose;
 use MooseX::NonMoose;
 
@@ -64,14 +64,16 @@ has 'lang' => (
   isa => 'HashRef',
 );
 
+has 'State' => (
+  is => 'rw',
+  isa => 'HashRef',
+  default => sub { {} },
+);
+
 has 'TimerPool' => (
   is => 'rw',
   isa => 'HashRef',
-  default => sub {
-    return({
-      DatabasesDirty => 0,
-    }),
-  },
+  default => sub { {} },
 );
 
 ## the core IRC plugin is single-server

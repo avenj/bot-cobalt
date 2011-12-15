@@ -1,6 +1,6 @@
 package Cobalt::Conf;
 
-use 5.14.1;
+use 5.12.1;
 
 use Moose;
 

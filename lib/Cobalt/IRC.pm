@@ -25,7 +25,7 @@ Cobalt::IRC
 
 =cut
 
-use 5.14.1;
+use 5.12.1;
 use strict;
 use warnings;
 use Carp;
@@ -135,6 +135,7 @@ sub _start_irc {
         'irc_public',
         'irc_msg',
         'irc_notice',
+        'irc_ctcp_action',
 
         'irc_kick',
         'irc_mode',
@@ -210,10 +211,10 @@ sub irc_chan_sync {
 
 sub irc_public {
   my ($self, $kernel, $src, $where, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
-  my $channel = $where->[0];
   my $me = $self->irc->nick_name();
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
+  my $channel = $where->[0];
 
   ## create a msg packet and send_event to self->core
 
@@ -240,12 +241,13 @@ sub irc_public {
 
 sub irc_msg {
   my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
-  my $sent_to = $target->[0];
   my $me = $self->irc->nick_name();
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
   ## similar to irc_public
+
+  my $sent_to = $target->[0];
 
   my $msg = {
     context => 'Main',
@@ -276,13 +278,17 @@ sub irc_notice {
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    sent_to => $sent_to,
+    sent_to => $target->[0],
     target_array => $target,
     message => $txt,
   };
 
   ## Bot_notice
   $self->core->send_event( 'notice', $msg );
+}
+
+sub irc_ctcp_action {
+  ## FIXME
 }
 
 sub irc_connected {
@@ -348,13 +354,33 @@ sub irc_quit {}
  ### COBALT EVENTS ###
 
 sub Bot_send_to_context {
-  ## dispatch messages based on context
-  ## (ours is Main)
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ shift(@_) };
 
-  return PLUGIN_EAT_NONE;
+  return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
+
+  $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
+  $core->send_event( 'message_sent', $msg );
+  return PLUGIN_EAT_NONE
 }
 
+sub Bot_send_to_all {
+  ## catch broadcasts (MultiServer)
+}
 
+sub Bot_send_notice {
+  ## send /NOTICE
+}
+
+sub Bot_mode {}
+
+sub Bot_kick {}
+
+sub Bot_join {}
+
+sub Bot_part {}
+
+sub Bot_send_raw {}
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
