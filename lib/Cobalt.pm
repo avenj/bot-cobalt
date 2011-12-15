@@ -57,9 +57,8 @@ has 'version' => (
 );
 
 has 'lang' => (
-  ## FIXME
   ## should read $Language.yml out of etc/langs
-  ## need standardized format
+  ## fixme; need standardized format ..
   ## pull hash from Conf->load_langset
   is => 'rw',
   isa => 'HashRef',
@@ -82,6 +81,7 @@ has 'TimerPool' => (
 ##   Name => servername,
 ##   PreferredNick => nick,
 ##   Object => poco-obj,
+##   Connected => BOOL,
 ##   ConnectedAt => time(),
 ## }
 

@@ -3,6 +3,28 @@ package Cobalt::IRC;
 ## Core IRC plugin
 ## (server context 'Main')
 
+=pod
+
+=head1 NAME
+
+Cobalt::IRC
+
+=head1 Emitted Events
+
+ Bot_connected
+ Bot_disconnected
+ Bot_server_error
+
+ Bot_chan_sync
+
+ Bot_public_msg
+ Bot_private_msg
+ Bot_notice
+
+ Bot_user_kicked
+
+=cut
+
 use 5.14.1;
 use strict;
 use warnings;
@@ -88,11 +110,12 @@ sub _start_irc {
     raw => 0,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
-  ## add 'Main' to connected servers
+  ## add 'Main' to Servers
   $self->core->Servers->{Main} = {
     Name => $server,
     PreferredNick => $nick,
     Object => $i,
+    Connected => 0,
     ConnectedAt => time(),
   };
 
@@ -201,6 +224,8 @@ sub irc_public {
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
+    channel => $channel,  # first dest. channel seen
+    target_array => $where,
     highlight => 0,
     message => $txt,
   };
@@ -213,13 +238,106 @@ sub irc_public {
   $self->core->send_event( 'public_msg', $msg );
 }
 
-sub irc_connected {}
-sub irc_disconnected {}
-sub irc_error {}
-sub irc_msg {}
-sub irc_notice {}
-sub irc_kick {}
-sub irc_mode {}
+sub irc_msg {
+  my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+  my $sent_to = $target->[0];
+  my $me = $self->irc->nick_name();
+  $txt = strip_color( strip_formatting($txt) );
+  my ($nick, $user, $host) = parse_user($src);
+
+  ## similar to irc_public
+
+  my $msg = {
+    context => 'Main',
+    myself => $me,
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    sent_to => $sent_to,  # first dest. seen
+    target_array => $target,
+    message => $txt,
+  };
+
+  ## Bot_private_msg
+  $self->core->send_event( 'private_msg', $msg );
+}
+
+sub irc_notice {
+  my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+  my $me = $self->irc->nick_name();
+  $txt = strip_color( strip_formatting($txt) );
+  my ($nick, $user, $host) = parse_user($src);
+
+  my $msg = {
+    context => 'Main',
+    myself => $me,
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    sent_to => $sent_to,
+    target_array => $target,
+    message => $txt,
+  };
+
+  ## Bot_notice
+  $self->core->send_event( 'notice', $msg );
+}
+
+sub irc_connected {
+  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
+
+  ## IMPORTANT:
+  ##  irc_connected indicates we're connected to the server
+  ##  however, irc_001 is the server welcome message
+  ##  irc_connected happens before auth, no guarantee we can send yet.
+}
+
+sub irc_001 {
+  my ($self, $kernel) = @_[OBJECT, KERNEL, ARG0];
+
+  $self->core->Servers->{Main}->{Connected} = 1;
+  my $server = $self->irc->server_name;
+  ## send a Bot_connected event with context and visible server name:
+  $self->core->send_event( 'connected', 'Main', $server );
+}
+
+sub irc_disconnected {
+  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
+  $self->core->Servers->{Main}->{Connected} = 0;
+  ## Bot_disconnected event, similar to Bot_connected:
+  $self->core->send_event( 'disconnected', 'Main', $server );
+}
+
+sub irc_error {
+  my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
+  ## Bot_server_error:
+  $self->core->send_event( 'server_error', 'Main', $reason );
+}
+
+
+sub irc_kick {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($src, $channel, $target, $reason) = @_[ARG0 .. ARG3];
+  my ($nick, $user, $host) = parse_user($src);
+
+  my $kick = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel => $channel,
+    target_nick => $target,
+    reason => $reason,
+  };
+
+  ## Bot_user_kicked:
+  $self->core->send_event( 'user_kicked', 'Main', $kick );
+}
+
+sub irc_mode {}  ## FIXME mode parser like circe
+
 sub irc_topic {}
 sub irc_nick {}
 sub irc_join {}

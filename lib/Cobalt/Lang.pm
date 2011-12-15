@@ -1,5 +1,8 @@
 package Cobalt::Lang;
 
+## Emitted events:
+##  langset_loaded ($lang, $lang-specified, $path)
+
 use 5.14.1;
 
 use Moose;
@@ -27,6 +30,8 @@ sub load_langset {  ## load_langset(language)
   my $langset = Load $cf_lang;
 
   ## FIXME langset validation
+
+  $self->send_event( 'langset_loaded', lc($lang), $lang, $path );
 
   return $langset->{RPL}
 }
