@@ -1,0 +1,86 @@
+#!/usr/bin/env perl
+
+use 5.12.1;
+use strict;
+use warnings;
+
+my $type = 'bcrypt';
+my $bcrypt_cost = '08';
+use Getopt::Long;
+GetOptions(
+  'type=s' => \$type,
+  'workcost=s' => \$bcrypt_cost,
+
+  'help' => sub {
+    say "Cobalt mkpasswd\n\n";
+    say " --type=<TYPE>";
+    say "        bcrypt sha256 sha512 md5\n";
+    say " BCRYPT-ONLY:";
+    say " --workcost=<two digit power of 2>\n";
+  },  
+);
+
+print "Passwd: ";
+my $pwd = <STDIN>;
+print "\n";
+
+say pwd_generate($pwd);
+
+## from Circe:
+sub pwd_generate {
+  my $pwd = shift || return;
+  my @p = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, '_',);
+  my $salt = join '', map { $p[rand@p] } 1 .. 8;
+  given ($type)
+  {
+    when (/sha512/i) {  ## SHA-512: glibc-2.7+
+      ## Secure .. unfortunately mostly only glibc has support in crypt()
+      ## SHA has variable length salts (up to 16)
+      ## varied salt lengths can (maybe) slow down attacks:
+      $salt .= $p[rand@p] for 1 .. rand 8;
+      $salt = '$6$'.$salt.'$';
+    }
+
+    when (/sha(256)?/i) {  ## SHA-256: glibc-2.7+
+      $salt .= $p[rand@p] for 1 .. rand 8;
+      $salt = '$5$'.$salt.'$';
+    }
+
+    when (/^bcrypt$/i) {  ## Bcrypt: requires Crypt::Eksblowfish
+      ## blowfish w/ cost factor
+      ## if the db is stolen, it will be very slow to break.
+      eval { require Crypt::Eksblowfish::Bcrypt; };
+      my $have_bcrypt = $@ ? 0 : 1;
+      unless ($have_bcrypt) {
+        say("WARNING: Attempting to use bcrypt but missing Crypt::Eksblowfish");
+        say("WARNING: Defaulting to MD5 instead . . . !");
+        $salt = '$1$'.$salt.'$';  ## no bcrypt here, generate md5 instead (sadface)
+      } else {
+        ## cost value is configurable, but 08 is a good choice.
+        ## has to be a two digit power of 2. pad with 0 as needed
+        my $cost = $bcrypt_cost // '08';
+        ## bcrypt expects 16 octets of salt:
+        $salt = join('', map { chr(int(rand(256))) } 1 .. 16);
+        ## ...base64-encoded via bcrypt's en_base64:
+        $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
+        ## actual settings string to feed bcrypt ($2a$COST$SALT)
+        $salt = join('', '$2a$', $cost, '$', $salt);
+        return Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $salt)
+      }
+    } 
+
+    when ("DES") {
+      ## not documented or even tested because it's a Very Bad Idea ...
+      ## but here in case you're stuck with the world's worst crypt()
+      ## srsly though, don't use it. no, really, the 80s are over, promise.
+      $salt = join '', map { $p[rand@p] } 1..2;
+    }
+
+    default {  ## defaults to MD5 -- portable, fast, but weak
+      $salt = '$1$'.$salt.'$';
+    }
+  }
+  my $crypt = crypt($pwd, $salt);
+  return $crypt
+}
+
