@@ -6,16 +6,22 @@ use 5.10.0;
 use strict;
 use warnings;
 
+use Term::ReadKey;
+
 use Time::HiRes qw/ gettimeofday tv_interval /;
+
+use Getopt::Long;
 
 my $type = 'bcrypt';
 my $bcrypt_cost = '08';
 my $showtimer = 0;
-use Getopt::Long;
+my $check;
 GetOptions(
   'method=s' => \$type,
   'workcost=s' => \$bcrypt_cost,
   'benchmark!' => \$showtimer,
+
+  'check=s' => \$check,
 
   'help' => sub {
     print(
@@ -32,6 +38,9 @@ GetOptions(
       "   - sha512 (requires glibc2.7+)\n",
       "   - md5 (fast, portable, insecure)\n",
       "\n",
+      " --check=<HASH>\n",
+      "   Compare password against specified hash.\n",
+      "\n",
       " bcrypt-only:\n",
       " --workcost=<two digit power of 2>\n",
       "   Default: -w 08\n",
@@ -42,16 +51,35 @@ GetOptions(
     exit 0
   },  
 );
+
+eval { require Crypt::Eksblowfish::Bcrypt; };
+my $have_bcrypt = $@ ? 0 : 1;
+
 my $pwd;
 if (@ARGV) {
   $pwd = $ARGV[0];
 } else {
+  ReadMode('noecho'); # don't echo
   print "Password: ";
   $pwd = <STDIN>;
   chomp($pwd);
+  ReadMode(0);        # back to normal
+  print "\n";
 }
+
 my $timer0 = [gettimeofday()];
-say pwd_generate($pwd);
+
+if ($check) {
+  if ( pwd_compare($pwd, $check) ) {
+    say "Password matches";
+    say $check;
+  } else {
+    say "NO MATCH";
+  }
+} else {
+  say pwd_generate($pwd);
+}
+
 my $interval0 = tv_interval($timer0);
 say " bench: $type, timer0 -> $interval0" if $showtimer;
 
@@ -78,8 +106,6 @@ sub pwd_generate {
 
     when (/^bcrypt$/i) {  ## Bcrypt: requires Crypt::Eksblowfish
       ## blowfish w/ cost factor
-      eval { require Crypt::Eksblowfish::Bcrypt; };
-      my $have_bcrypt = $@ ? 0 : 1;
       unless ($have_bcrypt) {
         say("WARNING: Attempting to use bcrypt but missing Crypt::Eksblowfish");
         say("WARNING: Defaulting to MD5 instead . . . !");
@@ -113,6 +139,28 @@ sub pwd_generate {
   return $crypt
 }
 
+sub pwd_compare {
+  my $pwd   = shift || return;
+  my $crypt = shift || return;
+
+  if ( index($crypt, '$2a$') == 0 ) ## bcrypted
+  {
+    unless ($have_bcrypt) {
+      say("ERROR; Missing Crypt::Eksblowfish!");
+      say("ERROR; Cannot compare bcrypted password!");
+      return 0
+    } else {
+      return 0 unless $crypt eq
+        Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $crypt);
+    }
+  }
+  else  ## some crypt() method, hopefully we have it!
+  {
+    return 0 unless $crypt eq crypt($pwd, $crypt);
+  }
+
+  return 1
+}
 
 
 =pod
@@ -143,6 +191,10 @@ sub pwd_generate {
        sha512 (requires glibc2.7+)
        sha256 (requires glibc2.7+)
        md5 (fast, portable, weak)
+
+ -c, --check <HASH>
+     Check password against <HASH>.
+     Method will be auto-detected.
 
  -w, --workcost <COST>
      bcrypt-only.
