@@ -26,7 +26,7 @@ sub load_langset {  ## load_langset(language)
   my $path = $self->cfg->{path} . "/langs/" . lc($lang) . ".yml";
 
   return unless -f $path;
-  my $cf_lang = read_file ( $path );
+  my $cf_lang = read_file($path);
   my $langset = Load $cf_lang;
 
   ## FIXME langset validation

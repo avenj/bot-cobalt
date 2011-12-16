@@ -218,6 +218,9 @@ sub irc_public {
 
   ## create a msg packet and send_event to self->core
 
+  ## FIXME: strip/flag if preceeded by cmdchar
+  ## FIXME: special event for cmdchar
+
   my $msg = {
     context => 'Main',  # server context
     myself => $me,      # bot's current nickname
@@ -228,12 +231,20 @@ sub irc_public {
     channel => $channel,  # first dest. channel seen
     target_array => $where,
     highlight => 0,
+    cmdprefix => 0,
     message => $txt,
   };
 
   ## flag messages seemingly directed at the bot
   ## makes life easier for plugins
   $msg->{highlight} = 1 if $txt =~ /^${me}.?\s+/i;
+
+  ## flag messages prefixed by cmdchar
+  my $cmdchar = $self->core->cfg->{core}->{Opts}->{CmdChar} // '!';
+  if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
+    $msg->{cmdprefix} = 1;
+    $msg->{cmd} = $1;
+  }
 
   ## issue Bot_public_msg
   $self->core->send_event( 'public_msg', $msg );
@@ -369,7 +380,14 @@ sub Bot_send_to_all {
 }
 
 sub Bot_send_notice {
-  ## send /NOTICE
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ shift(@_) };
+
+  return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
+
+  $self->irc->yield(notice => $msg->{target} => $msg->{txt});
+  $core->send_event( 'notice_sent', $msg );
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_mode {}
