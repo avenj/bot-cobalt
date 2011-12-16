@@ -4,27 +4,50 @@ use 5.12.1;
 use strict;
 use warnings;
 
+use Time::HiRes qw/ gettimeofday tv_interval /;
+
 my $type = 'bcrypt';
 my $bcrypt_cost = '08';
+my $showtimer = 0;
 use Getopt::Long;
 GetOptions(
-  'type=s' => \$type,
+  'method=s' => \$type,
   'workcost=s' => \$bcrypt_cost,
+  'benchmark!' => \$showtimer,
 
   'help' => sub {
-    say "Cobalt mkpasswd\n\n";
-    say " --type=<TYPE>";
-    say "        bcrypt sha256 sha512 md5\n";
-    say " BCRYPT-ONLY:";
-    say " --workcost=<two digit power of 2>\n";
+    print(
+      "Cobalt mkpasswd\n",
+      "Opts:\n",
+      " --benchmark\n",
+      "   Show timers. [Default: off]\n",
+      "\n",
+      " --method=<TYPE>\n",
+      "   Default: -m bcrypt\n",
+      "   Types: \n",
+      "   - bcrypt (requires Crypt::Eksblowfish)\n",
+      "   - sha256 (requires glibc2.7+)\n",
+      "   - sha512 (requires glibc2.7+)\n",
+      "   - md5 (fast, portable, insecure)\n",
+      "\n",
+      " bcrypt-only:\n",
+      " --workcost=<two digit power of 2>\n",
+      "   Default: -w 08\n",
+      "   bcrypt work cost factor; higher is slower.\n",
+      "   When it comes to comparing passwds, slower can be better.\n",
+      "   See http://codahale.com/how-to-safely-store-a-password/\n",
+    );
+    exit 0
   },  
 );
 
-print "Passwd: ";
+print "Password: ";
 my $pwd = <STDIN>;
-print "\n";
-
+chomp($pwd);
+my $timer0 = [gettimeofday()];
 say pwd_generate($pwd);
+my $interval0 = tv_interval($timer0);
+say " bench: $type, timer0 -> $interval0" if $showtimer;
 
 ## from Circe:
 sub pwd_generate {
@@ -33,22 +56,22 @@ sub pwd_generate {
   my $salt = join '', map { $p[rand@p] } 1 .. 8;
   given ($type)
   {
-    when (/sha512/i) {  ## SHA-512: glibc-2.7+
-      ## Secure .. unfortunately mostly only glibc has support in crypt()
+    when (/sha-?512/i) {  ## SHA-512: glibc-2.7+
+      ## unfortunately mostly only glibc has support in crypt()
       ## SHA has variable length salts (up to 16)
-      ## varied salt lengths can (maybe) slow down attacks:
+      ## varied salt lengths can (maybe) slow down attacks
+      ## (so says Drepper, anyway)
       $salt .= $p[rand@p] for 1 .. rand 8;
       $salt = '$6$'.$salt.'$';
     }
 
-    when (/sha(256)?/i) {  ## SHA-256: glibc-2.7+
+    when (/sha-?256/i) {  ## SHA-256: glibc-2.7+
       $salt .= $p[rand@p] for 1 .. rand 8;
       $salt = '$5$'.$salt.'$';
     }
 
     when (/^bcrypt$/i) {  ## Bcrypt: requires Crypt::Eksblowfish
       ## blowfish w/ cost factor
-      ## if the db is stolen, it will be very slow to break.
       eval { require Crypt::Eksblowfish::Bcrypt; };
       my $have_bcrypt = $@ ? 0 : 1;
       unless ($have_bcrypt) {
@@ -83,4 +106,3 @@ sub pwd_generate {
   my $crypt = crypt($pwd, $salt);
   return $crypt
 }
-
