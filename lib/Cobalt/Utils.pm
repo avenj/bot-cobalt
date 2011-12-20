@@ -21,6 +21,7 @@ sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
   my $timestr = shift;
   my($hrs,$mins,$secs,$total);
+  ## FIXME add days ?
   if ($timestr =~ m/(\d+)h/)
     { $hrs = $1; }
   if ($timestr =~ m/(\d+)m/)
@@ -101,4 +102,65 @@ sub mkpasswd {
   return crypt($pwd, $salt)
 }
 
+
 1;
+
+=pod
+
+=head1 NAME
+
+Cobalt::Utils
+
+=head1 DESCRIPTION
+
+Simple utility functions for Cobalt2 and plugins
+
+
+=head1 FUNCTIONS
+
+
+=head2 Date and time
+
+=head3 timestr_to_secs
+
+Converts a string such as "2h10m" into seconds.
+
+  my $delay_s = timestr_to_secs('1h33m10s');
+
+
+=head2 Password handling
+
+=head3 mkpasswd
+
+Simple interface for creating hashed passwords:
+
+  ## create a bcrypted password (work cost 08)
+  ## bcrypt is blowfish with a work cost factor.
+  ## if hashes are stolen, they'll be slow to break
+  ## see http://codahale.com/how-to-safely-store-a-password/
+  my $hashed = mkpasswd($password);
+
+  ## you can specify method options . . .
+  ## here's bcrypt with a lower work cost factor.
+  ## (must be a two-digit power of 2, possibly padded with 0)
+  my $hashed = mkpasswd($password, 'bcrypt', '06');
+
+  ## Available methods:
+  ##  bcrypt (preferred)
+  ##  SHA-256 or -512 (glibc2.7+ only)
+  ##  MD5 (fast, portable, weak)
+  my $sha_passwd = mkpasswd($password, 'sha512');
+
+=head3 passwdcmp
+
+  return passwdcmp($password, $hashed);
+
+Returns the hash if the cleartext password is a match.
+Otherwise, returns 0.
+
+=head1 AUTHOR
+
+Jon Portnoy (avenj)
+http://www.cobaltirc.org
+
+=cut
