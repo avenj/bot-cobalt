@@ -219,8 +219,6 @@ sub irc_public {
   ## create a msg packet and send_event to self->core
 
   ## FIXME: strip/flag if preceeded by cmdchar
-  ## FIXME: special event for cmdchar
-
   my $msg = {
     context => 'Main',  # server context
     myself => $me,      # bot's current nickname
@@ -244,6 +242,12 @@ sub irc_public {
   if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
     $msg->{cmdprefix} = 1;
     $msg->{cmd} = $1;
+    ## issue a public_cmd_$cmd event to plugins
+    ## command-only plugins can choose to only receive specified events
+    $self->core->send_event( 
+      'public_cmd_'.$msg->{cmd}, 
+      $msg 
+    );
   }
 
   ## issue Bot_public_msg
@@ -255,7 +259,7 @@ sub irc_msg {
   my $me = $self->irc->nick_name();
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
-
+  ## private msg handler
   ## similar to irc_public
 
   my $sent_to = $target->[0];
@@ -270,6 +274,7 @@ sub irc_msg {
     sent_to => $sent_to,  # first dest. seen
     target_array => $target,
     message => $txt,
+    message_array => (split ' ', $txt),
   };
 
   ## Bot_private_msg
@@ -355,11 +360,42 @@ sub irc_kick {
 
 sub irc_mode {}  ## FIXME mode parser like circe
 
-sub irc_topic {}
-sub irc_nick {}
-sub irc_join {}
-sub irc_part {}
-sub irc_quit {}
+sub irc_topic {}  ## FIXME
+
+sub irc_nick {} ## FIXME
+
+sub irc_join {
+  my ($self, $kernel, $src, $channel) = @_[OBJECT, KERNEL, ARG0, ARG1];
+  my ($nick, $user, $host) = parse_user($src);
+
+  my $join = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel  => $channel,
+  };
+
+  ## Bot_user_joined
+  $self->core->send_event( 'user_joined', 'Main', $join );
+}
+
+sub irc_part {
+  my ($self, $kernel, $src, $channel, $msg) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+
+  my $part = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel => $channel,
+  };
+
+  ## Bot_user_left
+  $self->core->send_event( 'user_left', 'Main', $part );
+}
+
+sub irc_quit {}  ## FIXME
 
 
  ### COBALT EVENTS ###
