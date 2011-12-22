@@ -67,7 +67,12 @@ has 'lang' => (
 has 'State' => (
   is => 'rw',
   isa => 'HashRef',
-  default => sub { {} },
+  default => sub {
+    {
+      StartedTS => time(),
+      Auth => { },
+    } 
+  },
 );
 
 has 'TimerPool' => (
@@ -156,8 +161,7 @@ sub init {
         'shutdown',
         'ev_plugin_error',
 
-         # db sync check timer
-        'timer_check_db',
+        'timer_check_pool',
       ],
     ],
   );
@@ -218,14 +222,22 @@ sub ev_plugin_error {
 }
 
 
-sub timer_check_db {
+sub timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
 
   ## FIXME
 
+  ## set up some sort of standardized hash struct
+  ## AddedBy => __PACKAGE__
+  ## ExecuteAt => ts
+  ## Execute => coderef ?
+  ##  alternate Execute interfaces ?
+  ##  perhaps a TYPE specification: code, event, msg ...
 
-  $kernel->alarm('timer_check_db' => time + 5);
+
+
+  $kernel->alarm('timer_check_pool' => time + 1);
 }
 
 
