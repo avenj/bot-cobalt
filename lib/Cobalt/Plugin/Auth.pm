@@ -29,6 +29,7 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = @_;
+  ## FIXME clear any Auth states belonging to us
   $core->log->info("Unregistering core IRC plugin");
   return PLUGIN_EAT_NONE
 }
@@ -43,7 +44,8 @@ sub Bot_private_msg {
   my $resp;
 
   given ($txt) {
-
+    ## FIXME play with State->{Auth}
+    ## FIXME retain other-auth compat by tagging w/ __PACKAGE__
   }
 
   if ($resp) {

@@ -25,7 +25,7 @@ GetOptions(
 
   'help' => sub {
     print(
-      "Cobalt mkpasswd\n",
+      "mkpasswd [OPTS]... [PASSWD]\n",
       "Opts:\n",
       " --benchmark\n",
       "   Show timers. [Default: off]\n",
@@ -59,11 +59,11 @@ my $pwd;
 if (@ARGV) {
   $pwd = $ARGV[0];
 } else {
-  ReadMode('noecho'); # don't echo
+  ReadMode('noecho');
   print "Password: ";
   $pwd = <STDIN>;
   chomp($pwd);
-  ReadMode(0);        # back to normal
+  ReadMode(0);
   print "\n";
 }
 
