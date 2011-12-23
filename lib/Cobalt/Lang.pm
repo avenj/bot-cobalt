@@ -27,6 +27,7 @@ sub load_langset {  ## load_langset(language)
 
   return unless -f $path;
   my $cf_lang = read_file($path);
+  utf8::encode($cf_lang);
   my $langset = Load $cf_lang;
 
   ## FIXME langset validation
