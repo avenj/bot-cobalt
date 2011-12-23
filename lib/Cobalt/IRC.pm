@@ -45,6 +45,7 @@ use POE::Component::IRC::Plugin::NickReclaim;
 use IRC::Utils
   qw/parse_user uc_irc lc_irc strip_color strip_formatting/;
 
+use namespace::autoclean;
 
 has 'core' => (
   is => 'rw',
@@ -93,13 +94,10 @@ sub _start_irc {
 
   my $nick = $cfg->{IRC}->{Nickname} // 'Cobalt' ;
 
-  $self->core->log->info("Spawning IRC, server: ($nick) $server $port");
+  my $usessl = $cfg->{IRC}->{UseSSL} ? 1 : 0 ;
+  my $use_v6 = $cfg->{IRC}->{IPv6} ? 1 : 0 ;
 
-  ## FIXME: conf:
-  ##  usessl
-  ##  localaddr
-  ##  password
-  ##  ipv6 ?
+  $self->core->log->info("Spawning IRC, server: ($nick) $server $port");
 
   my $i = POE::Component::IRC::State->spawn(
     nick     => $nick,
@@ -107,6 +105,7 @@ sub _start_irc {
     ircname  => $cfg->{IRC}->{Realname}  || 'http://cobaltirc.org',
     server   => $server,
     port     => $port,
+    useipv6  => $use_v6,
     raw => 0,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
@@ -165,13 +164,18 @@ sub _start {
     POE::Component::IRC::Plugin::Connector->new);
 # FIXME make reclaim time configurable:
   $self->irc->plugin_add('NickReclaim' =>
-    POE::Component::IRC::Plugin::NickReclaim->new( poll => 30 ) );
-# FIXME conf:
-#  $self->irc->plugin_add('NickServID' =>
-#    POE::Component::IRC::Plugin::NickServID->new (
-#      Password => $cfg->{opts}->{nickserv_passwd} // '',
-#    ),
-#  );
+    POE::Component::IRC::Plugin::NickReclaim->new(
+        poll => $cfg->{Opts}->{NickRegainDelay} // 30,
+      ), 
+    );
+
+  if ($cfg->{Opts}->{NickServPass}) {
+    $self->irc->plugin_add('NickServID' =>
+      POE::Component::IRC::Plugin::NickServID->new(
+        Password => $cfg->{Opts}->{NickServPass},
+      ),
+    );
+  }
 
   ## the single-server plugin just grabs Main context from channels cf:
   my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
@@ -194,7 +198,16 @@ sub _start {
 
   $self->irc->yield(register => 'all');
   $self->core->log->debug("pocoirc connect issued");
-  $self->irc->yield(connect => { });
+
+  my $opts = { };
+
+  my $localaddr = $cfg->{IRC}->{BindAddr} // 0;
+  $opts->{localaddr} = $localaddr if $localaddr;
+
+  my $server_pass = $cfg->{IRC}->{ServerPass} // 0;
+  $opts->{password} = $server_pass if $server_pass;
+
+  $self->irc->yield(connect => $opts);
 }
 
 sub irc_chan_sync {
@@ -494,15 +507,35 @@ sub Bot_send_notice {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_mode {}
+sub Bot_mode {
 
-sub Bot_kick {}
+  ## FIXME build mode strings based on isupport MODES=
+}
 
-sub Bot_join {}
+sub Bot_kick {
+  my ($self, $core) = splice @_, 0, 2;
 
-sub Bot_part {}
+  ## FIXME
 
-sub Bot_send_raw {}
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_join {
+  my ($self, $core) = splice @_, 0, 2;
+  ## FIXME
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_part {
+
+}
+
+sub Bot_send_raw {
+
+}
+
+
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
