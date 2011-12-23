@@ -218,7 +218,6 @@ sub irc_public {
 
   ## create a msg packet and send_event to self->core
 
-  ## FIXME: strip/flag if preceeded by cmdchar
   my $msg = {
     context => 'Main',  # server context
     myself => $me,      # bot's current nickname
@@ -304,7 +303,25 @@ sub irc_notice {
 }
 
 sub irc_ctcp_action {
-  ## FIXME
+  my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+  my $me = $self->irc->nick_name();
+  $txt = strip_color( strip_formatting($txt) );
+  my ($nick, $user, $host) = parse_user($src);
+
+  my $msg = {
+    context => 'Main',  
+    myself => $me,      
+    src => $src,        
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    target => $target->[0],
+    target_array => $target,
+    message => $txt,
+  };
+
+  ## Bot_action
+  $self->core->send_event( 'action', $msg );
 }
 
 sub irc_connected {
@@ -358,11 +375,41 @@ sub irc_kick {
   $self->core->send_event( 'user_kicked', 'Main', $kick );
 }
 
-sub irc_mode {}  ## FIXME mode parser like circe
+sub irc_mode {}  ## FIXME mode parser like circe?
 
-sub irc_topic {}  ## FIXME
+sub irc_topic {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($src, $channel, $topic) = @_[ARG0 .. ARG2];
+  my ($nick, $user, $host) = parse_user($src);
 
-sub irc_nick {} ## FIXME
+  my $topic_change = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel => $channel,
+    topic => $topic,
+  };
+
+  ## Bot_topic_changed
+  $self->core->send_event( 'topic_changed', 'Main', $topic_change );
+}
+
+sub irc_nick {
+  my ($self, $kernel, $src, $new) = @_[OBJECT, KERNEL, ARG0, ARG1];
+  ## if $src is a hostmask, get just the nickname:
+  my $old = parse_user($src);
+  ## is this just a case change ?
+  my $equal = eq_irc($old, $new) ? 1 : 0 ;
+  my $nick_change = {
+    old => $old,
+    new => $new,
+    equal => $equal,
+  };
+
+  ## Bot_nick_changed
+  $self->core->send_event( 'nick_changed', 'Main', $nick_change );
+}
 
 sub irc_join {
   my ($self, $kernel, $src, $channel) = @_[OBJECT, KERNEL, ARG0, ARG1];
@@ -381,7 +428,8 @@ sub irc_join {
 }
 
 sub irc_part {
-  my ($self, $kernel, $src, $channel, $msg) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($src, $channel, $msg) = @_[ARG0 .. ARG2];
 
   my $part = {
     src => $src,
@@ -395,7 +443,17 @@ sub irc_part {
   $self->core->send_event( 'user_left', 'Main', $part );
 }
 
-sub irc_quit {}  ## FIXME
+sub irc_quit {
+  my ($self, $kernel, $src, $msg) = @_[OBJECT, KERNEL, ARG0, ARG1];
+  ## depending on ircd we might get a hostmask .. or not ..
+  my $nick = parse_user($src);
+
+  my $quit = {
+    src_orig => $src,
+    src_nick => $nick,
+    reason => $msg,
+  };
+}
 
 
  ### COBALT EVENTS ###
@@ -407,12 +465,22 @@ sub Bot_send_to_context {
   return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
 
   $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
-  $core->send_event( 'message_sent', $msg );
+
+  $core->send_event( 'message_sent', 'Main', $msg );
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_send_to_all {
   ## catch broadcasts (MultiServer)
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ shift(@_) };
+
+  $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
+
+  $core->send_event( 'message_sent', 'Main', $msg );
+
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_send_notice {

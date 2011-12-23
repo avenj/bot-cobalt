@@ -7,7 +7,7 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Commands:
-
+##  Bot_cmd_alarmclock
 
 sub new {
   my $class = shift;
@@ -34,18 +34,16 @@ sub Cobalt_unregister {
 }
 
 
-sub Bot_public_msg {
+sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ shift(@_) };
 
   my $me = $msg->{myself};
-  my $txt = $msg->{message};
 
   my $resp;
 
-  given ($txt) {
+  
 
-  }
 
   if ($resp) {
     $core->send_event( 'send_to_context',
