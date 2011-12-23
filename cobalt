@@ -16,9 +16,12 @@ BEGIN {
  $lib = File::Spec->rel2abs(join '/', @root, 'lib');
 }
 use lib $lib;
-my $etc = join '/', @root, 'etc';
-croak("can't locate confdir: $etc") unless ($etc && -d $etc);
-my $var = join '/', @root, 'var';
+
+my $etc = File::Spec->rel2abs(join '/', @root, 'etc');
+croak("can't locate confdir: $etc") unless $etc and -d $etc;
+
+my $var = File::Spec->rel2abs(join '/', @root, 'var');
+croak("can't locate var; $var") unless $var and -d $var;
 
 use Getopt::Long;
 my $opt_debug = 0;
@@ -34,6 +37,9 @@ GetOptions(
   },
 
   'config=s' => \$etc,
+  'etc=s'    => \$etc,
+
+  'var=s' => \$var,
 
   'debug!'  => \$opt_debug,
   'detach!' => \$opt_detach,
@@ -110,5 +116,6 @@ Cobalt->new(
   loglevel => $loglevel, 
   debug => $opt_debug,
   detached => $opt_detach,
+  var => $var,
 )->init;
 POE::Kernel->run;

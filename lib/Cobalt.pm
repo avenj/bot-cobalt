@@ -27,6 +27,12 @@ has 'cfg' => (
   required => 1,
 );
 
+has 'var' => (
+  is => 'rw',
+  isa => 'Str',
+  is => 'required',
+);
+
 has 'log' => (
   is => 'rw',
   isa => 'Object',
@@ -109,7 +115,7 @@ sub init {
   my $maxlevel = $self->loglevel;
   $maxlevel = 'debug' if $self->debug;
   my $logfile = $self->cfg->{core}->{Paths}->{Logfile}
-                // $self->etc . "/cobalt.log" ;
+                // $self->var . "/cobalt.log" ;
   $logger->add(
     file => {
      maxlevel => $maxlevel,
