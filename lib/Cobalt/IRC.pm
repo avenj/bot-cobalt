@@ -15,13 +15,23 @@ Cobalt::IRC
  Bot_disconnected
  Bot_server_error
 
+ Bot_message_sent
+ Bot_notice_sent
+
  Bot_chan_sync
 
  Bot_public_msg
  Bot_private_msg
  Bot_notice
 
- Bot_user_kicked
+ Bot_topic_changed
+ #Bot_mode_changed # FIXME
+ Bot_nick_changed
+
+ Bot_user_joined
+ Bot_user_left
+ Bot_user_quit
+# Bot_user_kicked # FIXME
 
 =cut
 
@@ -466,6 +476,9 @@ sub irc_quit {
     src_nick => $nick,
     reason => $msg,
   };
+
+  ## Bot_user_quit
+  $self->core->send_event( 'user_quit', 'Main', $quit );
 }
 
 
