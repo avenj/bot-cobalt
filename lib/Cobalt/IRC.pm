@@ -235,6 +235,7 @@ sub irc_chan_sync {
 sub irc_public {
   my ($self, $kernel, $src, $where, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
   my $me = $self->irc->nick_name();
+  my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
   my $channel = $where->[0];
@@ -253,6 +254,8 @@ sub irc_public {
     highlight => 0,
     cmdprefix => 0,
     message => $txt,
+    orig => $orig,
+    message_array => [ split ' ', $txt ],
   };
 
   ## flag messages seemingly directed at the bot
@@ -264,6 +267,14 @@ sub irc_public {
   if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
     $msg->{cmdprefix} = 1;
     $msg->{cmd} = $1;
+
+    ## IMPORTANT: this is a _public_cmd_, so we shift message_array
+    ## this means the command *without prefix* is in $msg->{cmd}
+    ## the text array *without command or prefix* is in $msg->{message_array}
+    ## the original unmodified string is in $msg->{orig}
+    ## the format/color-stripped string is in $msg->{txt}
+    shift(@{ $msg->{message_array} });
+
     ## issue a public_cmd_$cmd event to plugins
     ## command-only plugins can choose to only receive specified events
     $self->core->send_event( 
@@ -279,6 +290,7 @@ sub irc_public {
 sub irc_msg {
   my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
   my $me = $self->irc->nick_name();
+  my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
   ## private msg handler
@@ -296,7 +308,8 @@ sub irc_msg {
     sent_to => $sent_to,  # first dest. seen
     target_array => $target,
     message => $txt,
-    message_array => (split ' ', $txt),
+    orig => $orig,
+    message_array => [ split ' ', $txt ],
   };
 
   ## Bot_private_msg
@@ -319,6 +332,7 @@ sub irc_notice {
     sent_to => $target->[0],
     target_array => $target,
     message => $txt,
+    message_array => [ split ' ', $txt ],
   };
 
   ## Bot_notice
