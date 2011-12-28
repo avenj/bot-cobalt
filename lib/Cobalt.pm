@@ -85,7 +85,11 @@ has 'State' => (
 has 'TimerPool' => (
   is => 'rw',
   isa => 'HashRef',
-  default => sub { {} },
+  default => sub { 
+    {
+      TIMERS => { },
+    } 
+  },
 );
 
 ## the core IRC plugin is single-server
@@ -229,19 +233,13 @@ sub ev_plugin_error {
 }
 
 
+### Core timer pieces.
+
 sub timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
 
   ## FIXME
-
-  ## set up some sort of standardized hash struct
-  ## AddedBy => __PACKAGE__
-  ## ExecuteAt => ts
-  ## Execute => coderef ?
-  ##  alternate Execute interfaces ?
-  ##  perhaps a TYPE specification: code, event, msg ...
-
 
 
   $kernel->alarm('timer_check_pool' => time + 1);
@@ -249,13 +247,118 @@ sub timer_check_pool {
 
 
 sub timer_set {
-  ## FIXME generic/easy timer set interface
-  ## timer IDs?
+  ## generic/easy timer set method
+  ## $core->timer_set($delay, $event, $id)
+
+  ##  $delay should always be in seconds
+  ##   (timestr_to_secs from Cobalt::Utils may help)
+  ##  $event should be a hashref:
+  ##   Type => <ONE OF: code, event, msg>
+  ##  see Type Options below for more info on these $event opts:
+  ##   Code =>
+  ##   Event =>
+  ##   Args =>
+  ##   Target =>
+  ##   Content =>
+  ##  $id is optional
+  ##  if adding an existing id the old one will be deleted first.
+
+  ##  Type options:
+  ## TYPE = code
+  ##   Code => $coderef,
+  ## TYPE = event
+  ##   Event => "send_to_context",  # Bot_send_to_context example
+  ##   Args  => [ ], ## optional array of args for event
+  ## TYPE = msg
+  ##   Context => $server_context,
+  ##   Target => $somewhere,
+  ##   Text => $string,
+
+  my ($self, $delay, $ev, $id) = @_;
+
+  unless (ref $ev eq 'HASH') {
+    $self->log->warn("timer_set not called with hashref in ".caller);
+    return
+  }
+
+  ## automatically pick a unique id unless specified
+  unless ($id) {
+    my @p = ('a' .. 'z', 'A' .. 'Z', 0 .. 9);
+    do {
+      $id = join '', map { $p[rand@p] } 1 .. 8;
+    } while exists $self->TimerPool->{TIMERS}->{$id};    
+  } else {
+    ## an id was specified, overrule an existing by the same name
+    delete $self->TimerPool->{TIMERS}->{$id};
+  }
+
+  # assume coderef if no Type specified
+  # makes it easier to just do something like:
+  #  ->timer_set( 60, { Code => $coderef } )
+  my $type = $ev->{Type} // 'code';
+  my $coderef;
+  given ($type) {
+    when ("code") {
+      ## coderef was specified.
+      unless (exists $ev->{Code} && ref $ev->{Code} eq 'CODE') {
+        $self->log->warn("timer_set no coderef specified in ".caller);
+        return
+      }
+      $coderef = $ev->{Code};
+    }
+
+    when ("event") {
+
+      unless (exists $ev->{Event}) {
+        $self->log->warn("timer_set no Event specified in ".caller);
+        return
+      }
+
+      $coderef = sub {
+        $self->send_event( $ev->{Event}, @{$ev->{Args}} );
+      };
+
+    }
+
+    when ("msg") {
+      unless ($ev->{Text}) {
+        $self->log->warn("timer_set no Text specified in ".caller);
+        return
+      }
+      unless ($ev->{Target}) {
+        $self->log->warn("timer_set no Target specified in ".caller);
+        return
+      }
+
+      my $context = 'Main' unless $ev->{Context};
+
+      $coderef = sub {
+        ## FIXME issue a send_to_context
+      };
+
+    }
+
+  }
+
+  if ($coderef) {
+    $self->TimerPool->{TIMERS}->{$id} = {
+      ExecuteAt => time() + $delay,
+      Execute => $coderef,
+      AddedBy => scalar caller(),
+    };
+  }
+
+
 }
 
 sub timer_del {
   ## FIXME del timers by ID
 }
+
+
+### Core Auth pieces.
+## Work is mostly done by Auth.pm or equivalent
+## These are just easy ways to get at the hash.
 
 sub auth_level {
   ## FIXME standardize State->{Auth} hash
