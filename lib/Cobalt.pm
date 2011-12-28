@@ -217,7 +217,7 @@ sub syndicator_started {
 
 sub shutdown {
   my $self = $_[OBJECT];
-  ## FIXME db write
+
   $self->_syndicator_destroy();
 }
 
@@ -333,7 +333,12 @@ sub timer_set {
       my $context = 'Main' unless $ev->{Context};
 
       $coderef = sub {
-        ## FIXME issue a send_to_context
+        my $msg = {
+          context => $context,
+          target => $ev->{Target},
+          txt => $ev->{Text},
+        };
+        $self->send_event( 'send_to_context', $msg );
       };
 
     }
@@ -346,13 +351,29 @@ sub timer_set {
       Execute => $coderef,
       AddedBy => scalar caller(),
     };
+  } else {
+    $self->log->warn("timer_set called but no timer added?");
   }
-
 
 }
 
 sub timer_del {
-  ## FIXME del timers by ID
+  my $self = shift;
+  my $id = shift || return;
+  return delete $self->TimerPool->{TIMERS}->{$id};
+}
+
+sub timer_del_pkg {
+  my $self = shift;
+  my $pkg = shift || return;
+  my @dead_timers;
+  ## delete timers by 'AddedBy' package name
+  ## (f.ex when unloading a plugin)
+  for my $timer (keys $self->TimerPool->{TIMERS}) {
+    my $ev = $self->TimerPool->{TIMERS}->{$timer};
+    push(@dead_timers, $timer) if $ev->{AddedBy} eq $pkg;
+  }
+  $self->timer_del($_) for @dead_timers;
 }
 
 
