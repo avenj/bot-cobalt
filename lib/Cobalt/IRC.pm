@@ -52,8 +52,12 @@ use POE::Component::IRC::Plugin::Connector;
 use POE::Component::IRC::Plugin::NickServID;
 use POE::Component::IRC::Plugin::NickReclaim;
 
-use IRC::Utils
-  qw/parse_user uc_irc lc_irc strip_color strip_formatting/;
+use IRC::Utils qw/
+  parse_user
+  lc_irc uc_irc eq_irc
+  strip_color strip_formatting
+  matches_mask normalize_mask
+/;
 
 use namespace::autoclean;
 
@@ -116,15 +120,22 @@ sub _start_irc {
     server   => $server,
     port     => $port,
     useipv6  => $use_v6,
+    usessl   => $usessl,
     raw => 0,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
   ## add 'Main' to Servers
   $self->core->Servers->{Main} = {
-    Name => $server,
+    Name => $server,   ## specified server hostname
     PreferredNick => $nick,
-    Object => $i,
+    Object => $i,      ## the pocoirc obj
+
+    ## flipped by irc_001 events:
     Connected => 0,
+    # some reasonable defaults:
+    CaseMap => 'rfc1459', # for feeding eq_irc et al
+    MaxModes => 3,        # for splitting long modestrings
+    
     ConnectedAt => time(),
   };
 
@@ -170,15 +181,23 @@ sub _start {
 
   $self->core->log->debug("pocoirc plugin load");
 
+  ## autoreconn plugin:
+
+  ## FIXME: Connector can be provided a list of servers
+  ## docs say it should be in the format of:
+  ## [ [$host, $port], [$host, $port], ... ]
+
   $self->irc->plugin_add('Connector' =>
     POE::Component::IRC::Plugin::Connector->new);
-# FIXME make reclaim time configurable:
+
+  ## attempt to regain primary nickname:
   $self->irc->plugin_add('NickReclaim' =>
     POE::Component::IRC::Plugin::NickReclaim->new(
         poll => $cfg->{Opts}->{NickRegainDelay} // 30,
       ), 
     );
 
+  ## see if we should be identifying to nickserv automagically:
   if ($cfg->{Opts}->{NickServPass}) {
     $self->irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
@@ -187,7 +206,9 @@ sub _start {
     );
   }
 
-  ## the single-server plugin just grabs Main context from channels cf:
+  ## channel config to feed autojoin plugin
+  ## single-server core irc module just grabs 'Main' context
+  ## FIXME: configurable
   my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
 
   $self->irc->plugin_add('AutoJoin' =>
@@ -199,6 +220,8 @@ sub _start {
       Retry_when_banned => 60,
     ),
   );
+
+  ## define ctcp responses
   $self->irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
       version => "cobalt ".$self->core->version." (perl $^V)",
@@ -206,18 +229,22 @@ sub _start {
     ),
   );
 
+  ## register for all events from the component
   $self->irc->yield(register => 'all');
-  $self->core->log->debug("pocoirc connect issued");
 
   my $opts = { };
 
+  ## see if we should be specifying a local bindaddr:
   my $localaddr = $cfg->{IRC}->{BindAddr} // 0;
   $opts->{localaddr} = $localaddr if $localaddr;
-
+  ## .. or passwd:
   my $server_pass = $cfg->{IRC}->{ServerPass} // 0;
   $opts->{password} = $server_pass if $server_pass;
+  ## (could just as easily set these up at spawn, granted)
 
+  ## initiate ze connection:
   $self->irc->yield(connect => $opts);
+  $self->core->log->debug("irc component connect issued");
 }
 
 sub irc_chan_sync {
@@ -233,14 +260,36 @@ sub irc_chan_sync {
 }
 
 sub irc_public {
-  my ($self, $kernel, $src, $where, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
   my $me = $self->irc->nick_name();
   my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
   my $channel = $where->[0];
 
-  ## create a msg packet and send_event to self->core
+  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  for my $mask (keys $self->core->State->{Ignored}) {
+    ## Check against ignore list
+    ## (Ignore list should be keyed by hostmask)
+    return if matches_mask( $mask, $src, $map );
+  }
+
+  ## create a msg hash and send_event to self->core
+  ## we do a bunch of work here so plugins don't have to:
+
+  ## IMPORTANT:
+  ## note that we don't decode_irc() here.
+  ##
+  ## this means that text consists of byte strings of unknown encoding!
+  ## storing or displaying the text may present complications.
+  ## 
+  ## ( see http://search.cpan.org/perldoc?IRC::Utils#ENCODING )
+  ## before writing or displaying text it may be wise for plugins to
+  ## run the string though decode_irc()
+  ##
+  ## when replying, always reply to the original byte-string.
+  ## channel names may be an unknown encoding also.
 
   my $msg = {
     context => 'Main',  # server context
@@ -250,12 +299,13 @@ sub irc_public {
     src_user => $user,
     src_host => $host,
     channel => $channel,  # first dest. channel seen
-    target_array => $where,
-    highlight => 0,
+    target_array => $where, # array of all chans seen
+    highlight => 0,  # these two are set up below
     cmdprefix => 0,
-    message => $txt,
-    orig => $orig,
+    message => $txt,  # the color/format-stripped text
+    # also included in array format:
     message_array => [ split ' ', $txt ],
+    orig => $orig,    # the original unparsed text
   };
 
   ## flag messages seemingly directed at the bot
@@ -268,7 +318,8 @@ sub irc_public {
     $msg->{cmdprefix} = 1;
     $msg->{cmd} = $1;
 
-    ## IMPORTANT: this is a _public_cmd_, so we shift message_array
+    ## IMPORTANT:
+    ## this is a _public_cmd_, so we shift message_array leftwards.
     ## this means the command *without prefix* is in $msg->{cmd}
     ## the text array *without command or prefix* is in $msg->{message_array}
     ## the original unmodified string is in $msg->{orig}
@@ -293,8 +344,14 @@ sub irc_msg {
   my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
+
   ## private msg handler
   ## similar to irc_public
+
+  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  for my $mask (keys $self->core->State->{Ignored}) {
+    return if matches_mask( $mask, $src, $map );
+  }
 
   my $sent_to = $target->[0];
 
@@ -322,6 +379,11 @@ sub irc_notice {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
+  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  for my $mask (keys $self->core->State->{Ignored}) {
+    return if matches_mask( $mask, $src, $map );
+  }
+
   my $msg = {
     context => 'Main',
     myself => $me,
@@ -345,6 +407,10 @@ sub irc_ctcp_action {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
+  for my $mask (keys $self->core->State->{Ignored}) {
+    return if matches_mask( $mask, $src );
+  }
+
   my $msg = {
     context => 'Main',  
     myself => $me,      
@@ -364,16 +430,28 @@ sub irc_ctcp_action {
 sub irc_connected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
 
-  ## IMPORTANT:
+  ## NOTE:
   ##  irc_connected indicates we're connected to the server
   ##  however, irc_001 is the server welcome message
   ##  irc_connected happens before auth, no guarantee we can send yet.
+  ##  (we don't broadcast Bot_connected until irc_001)
 }
 
 sub irc_001 {
   my ($self, $kernel) = @_[OBJECT, KERNEL, ARG0];
 
+  ## server welcome message received.
+  ## set up some stuff relevant to our server context:
   $self->core->Servers->{Main}->{Connected} = 1;
+  $self->core->Servers->{Main}->{MaxModes} = 
+    $self->irc->isupport('MODES') // 4;
+  ## irc comes with odd case-mapping rules.
+  ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
+  ## checking ISUPPORT and setting the casemapping if available
+  ## (most servers are rfc1459, some are -strict, some are ascii)
+  $self->core->Servers->{Main}->{CaseMap} =
+    $self->irc->isupport('CASEMAPPING') // 'rfc1459';
+
   my $server = $self->irc->server_name;
   ## send a Bot_connected event with context and visible server name:
   $self->core->send_event( 'connected', 'Main', $server );
@@ -388,6 +466,8 @@ sub irc_disconnected {
 
 sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
+  ## not a socket error, but the IRC server hates you.
+  ## maybe you got zlined. :)
   ## Bot_server_error:
   $self->core->send_event( 'server_error', 'Main', $reason );
 }
@@ -437,7 +517,8 @@ sub irc_nick {
   ## if $src is a hostmask, get just the nickname:
   my $old = parse_user($src);
   ## is this just a case change ?
-  my $equal = eq_irc($old, $new) ? 1 : 0 ;
+  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $equal = eq_irc($old, $new, $map) ? 1 : 0 ;
   my $nick_change = {
     old => $old,
     new => $new,
@@ -467,7 +548,7 @@ sub irc_join {
 sub irc_part {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($src, $channel, $msg) = @_[ARG0 .. ARG2];
-
+  my ($nick, $user, $host) = parse_user($src);
   my $part = {
     src => $src,
     src_nick => $nick,
@@ -512,7 +593,7 @@ sub Bot_send_to_context {
 }
 
 sub Bot_send_to_all {
-  ## catch broadcasts (MultiServer)
+  ## catch broadcasts (for MultiServer-enabled bots)
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ shift(@_) };
 
@@ -535,8 +616,9 @@ sub Bot_send_notice {
 }
 
 sub Bot_mode {
-
-  ## FIXME build mode strings based on isupport MODES=
+  my ($self, $core) = splice @_, 0, 2;
+  ## FIXME
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_kick {
@@ -555,10 +637,18 @@ sub Bot_join {
 }
 
 sub Bot_part {
+  my ($self, $core) = splice @_, 0, 2;
+  ## FIXME
+
+  return PLUGIN_EAT_NONE
 
 }
 
 sub Bot_send_raw {
+  my ($self, $core) = splice @_, 0, 2;
+  ## FIXME
+
+  return PLUGIN_EAT_NONE
 
 }
 

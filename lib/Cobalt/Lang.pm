@@ -4,15 +4,10 @@ package Cobalt::Lang;
 ##  langset_loaded ($lang, $lang-specified, $path)
 
 use 5.12.1;
-
 use Moose;
-
 use Carp;
-
 use File::Slurp;
-
 use YAML::Syck;
-
 use namespace::autoclean;
 
 

@@ -4,6 +4,8 @@ use 5.12.1;
 use strict;
 use warnings;
 
+use Cobalt::Utils qw/ timestr_to_secs /;
+
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Commands:
@@ -42,9 +44,22 @@ sub Bot_public_cmd_alarmclock {
 
   my $resp;
 
-  
+  my $setter = $msg->{src_nick};
 
+  ## FIXME: auth check
 
+  ## This is the array of (format-stripped) args to the _public_cmd_
+  my @args = @{ $msg->{message_array} };  
+  ## E.g.:
+  ##  !alarmclock 1h10m things and stuff
+  my $timestr = shift @args;
+  ## the rest of this string is the alarm text:
+  my $txtstr  = join ' ', @args;
+
+  ## FIXME: set a Timer
+  ## generic interface for this?
+
+  ## FIXME: send a response
   if ($resp) {
     $core->send_event( 'send_to_context',
       {
