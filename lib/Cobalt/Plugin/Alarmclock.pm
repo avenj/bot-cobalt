@@ -25,7 +25,7 @@ sub Cobalt_register {
     [ 'public_msg' ],
   );
 
-  $core->log->info(__PACKAGE__." registered");
+  $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 
