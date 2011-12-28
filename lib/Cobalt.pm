@@ -1,6 +1,6 @@
 package Cobalt;
 
-our $VERSION = '2.0_001';
+our $VERSION = '2.0_002';
 
 use 5.12.1;
 use Moose;
@@ -30,7 +30,7 @@ has 'cfg' => (
 has 'var' => (
   is => 'rw',
   isa => 'Str',
-  is => 'required',
+  required => 1,
 );
 
 has 'log' => (
@@ -77,6 +77,7 @@ has 'State' => (
     {
       StartedTS => time(),
       Auth => { },
+      Ignored => { },
     } 
   },
 );
@@ -245,6 +246,21 @@ sub timer_check_pool {
 
   $kernel->alarm('timer_check_pool' => time + 1);
 }
+
+
+sub timer_set {
+  ## FIXME generic/easy timer set interface
+  ## timer IDs?
+}
+
+sub timer_del {
+  ## FIXME del timers by ID
+}
+
+sub auth_level {
+  ## FIXME standardize State->{Auth} hash
+}
+
 
 
 
