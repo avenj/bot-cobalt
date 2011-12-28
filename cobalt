@@ -61,7 +61,35 @@ GetOptions(
 );
 
 sub show_help {
-  ## FIXME
+  print(
+    "cobalt2 invocation help \n\n",
+    " Information:\n",
+    "  --version \n",
+    "    Display current Cobalt.pm version \n",
+    "  --dumpconfig \n",
+    "    Display current Cobalt::Conf data structures.\n",
+
+    "\n",
+    " Execution:\n",
+    "  --nodetach / --nodaemon \n",
+    "    Run in the foreground (do not daemonize) \n",
+    "  --loglevel=LOGLEVEL \n",
+    "    Specify log verbosity. Defaults to 'info' \n",
+    "    Valid levels, most verbose to least: \n",
+    "      debug info notice warn err crit alert emerg \n",
+    "  --debug \n",
+    "    Enable debug output. Overrides loglevel. \n",
+
+    "\n",
+    " Paths:\n",
+    "  --etc=/path/to/etcdir \n",
+    "    Specify a confdir. Defaults to INSTALLDIR/etc/ \n",
+    "  --var=/path/to/vardir \n",
+    "    Specify directory used for logs and databases\n",
+    "    Defaults to INSTALLDIR/var/ \n\n",
+    ## FIXME; note on POCOIRC_DEBUG and POE debug opts ?
+  );
+
   exit 0
 }
 
@@ -86,8 +114,12 @@ my $pid = Proc::PID::File->new(
   dir => $var,
   name => 'cobalt',
 );
-(say "cobalt appears to be already running" and exit 1) if $pid->alive();
+if ($pid->alive) {
+  say "cobalt appears to be already running";
+  exit 1
+}
 
+## POSIX fork dance
 use POSIX ();
 if ($opt_detach)
 {
