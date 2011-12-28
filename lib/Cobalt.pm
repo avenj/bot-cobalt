@@ -238,9 +238,19 @@ sub ev_plugin_error {
 sub timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
+  ## Timer hash format:
+  ##   Execute => $coderef,
+  ##   ExecuteAt => $ts,
+  ##   AddedBy => $caller,
 
-  ## FIXME
-
+  for my $id (keys $self->TimerPool->{TIMERS}) {
+    my $timer = $self->TimerPool->{TIMERS}->{$id};
+    my $execute_ts = $timer->{ExecuteAt};
+    if ( $execute_ts <= time ) {
+      $timer->{Execute}->();
+      delete $self->TimerPool->{TIMERS}->{$id};
+    }
+  }
 
   $kernel->alarm('timer_check_pool' => time + 1);
 }
@@ -371,9 +381,10 @@ sub timer_del_pkg {
   ## (f.ex when unloading a plugin)
   for my $timer (keys $self->TimerPool->{TIMERS}) {
     my $ev = $self->TimerPool->{TIMERS}->{$timer};
-    push(@dead_timers, $timer) if $ev->{AddedBy} eq $pkg;
+
+    delete $self->TimerPool->{TIMERS}->{$timer}
+      if $ev->{AddedBy} eq $pkg;
   }
-  $self->timer_del($_) for @dead_timers;
 }
 
 
