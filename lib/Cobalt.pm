@@ -21,6 +21,8 @@ extends 'POE::Component::Syndicator',
 
 use Cobalt::IRC;
 
+## a whole bunch of attributes ...
+
 has 'cfg' => (
   is => 'rw',
   isa => 'HashRef',
@@ -28,12 +30,14 @@ has 'cfg' => (
 );
 
 has 'var' => (
+  ## path to our var/
   is => 'rw',
   isa => 'Str',
   required => 1,
 );
 
 has 'log' => (
+  ## the Log::Handler instance
   is => 'rw',
   isa => 'Object',
 );
@@ -64,18 +68,22 @@ has 'version' => (
 
 has 'lang' => (
   ## should read $Language.yml out of etc/langs
-  ## fixme; need standardized format ..
+  ## fixme; need some kind of schema ..
   ## pull hash from Conf->load_langset
   is => 'rw',
   isa => 'HashRef',
 );
 
 has 'State' => (
+  ## global 'heap' of sorts
   is => 'rw',
   isa => 'HashRef',
   default => sub {
     {
       StartedTS => time(),
+      Counters => {
+        Sent => 0,
+      },
       Auth => { },
       Ignored => { },
     } 
@@ -83,6 +91,7 @@ has 'State' => (
 );
 
 has 'TimerPool' => (
+  ## timers; see timer_check_pool and timer_set methods
   is => 'rw',
   isa => 'HashRef',
   default => sub { 
@@ -185,13 +194,9 @@ sub syndicator_started {
   $kernel->sig('INT'  => 'shutdown');
   $kernel->sig('TERM' => 'shutdown');
 
-  ## FIXME load databases
-
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
   $self->plugin_add('IRC', Cobalt::IRC->new);
-
-  $poe_kernel->yield('timer_check_db');
 
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");

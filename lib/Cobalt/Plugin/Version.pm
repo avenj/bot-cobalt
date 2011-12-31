@@ -6,18 +6,15 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
+use Cobalt::Utils qw/ secs_to_timestr /;
+
 ## Commands:
 ##  'info'
 ##  'version'
 ##  'os'
 ##  'uptime'
 
-sub new {
-  my $class = shift;
-  my $self = {};
-  bless($self,$class);
-  return $self
-}
+sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
@@ -39,7 +36,7 @@ sub Cobalt_unregister {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
 
   ## return unless bot is addressed
   return PLUGIN_EAT_NONE unless $msg->{highlight};
@@ -55,13 +52,13 @@ sub Bot_public_msg {
   given ($txt) {
 
     when (/^info$/i) {
+      my $startedts = $core->State->{StartedTS} // 0;
+      my $delta = time() - $startedts;
       $resp = sprintf( $core->lang->{RPL_INFO},
         'cobalt '.$core->version,
-        0, ## FIXME uptime
-        0, ## FIXME questions answered state
-        0, ## FIXME
-        0, ## FIXME
-        0, ## FIXME
+        scalar keys $core->plugin_list,
+        secs_to_timestr($delta),
+        $core->State->{Counters}->{Sent},
       );
     }
 

@@ -10,7 +10,7 @@ RPL:
   RPL_CHAN_SYNC: Sync complete on %s
 
   RPL_VERSION: Running cobalt %s (perl-%s poe-%s pocoirc-%s) -- http://cobaltirc.org/dev/bots
-  RPL_INFO: Running %s. I've been up for %s, answered %d questions, learned %d things and %d randstuffs, and forgotten %d things.
+  RPL_INFO: Running %s. I have %d plugins loaded. I've been up for %s and responded %d times.
   RPL_OS: I am running %s
 
   RPL_DONTKNOW:

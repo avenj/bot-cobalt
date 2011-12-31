@@ -9,18 +9,13 @@ use Object::Pluggable::Constants qw/ :ALL /;
 ## Commands:
 
 
-sub new {
-  my $class = shift;
-  my $self = {};
-  bless($self,$class);
-  return $self
-}
+sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
 
   $core->plugin_register($self, 'SERVER',
-    [ 'public_msg' ],
+    [ 'private_msg' ],
   );
 
   $core->log->info("Registered");
@@ -37,7 +32,7 @@ sub Cobalt_unregister {
 
 sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
 
   my $txt = $msg->{message};
 

@@ -208,7 +208,6 @@ sub _start {
 
   ## channel config to feed autojoin plugin
   ## single-server core irc module just grabs 'Main' context
-  ## FIXME: configurable
   my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
 
   $self->irc->plugin_add('AutoJoin' =>
@@ -581,37 +580,48 @@ sub irc_quit {
 
 sub Bot_send_to_context {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
+
+  ## core->send_event( 'send_to_context', $msgHash );
+  ## msgHash = {
+  ##   target => $nick or $chan,
+  ##   context => $server_context,
+  ##   txt => $string,
+  ## }
 
   return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
 
   $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
 
   $core->send_event( 'message_sent', 'Main', $msg );
+  ++$core->State->{Counters}->{Sent};
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_send_to_all {
-  ## catch broadcasts (for MultiServer-enabled bots)
+  ## like above but catch broadcasts (for MultiServer-enabled bots)
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
 
   $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
 
   $core->send_event( 'message_sent', 'Main', $msg );
+  ++$core->State->{Counters}->{Sent};
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
 
   return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
 
   $self->irc->yield(notice => $msg->{target} => $msg->{txt});
+
   $core->send_event( 'notice_sent', $msg );
+
   return PLUGIN_EAT_NONE
 }
 
@@ -623,15 +633,22 @@ sub Bot_mode {
 
 sub Bot_kick {
   my ($self, $core) = splice @_, 0, 2;
+  ## send_event( 'kick', $channel, $nick, $context)
+  ## assume 'Main' context if none specified.
+  ## shouldfix to 'best guess' based on current channels...
 
   ## FIXME
+
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_join {
   my ($self, $core) = splice @_, 0, 2;
+  my $chan = ${ $_[0] };
+
   ## FIXME
+
 
   return PLUGIN_EAT_NONE
 }

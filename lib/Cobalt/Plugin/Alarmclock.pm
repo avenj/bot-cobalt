@@ -11,18 +11,14 @@ use Object::Pluggable::Constants qw/ :ALL /;
 ## Commands:
 ##  Bot_cmd_alarmclock
 
-sub new {
-  my $class = shift;
-  my $self = {};
-  bless($self,$class);
-  return $self
-}
+sub new { bless ( {}, shift ); }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
 
-  $core->plugin_register($self, 'SERVER',
-    [ 'public_msg' ],
+  ## register for public_cmd_alarmclock:
+  $core->plugin_register($self, 'SERVER', 
+    [ 'public_cmd_alarmclock' ] 
   );
 
   $core->log->info("Registered");
@@ -38,7 +34,7 @@ sub Cobalt_unregister {
 
 sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ shift(@_) };
+  my $msg = ${ $_[0] };
 
   my $me = $msg->{myself};
 
