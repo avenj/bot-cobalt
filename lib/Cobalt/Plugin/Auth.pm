@@ -6,14 +6,31 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-## Commands:
 
+## Utils:
+use IRC::Utils qw/
+  matches_mask
+  parse_user
+  lc_irc uc_irc eq_irc /;
+use Cobalt::Utils qw/ mkpasswd passwdcmp /;
+
+## Serialization:
+use YAML::Syck;
+use File::Slurp;
+
+## Commands:
+## PRIVMSG:
+##   login <username> <passwd>
+##   user add
+##   user del
+##   user list
+##   user search
 
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
-
+  $self->{Core} = $core;
   $core->plugin_register($self, 'SERVER',
     [ 'private_msg' ],
   );
@@ -34,17 +51,20 @@ sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
 
-  my $txt = $msg->{message};
-
   my $resp;
 
-  given ($txt) {
-    ## FIXME play with State->{Auth}
-    ## FIXME retain other-auth compat by tagging w/ __PACKAGE__
+  ## FIXME dispatch commands we care about to _dispatcher
+
+  my @valid_cmds = qw/ login user /;
+  my $command = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
+  $command = lc $command;
+
+  if ($command ~~ @valid_cmds) {
+    $self->log->debug("dispatching '$command' for ".$msg->{src_nick});
+    $resp = $self->_cmd_$command($msg);
   }
 
   if ($resp) {
-    ## FIXME NOTICE type
     $core->send_event( 'send_to_context',
       {
         context => $msg->{context},
@@ -56,5 +76,68 @@ sub Bot_private_msg {
 
   return PLUGIN_EAT_NONE
 }
+
+
+### Frontends:
+
+sub _cmd_login {
+  my ($self, $msg) = @_;
+
+
+}
+
+sub _cmd_user {
+  my ($self, $msg) = @_;
+
+  ## user add
+  ## user del
+  ## user list
+  ## user search
+}
+
+
+
+### Auth routines:
+
+sub _user_login {
+  my ($self, $username, $passwd, $host) = @_;
+  my $core = $self->{Core};
+  ## FIXME tag w/ pkg name so we can clear in _unregister
+
+}
+
+sub _user_logout {
+  ## FIXME catch 'lost' users and handle logouts
+}
+
+sub _user_add {
+
+}
+
+sub _user_del {
+
+}
+
+sub _user_list {
+
+}
+
+sub _user_search {
+
+}
+
+
+
+### Access list mgmt methods
+### (YAML frontend)
+
+sub _read_access_list {
+
+}
+
+sub _write_access_list {
+
+}
+
 
 1;
