@@ -12,6 +12,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our @EXPORT_OK = qw/
+  secs_to_timestr
   timestr_to_secs
   mkpasswd
   passwdcmp
@@ -24,7 +25,7 @@ our %EXPORT_TAGS = (
 
 sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
-  my $timestr = shift;
+  my $timestr = shift || return;
   my($hrs,$mins,$secs,$total);
   ## FIXME add days ?
   if ($timestr =~ m/(\d+)h/)
@@ -37,6 +38,19 @@ sub timestr_to_secs {
   $total += (int $mins * 60) if $mins;
   $total += (int $hrs * 3600) if $hrs;
   return int($total)
+}
+
+sub secs_to_timestr {
+  ## reverse of timestr_to_secs, sort of
+  ## turn seconds into a string like '0 days, 00:00:00'
+  my $diff = shift || return;
+  my $days   = int $diff / 86400;
+  my $sec    = $diff % 86400;
+  my $hours  = int $sec / 3600;  $sec   %= 3600;
+  my $mins   = int $sec / 60;    $sec   %= 60;
+  return sprintf("%d days, %2.2d:%2.2d:%2.2d",
+    $days, $hours, $mins, $sec
+  );
 }
 
 
@@ -148,9 +162,18 @@ Import everything:
 
 =head3 timestr_to_secs
 
-Converts a string such as "2h10m" into seconds.
+Convert a string such as "2h10m" into seconds.
 
   my $delay_s = timestr_to_secs('1h33m10s');
+
+=head3 secs_to_timestr
+
+Convert a TS delta into a string.
+
+Useful for uptime reporting, for example:
+
+  my $delta = time() - $your_start_TS;
+  my $uptime_str = secs_to_timestr($delta);
 
 
 =head2 Password handling
