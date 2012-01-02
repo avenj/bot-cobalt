@@ -82,6 +82,9 @@ sub Cobalt_register {
     [ 'all' ],
   );
 
+  ## give ourselves an Auth hash
+  $core->State->{Auth}->{Main} = { };
+
   $core->log->info(__PACKAGE__." registered");
   return PLUGIN_EAT_NONE
 }
@@ -89,6 +92,8 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering core IRC plugin");
+  $core->log->debug("clearing 'Main' context from Auth");
+  delete $core->State->{Auth}->{Main};
   return PLUGIN_EAT_NONE
 }
 
@@ -315,7 +320,8 @@ sub irc_public {
   my $cmdchar = $self->core->cfg->{core}->{Opts}->{CmdChar} // '!';
   if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
     $msg->{cmdprefix} = 1;
-    $msg->{cmd} = $1;
+    ## Commands always get lowercased:
+    $msg->{cmd} = lc $1;
 
     ## IMPORTANT:
     ## this is a _public_cmd_, so we shift message_array leftwards.
@@ -323,7 +329,8 @@ sub irc_public {
     ## the text array *without command or prefix* is in $msg->{message_array}
     ## the original unmodified string is in $msg->{orig}
     ## the format/color-stripped string is in $msg->{txt}
-    shift(@{ $msg->{message_array} });
+    ## the text array here may well be empty (no args specified)
+    shift @{ $msg->{message_array} };
 
     ## issue a public_cmd_$cmd event to plugins
     ## command-only plugins can choose to only receive specified events
@@ -590,19 +597,6 @@ sub Bot_send_to_context {
   ## }
 
   return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
-
-  $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
-
-  $core->send_event( 'message_sent', 'Main', $msg );
-  ++$core->State->{Counters}->{Sent};
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_send_to_all {
-  ## like above but catch broadcasts (for MultiServer-enabled bots)
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
 
   $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
 
