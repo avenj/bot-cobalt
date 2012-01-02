@@ -259,8 +259,21 @@ sub irc_chan_sync {
   ## issue Bot_chan_sync
   $self->core->send_event( 'chan_sync', $chan );
 
+  ## ON if cobalt.conf->Opts->NotifyOnSync is true or not specified:
+  my $notify = 
+    ($self->core->cfg->{core}->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
+
+  ## check if we have a specific setting for this channel (override):
+  my $chan_h = $self->core->cfg->{channels}->{Main} // { };
+  if ( exists $chan_h->{$chan}
+       && ref $chan_h->{$chan} eq 'HASH' 
+       && exists $chan_h->{$chan}->{notify_on_sync} ) 
+  {
+    $notify = $chan_h->{$chan}->{notify_on_sync} ? 1 : 0;
+  }
+
   $self->irc->yield(privmsg => $chan => $resp)
-    if $self->core->cfg->{core}->{Opts}->{NotifyOnSync};
+    if $notify;
 }
 
 sub irc_public {
