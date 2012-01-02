@@ -6,7 +6,8 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-## Commands:
+
+## FIXME Read in config of games to load & command mapping
 
 
 sub new { bless( {}, shift ) }
@@ -33,16 +34,8 @@ sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
 
-  my $me = $msg->{myself};
-  my $txt = $msg->{message};
-  $txt =~ s/^${me}.?\s+//i;  ## strip bot's nick off string
-  $txt =~ s/\s+$//;          ## strip trailing white space
 
-  my $resp;
 
-  given ($txt) {
-
-  }
 
   if ($resp) {
     $core->send_event( 'send_to_context',

@@ -21,11 +21,13 @@ sub load_langset {  ## load_langset(language)
   my $path = $self->cfg->{path} . "/langs/" . lc($lang) . ".yml";
 
   return unless -f $path;
+
+  $self->log->info("Loading language set: $lang");
   my $cf_lang = read_file($path);
   utf8::encode($cf_lang);
   my $langset = Load $cf_lang;
 
-  ## FIXME langset validation
+  ## FIXME langset validation ?
 
   $self->send_event( 'langset_loaded', lc($lang), $lang, $path );
 

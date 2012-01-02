@@ -1,5 +1,14 @@
 package Cobalt::Conf;
 
+## Cobalt::Conf
+## Looks for the following YAML confs:
+##   etc/cobalt.conf
+##   etc/channels.conf
+##   etc/plugins.conf
+##
+## Plguins can specify their own config files to load
+## See plugins.conf for more information.
+
 use 5.12.1;
 use Moose;
 use Carp;
@@ -21,7 +30,7 @@ sub read_cfg {
   $conf->{path} = $self->etc;
   croak "can't find confdir: $conf->{path}" unless -d $conf->{path};
 
-  ## Core
+  ## Core (cobalt.conf)
   $conf->{path_cobalt_cf} = $conf->{path}."/cobalt.conf";
   croak "cannot find cobalt.conf at $conf->{path}"
     unless -f $conf->{path_cobalt_cf};
@@ -29,7 +38,7 @@ sub read_cfg {
   my $cf_core = read_file( $conf->{path_cobalt_cf} );
   $conf->{core} = Load $cf_core;
 
-  ## Channels
+  ## Channels (channels.conf)
   $conf->{path_chan_cf} = $conf->{path}."/channels.conf" ;
   croak "cannot find channels.conf at $conf->{path}"
     unless -f $conf->{path_chan_cf};
@@ -37,12 +46,11 @@ sub read_cfg {
   my $cf_chan = read_file( $conf->{path_chan_cf} );
   $conf->{channels} = Load $cf_chan;
 
-  ## Plugins
+  ## Plugins (plugins.conf)
   $conf->{path_plugins_cf} = $conf->{path}."/plugins.conf";
   croak "can't find plugins.conf at $conf->{path}" unless -f $conf->{path_plugins_cf};
   my $cf_yml_plugins = read_file($conf->{path_plugins_cf});
   $conf->{plugins} = Load $cf_yml_plugins;
-
 
   # Plugin-specific configs, relative to etc/
   for my $plugin (keys %{ $conf->{plugins} })

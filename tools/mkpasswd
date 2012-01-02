@@ -6,6 +6,8 @@ use 5.10.0;
 use strict;
 use warnings;
 
+my $version = 1;
+
 use Term::ReadKey;
 
 use Time::HiRes qw/ gettimeofday tv_interval /;
@@ -22,6 +24,12 @@ GetOptions(
   'benchmark!' => \$showtimer,
 
   'check=s' => \$check,
+
+  'version' => sub {
+     say "Cobalt tools/mkpasswd v".$version;
+     say "Adapted from Cobalt::Utils";
+     exit 0
+   },
 
   'help' => sub {
     print(
