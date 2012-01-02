@@ -31,7 +31,7 @@ has 'cfg' => (
 
 has 'var' => (
   ## path to our var/
-  is => 'rw',
+  is => 'ro',
   isa => 'Str',
   required => 1,
 );
@@ -55,7 +55,7 @@ has 'debug' => (
 );
 
 has 'detached' => (
-  is => 'rw',
+  is => 'ro',
   isa => 'Int',
   required => 1,
 );
@@ -84,7 +84,8 @@ has 'State' => (
       Counters => {
         Sent => 0,
       },
-      Auth => { },
+     # each server context should set up its own Auth->{$context} hash:
+      Auth => { },   ## ->{$context}->{$nickname} = {}
       Ignored => { },
     } 
   },
@@ -102,8 +103,8 @@ has 'TimerPool' => (
 );
 
 ## the core IRC plugin is single-server
-## however a MultiServer plugin is possible
-## track hashes for our servers here.
+## however a MultiServer plugin is possible (and planned)
+## thusly, track hashes for our servers here.
 ## Servers->{$alias} = {
 ##   Name => servername,
 ##   PreferredNick => nick,
@@ -169,7 +170,7 @@ sub init {
 
 
   $self->_syndicator_init(
-#    debug => 1,
+#    debug => 1,  ## shouldfix; enable on higher debug level?
     prefix => 'ev_',  ## event prefix for sessions
     reg_prefix => 'Cobalt_',
     types => [ SERVER => 'Bot', USER => 'OUT' ],
@@ -398,7 +399,8 @@ sub timer_del_pkg {
 ## These are just easy ways to get at the hash.
 
 sub auth_level {
-  ## FIXME standardize State->{Auth} hash
+  my ($self, $context, $nickname) = @_;
+
 }
 
 
