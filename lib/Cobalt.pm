@@ -122,10 +122,6 @@ has 'Servers' => (
 sub init {
   my ($self) = @_;
 
-  my $language = $self->cfg->{core}->{Language}
-    // croak "missing Language directive?" ;
-  $self->lang( $self->load_langset($language) );
-
   my $logger = Log::Handler->create_logger("cobalt");
   my $maxlevel = $self->loglevel;
   $maxlevel = 'debug' if $self->debug;
@@ -146,6 +142,10 @@ sub init {
   );
 
   $self->log($logger);
+
+  ## Load configured langset (defaults to english)
+  my $language = ($self->cfg->{core}->{Language} //= 'english');
+  $self->lang( $self->load_langset($language) );
 
   if ($self->detached)
   {
