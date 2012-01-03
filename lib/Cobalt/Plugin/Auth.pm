@@ -149,11 +149,11 @@ sub Bot_private_msg {
   my $command = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
   $command = lc $command;
 
-  ## simple method check:
-  if ($self->can( "_cmd_".$command ) {
+  ## simple method check/dispatch:
+  my $method = "_cmd_".$command;
+  if ( $self->can($method) ) {
     $self->log->debug("dispatching '$command' for ".$msg->{src_nick});
-    ## method dispatch:
-    $resp = $self->_cmd_$command($msg);
+    $resp = $self->$method($msg);
   }
 
   if ($resp) {
@@ -176,9 +176,23 @@ sub _cmd_login {
   my ($self, $msg) = @_;
   my $context = $msg->{context};
 
+  my $l_user = $msg->{message_array}->[1] // undef;
+  my $l_pass = $msg->{message_array}->[2] // undef;
+
+  unless (defined $l_user && defined $l_pass) {
+    ## return bad syntax RPL
+  }
+
+  ## interact with _user_login and set up responses
+
 }
 
 sub _cmd_chpass {
+  my ($self, $msg) = @_;
+  my $context = $msg->{context};
+
+  ## FIXME self chpass for logged in users
+  ## (_cmd_user has a chpass for administrative use)
 
 }
 
@@ -193,6 +207,8 @@ sub _cmd_user {
   my $cmd = lc( $msg->{message_array}->[1] // '');
 
   my $context = $msg->{context};
+
+  my $resp;
 
   if (! $cmd) {
     ## FIXME return bad syntax RPL
@@ -220,6 +236,8 @@ sub _cmd_user {
     }
 
     when ("chpass") {
+
+    }
   }
 
   return $resp;
