@@ -2,69 +2,70 @@
 NAME: english
 REV: 1   ## bump +1 on revisions please
 SPEC: 0  ## someday there'll be a langspec.
+
 RPL:
 
- ## Core cobalt lang replies:
+  ## Core cobalt lang replies:
 
   ## RPL_PLUGIN_LOAD, $plugin_alias, $module
-  RPL_PLUGIN_LOAD: Plugin loaded: %s (%s)
+  RPL_PLUGIN_LOAD: "Plugin loaded: %s (%s)"
 
   ## RPL_PLUGIN_UNLOAD, $plugin_alias, $module
-  RPL_PLUGIN_UNLOAD: Plugin removed: %s (%s)
+  RPL_PLUGIN_UNLOAD: "Plugin removed: %s (%s)"
 
   ## RPL_PLUGIN_ERR, $plugin_alias, $error
-  RPL_PLUGIN_ERR: Failed plugin load: %s: %s
+  RPL_PLUGIN_ERR: "Failed plugin load: %s: %s"
 
-  RPL_CHAN_SYNC: Sync complete on %s
+  RPL_CHAN_SYNC: "Sync complete on %s"
 
- ## Plugin::Version:
+  ## Plugin::Version:
   ## RPL_VERSION, $version, $perl_version, $poe_version, $pocoirc_version
-  RPL_VERSION: Running cobalt %s (perl-%s poe-%s pocoirc-%s) -- http://cobaltirc.org/dev/bots
+  RPL_VERSION: "Running cobalt %s (perl-%s poe-%s pocoirc-%s) -- http://cobaltirc.org/dev/bots"
 
   ## RPL_INFO, $version, $plugin-count, $uptime, $sent_messages
   RPL_INFO: Running %s. I have %d plugins loaded. I've been up for %s and responded %d times.
 
   ## RPL_OS, $operating_system
-  RPL_OS: I am running %s
+  RPL_OS: "I am running %s"
 
 
- ## Plugin::Auth:
+  ## Plugin::Auth:
 
   ## RPL_NO_ACCESS, $nickname
-  RPL_NO_ACCESS: %s, you are not authorized!
+  RPL_NO_ACCESS: "%s, you are not authorized!"
 
   ## RPL_AUTH_SUCCESS, $nickname
-  RPL_AUTH_SUCCESS: Successful auth (%s)
+  RPL_AUTH_SUCCESS: "Successful auth (%s)"
 
   ## RPL_AUTH_FAIL, $nickname
-  RPL_AUTH_FAIL: Authentication failed (%s)
+  RPL_AUTH_FAIL: "Authentication failed (%s)"
 
   ## RPL_AUTH_STATUS, $nick, $level
-  RPL_AUTH_STATUS: Current level for %s: %s
+  RPL_AUTH_STATUS: "Current level for %s: %s"
 
   ## RPL_USER_ADDED, $username, $mask, $level
-  RPL_USER_ADDED: Added user %s (%s) level %s
+  RPL_USER_ADDED: "Added user %s (%s) level %s"
 
   ## RPL_MASK_ADDED, $mask, $username
-  RPL_MASK_ADDED: Added new mask (%s) to user %s
+  RPL_MASK_ADDED: "Added new mask (%s) to user %s"
 
   ## RPL_MASK_DELETED, $mask, $username
-  RPL_MASK_DELETED: Deleted mask (%s) from user %s
+  RPL_MASK_DELETED: "Deleted mask (%s) from user %s"
 
   ## RPL_USER_DELETED, $username, $level
-  RPL_USER_DELETED: Deleted user %s (was level %s)
+  RPL_USER_DELETED: "Deleted user %s (was level %s)"
 
   ## RPL_USER_EXISTS, $username
-  RPL_USER_EXISTS: Username %s already exists.
+  RPL_USER_EXISTS: "Username %s already exists."
 
 
- ## Plugin::Info3:
+  ## Plugin::Info3:
 
   ## RPL_DONTKNOW, $topic
   RPL_DONTKNOW: I don't know anything about %s
 
   ## RPL_WHAT, $nickname
-  RPL_WHAT: %s, what?
+  RPL_WHAT: "%s, what?"
 
   RPL_INFO3_ADD:
 
