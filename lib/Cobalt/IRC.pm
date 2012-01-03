@@ -202,11 +202,12 @@ sub _start {
       ), 
     );
 
-  ## see if we should be identifying to nickserv automagically:
-  if ($cfg->{Opts}->{NickServPass}) {
+  ## see if we should be identifying to nickserv automagically
+  ## note that the 'Main' context's nickservpass exists in cobalt.conf:
+  if ($cfg->{IRC}->{NickServPass}) {
     $self->irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
-        Password => $cfg->{Opts}->{NickServPass},
+        Password => $cfg->{IRC}->{NickServPass},
       ),
     );
   }
