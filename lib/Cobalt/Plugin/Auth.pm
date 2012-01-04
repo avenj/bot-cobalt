@@ -66,9 +66,11 @@ has 'core' => (
 ##       Masks => ARRAY,
 ##       Password => STRING (passwd hash),
 ##       Level => INT (9999 if superuser),
+##       SuperUser => BOOL,
 ##     },
 ##   },
 ## }
+
 
 has 'AccessList' => (
   is => 'rw',
@@ -86,12 +88,14 @@ sub Cobalt_register {
   my $relative_path = $p_cfg->{Opts}->{AuthDB} // 'db/authdb.yml';
   my $authdb = $core->var ."/". $relative_path;
 
+  ## Read in main authdb
   $self->AccessList( $self->_read_access_list($authdb) );
 
   ## Read in configured superusers
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers} // {};
   $superusers = ref $superusers eq 'HASH' ? $superusers : {};
+
   for my $context (keys $superusers) {
 
     for my $user (keys $superusers->{$context}) {
@@ -102,9 +106,22 @@ sub Cobalt_register {
       ## AccessList entries for superusers:
       $self->AccessList->{$context}->{$user} = {
         Password => $superusers->{$context}->{$user}->{Password}
-                     // mkpasswd(rand),
+                     // $self->_mkpasswd(rand),
+        ## SuperUsers are level 9999, to make life easier on plugins
+        ## (allows for easy numeric level comparison)
         Level => 9999,
+        ## ...standard Auth also provides a SuperUser flag:
+        SuperUser => 1,
       };
+
+      ## Mask and Masks are both valid directives, Mask trumps Masks
+      ## ...whether that's sane behavior or not is questionable
+      ## (but it's what the comments in auth.conf specify)
+      if (exists $superusers->{$context}->{$user}->{Masks} &&
+          !exists $superusers->{$context}->{$user}->{Mask}) {
+        $superusers->{$context}->{$user}->{Mask} =
+          $superusers->{$context}->{$user}->{Masks};
+      }
 
       ## the Mask specification in cfg may be an array or a string:
       if (ref $superusers->{$context}->{$user}->{Mask} eq 'ARRAY') {
@@ -312,6 +329,18 @@ sub _user_chpass {
 
 }
 
+sub _mkpasswd {
+  my ($self, $passwd) = @_;
+  return unless $passwd;
+  ## frontend to Cobalt::Utils::mkpasswd()
+  ## handles grabbing cfg opts for us
+  my $pkg = __PACKAGE__;
+  my $cfg = $self->core->cfg->{plugin_cf}->{$pkg};
+  my $method = $cfg->{Method} // 'bcrypt';
+  my $bcrypt_cost = $cfg->{Bcrypt_Cost} // '08';
+  return mkpasswd($passwd, $method, $bcrypt_cost);
+}
+
 
 
 ### Access list mgmt methods
@@ -319,11 +348,21 @@ sub _user_chpass {
 
 sub _read_access_list {
   my ($self, $authdb) = @_;
+  my $core = $self->core;
   ## read authdb, spit out hash
+
+  unless (-f $authdb) {
+    $core->log->debug("did not find authdb at $authdb");
+    $core->log->info("No existing authdb, creating empty access list.");
+    return { }
+  }
+
+  ## FIXME 
 }
 
 sub _write_access_list {
-
+  ## FIXME shouldn't write superusers
+  ## FIXME grab AuthDB_Perms
 }
 
 
