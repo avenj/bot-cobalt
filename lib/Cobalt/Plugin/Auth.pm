@@ -19,8 +19,7 @@ our $VERSION = '0.10';
 ## - Users can have any numeric level.
 ##   Generally unauthenticated users will be level 0
 ##   Higher levels trump lower levels.
-##
-## - SuperUsers (auth.conf) always trumps other access levels.
+##   SuperUsers (auth.conf) get access level 9999.
 ##
 ## - Plugins determine required levels for their respective commands
 ##
@@ -45,7 +44,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Utils:
 use IRC::Utils qw/
-  matches_mask
+  matches_mask normalize_mask
   parse_user
   lc_irc uc_irc eq_irc /;
 use Cobalt::Utils qw/ mkpasswd passwdcmp /;
@@ -60,6 +59,16 @@ has 'core' => (
   is => 'rw',
   isa => 'Object',
 );
+
+## AccessList = {
+##   $context => {
+##     $username => {
+##       Masks => ARRAY,
+##       Password => STRING (passwd hash),
+##       Level => INT (9999 if superuser),
+##     },
+##   },
+## }
 
 has 'AccessList' => (
   is => 'rw',
@@ -81,11 +90,36 @@ sub Cobalt_register {
 
   ## Read in configured superusers
   ## These will override existing usernames
-  ## FIXME case sensitivity ...?
-  for my $context (keys $p_cfg->{SuperUsers}) {
-    for my $user (keys $p_cfg->{SuperUsers}->{$context}) {
-      ## FIXME set up AccessList entries
+  my $superusers = $p_cfg->{SuperUsers} // {};
+  $superusers = ref $superusers eq 'HASH' ? $superusers : {};
+  for my $context (keys $superusers) {
+
+    for my $user (keys $superusers->{$context}) {
+      ## Usernames automatically get lowercased
+      ## (per rfc1459 rules, aka CASEMAPPING=rfc1459):
+      ## FIXME -- lowercase by context's casemapping setting ... ?
+      $user = lc_irc $user;
+      ## AccessList entries for superusers:
+      $self->AccessList->{$context}->{$user} = {
+        Password => $superusers->{$context}->{$user}->{Password}
+                     // mkpasswd(rand),
+        Level => 9999,
+      };
+
+      ## the Mask specification in cfg may be an array or a string:
+      if (ref $superusers->{$context}->{$user}->{Mask} eq 'ARRAY') {
+          $self->AccessList->{$context}->{$user}->{Masks} = [
+            ## normalize masks into full, matchable masks:
+            map { normalize_mask($_) } 
+              @{ $superusers->{$context}->{$user}->{Mask} }
+          ];
+        } else {
+          $self->AccessList->{$context}->{$user}->{Masks} = [ 
+            normalize_mask($superusers->{$context}->{$user}->{Mask}) 
+          ];
+        }
     }
+
   }
 
   $core->plugin_register($self, 'SERVER',
