@@ -14,7 +14,7 @@ our $VERSION = '0.10';
 ##    user chpass
 ##
 ##
-## Very basic access level system:
+## Fairly basic access level system:
 ##
 ## - Users can have any numeric level.
 ##   Generally unauthenticated users will be level 0
@@ -30,8 +30,32 @@ our $VERSION = '0.10';
 ## Passwords are hashed via bcrypt and stored in YAML
 ## Location of the authdb is determined by auth.conf
 ##
+## Loaded authdb exists in memory in $self->AccessList:
+## ->AccessList = {
+##   $context => {
+##     $username => {
+##       Masks => ARRAY,
+##       Password => STRING (passwd hash),
+##       Level => INT (9999 if superuser),
+##       Flags => HASH,
+##     },
+##   },
+## }
+##
 ## Authenticated users exist in $core->State->{Auth}:
-## {Auth}->{$context}->{$nickname}
+##
+## {Auth}->{$context}->{$nickname} = {
+##   Package => __PACKAGE__,
+##   Username => STRING (identified username),
+##    # 'Host' may not be reliable due to stupid cloaking cmds
+##    # FIXME: query to check nicknames and update Host ?
+##   Host => STRING (nick!user@host),
+##   Level => INT (numeric level),
+##   Flags => HASH (f.ex {SUPERUSER=>1} or other flags)
+##   ## FIXME others? (Dis)AllowedChans ...?
+## };
+##
+## Auth hash should be adjusted when nicknames change.
 ## This plugin tracks 'lost' identified users and clears as needed
 
 use 5.12.1;
@@ -43,6 +67,7 @@ use Moose;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Utils:
+# use Text::Glob;
 use IRC::Utils qw/
   matches_mask normalize_mask
   parse_user
@@ -51,26 +76,15 @@ use Cobalt::Utils qw/ mkpasswd passwdcmp /;
 
 ## Serialization:
 use YAML::Syck;
-use File::Slurp;
+use Fcntl qw/:flock/;
 
 use namespace::autoclean;
+
 
 has 'core' => (
   is => 'rw',
   isa => 'Object',
 );
-
-## AccessList = {
-##   $context => {
-##     $username => {
-##       Masks => ARRAY,
-##       Password => STRING (passwd hash),
-##       Level => INT (9999 if superuser),
-##       SuperUser => BOOL,
-##     },
-##   },
-## }
-
 
 has 'AccessList' => (
   is => 'rw',
@@ -78,40 +92,53 @@ has 'AccessList' => (
   default => sub { {} },
 );
 
+has 'DB_Path' => (
+  is => 'rw',
+  isa => 'Str',
+);
+
 sub Cobalt_register {
   my ($self, $core) = @_;
+  ## Set $self->core to make life easier on our internals:
   $self->core($core);
 
   my $pkg = __PACKAGE__;
   my $p_cfg = $core->cfg->{plugin_cf}->{$pkg};
 
-  my $relative_path = $p_cfg->{Opts}->{AuthDB} // 'db/authdb.yml';
+  my $relative_path = $p_cfg->{Opts}->{AuthDB} || 'db/authdb.yml';
   my $authdb = $core->var ."/". $relative_path;
+  $self->DB_Path($authdb);
 
-  ## Read in main authdb
-  $self->AccessList( $self->_read_access_list($authdb) );
+  ## Read in main authdb:
+  $self->AccessList( $self->_read_access_list );
 
   ## Read in configured superusers
   ## These will override existing usernames
-  my $superusers = $p_cfg->{SuperUsers} // {};
+  my $superusers = $p_cfg->{SuperUsers};
   $superusers = ref $superusers eq 'HASH' ? $superusers : {};
-
   for my $context (keys $superusers) {
 
     for my $user (keys $superusers->{$context}) {
       ## Usernames automatically get lowercased
-      ## (per rfc1459 rules, aka CASEMAPPING=rfc1459):
-      ## FIXME -- lowercase by context's casemapping setting ... ?
+      ## per rfc1459 rules, aka CASEMAPPING=rfc1459
+      ## (we probably don't even know the server's CASEMAPPING= yet)
       $user = lc_irc $user;
       ## AccessList entries for superusers:
+      my $flags;
+      if (ref $superusers->{$context}->{$user}->{Flags} eq 'HASH') {
+        $flags = $superusers->{$context}->{$user}->{Flags};
+      } else { $flags = { }; }
+      ## Set superuser flag:
+      $flags->{SUPERUSER} = 1;
       $self->AccessList->{$context}->{$user} = {
+        ## if you're lame enough to exclude a passwd, here's a random one:
         Password => $superusers->{$context}->{$user}->{Password}
-                     // $self->_mkpasswd(rand),
+                     // $self->_mkpasswd(rand 10),
         ## SuperUsers are level 9999, to make life easier on plugins
         ## (allows for easy numeric level comparison)
         Level => 9999,
         ## ...standard Auth also provides a SuperUser flag:
-        SuperUser => 1,
+        Flags => $flags,
       };
 
       ## Mask and Masks are both valid directives, Mask trumps Masks
@@ -132,7 +159,7 @@ sub Cobalt_register {
           ];
         } else {
           $self->AccessList->{$context}->{$user}->{Masks} = [ 
-            normalize_mask($superusers->{$context}->{$user}->{Mask}) 
+            normalize_mask( $superusers->{$context}->{$user}->{Mask} ) 
           ];
         }
     }
@@ -157,36 +184,44 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = @_;
-  ## FIXME clear any Auth states belonging to us
   $core->log->info("Unregistering core IRC plugin");
+  $self->_clear_self;
   return PLUGIN_EAT_NONE
 }
 
 
 sub Bot_connected {
+  my ($self, $core) = splice @_, 0, 2;
   ## Bot's freshly connected to a context
   ## Clear any auth entries for this pkg + context
+  $self->_clear_self;
 }
 
 sub Bot_disconnected {
-  ## disconnect event, clear auth entries for this pkg + context
+  my ($self, $core) = splice @_, 0, 2;
+  ## disconnect event
+  $self->_clear_self;
 }
 
 sub Bot_user_left {
+  my ($self, $core) = splice @_, 0, 2;
   ## User left a channel
   ## If we don't share other channels, this user can't be tracked
   ## (therefore clear any auth entries for user belonging to us)
 }
 
 sub Bot_user_kicked {
+  my ($self, $core) = splice @_, 0, 2;
   ## similar to user_left
 }
 
 sub Bot_user_quit {
+  my ($self, $core) = splice @_, 0, 2;
   ## User quit, clear relevant auth entries
 }
 
 sub Bot_nick_changed {
+  my ($self, $core) = splice @_, 0, 2;
   ## nickname changed, adjust Auth accordingly
 }
 
@@ -226,7 +261,6 @@ sub Bot_private_msg {
 sub _cmd_login {
   my ($self, $msg) = @_;
   my $context = $msg->{context};
-
   my $l_user = $msg->{message_array}->[1] // undef;
   my $l_pass = $msg->{message_array}->[2] // undef;
 
@@ -234,7 +268,10 @@ sub _cmd_login {
     ## return bad syntax RPL
   }
 
-  ## interact with _user_login and set up responses
+  ## usernames are stored lowercase per rfc1459 rules:
+  $l_user = lc_irc $l_user;
+
+  ## interact with _do_login and set up responses
 
 }
 
@@ -254,42 +291,20 @@ sub _cmd_user {
   ## user del
   ## user list
   ## user search
-  my @valid = qw/ add del delete list search chpass /;
   my $cmd = lc( $msg->{message_array}->[1] // '');
 
   my $context = $msg->{context};
 
   my $resp;
 
-  if (! $cmd) {
+  unless ($cmd) {
     ## FIXME return bad syntax RPL
   }
 
-  unless ($cmd ~~ @valid) {
-    ## FIXME return invalid command/bad syntax RPL
-  }
-    
-  given ($cmd) {
-    when ("add") {
-
-    }
-
-    when (/^del(ete)?$/) {
-
-    }
-
-    when ("list") {
-
-    }
-
-    when ("search") {
-
-    }
-
-    when ("chpass") {
-
-    }
-  }
+  ## FIXME method dispatch like the _cmd_ dispatcher above
+  ##   pass args unmolested?
+  ##   
+  my $method = "_user_".$cmd;
 
   return $resp;
 }
@@ -298,23 +313,36 @@ sub _cmd_user {
 
 ### Auth routines:
 
-sub _user_login {
-  my ($self, $username, $passwd, $host) = @_;
-  my $core = $self->{Core};
+sub _do_login {
+  ## we can be fairly sure syntax is correct
+  ## also, $username should've already been normalized via lc_irc:
+  my ($self, $context, $username, $passwd, $host) = @_;
+  ## (_cmd_login handles sending bad syntax RPLs)
   ## FIXME tag w/ pkg name so we can clear in _unregister
+  my $core = $self->core;
+
+  ## note that this'll autoviv a nonexistant AccessList context
+  ## (which is alright, but it's good to be aware of it)
+  unless (exists $self->AccessList->{$context}->{$username}) {
+    ## no such username, fail out and tell _cmd_login why
+  }
+
+  ## check username/passwd/host combination against AccessList:
 
 }
 
-sub _user_logout {
+sub _do_logout {
   ## FIXME catch 'lost' users and handle logouts
+  ## send a logout event in addition to clearing auth hash
 }
 
 sub _user_add {
-
+  ## add users to AccessList and call a list sync
 }
 
+sub _user_delete { _user_del(@_) }
 sub _user_del {
-
+  ## delete users from AccessList and call a list sync
 }
 
 sub _user_list {
@@ -322,18 +350,46 @@ sub _user_list {
 }
 
 sub _user_search {
+  ## Text::Glob ?
+}
 
+sub _user_chflags {
+
+}
+
+sub _user_chmask {
+  ## [+/-]mask syntax so as not to be confused with user del (much)
 }
 
 sub _user_chpass {
-
+  ## superuser (or configurable level.. ?) chpass ability
 }
+
+
+## Utils:
+
+sub _clear_self {
+  my ($self) = @_;
+  ## Clear any $core->{Auth} states belonging to us
+  for my $context (keys %{ $self->core->{Auth} }) {
+
+    for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
+      my $pkg = $self->core->{Auth}->{$context}->{$nick}->{Package};
+      if ($pkg eq __PACKAGE__) {
+        $self->core->log->debug("cleared auth: $nick ($context)");
+        delete $self->core->{Auth}->{$context}->{$nick};
+      }
+    }
+
+  }
+}
+
 
 sub _mkpasswd {
   my ($self, $passwd) = @_;
   return unless $passwd;
-  ## frontend to Cobalt::Utils::mkpasswd()
-  ## handles grabbing cfg opts for us
+  ## simple frontend to Cobalt::Utils::mkpasswd()
+  ## handles grabbing cfg opts for us:
   my $pkg = __PACKAGE__;
   my $cfg = $self->core->cfg->{plugin_cf}->{$pkg};
   my $method = $cfg->{Method} // 'bcrypt';
@@ -348,6 +404,8 @@ sub _mkpasswd {
 
 sub _read_access_list {
   my ($self, $authdb) = @_;
+  ## Default to $self->DB_Path
+  $authdb = $self->DB_Path unless $authdb;
   my $core = $self->core;
   ## read authdb, spit out hash
 
@@ -357,12 +415,75 @@ sub _read_access_list {
     return { }
   }
 
-  ## FIXME 
+  open(my $db_in, '<', $authdb)
+    or (
+      $core->log->emerg("Open failed in _read_access_list: $!")
+      and return
+  );
+  flock($db_in, LOCK_SH)
+    or (
+      $core->log->emerg("LOCK_SH failed in _read_access_list: $!")
+      and return
+  );
+  my $yaml = <$db_in>;
+
+  flock($db_in, LOCK_UN)
+    or $core->log->warn("LOCK_UN failed in _read_access_list: $!");
+  close($db_in);
+
+  utf8::encode($yaml);
+
+  my $accesslist = Load $yaml;
+
+  return $accesslist
 }
 
 sub _write_access_list {
-  ## FIXME shouldn't write superusers
-  ## FIXME grab AuthDB_Perms
+  my ($self, $authdb, $alist) = @_;
+  $authdb = $self->DB_Path unless $authdb;
+  $alist  = $self->AccessList unless $alist;
+  my $core = $self->core;
+
+  ## we don't want to write superusers back out:
+  my %hash = %$alist;
+  for my $context (keys %hash) {
+    for my $user (keys %{$hash{$context}}) {
+      if ($hash{$context}->{$user}->{Flags}->{SUPERUSER}) {
+        delete $hash{$context}->{$user};
+      }
+    }
+  }
+
+  my $yaml = Dump \%hash;
+
+  utf8::decode($yaml);
+
+  open(my $db_out, '>>', $authdb)
+    or (
+      $core->log->emerg("Open failed in _write_access_list: $!")
+      and return
+  );
+  flock($db_out, LOCK_EX | LOCK_NB)
+    or ( 
+      $core->log->emerg("LOCK_EX failed in _write_access_list: $!")
+      and return
+  );
+
+  seek($db_out, 0, 0);
+  truncate($db_out, 0);
+  print $db_out $yaml;
+
+  flock($db_out, LOCK_UN)
+    or (
+      $core->log->emerg("LOCK_UN failed in _write_access_list: $!")
+      and return
+  );
+  close($db_out);
+
+  my $pkg = __PACKAGE__;
+  my $p_cfg = $core->cfg->{plugin_cf}->{$pkg};
+  my $perms = $p_cfg->{Opts}->{AuthDB_Perms} // 0600;
+  chmod($perms, $authdb);
 }
 
 
