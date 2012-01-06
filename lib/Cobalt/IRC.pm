@@ -25,13 +25,13 @@ Cobalt::IRC
  Bot_notice
 
  Bot_topic_changed
- #Bot_mode_changed # FIXME
+ Bot_mode_changed
  Bot_nick_changed
 
  Bot_user_joined
  Bot_user_left
  Bot_user_quit
-# Bot_user_kicked # FIXME
+ Bot_user_kicked
 
 =cut
 
@@ -512,7 +512,15 @@ sub irc_kick {
   $self->core->send_event( 'user_kicked', 'Main', $kick );
 }
 
-sub irc_mode {}  ## FIXME mode parser like circe?
+sub irc_mode {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+
+  my ($src, $changed_on, $modestr, @modeargs) = @_[ ARG0 .. $#_ ];
+
+  ## FIXME
+
+  $self->core->send_event( 'mode_changed', 'Main', $modechg);
+}
 
 sub irc_topic {
   my ($self, $kernel) = @_[OBJECT, KERNEL];

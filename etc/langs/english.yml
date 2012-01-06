@@ -5,7 +5,7 @@ SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
 
-  ## Core cobalt lang replies:
+ ## Core cobalt lang replies:
 
   ## RPL_PLUGIN_LOAD, $plugin_alias, $module
   RPL_PLUGIN_LOAD: "Plugin loaded: %s (%s)"
@@ -28,38 +28,43 @@ RPL:
   ## RPL_OS, $operating_system
   RPL_OS: "I am running %s"
 
-
-  ## Plugin::Auth:
-
   ## RPL_NO_ACCESS, $nickname
   RPL_NO_ACCESS: "%s, you are not authorized!"
 
-  ## RPL_AUTH_SUCCESS, $nickname
-  RPL_AUTH_SUCCESS: "Successful auth (%s)"
 
-  ## RPL_AUTH_FAIL, $nickname
-  RPL_AUTH_FAIL: "Authentication failed (%s)"
+ ## Plugin::Auth:
 
-  ## RPL_AUTH_STATUS, $nick, $level
-  RPL_AUTH_STATUS: "Current level for %s: %s"
+  ## AUTH_SUCCESS, $auth_username, $level
+  AUTH_SUCCESS: "Successful auth (%s - %s)"
 
-  ## RPL_USER_ADDED, $username, $mask, $level
-  RPL_USER_ADDED: "Added user %s (%s) level %s"
+  ## Broken syntax RPLs
+  AUTH_BADSYN_LOGIN: "Bad syntax. Usage: LOGIN <username> <passwd>"
 
-  ## RPL_MASK_ADDED, $mask, $username
-  RPL_MASK_ADDED: "Added new mask (%s) to user %s"
+  ## AUTH_FAIL_*, $auth_username
+  AUTH_FAIL_BADHOST: "Login failed; host mismatch (%s)"
+  AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%s)"
+  AUTH_FAIL_NO_SUCH: "Login failed; no such user (%s)"
 
-  ## RPL_MASK_DELETED, $mask, $username
-  RPL_MASK_DELETED: "Deleted mask (%s) from user %s"
+  ## AUTH_STATUS, $nick, $level
+  AUTH_STATUS: "Current level for %s: %s"
 
-  ## RPL_USER_DELETED, $username, $level
-  RPL_USER_DELETED: "Deleted user %s (was level %s)"
+  ## AUTH_USER_ADDED, $username, $mask, $level
+  AUTH_USER_ADDED: "Added user %s (%s) level %s"
 
-  ## RPL_USER_EXISTS, $username
-  RPL_USER_EXISTS: "Username %s already exists."
+  ## AUTH_MASK_ADDED, $mask, $username
+  AUTH_MASK_ADDED: "Added new mask (%s) to user %s"
+
+  ## AUTH_MASK_DELETED, $mask, $username
+  AUTH_MASK_DELETED: "Deleted mask (%s) from user %s"
+
+  ## AUTH_USER_DELETED, $username, $level
+  AUTH_USER_DELETED: "Deleted user %s (was level %s)"
+
+  ## AUTH_USER_EXISTS, $username
+  AUTH_USER_EXISTS: "Username %s already exists."
 
 
-  ## Plugin::Info3:
+ ## Plugin::Info3:
 
   ## RPL_DONTKNOW, $topic
   RPL_DONTKNOW: I don't know anything about %s

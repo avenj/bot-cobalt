@@ -272,6 +272,8 @@ sub Bot_private_msg {
 ### Frontends:
 
 sub _cmd_login {
+  ## interact with _do_login and set up response RPLs
+  ## _do_login does the heavy lifting, we just talk to the user.
   my ($self, $msg) = @_;
   my $context = $msg->{context};
   my $l_user = $msg->{message_array}->[1] // undef;
@@ -280,34 +282,37 @@ sub _cmd_login {
   my $nick = $msg->{src_nick};
 
   unless (defined $l_user && defined $l_pass) {
-    ## return bad syntax RPL
+    ## pointless use of sprintf in case we add args later:
+    return sprintf($self->core->lang->{AUTH_BADSYN_LOGIN});
   }
 
-  ## usernames in accesslist are stored lowercase per rfc1459 rules:
+  ## NOTE: usernames in accesslist are stored lowercase per rfc1459 rules:
   $l_user = lc_irc($l_user);
+
   ## nicknames (for auth hash) remain unmolested
   ## case changes are managed by tracking actual nickname changes
   ## (that way we don't have to worry about it when checking access levels)
 
-  ## interact with _do_login and set up response RPLs
-  ## constants:
+  ## _do_login returns constants we can translate into a langset RPL:
   ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST
   my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
-
   my $resp;
-
   given ($retval) {
     when (SUCCESS) {
-      ## FIXME
+      ## AUTH_SUCCESS $username $level
+      $resp = sprintf( $self->core->lang->{AUTH_SUCCESS},
+        $l_user,
+        $self->core->State->{Auth}->{$context}->{$nick}->{Level},
+      );
     }
     when (E_NOSUCH) {
-      ## FIXME
+      $resp = sprintf( $self->core->lang->{AUTH_FAIL_NO_SUCH}, $l_user );
     }
     when (E_BADPASS) {
-      ## FIXME
+      $resp = sprintf( $self->core->lang->{AUTH_FAIL_BADPASS}, $l_user );
     }
     when (E_BADHOST) {
-      ## FIXME
+      $resp = sprintf( $self->core->lang->{AUTH_FAIL_BADHOST}, $l_user );
     }
   }
 
@@ -354,10 +359,9 @@ sub _cmd_user {
 
 sub _do_login {
   ## backend handler for _cmd_login, returns constants
-  ## we can be fairly sure syntax is correct
+  ## we can be fairly sure syntax is correct from here
   ## also, $username should've already been normalized via lc_irc:
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
-  ## (_cmd_login handles sending bad syntax RPLs)
 
   ## note that this'll autoviv a nonexistant AccessList context
   ## (which is alright, but it's good to be aware of it)
