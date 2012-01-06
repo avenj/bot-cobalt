@@ -14,14 +14,68 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw/
   secs_to_timestr
   timestr_to_secs
+
   mkpasswd
   passwdcmp
+
+  colorize
 /;
 
 our %EXPORT_TAGS = (
   ALL => [ @EXPORT_OK ],
 );
 
+## IRC color codes:
+sub color {
+  ## color($format, $str)
+  ## implements mirc formatting codes, against my better judgement
+  ## if format is unspecified, returns NORMAL
+  
+  ## interpolate bold, reset to NORMAL after:
+  ## $str = color('bold') . "Text" . color;
+  ##  -or-
+  ## format specified strings, resetting NORMAL after:
+  ## $str = color('bold', "Some text"); # bold text ending in normal
+
+  ## mostly borrowed from IRC::Utils
+
+  my $format = uc(shift || 'normal');
+  my $str = shift;
+  my %colors = (
+    NORMAL      => "\x0f",
+
+    BOLD        => "\x02",
+    UNDERLINE   => "\x1f",
+    REVERSE     => "\x16",
+    ITALIC      => "\x1d",
+
+    WHITE       => "\x0300",
+    BLACK       => "\x0301",
+    BLUE        => "\x0302",
+    GREEN       => "\x0303",
+    RED         => "\x0304",
+    BROWN       => "\x0305",
+    PURPLE      => "\x0306",
+    ORANGE      => "\x0307",
+    YELLOW      => "\x0308",
+    TEAL        => "\x0310",
+    PINK        => "\x0313",
+    GREY        => "\x0314",
+    GRAY        => "\x0314",
+
+    LIGHT_BLUE  => "\x0312",
+    LIGHT_CYAN  => "\x0311",
+    LIGHT_GREEN => "\x0309",
+    LIGHT_GRAY  => "\x0315",
+    LIGHT_GREY  => "\x0315",
+  );
+  my $selected = $colors{$format};
+
+  return $selected . $str . $colors{NORMAL} if $str;
+  return $selected || $colors{NORMAL};
+};
+
+## Time/date ops:
 
 sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
@@ -177,6 +231,31 @@ Useful for uptime reporting, for example:
 
   my $delta = time() - $your_start_TS;
   my $uptime_str = secs_to_timestr($delta);
+
+
+=head2 IRC-related tools
+
+=head3 color
+
+Add mIRC formatting and color codes to a string.
+
+Valid formatting codes:
+  NORMAL BOLD UNDERLINE REVERSE ITALIC
+
+Valid color codes:
+  WHITE BLACK BLUE GREEN RED BROWN PURPLE ORANGE YELLOW TEAL PINK
+  LIGHT_CYAN LIGHT_BLUE LIGHT_GRAY LIGHT_GREEN
+
+Format/color type can be passed in upper or lower case.
+
+If passed just a color or format name, returns the control code.
+If passed nothing at all, returns the 'NORMAL' code.
+
+  my $str = color('bold') . "bold text" . color() . "normal text";
+
+If passed a color or format name and a string, returns the formatted
+string, terminated by NORMAL:
+  my $formatted = color('red', "red text") . "normal text";
 
 
 =head2 Password handling
