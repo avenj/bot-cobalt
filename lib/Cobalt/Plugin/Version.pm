@@ -72,12 +72,9 @@ sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
 
   ## Arguments are provided as a reference.
-  ## Explicit deref of the first arg:
-  my $msg = ${ $_[0] };
-
-  ## This is a fairly unnecessary check . . .
-  ## If $msg isn't a hashref, somebody sucks at life:
-  return PLUGIN_EAT_NONE unless ref $msg eq 'HASH';
+  ## deref:
+  my $context = $$_[0];  ## our server context
+  my $msg = $$_[1];      ## our msg hash
 
   ## return unless bot is addressed:
   return PLUGIN_EAT_NONE unless $msg->{highlight};
@@ -120,8 +117,9 @@ sub Bot_public_msg {
     ## Send it back to the relevant location.
     $core->send_event( 'send_to_context',
       {
-        ## Server context of the original message:
-        context => $msg->{context},
+        ## Server context of the original message
+        ## we could just as easily send to other contexts (or many)
+        context => $context,
         ## target could be a channel or nickname
         ## here it's just the relevant channel:
         target => $msg->{channel},
@@ -131,6 +129,8 @@ sub Bot_public_msg {
     );    
   }
 
+  ## Always return an Object::Pluggable::Constants value
+  ## (otherwise you might interrupt the plugin pipeline)
   return PLUGIN_EAT_NONE
 }
 

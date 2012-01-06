@@ -349,13 +349,14 @@ sub irc_public {
     ## issue a public_cmd_$cmd event to plugins
     ## command-only plugins can choose to only receive specified events
     $self->core->send_event( 
-      'public_cmd_'.$msg->{cmd}, 
+      'public_cmd_'.$msg->{cmd},
+      'Main', 
       $msg 
     );
   }
 
-  ## issue Bot_public_msg
-  $self->core->send_event( 'public_msg', $msg );
+  ## issue Bot_public_msg (plugins will get _cmd_ events first!)
+  $self->core->send_event( 'public_msg', 'Main', $msg );
 }
 
 sub irc_msg {
@@ -390,7 +391,7 @@ sub irc_msg {
   };
 
   ## Bot_private_msg
-  $self->core->send_event( 'private_msg', $msg );
+  $self->core->send_event( 'private_msg', 'Main', $msg );
 }
 
 sub irc_notice {
@@ -418,7 +419,7 @@ sub irc_notice {
   };
 
   ## Bot_notice
-  $self->core->send_event( 'notice', $msg );
+  $self->core->send_event( 'notice', 'Main', $msg );
 }
 
 sub irc_ctcp_action {
@@ -444,7 +445,7 @@ sub irc_ctcp_action {
   };
 
   ## Bot_action
-  $self->core->send_event( 'action', $msg );
+  $self->core->send_event( 'action', 'Main', $msg );
 }
 
 sub irc_connected {
@@ -630,7 +631,7 @@ sub Bot_send_to_context {
 
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
+  my $msg = ${ $_[0] };  ## FIXME better interfaces?
 
   return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
 

@@ -192,6 +192,7 @@ sub Cobalt_register {
   );
 
   $core->log->info("Registered");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -208,12 +209,14 @@ sub Bot_connected {
   ## Bot's freshly connected to a context
   ## Clear any auth entries for this pkg + context
   $self->_clear_self;
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_disconnected {
   my ($self, $core) = splice @_, 0, 2;
   ## disconnect event
   $self->_clear_self;
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_left {
@@ -226,11 +229,13 @@ sub Bot_user_left {
   my $nick = $$_[1]->{src_nick};
 
   ## FIXME ask our irc component (from core->Servers) if we still share channels?
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
   ## similar to user_left
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_quit {
@@ -239,6 +244,7 @@ sub Bot_user_quit {
   my $context = $$_[0];
   my $nick = $$_[1]->{src_nick};
   $self->_do_logout($context, $nick);
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_nick_changed {
@@ -255,12 +261,14 @@ sub Bot_nick_changed {
         delete $core->State->{Auth}->{$context}->{$old};
     }
   }
+  return PLUGIN_EAT_NONE
 }
 
 
 sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = $$_[0];
+  my $context = $$_[0];
+  my $msg = $$_[1];
 
   my $resp;
 
@@ -271,13 +279,13 @@ sub Bot_private_msg {
   my $method = "_cmd_".$command;
   if ( $self->can($method) ) {
     $self->log->debug("dispatching '$command' for ".$msg->{src_nick});
-    $resp = $self->$method($msg);
+    $resp = $self->$method($context, $msg);
   }
 
   if ($resp) {
     $core->send_event( 'send_notice',
       {
-        context => $msg->{context},
+        context => $context,
         target => $msg->{src_nick},
         txt => $resp,
       }
@@ -293,8 +301,7 @@ sub Bot_private_msg {
 sub _cmd_login {
   ## interact with _do_login and set up response RPLs
   ## _do_login does the heavy lifting, we just talk to the user.
-  my ($self, $msg) = @_;
-  my $context = $msg->{context};
+  my ($self, $context, $msg) = @_;
   my $l_user = $msg->{message_array}->[1] // undef;
   my $l_pass = $msg->{message_array}->[2] // undef;
   my $origin = $msg->{src};
@@ -339,8 +346,7 @@ sub _cmd_login {
 }
 
 sub _cmd_chpass {
-  my ($self, $msg) = @_;
-  my $context = $msg->{context};
+  my ($self, $context, $msg) = @_;
 
   ## FIXME self chpass for logged in users
   ## (_cmd_user has a chpass for administrative use)
@@ -348,15 +354,13 @@ sub _cmd_chpass {
 }
 
 sub _cmd_user {
-  my ($self, $msg) = @_;
+  my ($self, $context, $msg) = @_;
 
   ## user add
   ## user del
   ## user list
   ## user search
   my $cmd = lc( $msg->{message_array}->[1] // '');
-
-  my $context = $msg->{context};
 
   my $resp;
 

@@ -31,7 +31,8 @@ sub Cobalt_unregister {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
+  my $context = $$_[0];
+  my $msg = $$_[1];
 
   my $me = $msg->{myself};
   my $txt = $msg->{message};
@@ -47,7 +48,7 @@ sub Bot_public_msg {
   if ($resp) {
     $core->send_event( 'send_to_context',
       {
-        context => $msg->{context},
+        context => $context,
         target => $msg->{channel},
         txt => $resp,
       }
