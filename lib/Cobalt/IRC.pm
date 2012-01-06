@@ -129,7 +129,7 @@ sub _start_irc {
     raw => 0,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
-  ## add 'Main' to Servers
+  ## add 'Main' to Servers:
   $self->core->Servers->{Main} = {
     Name => $server,   ## specified server hostname
     PreferredNick => $nick,
@@ -517,8 +517,8 @@ sub irc_mode {
 
   my ($src, $changed_on, $modestr, @modeargs) = @_[ ARG0 .. $#_ ];
 
-  ## FIXME
-
+  my $modechg; ## FIXME
+  
   $self->core->send_event( 'mode_changed', 'Main', $modechg);
 }
 

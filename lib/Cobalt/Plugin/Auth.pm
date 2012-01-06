@@ -128,24 +128,24 @@ sub Cobalt_register {
   ## Read in configured superusers
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
-  $superusers = ref $superusers eq 'HASH' ? $superusers : {};
-  for my $context (keys $superusers) {
+  my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
+  for my $context (keys %su) {
 
-    for my $user (keys $superusers->{$context}) {
+    for my $user (keys $su{$context}) {
       ## Usernames automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
       ## (we probably don't even know the server's CASEMAPPING= yet)
       $user = lc_irc $user;
       ## AccessList entries for superusers:
       my $flags;
-      if (ref $superusers->{$context}->{$user}->{Flags} eq 'HASH') {
-        $flags = $superusers->{$context}->{$user}->{Flags};
+      if (ref $su{$context}->{$user}->{Flags} eq 'HASH') {
+        $flags = $su{$context}->{$user}->{Flags};
       } else { $flags = { }; }
       ## Set superuser flag:
       $flags->{SUPERUSER} = 1;
       $self->AccessList->{$context}->{$user} = {
         ## if you're lame enough to exclude a passwd, here's a random one:
-        Password => $superusers->{$context}->{$user}->{Password}
+        Password => $su{$context}->{$user}->{Password}
                      // $self->_mkpasswd(rand 10),
         ## SuperUsers are level 9999, to make life easier on plugins
         ## (allows for easy numeric level comparison)
@@ -157,22 +157,22 @@ sub Cobalt_register {
       ## Mask and Masks are both valid directives, Mask trumps Masks
       ## ...whether that's sane behavior or not is questionable
       ## (but it's what the comments in auth.conf specify)
-      if (exists $superusers->{$context}->{$user}->{Masks} &&
-          !exists $superusers->{$context}->{$user}->{Mask}) {
-        $superusers->{$context}->{$user}->{Mask} =
-          $superusers->{$context}->{$user}->{Masks};
+      if (exists $su{$context}->{$user}->{Masks} &&
+          !exists $su{$context}->{$user}->{Mask}) {
+        $su{$context}->{$user}->{Mask} =
+          $su{$context}->{$user}->{Masks};
       }
 
       ## the Mask specification in cfg may be an array or a string:
-      if (ref $superusers->{$context}->{$user}->{Mask} eq 'ARRAY') {
+      if (ref $su{$context}->{$user}->{Mask} eq 'ARRAY') {
           $self->AccessList->{$context}->{$user}->{Masks} = [
             ## normalize masks into full, matchable masks:
             map { normalize_mask($_) } 
-              @{ $superusers->{$context}->{$user}->{Mask} }
+              @{ $su{$context}->{$user}->{Mask} }
           ];
         } else {
           $self->AccessList->{$context}->{$user}->{Masks} = [ 
-            normalize_mask( $superusers->{$context}->{$user}->{Mask} ) 
+            normalize_mask( $su{$context}->{$user}->{Mask} ) 
           ];
         }
     }
@@ -431,7 +431,7 @@ sub _do_login {
 
   ## deref from accesslist and initialize our Auth hash for this nickname:
   my $level = $user_record->{Level};
-  my %flags = %{$user_record->{Flags}};
+  my %flags = %{ $user_record->{Flags} // {} };
   $self->core->State->{Auth}->{$context}->{$nick} = {
     Package => __PACKAGE__,
     Username => $username,
@@ -443,6 +443,7 @@ sub _do_login {
   $self->log->debug(
     "[$context] successful auth: $username (lev $level) ($host)"
   );
+
   ## send Bot_auth_user_login ($context, $nick, $host, $username, $lev):
   $self->core->send_event( 'auth_user_login',
     $context,
@@ -464,11 +465,23 @@ sub _do_logout {
   if (exists $core->State->{Auth}->{$context}->{$nick}) {
     my $pkg = $core->State->{Auth}->{$context}->{$nick}->{Package};
     if ($pkg eq __PACKAGE__) {
+      ## FIXME accessors?
+      my $host = $core->State->{Auth}->{$context}->{$nick}->{Host};
+      my $username = $core->State->{Auth}->{$context}->{$nick}->{Username};
+      my $level =  $core->State->{Auth}->{$context}->{$nick}->{Level};
+      ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
+      $self->core->send_event( 'auth_user_logout',
+        $context,
+        $nick,
+        $host,
+        $username,
+        $level,
+        $pkg,
+      );
       return delete $core->State->{Auth}->{$context}->{$nick};
-      ## FIXME send logout event
     }
   }
-  return  
+  return
 }
 
 sub _user_add {
