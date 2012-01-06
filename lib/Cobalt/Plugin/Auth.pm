@@ -63,6 +63,7 @@ use strict;
 use warnings;
 
 use Moose;
+use namespace::autoclean;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
@@ -78,7 +79,15 @@ use Cobalt::Utils qw/ mkpasswd passwdcmp /;
 use YAML::Syck;
 use Fcntl qw/:flock/;
 
-use namespace::autoclean;
+
+## Constants, mostly for internal retvals:
+use constant {
+   ## _do_login RPL constants:
+    SUCCESS   => 1,
+    E_NOSUCH  => 2,
+    E_BADPASS => 3,
+    E_BADHOST => 4,
+};
 
 
 has 'core' => (
@@ -110,7 +119,11 @@ sub Cobalt_register {
   $self->DB_Path($authdb);
 
   ## Read in main authdb:
-  $self->AccessList( $self->_read_access_list );
+  my $alist = $self->_read_access_list;
+  unless ($alist) {
+    die "initial _read_access_list failed, check log";
+  }
+  $self->AccessList( $alist );
 
   ## Read in configured superusers
   ## These will override existing usernames
@@ -263,16 +276,42 @@ sub _cmd_login {
   my $context = $msg->{context};
   my $l_user = $msg->{message_array}->[1] // undef;
   my $l_pass = $msg->{message_array}->[2] // undef;
+  my $origin = $msg->{src};
+  my $nick = $msg->{src_nick};
 
   unless (defined $l_user && defined $l_pass) {
     ## return bad syntax RPL
   }
 
-  ## usernames are stored lowercase per rfc1459 rules:
-  $l_user = lc_irc $l_user;
+  ## usernames in accesslist are stored lowercase per rfc1459 rules:
+  $l_user = lc_irc($l_user);
+  ## nicknames (for auth hash) remain unmolested
+  ## case changes are managed by tracking actual nickname changes
+  ## (that way we don't have to worry about it when checking access levels)
 
-  ## interact with _do_login and set up responses
+  ## interact with _do_login and set up response RPLs
+  ## constants:
+  ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST
+  my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
 
+  my $resp;
+
+  given ($retval) {
+    when (SUCCESS) {
+      ## FIXME
+    }
+    when (E_NOSUCH) {
+      ## FIXME
+    }
+    when (E_BADPASS) {
+      ## FIXME
+    }
+    when (E_BADHOST) {
+      ## FIXME
+    }
+  }
+
+  return $resp  ## return a response to the _private_msg handler
 }
 
 sub _cmd_chpass {
@@ -298,7 +337,7 @@ sub _cmd_user {
   my $resp;
 
   unless ($cmd) {
-    ## FIXME return bad syntax RPL
+    ## FIXME
   }
 
   ## FIXME method dispatch like the _cmd_ dispatcher above
@@ -314,26 +353,90 @@ sub _cmd_user {
 ### Auth routines:
 
 sub _do_login {
+  ## backend handler for _cmd_login, returns constants
   ## we can be fairly sure syntax is correct
   ## also, $username should've already been normalized via lc_irc:
-  my ($self, $context, $username, $passwd, $host) = @_;
+  my ($self, $context, $nick, $username, $passwd, $host) = @_;
   ## (_cmd_login handles sending bad syntax RPLs)
-  ## FIXME tag w/ pkg name so we can clear in _unregister
-  my $core = $self->core;
 
   ## note that this'll autoviv a nonexistant AccessList context
   ## (which is alright, but it's good to be aware of it)
   unless (exists $self->AccessList->{$context}->{$username}) {
-    ## no such username, fail out and tell _cmd_login why
+    $self->log->debug("[$context] authfail; no such user: $username ($host)");
+    ## auth_failed_login ($context, $nick, $username, $host, $error_str)
+    $self->core->send_event( 'auth_failed_login',
+      $context,
+      $nick,
+      $username,
+      $host,
+      'NO_SUCH_USER',
+    );
+    return E_NOSUCH
   }
 
-  ## check username/passwd/host combination against AccessList:
+  ## check username/passwd/host against AccessList:
+  my $user_record = $self->AccessList->{$context}->{$username};
+  ## masks should be normalized already:
+  my @matched_masks;
+  for my $mask (@{ $user_record->{Masks} }) {
+    push(@matched_masks, $mask) if matches_mask($mask, $host);
+  }
 
+  unless (@matched_masks) {
+    $self->log->debug("[$context] authfail; no host match: $username ($host)");
+    $self->core->send_event( 'auth_failed_login',
+      $context,
+      $nick,
+      $username,
+      $host,
+      'BAD_HOST',
+    );
+    return E_BADHOST
+  }
+
+  unless ( passwdcmp($passwd, $user_record->{Password}) ) {
+    $self->log->debug("[$context] authfail; bad passwd: $username ($host)");
+    $self->core->send_event( 'auth_failed_login',
+      $context,
+      $nick,
+      $username,
+      $host,
+      'BAD_PASS',
+    );
+    return E_BADPASS
+  }
+
+  ## deref from accesslist and initialize our Auth hash for this nickname:
+  my $level = $user_record->{Level};
+  my %flags = %{$user_record->{Flags}};
+  $self->core->State->{Auth}->{$context}->{$nick} = {
+    Package => __PACKAGE__,
+    Username => $username,
+    Host => $host,
+    Level => $level,
+    Flags => \%flags,
+  };
+
+  $self->log->debug(
+    "[$context] successful auth: $username (lev $level) ($host)"
+  );
+  ## send Bot_auth_user_login ($context, $nick, $host, $username, $lev):
+  $self->core->send_event( 'auth_user_login',
+    $context,
+    $nick,
+    $host,
+    $username,
+    $level,
+  );
+
+  return SUCCESS
 }
 
 sub _do_logout {
-  ## FIXME catch 'lost' users and handle logouts
+  ## catch 'lost' users and handle logouts
   ## send a logout event in addition to clearing auth hash
+  my ($self, $context, $nickname) = @_;
+  
 }
 
 sub _user_add {
@@ -359,6 +462,7 @@ sub _user_chflags {
 
 sub _user_chmask {
   ## [+/-]mask syntax so as not to be confused with user del (much)
+  ## FIXME normalize masks before adding ?
 }
 
 sub _user_chpass {
@@ -452,7 +556,12 @@ sub _write_access_list {
         delete $hash{$context}->{$user};
       }
     }
+    ## don't need to write empty contexts either:
+    delete $hash{$context} unless scalar keys %{ $hash{$context} };
   }
+
+  ## don't need to write empty access lists to disk ...
+  return unless scalar keys %hash;
 
   my $yaml = Dump \%hash;
 
