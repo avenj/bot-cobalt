@@ -221,6 +221,11 @@ sub Bot_user_left {
   ## User left a channel
   ## If we don't share other channels, this user can't be tracked
   ## (therefore clear any auth entries for user belonging to us)
+  my $context = $$_[0];
+  my $channel = $$_[1]->{channel};
+  my $nick = $$_[1]->{src_nick};
+
+  ## FIXME ask our irc component (from core->Servers) if we still share channels?
 }
 
 sub Bot_user_kicked {
@@ -231,17 +236,31 @@ sub Bot_user_kicked {
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
   ## User quit, clear relevant auth entries
+  my $context = $$_[0];
+  my $nick = $$_[1]->{src_nick};
+  $self->_do_logout($context, $nick);
 }
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
   ## nickname changed, adjust Auth accordingly
+  my $context = $$_[0];
+  my $old = $$_[1]->{old};
+  my $new = $$_[1]->{new};
+
+  if (exists $core->State->{Auth}->{$context}->{$old}) {
+    my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};
+    if ($pkg eq __PACKAGE__) {
+      $core->State->{Auth}->{$context}->{$new} =
+        delete $core->State->{Auth}->{$context}->{$old};
+    }
+  }
 }
 
 
 sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
+  my $msg = $$_[0];
 
   my $resp;
 
@@ -439,8 +458,17 @@ sub _do_login {
 sub _do_logout {
   ## catch 'lost' users and handle logouts
   ## send a logout event in addition to clearing auth hash
-  my ($self, $context, $nickname) = @_;
-  
+  ## returns the deleted user auth hash (or nothing)
+  my ($self, $context, $nick) = @_;
+  my $core = $self->core;
+  if (exists $core->State->{Auth}->{$context}->{$nick}) {
+    my $pkg = $core->State->{Auth}->{$context}->{$nick}->{Package};
+    if ($pkg eq __PACKAGE__) {
+      return delete $core->State->{Auth}->{$context}->{$nick};
+      ## FIXME send logout event
+    }
+  }
+  return  
 }
 
 sub _user_add {
