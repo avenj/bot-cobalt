@@ -108,6 +108,9 @@ sub mkpasswd {
         ## cost value is configurable, but 08 is a good choice.
         ## has to be a two digit power of 2. pad with 0 as needed
         $cost //= '08';
+        ## try to pad with 0 if user is an idiot
+        ## not documented because you shouldn't be an idiot:
+        $cost = '0'.$cost if length $cost == 1;
         ## bcrypt expects 16 octets of salt:
         $salt = join '', map { chr(int(rand(256))) } 1 .. 16;
         ## ...base64-encoded via bcrypt's en_base64:
