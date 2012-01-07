@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-
+our $VERSION = '0.02';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -7,31 +7,197 @@ package Cobalt::IRC;
 
 =head1 NAME
 
-Cobalt::IRC
+Cobalt::IRC -- core (context "Main") IRC plugin
 
-=head1 Emitted Events
 
- Bot_connected
- Bot_disconnected
- Bot_server_error
+=head1 DESCRIPTION
 
- Bot_message_sent
- Bot_notice_sent
+The core IRC plugin provides a single-server IRC interface via
+L<POE::Component::IRC>.
 
- Bot_chan_sync
+B<The server context is always "Main">
 
- Bot_public_msg
- Bot_private_msg
- Bot_notice
+It does various work on incoming events we consider important enough
+to re-broadcast from the IRC component. This makes life infinitely
+easier on plugins and reduces code redundancy.
 
- Bot_topic_changed
- Bot_mode_changed
- Bot_nick_changed
+IRC-related events provide the $core->Servers context name in the 
+first argument:
+  my $context = $$_[0];
 
- Bot_user_joined
- Bot_user_left
- Bot_user_quit
- Bot_user_kicked
+Other arguments may vary by event. See below.
+
+
+=head1 EMITTED EVENTS
+
+=head2 Connection state events
+
+=head3 Bot_connected
+
+Issued when an irc_001 (welcome msg) event is received.
+
+Indicates the bot is now talking to an IRC server.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $server_name = $$_[1];
+
+The relevant $core->Servers->{$context} hash is updated prior to
+broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
+are now available for retrieval. You might use these to properly
+compare two nicknames, for example:
+  require IRC::Utils;  ## for eq_irc
+  my $context = $$_[0];
+  ## most servers are 'rfc1459', some may be ascii or -strict:
+  my $casemap = $core->Servers->{$context}->{CaseMap};
+  my $is_equal = IRC::Utils::eq_irc($nick_a, $nick_b, $casemap);
+
+=head3 Bot_disconnected
+
+Broadcast when irc_disconnected is received.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $server_name = $$_[1];
+
+$core->Servers->{$context}->{Connected} will be false until a reconnect.
+
+=head3 Bot_server_error
+
+Issued on unknown ERROR : events. Not a socket error, but connecting failed.
+
+The IRC component will provide a maybe-not-useful reason:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $reason = $$_[1];
+
+... Maybe you're zlined. :)
+
+
+
+=head2 Incoming message events
+
+=head3 Bot_public_msg
+
+Broadcast upon receiving public text (text in a channel).
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $msg = $$_[1];
+  my $stripped = $msg->{message};
+  ...
+
+$msg is a hash, with the following structure:
+
+  $msg = {
+    myself => The bot's current nickname on this context
+    src => Source's full nick!user@host
+    src_nick => Source nickname
+    src_user => Source username
+    src_host => Source hostname
+
+    channel => The first channel message was seen on
+    target_array => Array of channels message was seen on    
+
+    orig => Original, unparsed message content
+    message => Color/format-stripped message content
+    message_array => Color/format-stripped content, split to array
+
+    highlight => Boolean: was the bot being addressed?
+    cmdprefix => Boolean: was the string prefixed with CmdChar?
+    ## also see L</Bot_public_cmd_CMD>
+    cmd => The command used, if cmdprefix was true
+  };
+
+B<IMPORTANT:> We don't automagically decode any character encodings.
+This means that text may be a byte-string of unknown encoding.
+Storing or displaying the text may present complications.
+You may want decode_irc from L<IRC::Utils> for these purposes.
+See L<IRC::Utils/ENCODING> for more on encodings + IRC.
+
+
+=head3 Bot_public_cmd_CMD
+
+Broadcast when a public command is triggered.
+
+Plugins can catch these events to respond to specific commands.
+
+CMD is the public command triggered; ie the first "word" of something
+like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
+
+Syntax is precisely the same as L</Bot_public_msg>, with one major 
+caveat: B<$msg->{message_array} will not contain the command.>
+
+This event is pushed to the pipeline before _public_msg.
+
+
+=head3 Bot_private_msg
+
+Broadcast when a private message is received.
+
+Syntax is the same as L</Bot_public_msg>, B<except> the first spotted 
+destination is stored in key C<target>
+
+The default IRC interface plugins only spawn a single client per server.
+It's fairly safe to assume that C<target> is the bot's current nickname.
+
+
+=head3 Bot_notice
+
+Broadcast when a /NOTICE is received.
+
+Syntax is the same as L</Bot_private_msg>
+
+
+=head3 Bot_ctcp_action
+
+Broadcast when a CTCP ACTION (/ME in most clients) is received.
+
+Syntax is similar to L</Bot_public_msg>, except the only keys available are:
+  context
+  myself
+  src src_nick src_user src_host
+  target target_array
+  message message_array orig
+
+
+=head2 Sent notification events
+
+=head3 Bot_message_sent
+
+=head3 Bot_notice_sent
+
+
+
+=head2 Channel state events
+
+=head3 Bot_chan_sync
+
+=head3 Bot_topic_changed
+
+=head3 Bot_mode_changed
+
+=head3 Bot_user_joined
+
+=head3 Bot_user_left
+
+=head3 Bot_user_kicked
+
+
+
+=head2 User state events
+
+=head3 Bot_nick_changed
+
+=head3 Bot_user_quit
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+http://www.cobaltirc.org
 
 =cut
 
@@ -317,6 +483,7 @@ sub irc_public {
     src_user => $user,
     src_host => $host,
     channel => $channel,  # first dest. channel seen
+    target => $channel, # maintain compat with privmsg handler
     target_array => $where, # array of all chans seen
     highlight => 0,  # these two are set up below
     cmdprefix => 0,
@@ -333,9 +500,10 @@ sub irc_public {
   ## flag messages prefixed by cmdchar
   my $cmdchar = $self->core->cfg->{core}->{Opts}->{CmdChar} // '!';
   if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
-    $msg->{cmdprefix} = 1;
     ## Commands always get lowercased:
-    $msg->{cmd} = lc $1;
+    my $cmd = lc $1;
+    $msg->{cmd} = $cmd;
+    $msg->{cmdprefix} = 1;
 
     ## IMPORTANT:
     ## this is a _public_cmd_, so we shift message_array leftwards.
@@ -344,14 +512,16 @@ sub irc_public {
     ## the original unmodified string is in $msg->{orig}
     ## the format/color-stripped string is in $msg->{txt}
     ## the text array here may well be empty (no args specified)
-    shift @{ $msg->{message_array} };
 
-    ## issue a public_cmd_$cmd event to plugins
+    my %cmd_msg = %{ $msg };
+    shift @{ $cmd_msg{message_array} };
+
+    ## issue a public_cmd_$cmd event to plugins (w/ different ref)
     ## command-only plugins can choose to only receive specified events
     $self->core->send_event( 
-      'public_cmd_'.$msg->{cmd},
+      'public_cmd_'.$cmd,
       'Main', 
-      $msg 
+      \%cmd_msg 
     );
   }
 
@@ -383,7 +553,7 @@ sub irc_msg {
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    sent_to => $sent_to,  # first dest. seen
+    target => $sent_to,  # first dest. seen
     target_array => $target,
     message => $txt,
     orig => $orig,
@@ -397,6 +567,7 @@ sub irc_msg {
 sub irc_notice {
   my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
   my $me = $self->irc->nick_name();
+  my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
@@ -412,9 +583,10 @@ sub irc_notice {
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    sent_to => $target->[0],
+    target => $target->[0],
     target_array => $target,
     message => $txt,
+    orig => $orig,
     message_array => [ split ' ', $txt ],
   };
 
@@ -425,6 +597,7 @@ sub irc_notice {
 sub irc_ctcp_action {
   my ($self, $kernel, $src, $target, $txt) = @_[OBJECT, KERNEL, ARG0 .. ARG2];
   my $me = $self->irc->nick_name();
+  my $orig = $txt;
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
@@ -442,10 +615,12 @@ sub irc_ctcp_action {
     target => $target->[0],
     target_array => $target,
     message => $txt,
+    orig => $orig,
+    message_array => [ split ' ', $txt ],
   };
 
-  ## Bot_action
-  $self->core->send_event( 'action', 'Main', $msg );
+  ## Bot_ctcp_action
+  $self->core->send_event( 'ctcp_action', 'Main', $msg );
 }
 
 sub irc_connected {
@@ -544,6 +719,9 @@ sub irc_topic {
 sub irc_nick {
   my ($self, $kernel, $src, $new) = @_[OBJECT, KERNEL, ARG0, ARG1];
   ## if $src is a hostmask, get just the nickname:
+
+  ## FIXME: see if it's our nick that changed, adjust Servers
+
   my $old = parse_user($src);
   ## is this just a case change ?
   my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
