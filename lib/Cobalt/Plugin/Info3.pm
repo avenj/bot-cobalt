@@ -32,28 +32,8 @@ sub Cobalt_unregister {
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
-  my $msg = $$_[1];
 
-  my $me = $msg->{myself};
-  my $txt = $msg->{message};
-  $txt =~ s/^${me}.?\s+//i;  ## strip bot's nick off string
-  $txt =~ s/\s+$//;          ## strip trailing white space
 
-  my $resp;
-
-  given ($txt) {
-
-  }
-
-  if ($resp) {
-    $core->send_event( 'send_to_context',
-      {
-        context => $context,
-        target => $msg->{channel},
-        txt => $resp,
-      }
-    );    
-  }
 
   return PLUGIN_EAT_NONE
 }

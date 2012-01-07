@@ -115,18 +115,8 @@ sub Bot_public_msg {
   if ($resp) {
     ## We have a response . . .
     ## Send it back to the relevant location.
-    $core->send_event( 'send_to_context',
-      {
-        ## Server context of the original message
-        ## we could just as easily send to other contexts (or many)
-        context => $context,
-        ## target could be a channel or nickname
-        ## here it's just the relevant channel:
-        target => $msg->{channel},
-        ## our response:
-        txt => $resp,
-      }
-    );    
+    my $target = $msg->{channel};
+    $core->send_event( 'send_message', $context, $target, $resp );
   }
 
   ## Always return an Object::Pluggable::Constants value

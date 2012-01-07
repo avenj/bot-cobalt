@@ -58,13 +58,8 @@ sub Bot_public_cmd_alarmclock {
 
   ## FIXME: send a response
   if ($resp) {
-    $core->send_event( 'send_to_context',
-      {
-        context => $context,
-        target => $msg->{channel},
-        txt => $resp,
-      }
-    );    
+    my $target = $msg->{channel};
+    $core->send_event( 'send_message', $context, $target, $resp );
   }
 
   return PLUGIN_EAT_NONE

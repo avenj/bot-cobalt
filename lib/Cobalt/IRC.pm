@@ -166,8 +166,24 @@ Syntax is similar to L</Bot_public_msg>, except the only keys available are:
 
 =head3 Bot_message_sent
 
+Broadcast when a PRIVMSG has been sent to the server via an event;
+in other words, when a 'send_message' event was sent.
+
+Carries a copy of the target and text:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $target = $$_[1];
+  my $string = $$_[2];
+
+This being IRC, there is no guarantee that the message actually went out.
+
+
 =head3 Bot_notice_sent
 
+Broadcast when a NOTICE has been sent out via a send_notice event.
+
+Same syntax as L</Bot_message_sent>.
 
 
 =head2 Channel state events
@@ -178,19 +194,141 @@ Syntax is similar to L</Bot_public_msg>, except the only keys available are:
 
 =head3 Bot_mode_changed
 
+Broadcast when a channel mode has changed.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my ($context, $modechg) = ($$_[0], $$_[1]);
+
+The $modechg hash has the following keys:
+
+  $modechg = {
+    src => Full nick!user@host (or a server name)
+    ## The other src_* variables are irrelevant if src is a server:
+    src_nick => Nickname of mode changer
+    src_user => Username of mode changer
+    src_host => Hostname of mode changer
+    channel => Channel mode changed on
+    mode => Mode change string
+    args => Array of arguments to modes, if any
+    hash => HashRef produced by IRC::Utils::parse_mode_line
+  };
+
+$modechg->{hash} is produced by L<IRC::Utils>.
+
+It has two keys: I<modes> and I<args>. They are both ARRAY references:
+  my @modes = @{ $modechg->{hash}->{modes} };
+  my @args = @{ $modechg->{hash}->{args} };
+
+If parsing failed, the hash is empty.
+
+The caveat to parsing modes is determining whether or not they have args.
+You can walk each individual mode and handle known types:
+  for my $mode (@modes) {
+    given ($mode) {
+      next when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
+      when ("l") {  ## limit mode has an arg
+        my $limit = shift @args;
+      }
+      when ("b") {
+        ## shift off a ban ...
+      }
+      ## etc
+    }
+  }
+
+Theoretically, you can find out which types should have args via ISUPPORT:
+  my $irc = $self->Servers->{Main}->{Object};
+  my $is_chanmodes = $irc->isupport('CHANMODES')
+                     || 'b,k,l,imnpst';  ## oldschool set
+  ## $m_list modes add/delete modes from a list (bans for example)
+  ## $m_always modes always have a param specified.
+  ## $m_only modes only have a param specified on a '+' operation.
+  ## $m_never will never have a parameter.
+  my ($m_list, $m_always, $m_only, $m_never) = split ',', $is_chanmodes;
+  ## get status modes (ops, voice ...)
+  ## allegedly not all servers report all PREFIX modes
+  my $m_status = $irc->isupport('PREFIX') || '(ov)@+';
+  $m_status =~ s/^\((\w+)\).*$/$1/; 
+  
+See L<http://www.irc.org/tech_docs/005.html> for more information on ISUPPORT.
+
+As of this writing the Cobalt core provides no convenience method for this.
+
+
 =head3 Bot_user_joined
 
+Broadcast when a user joins a channel we are on.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $join = $$_[1];
+
+$join is a hash with the following keys:
+  $join = {
+    src =>
+    src_nick =>
+    src_user =>
+    src_host =>
+    channel => Channel the user joined
+  };
+
 =head3 Bot_user_left
+
+Broadcast when a user parts a channel we are on.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $part = $$_[1];
+
+$part is a hash with the same keys as L</Bot_user_joined>.
+
+=head3 Bot_self_left
+
+Broadcast when the bot parts a channel.
+
+$$_[1] is the channel name.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+
 
 =head3 Bot_user_kicked
 
 
-
 =head2 User state events
+
+=head3 Bot_umode_changed
 
 =head3 Bot_nick_changed
 
 =head3 Bot_user_quit
+
+
+=head1 ACCEPTED EVENTS
+
+=head3 send_message
+
+A send_message event for our context triggers a PRIVMSG send.
+
+  $core->send_event( 'send_message', $context, $target, $string);
+
+=head3 send_notice
+
+A send_notice event for our context triggers a NOTICE.
+
+  $core->send_event( 'send_notice', $context, $target, $string);
+
+=head3 send_raw
+
+=head3 mode
+
+=head3 kick
+
+=head3 join
+
+=head3 part
+
 
 
 =head1 AUTHOR
@@ -424,7 +562,7 @@ sub irc_chan_sync {
   my $resp = sprintf( $self->core->lang->{RPL_CHAN_SYNC}, $chan );
 
   ## issue Bot_chan_sync
-  $self->core->send_event( 'chan_sync', $chan );
+  $self->core->send_event( 'chan_sync', 'Main', $chan );
 
   ## ON if cobalt.conf->Opts->NotifyOnSync is true or not specified:
   my $notify = 
@@ -690,11 +828,37 @@ sub irc_kick {
 
 sub irc_mode {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
-
   my ($src, $changed_on, $modestr, @modeargs) = @_[ ARG0 .. $#_ ];
+  my ($nick, $user, $host) = parse_user($src);
 
-  my $modechg; ## FIXME
-  
+  ## shouldfix; split into modes with args and modes without based on isupport?
+
+  my $modechg = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel => $changed_on,
+    mode => $modestr,
+    args => [ @modeargs ],
+    ## FIXME: try to parse isupport to feed parse_mode_line chan/status lines?
+    hash => parse_mode_line($modestr, @modeargs),
+  };
+  ## try to guess whether the mode change was umode (us):
+  my $me = $self->irc->nick_name();
+  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  if ( eq_irc($me, $changed_on, $casemap) ) {
+    ## our umode changed
+    $self->core->send_event( 'umode_changed', 'Main', $modestr );
+    return
+  }
+
+  ## otherwise it's mostly safe to assume mode changed on a channel
+  ## could check by grabbing isupport('CHANTYPES') and checking against
+  ## is_valid_chan_name from IRC::Utils, f.ex:
+  ## my $chantypes = $self->irc->isupport('CHANTYPES') || '#&';
+  ## is_valid_chan_name($changed_on, [ split '', $chantypes ]) ? 1 : 0;
+  ## ...but afaik this Should Be Fine:
   $self->core->send_event( 'mode_changed', 'Main', $modechg);
 }
 
@@ -764,6 +928,14 @@ sub irc_part {
     channel => $channel,
   };
 
+  my $me = $self->irc->nick_name();
+  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  if ( eq_irc($me, $nick, $casemap) ) {
+    ## we were the issuer of the part -- possibly via /remove, perhaps?
+    ## (autojoin might bring back us back, though)
+    $self->core->send_event( 'self_left', 'Main', $channel );
+  }
+
   ## Bot_user_left
   $self->core->send_event( 'user_left', 'Main', $part );
 }
@@ -786,22 +958,23 @@ sub irc_quit {
 
  ### COBALT EVENTS ###
 
-sub Bot_send_to_context {
+sub Bot_send_message {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
+  my ($context, $target, $txt) = ($$_[0], $$_[1], $$_[2]);
 
-  ## core->send_event( 'send_to_context', $msgHash );
-  ## msgHash = {
-  ##   target => $nick or $chan,
-  ##   context => $server_context,
-  ##   txt => $string,
-  ## }
+  ## core->send_event( 'send_message', $context, $target, $string );
 
-  return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
+  unless ( $context
+           && $context eq 'Main'
+           && $target
+           && $txt
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
 
-  $self->irc->yield(privmsg => $msg->{target} => $msg->{txt});
+  $self->irc->yield(privmsg => $target => $txt);
 
-  $core->send_event( 'message_sent', 'Main', $msg );
+  $core->send_event( 'message_sent', 'Main', $target, $txt );
   ++$core->State->{Counters}->{Sent};
 
   return PLUGIN_EAT_NONE
@@ -809,13 +982,19 @@ sub Bot_send_to_context {
 
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };  ## FIXME better interfaces?
+  my ($context, $target, $txt) = ($$_[0], $$_[1], $$_[2]);
 
-  return PLUGIN_EAT_NONE unless $msg->{context} eq 'Main';
+  unless ( $context
+           && $context eq 'Main'
+           && $target
+           && $txt
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
 
-  $self->irc->yield(notice => $msg->{target} => $msg->{txt});
+  $self->irc->yield(notice => $target => $txt);
 
-  $core->send_event( 'notice_sent', $msg );
+  $core->send_event( 'notice_sent', 'Main', $target, $txt );
 
   return PLUGIN_EAT_NONE
 }
