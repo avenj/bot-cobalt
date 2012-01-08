@@ -3,18 +3,15 @@ package Cobalt;
 our $VERSION = '2.0_002';
 
 use 5.12.1;
+use Carp;
 use Moose;
 use MooseX::NonMoose;
-
-use POE;
-
-use Carp;
+use namespace::autoclean;
 
 use Log::Handler;
 
+use POE;
 use Object::Pluggable::Constants qw(:ALL);
-
-use namespace::autoclean;
 
 extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
@@ -22,6 +19,7 @@ extends 'POE::Component::Syndicator',
 use Cobalt::IRC;
 
 ## a whole bunch of attributes ...
+
 
 has 'cfg' => (
   is => 'rw',
@@ -245,7 +243,8 @@ sub timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
   ## Timer hash format:
-  ##   Execute => $coderef,
+  ##   Event => $event_to_syndicate,
+  ##   Args => [ @event_args ],
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
 
@@ -253,7 +252,12 @@ sub timer_check_pool {
     my $timer = $self->TimerPool->{TIMERS}->{$id};
     my $execute_ts = $timer->{ExecuteAt};
     if ( $execute_ts <= time ) {
-      $timer->{Execute}->();
+      my $event = $timer->{Event};
+      my @args = @{ $timer->{Args} };
+      ## dispatch this event:
+      $self->send_event( $event, @args );
+      ## send executed_timer to indicate this timer's done:
+      $self->send_event( 'executed_timer', $id );
       delete $self->TimerPool->{TIMERS}->{$id};
     }
   }
@@ -270,25 +274,32 @@ sub timer_set {
   ##   (timestr_to_secs from Cobalt::Utils may help)
   ##  $event should be a hashref:
   ##   Type => <ONE OF: code, event, msg>
-  ##  see Type Options below for more info on these $event opts:
-  ##   Code =>
+  ##  If Type is 'event':
   ##   Event =>
   ##   Args =>
+  ##  If Type is 'msg':
   ##   Target =>
   ##   Content =>
   ##  $id is optional
   ##  if adding an existing id the old one will be deleted first.
 
   ##  Type options:
-  ## TYPE = code
-  ##   Code => $coderef,
   ## TYPE = event
-  ##   Event => "send_to_context",  # Bot_send_to_context example
+  ##   Event => "send_notice",  ## send notice example
   ##   Args  => [ ], ## optional array of args for event
   ## TYPE = msg
-  ##   Context => $server_context,
+  ##   Context => $server_context, # defaults to 'Main'
   ##   Target => $somewhere,
   ##   Text => $string,
+
+  ## for example, a random-ID timer to join a channel 60s from now:
+  ##  timer_set( 60,
+  ##    {
+  ##      Type => 'event', 
+  ##      Event => 'join',
+  ##      Args => [ $context, $channel ],
+  ##    } 
+  ##  );
 
   my ($self, $delay, $ev, $id) = @_;
 
@@ -308,35 +319,20 @@ sub timer_set {
     delete $self->TimerPool->{TIMERS}->{$id};
   }
 
-  # assume coderef if no Type specified
-  # makes it easier to just do something like:
-  #  ->timer_set( 60, { Code => $coderef } )
-  my $type = $ev->{Type} // 'code';
-  my $coderef;
+  my $type = $ev->{Type} // 'event';
+  my($event_name, @event_args);
   given ($type) {
-    when ("code") {
-      ## coderef was specified.
-      unless (exists $ev->{Code} && ref $ev->{Code} eq 'CODE') {
-        $self->log->warn("timer_set no coderef specified in ".caller);
-        return
-      }
-      $coderef = $ev->{Code};
-    }
 
     when ("event") {
-
       unless (exists $ev->{Event}) {
         $self->log->warn("timer_set no Event specified in ".caller);
         return
       }
-
-      $coderef = sub {
-        $self->send_event( $ev->{Event}, @{$ev->{Args}} );
-      };
-
+      $event_name = $ev->{Event};
+      @event_args = @{ $ev->{Args} // [] };
     }
 
-    when ("msg") {
+    when ([qw/msg message privmsg/]) {
       unless ($ev->{Text}) {
         $self->log->warn("timer_set no Text specified in ".caller);
         return
@@ -346,25 +342,19 @@ sub timer_set {
         return
       }
 
-      my $context = 'Main' unless $ev->{Context};
+      my $context = $ev->{Context} // 'Main';
 
-      $coderef = sub {
-        my $msg = {
-          context => $context,
-          target => $ev->{Target},
-          txt => $ev->{Text},
-        };
-        $self->send_event( 'send_to_context', $msg );
-      };
-
+      ## send_message $context, $target, $text
+      $event_name = 'send_message';
+      @event_args = ( $context, $ev->{Target}, $ev->{Text} );
     }
-
   }
 
-  if ($coderef) {
+  if ($event_name) {
     $self->TimerPool->{TIMERS}->{$id} = {
       ExecuteAt => time() + $delay,
-      Execute => $coderef,
+      Event => $event_name,
+      Args => [ @event_args ],
       AddedBy => scalar caller(),
     };
   } else {
@@ -374,6 +364,7 @@ sub timer_set {
 }
 
 sub timer_del {
+  ## delete a timer by its ID
   my $self = shift;
   my $id = shift || return;
   return delete $self->TimerPool->{TIMERS}->{$id};
@@ -383,11 +374,11 @@ sub timer_del_pkg {
   my $self = shift;
   my $pkg = shift || return;
   my @dead_timers;
+  ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
   for my $timer (keys $self->TimerPool->{TIMERS}) {
     my $ev = $self->TimerPool->{TIMERS}->{$timer};
-
     delete $self->TimerPool->{TIMERS}->{$timer}
       if $ev->{AddedBy} eq $pkg;
   }
