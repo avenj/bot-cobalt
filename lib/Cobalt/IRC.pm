@@ -30,7 +30,9 @@ Other arguments may vary by event. See below.
 
 =head1 EMITTED EVENTS
 
+
 =head2 Connection state events
+
 
 =head3 Bot_connected
 
@@ -181,7 +183,9 @@ Syntax is similar to L</Bot_public_msg>, except the only keys available are:
   message message_array orig
 
 
+
 =head2 Sent notification events
+
 
 =head3 Bot_message_sent
 
@@ -206,6 +210,7 @@ Same syntax as L</Bot_message_sent>.
 
 
 =head2 Channel state events
+
 
 =head3 Bot_chan_sync
 
@@ -240,6 +245,7 @@ $t_change has the following keys:
 
 Note that the topic setter may be a server, just a nickname, 
 the name of a service, or some other arbitrary string.
+
 
 =head3 Bot_mode_changed
 
@@ -321,6 +327,7 @@ $join is a hash with the following keys:
     channel => Channel the user joined
   };
 
+
 =head3 Bot_user_left
 
 Broadcast when a user parts a channel we are on.
@@ -335,16 +342,28 @@ $part is a hash with the same keys as L</Bot_user_joined>.
 
 Broadcast when the bot parts a channel, possibly via coercion.
 
-A plugin can catch I<Bot_part> events to find out that the bot was
-told to depart from a channel. However, the bot may've been forced
-to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART'
-that will do this.
+A plugin can catch I<Bot_part> events to find out that the bot was 
+told to depart from a channel. However, the bot may've been forced 
+to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART' 
+that will do this. I<Bot_self_left> indicates the bot left the channel, 
+as determined by matching the bot's nickname against the user who left.
 
 $$_[1] is the channel name.
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
   my $channel = $$_[1];
+
+B<IMPORTANT>:
+
+Uses eq_irc with the server's CASEMAPPING to determine whether this 
+is actually the bot leaving, in order to cope with servers issuing 
+forced parts with incorrect case.
+
+This method may be unreliable on servers with an incorrect CASEMAPPING 
+in ISUPPORT, as it will fall back to normal rfc1459 rules.
+
+Also see L</Bot_user_left>
 
 
 =head3 Bot_user_kicked
@@ -366,7 +385,10 @@ $$_[1] is a hash with the following keys:
     kicked => User that was kicked
   }
 
+
+
 =head2 User state events
+
 
 =head3 Bot_umode_changed
 
@@ -396,7 +418,9 @@ $$_[1] is a hash with the following keys:
 
 I<equal> is determined by attempting to get server CASEMAPPING= 
 (falling back to 'rfc1459' rules) and using L<IRC::Utils> to check 
-whether this appears to be just a case change.
+whether this appears to be just a case change. This method may be 
+unreliable on servers with an incorrect CASEMAPPING value in ISUPPORT.
+
 
 =head3 Bot_self_nick_changed
 
@@ -408,33 +432,89 @@ Broadcast when our own nickname changed, possibly via coercion.
 
 A I<nick_changed> event will be queued after I<self_nick_changed>.
 
+
 =head3 Bot_user_quit
+
+Broadcast when a visible user has quit.
+
+We can only receive quit notifications if we share channels with the user.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $quit_h = $$_[1];
+
+$quit_h would be a hash with the following keys:
+
+  $quit_h = {
+    src =>
+    src_nick =>
+    src_user =>
+    src_host =>
+    reason =>
+  }
+
 
 
 =head1 ACCEPTED EVENTS
 
+=head2 Outgoing IRC commands
+
 =head3 send_message
 
-A send_message event for our context triggers a PRIVMSG send.
+A C<send_message> event for our context triggers a PRIVMSG send.
 
-  $core->send_event( 'send_message', $context, $target, $string);
+  $core->send_event( 'send_message', $context, $target, $string );
 
 =head3 send_notice
 
-A send_notice event for our context triggers a NOTICE.
+A C<send_notice> event for our context triggers a NOTICE.
 
-  $core->send_event( 'send_notice', $context, $target, $string);
+  $core->send_event( 'send_notice', $context, $target, $string );
+
 
 =head3 send_raw
 
+FIXME
+
 =head3 mode
+
+A C<mode> event for our context attempts a mode change.
+
+Typically the target will be either a channel or the bot's own nickname.
+
+  $core->send_event( 'mode', $context, $target, $modestr );
+  ## example:
+  $core->send_event( 'mode', 'Main', '#mychan', '+ik some_key' );
+
+This being IRC, there is no guarantee that the bot has privileges to 
+effect the changes, or that the changes took place.
 
 =head3 kick
 
+A C<kick> event for our context attempts to kick a user.
+
+A reason can be supplied:
+
+  $core->send_event( 'kick', $context, $channel, $target, $reason );
+
 =head3 join
+
+A C<join> event for our context attempts to join a channel.
+
+  $core->send_event( 'join', $context, $channel );
+
+Catch L</Bot_chan_sync> to check for channel sync status.
 
 =head3 part
 
+A C<part> event for our context attempts to leave a channel.
+
+A reason can be supplied:
+
+  $core->send_event( 'part', $context, $channel, $reason );
+
+There is no guarantee that we were present on the channel in the 
+first place.
 
 
 =head1 AUTHOR
@@ -451,6 +531,7 @@ use warnings;
 use Carp;
 
 use Moose;
+use namespace::autoclean;
 
 use Object::Pluggable::Constants qw( :ALL );
 
@@ -469,7 +550,6 @@ use IRC::Utils qw/
   matches_mask normalize_mask
 /;
 
-use namespace::autoclean;
 
 has 'core' => (
   is => 'rw',
@@ -893,11 +973,29 @@ sub irc_001 {
   ##
   ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
   ## checking ISUPPORT and setting the casemapping if available
-  ##
+  my $casemap = lc( $self->irc->isupport('CASEMAPPING') || 'rfc1459' );
+  $self->core->Servers->{Main}->{CaseMap} = $casemap;
+  
   ## if the server returns a fubar value (hi, paradoxirc) IRC::Utils
   ## automagically defaults to rfc1459 casemapping rules
-  my $casemap = $self->irc->isupport('CASEMAPPING') // 'rfc1459';
-  $self->core->Servers->{Main}->{CaseMap} = $casemap;
+  ## 
+  ## this is unavoidable in some situations, however:
+  ## misconfigured inspircd on paradoxirc gives a codepage for CASEMAPPING
+  ## and a casemapping for CHARSET (which is supposed to be deprecated)
+  ##
+  ## we can try to check for this, but it's still a crapshoot.
+  ## smack your admins with a hammer instead.
+  my @valid_casemaps = qw/ rfc1459 ascii strict-rfc1459 /;
+  unless ($casemap ~~ @valid_casemaps) {
+    my $charset = lc( $self->irc->isupport('CHARSET') || '' );
+    if ($charset && $charset ~~ @valid_casemaps) {
+      $self->core->Servers->{Main}->{CaseMap} = $charset;
+    }
+    ## we don't save CHARSET, it's deprecated per the spec
+    ## also mostly unreliable and meaningless
+    ## you're on your own for handling fubar encodings.
+    ## http://www.irc.org/tech_docs/draft-brocklesby-irc-isupport-03.txt
+  }
 
   my $server = $self->irc->server_name;
   ## send a Bot_connected event with context and visible server name:
@@ -1048,6 +1146,8 @@ sub irc_part {
 
   my $me = $self->irc->nick_name();
   my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  ## FIXME; we could try an 'eq' here ... but is a part issued by
+  ## force methods going to be guaranteed the same case ... ?
   if ( eq_irc($me, $nick, $casemap) ) {
     ## we were the issuer of the part -- possibly via /remove, perhaps?
     ## (autojoin might bring back us back, though)
@@ -1061,11 +1161,13 @@ sub irc_part {
 sub irc_quit {
   my ($self, $kernel, $src, $msg) = @_[OBJECT, KERNEL, ARG0, ARG1];
   ## depending on ircd we might get a hostmask .. or not ..
-  my $nick = parse_user($src);
+  my ($nick, $user, $host) = parse_user($src);
 
   my $quit = {
-    src_orig => $src,
+    src => $src,
     src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
     reason => $msg,
   };
 
@@ -1119,38 +1221,79 @@ sub Bot_send_notice {
 
 sub Bot_mode {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME
+  my $context = $$_[0];
+  my $target = $$_[1];  ## channel or self normally
+  my $modestr = $$_[2]; ## modes + args
+
+  unless ( $context
+           && $context eq 'Main'
+           && $target
+           && $modestr
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
+
+
+  my ($mode, @args) = split ' ', $modestr;
+
+  $self->irc->yield( 'mode', $target, $mode, @args );
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_kick {
   my ($self, $core) = splice @_, 0, 2;
-  ## send_event( 'kick', $channel, $nick, $context)
-  ## assume 'Main' context if none specified.
-  ## shouldfix to 'best guess' based on current channels...
+  my $context = $$_[0];
+  my $channel = $$_[1];
+  my $target = $$_[2];
+  my $reason = $$_[3] // 'Kicked';
 
-  ## FIXME
+  unless ( $context
+           && $context eq 'Main'
+           && $channel
+           && $target
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }      
 
+  $self->irc->yield( 'kick', $channel, $target, $reason );
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_join {
   my ($self, $core) = splice @_, 0, 2;
-  my $chan = ${ $_[0] };
+  my $context = $$_[0];
+  my $channel = $$_[1];
 
-  ## FIXME
+  unless ( $context
+           && $context eq 'Main'
+           && $channel
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
 
+  $self->irc->yield( 'join', $channel );
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_part {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME
+  my $context = $$_[0];
+  my $channel = $$_[1];
+  my $reason = $$_[2] // 'Leaving';
+
+  unless ( $context
+           && $context eq 'Main'
+           && $channel
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }      
+
+  $self->irc->yield( 'part', $channel, $reason );
 
   return PLUGIN_EAT_NONE
-
 }
 
 sub Bot_send_raw {
