@@ -12,6 +12,8 @@ Cobalt::IRC -- core (context "Main") IRC plugin
 
 =head1 DESCRIPTION
 
+Plugin authors will almost definitely want to read this reference.
+
 The core IRC plugin provides a single-server IRC interface via
 L<POE::Component::IRC>.
 
@@ -48,6 +50,7 @@ The relevant $core->Servers->{$context} hash is updated prior to
 broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
 are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
+
   require IRC::Utils;  ## for eq_irc
   my $context = $$_[0];
   ## most servers are 'rfc1459', some may be ascii or -strict
@@ -148,7 +151,7 @@ CMD is the public command triggered; ie the first "word" of something
 like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
 
 Syntax is precisely the same as L</Bot_public_msg>, with one major 
-caveat: B<$msg->{message_array} will not contain the command.>
+caveat: B<<$msg->{message_array} will not contain the command.>>
 
 This event is pushed to the pipeline before _public_msg.
 
@@ -218,6 +221,7 @@ Broadcast when we've finished receiving channel status info.
 This generally indicates we're ready to talk to the channel.
 
 Carries the channel name:
+
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
   my $channel = $$_[1];
@@ -228,6 +232,7 @@ Carries the channel name:
 Broadcast when a channel topic has changed.
 
 Carries a hash:
+
   my ($self, $core) = @splice @_, 0, 2;
   my $context = $$_[0];
   my $t_change = $$_[1];
@@ -271,6 +276,7 @@ The $modechg hash has the following keys:
 $modechg->{hash} is produced by L<IRC::Utils>.
 
 It has two keys: I<modes> and I<args>. They are both ARRAY references:
+
   my @modes = @{ $modechg->{hash}->{modes} };
   my @args = @{ $modechg->{hash}->{args} };
 
@@ -278,6 +284,7 @@ If parsing failed, the hash is empty.
 
 The caveat to parsing modes is determining whether or not they have args.
 You can walk each individual mode and handle known types:
+
   for my $mode (@modes) {
     given ($mode) {
       next when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
@@ -292,6 +299,7 @@ You can walk each individual mode and handle known types:
   }
 
 Theoretically, you can find out which types should have args via ISUPPORT:
+
   my $irc = $self->Servers->{Main}->{Object};
   my $is_chanmodes = $irc->isupport('CHANMODES')
                      || 'b,k,l,imnpst';  ## oldschool set
@@ -319,6 +327,7 @@ Broadcast when a user joins a channel we are on.
   my $join = $$_[1];
 
 $join is a hash with the following keys:
+
   $join = {
     src =>
     src_nick =>
@@ -395,6 +404,7 @@ $$_[1] is a hash with the following keys:
 Broadcast when mode changes on the bot's nickname (umode).
 
 The context and mode string is provided:
+
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
   my $modestr = $$_[1];
@@ -521,7 +531,7 @@ first place.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-http://www.cobaltirc.org
+L<http://www.cobaltirc.org>
 
 =cut
 
