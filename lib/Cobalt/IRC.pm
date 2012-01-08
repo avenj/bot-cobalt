@@ -18,8 +18,8 @@ L<POE::Component::IRC>.
 B<The server context is always "Main">
 
 It does various work on incoming events we consider important enough
-to re-broadcast from the IRC component. This makes life infinitely
-easier on plugins and reduces code redundancy.
+to re-broadcast from the IRC component. This makes life easier on 
+plugins and reduces code redundancy.
 
 IRC-related events provide the $core->Servers context name in the 
 first argument:
@@ -48,7 +48,8 @@ are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
   require IRC::Utils;  ## for eq_irc
   my $context = $$_[0];
-  ## most servers are 'rfc1459', some may be ascii or -strict:
+  ## most servers are 'rfc1459', some may be ascii or -strict
+  ## (some return totally fubar values, and we'll default to rfc1459)
   my $casemap = $core->Servers->{$context}->{CaseMap};
   my $is_equal = IRC::Utils::eq_irc($nick_a, $nick_b, $casemap);
 
@@ -110,11 +111,29 @@ $msg is a hash, with the following structure:
     cmd => The command used, if cmdprefix was true
   };
 
-B<IMPORTANT:> We don't automagically decode any character encodings.
+B<IMPORTANT:> We don't automatically decode any character encodings.
 This means that text may be a byte-string of unknown encoding.
 Storing or displaying the text may present complications.
 You may want decode_irc from L<IRC::Utils> for these purposes.
 See L<IRC::Utils/ENCODING> for more on encodings + IRC.
+
+Also see:
+
+=over
+
+=item *
+
+L<perluniintro>
+
+=item *
+
+L<perlunitut>
+
+=item *
+
+L<perlunicode>
+
+=back
 
 
 =head3 Bot_public_cmd_CMD
@@ -190,7 +209,37 @@ Same syntax as L</Bot_message_sent>.
 
 =head3 Bot_chan_sync
 
+Broadcast when we've finished receiving channel status info.
+This generally indicates we're ready to talk to the channel.
+
+Carries the channel name:
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+
+
 =head3 Bot_topic_changed
+
+Broadcast when a channel topic has changed.
+
+Carries a hash:
+  my ($self, $core) = @splice @_, 0, 2;
+  my $context = $$_[0];
+  my $t_change = $$_[1];
+
+$t_change has the following keys:
+
+  $t_change = {
+    src => Topic setter; may be an arbitrary string
+    src_nick => 
+    src_user => 
+    src_host =>
+    channel =>
+    topic => New topic string
+  };
+
+Note that the topic setter may be a server, just a nickname, 
+the name of a service, or some other arbitrary string.
 
 =head3 Bot_mode_changed
 
@@ -284,7 +333,12 @@ $part is a hash with the same keys as L</Bot_user_joined>.
 
 =head3 Bot_self_left
 
-Broadcast when the bot parts a channel.
+Broadcast when the bot parts a channel, possibly via coercion.
+
+A plugin can catch I<Bot_part> events to find out that the bot was
+told to depart from a channel. However, the bot may've been forced
+to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART'
+that will do this.
 
 $$_[1] is the channel name.
 
@@ -295,12 +349,64 @@ $$_[1] is the channel name.
 
 =head3 Bot_user_kicked
 
+Broadcast when a user (maybe us) is kicked.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $kick = $$_[1];
+
+$$_[1] is a hash with the following keys:
+
+  $kick = {
+    src => Origin of the kick
+    src_nick =>
+    src_user =>
+    src_host =>
+    channel => Channel kick took place on
+    kicked => User that was kicked
+  }
 
 =head2 User state events
 
 =head3 Bot_umode_changed
 
+Broadcast when mode changes on the bot's nickname (umode).
+
+The context and mode string is provided:
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $modestr = $$_[1];
+
+
 =head3 Bot_nick_changed
+
+Broadcast when a visible user's nickname changes.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $nchange = $$_[1];
+
+$$_[1] is a hash with the following keys:
+
+  $nchange = {
+    old => Previous nickname
+    new => New nickname
+    equal => Indicates a simple case change
+  }
+
+I<equal> is determined by attempting to get server CASEMAPPING= 
+(falling back to 'rfc1459' rules) and using L<IRC::Utils> to check 
+whether this appears to be just a case change.
+
+=head3 Bot_self_nick_changed
+
+Broadcast when our own nickname changed, possibly via coercion.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $new_nick = $$_[1];
+
+A I<nick_changed> event will be queued after I<self_nick_changed>.
 
 =head3 Bot_user_quit
 
@@ -780,11 +886,18 @@ sub irc_001 {
   $self->core->Servers->{Main}->{MaxModes} = 
     $self->irc->isupport('MODES') // 4;
   ## irc comes with odd case-mapping rules.
+  ## []\~ are considered uppercase equivalents of {}|^
+  ##
+  ## this may vary by server
+  ## (most servers are rfc1459, some are -strict, some are ascii)
+  ##
   ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
   ## checking ISUPPORT and setting the casemapping if available
-  ## (most servers are rfc1459, some are -strict, some are ascii)
-  $self->core->Servers->{Main}->{CaseMap} =
-    $self->irc->isupport('CASEMAPPING') // 'rfc1459';
+  ##
+  ## if the server returns a fubar value (hi, paradoxirc) IRC::Utils
+  ## automagically defaults to rfc1459 casemapping rules
+  my $casemap = $self->irc->isupport('CASEMAPPING') // 'rfc1459';
+  $self->core->Servers->{Main}->{CaseMap} = $casemap;
 
   my $server = $self->irc->server_name;
   ## send a Bot_connected event with context and visible server name:
@@ -818,7 +931,8 @@ sub irc_kick {
     src_user => $user,
     src_host => $host,
     channel => $channel,
-    target_nick => $target,
+    kicked => $target,
+    target => $target,  # kicked/target are both valid
     reason => $reason,
   };
 
@@ -841,7 +955,8 @@ sub irc_mode {
     channel => $changed_on,
     mode => $modestr,
     args => [ @modeargs ],
-    ## FIXME: try to parse isupport to feed parse_mode_line chan/status lines?
+    ## shouldfix; try to parse isupport to feed parse_mode_line chan/status lines?
+    ## (code to sort-of do this in embedded POD)
     hash => parse_mode_line($modestr, @modeargs),
   };
   ## try to guess whether the mode change was umode (us):
@@ -883,12 +998,15 @@ sub irc_topic {
 sub irc_nick {
   my ($self, $kernel, $src, $new) = @_[OBJECT, KERNEL, ARG0, ARG1];
   ## if $src is a hostmask, get just the nickname:
-
-  ## FIXME: see if it's our nick that changed, adjust Servers
-
   my $old = parse_user($src);
-  ## is this just a case change ?
+
+  ## see if it's our nick that changed, send event:
+  if ($new eq $self->irc->nick_name) {
+    $self->core->send_event( 'self_nick_changed', 'Main', $new );
+  }
+
   my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  ## is this just a case change ?
   my $equal = eq_irc($old, $new, $map) ? 1 : 0 ;
   my $nick_change = {
     old => $old,
