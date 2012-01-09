@@ -166,15 +166,33 @@ sub _start {
   $self->core->log->debug("pocoirc plugin load");
 
   ## autoreconn plugin:
+  my %connector;
 
-  ## FIXME: Connector can be provided 'servers =>'
-  ## docs say it should be in the format of:
+  ## Connector can be provided 'servers => ARRAY'
+  ## ARRAY should be in the format of:
   ## [ [$host, $port], [$host, $port], ... ]
+  ##
+  ## this is mostly a Bad Idea, as opts like usessl will (should) 
+  ## carry over to the next server in the list.
+  if ( defined $cfg->{IRC}->{AltServers}
+       && ref $cfg->{IRC}->{AltServers} eq 'ARRAY'
+       && @{ $cfg->{IRC}->{AltServers} } )
+  {
+    for my $unparsed (@{ $cfg->{IRC}->{AltServers} }) {
+      ## will break on raw ipv6 addresses
+      ## .. but well .. "doctor it hurts when I do this"
+      my ($altserver, $sport) = split /:/, $unparsed;
+      push( @{ $connector{servers} },  [ $altserver, $sport ] );
+    }
+    
+  }
+
+  $connector{delay} = $cfg->{Opts}->{StonedCheck} || 300;
+  $connector{reconnect} = $cfg->{Opts}->{ReconnectDelay} || 60;
 
   $self->irc->plugin_add('Connector' =>
     POE::Component::IRC::Plugin::Connector->new(
-      delay => $cfg->{Opts}->{StonedCheck} || 300,
-      reconnect => $cfg->{Opts}->{ReconnectDelay} || 60,
+      %connector
     ),
   );
 
