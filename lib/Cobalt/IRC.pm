@@ -86,7 +86,7 @@ sub _start_irc {
 
   $self->core->log->info("Spawning IRC, server: ($nick) $server $port");
 
-  my $i = POE::Component::IRC::State->spawn(
+  my %spawn_opts = (
     nick     => $nick,
     username => $cfg->{IRC}->{Username} || 'cobalt',
     ircname  => $cfg->{IRC}->{Realname}  || 'http://cobaltirc.org',
@@ -95,6 +95,17 @@ sub _start_irc {
     useipv6  => $use_v6,
     usessl   => $usessl,
     raw => 0,
+  );
+
+  ## see if we should be specifying a local bindaddr:
+  my $localaddr = $cfg->{IRC}->{BindAddr} // undef;
+  $spawn_opts{localaddr} = $localaddr if $localaddr;
+  ## .. or passwd:
+  my $server_pass = $cfg->{IRC}->{ServerPass} // undef;
+  $spawn_opts{password} = $server_pass if $server_pass;
+
+  my $i = POE::Component::IRC::State->spawn(
+    %spawn_opts,
   ) or $self->core->log->emerg("poco-irc error: $!");
 
   ## add 'Main' to Servers:
@@ -156,12 +167,16 @@ sub _start {
 
   ## autoreconn plugin:
 
-  ## FIXME: Connector can be provided a list of servers
+  ## FIXME: Connector can be provided 'servers =>'
   ## docs say it should be in the format of:
   ## [ [$host, $port], [$host, $port], ... ]
 
   $self->irc->plugin_add('Connector' =>
-    POE::Component::IRC::Plugin::Connector->new);
+    POE::Component::IRC::Plugin::Connector->new(
+      delay => $cfg->{Opts}->{StonedCheck} || 300,
+      reconnect => $cfg->{Opts}->{ReconnectDelay} || 60,
+    ),
+  );
 
   ## attempt to regain primary nickname:
   $self->irc->plugin_add('NickReclaim' =>
@@ -210,19 +225,8 @@ sub _start {
 
   ## register for all events from the component
   $self->irc->yield(register => 'all');
-
-  my $opts = { };
-
-  ## see if we should be specifying a local bindaddr:
-  my $localaddr = $cfg->{IRC}->{BindAddr} // 0;
-  $opts->{localaddr} = $localaddr if $localaddr;
-  ## .. or passwd:
-  my $server_pass = $cfg->{IRC}->{ServerPass} // 0;
-  $opts->{password} = $server_pass if $server_pass;
-  ## (could just as easily set these up at spawn, granted)
-
   ## initiate ze connection:
-  $self->irc->yield(connect => $opts);
+  $self->irc->yield(connect => {});
   $self->core->log->debug("irc component connect issued");
 }
 
