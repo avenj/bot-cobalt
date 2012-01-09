@@ -67,20 +67,19 @@ use namespace::autoclean;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-## Utils:
-# use Text::Glob;
+### Utils:
 use IRC::Utils qw/
   matches_mask normalize_mask
   parse_user
   lc_irc uc_irc eq_irc /;
 use Cobalt::Utils qw/ mkpasswd passwdcmp /;
 
-## Serialization:
+### Serialization:
 use YAML::Syck;
 use Fcntl qw/:flock/;
 
 
-## Constants, mostly for internal retvals:
+### Constants, mostly for internal retvals:
 use constant {
    ## _do_login RPL constants:
     SUCCESS   => 1,
@@ -90,6 +89,7 @@ use constant {
 };
 
 
+### Attributes
 has 'core' => (
   is => 'rw',
   isa => 'Object',
@@ -106,6 +106,8 @@ has 'DB_Path' => (
   isa => 'Str',
 );
 
+
+### Load/unload:
 sub Cobalt_register {
   my ($self, $core) = @_;
   ## Set $self->core to make life easier on our internals:
@@ -138,6 +140,7 @@ sub Cobalt_register {
       $user = lc_irc $user;
       ## AccessList entries for superusers:
       my $flags;
+      ## Handle empty flag values:
       if (ref $su{$context}->{$user}->{Flags} eq 'HASH') {
         $flags = $su{$context}->{$user}->{Flags};
       } else { $flags = { }; }
@@ -204,6 +207,7 @@ sub Cobalt_unregister {
 }
 
 
+### Bot_* events:
 sub Bot_connected {
   my ($self, $core) = splice @_, 0, 2;
   ## Bot's freshly connected to a context
@@ -228,8 +232,9 @@ sub Bot_user_left {
   my $channel = $$_[1]->{channel};
   my $nick = $$_[1]->{src_nick};
 
-  ## FIXME ask our irc component (from core->Servers) if we still share channels? similar to cobalt behavior
-  ##   need a method for this ...
+  ## FIXME if this is our nick that left the channel, query shared chan status of all auth'd users in this server context
+
+  ## FIXME ask our irc component (from core->Servers) if we still share channels via _check_for_shared
 
   return PLUGIN_EAT_NONE
 }
@@ -504,7 +509,7 @@ sub _user_list {
 }
 
 sub _user_search {
-  ## Text::Glob ?
+
 }
 
 sub _user_chflags {
@@ -521,10 +526,29 @@ sub _user_chpass {
 }
 
 
-## Utils:
+### Utility methods:
+
+sub _check_for_shared {
+  ## $self->_check_for_shared( $context, $nickname );
+  ##
+  ## Query the IRC component to see if we share channels with a user.
+  ## Actually just a simple frontend to get_irc_obj & PoCo::IRC::State
+  ##
+  ## Returns boolean true or false.
+  ## Typically called after either the bot or a user leave a channel.
+  ##
+  ## Tells Auth whether or not we can sanely track this user.
+  ## If we don't share channels it's difficult to get nick change
+  ## notifications and generally validate authenticated users.
+  my ($self, $context, $nick) = @_;
+  my $irc = $self->core->get_irc_obj( $context );
+  my @shared = $irc->nick_channels( $nick );
+  return @shared ? 1 : 0 ;
+}
 
 sub _clear_self {
   my ($self) = @_;
+  ## $self->clear_self()
   ## Clear any $core->{Auth} states belonging to us
   for my $context (keys %{ $self->core->{Auth} }) {
 
@@ -539,10 +563,10 @@ sub _clear_self {
   }
 }
 
-
 sub _mkpasswd {
   my ($self, $passwd) = @_;
   return unless $passwd;
+  ## $self->_mkpasswd( $passwd );
   ## simple frontend to Cobalt::Utils::mkpasswd()
   ## handles grabbing cfg opts for us:
   my $pkg = __PACKAGE__;
