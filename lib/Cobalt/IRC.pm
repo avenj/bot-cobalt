@@ -118,7 +118,7 @@ sub _start_irc {
     object_states => [
       $self => [
         '_start',
-
+        ## FIXME _default handler to relay events to Bot_Autoload_$ev or something? configurable, maybe flipped on by plugins via IRCCONF event?
         'irc_connected',
         'irc_disconnected',
         'irc_error',
@@ -183,14 +183,20 @@ sub _start {
   ## channel config to feed autojoin plugin
   ## single-server core irc module just grabs 'Main' context
   my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
+  ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
+  my %ajoin;
+  for my $chan (%{ $chanhash }) {
+    my $key = $chanhash->{$chan}->{password} // '';
+    $ajoin{$chan} = $key;
+  }
 
   $self->irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
-      Channels => [ keys %$chanhash ],
-      RejoinOnKick => 1,
-      Rejoin_delay => 5,  ## FIXME: configurables
-      NickServ_delay => 1,
-      Retry_when_banned => 60,
+      Channels => \%ajoin,
+      RejoinOnKick => $cfg->{Opts}->{Chan_RetryAfterKick} // 1,
+      Rejoin_delay => $cfg->{Opts}->{Chan_RejoinDelay} // 5,
+      NickServ_delay => $cfg->{Opts}->{Chan_NickServDelay} // 1,
+      Retry_when_banned => $cfg->{Opts}->{Chan_RetryAfterBan} // 60,
     ),
   );
 
@@ -662,6 +668,8 @@ sub Bot_send_message {
 
   ## core->send_event( 'send_message', $context, $target, $string );
 
+  ## FIXME: send_user_event for output filters (Outgoing_message)
+
   unless ( $context
            && $context eq 'Main'
            && $target
@@ -681,6 +689,10 @@ sub Bot_send_message {
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
   my ($context, $target, $txt) = ($$_[0], $$_[1], $$_[2]);
+
+  ## core->send_event( 'send_notice', $context, $target, $string );
+
+  ## FIXME: send_user_event for output filters (Outgoing_notice)
 
   unless ( $context
            && $context eq 'Main'
