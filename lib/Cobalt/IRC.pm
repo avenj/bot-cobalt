@@ -1,539 +1,7 @@
 package Cobalt::IRC;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 ## Core IRC plugin
 ## (server context 'Main')
-
-=pod
-
-=head1 NAME
-
-Cobalt::IRC -- core (context "Main") IRC plugin
-
-
-=head1 DESCRIPTION
-
-Plugin authors will almost definitely want to read this reference.
-
-The core IRC plugin provides a single-server IRC interface via
-L<POE::Component::IRC>.
-
-B<The server context is always "Main">
-
-It does various work on incoming events we consider important enough
-to re-broadcast from the IRC component. This makes life easier on 
-plugins and reduces code redundancy.
-
-IRC-related events provide the $core->Servers context name in the 
-first argument:
-  my $context = $$_[0];
-
-Other arguments may vary by event. See below.
-
-
-=head1 EMITTED EVENTS
-
-
-=head2 Connection state events
-
-
-=head3 Bot_connected
-
-Issued when an irc_001 (welcome msg) event is received.
-
-Indicates the bot is now talking to an IRC server.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $server_name = $$_[1];
-
-The relevant $core->Servers->{$context} hash is updated prior to
-broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
-are now available for retrieval. You might use these to properly
-compare two nicknames, for example:
-
-  require IRC::Utils;  ## for eq_irc
-  my $context = $$_[0];
-  ## most servers are 'rfc1459', some may be ascii or -strict
-  ## (some return totally fubar values, and we'll default to rfc1459)
-  my $casemap = $core->Servers->{$context}->{CaseMap};
-  my $is_equal = IRC::Utils::eq_irc($nick_a, $nick_b, $casemap);
-
-=head3 Bot_disconnected
-
-Broadcast when irc_disconnected is received.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $server_name = $$_[1];
-
-$core->Servers->{$context}->{Connected} will be false until a reconnect.
-
-=head3 Bot_server_error
-
-Issued on unknown ERROR : events. Not a socket error, but connecting failed.
-
-The IRC component will provide a maybe-not-useful reason:
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $reason = $$_[1];
-
-... Maybe you're zlined. :)
-
-
-
-=head2 Incoming message events
-
-=head3 Bot_public_msg
-
-Broadcast upon receiving public text (text in a channel).
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $msg = $$_[1];
-  my $stripped = $msg->{message};
-  ...
-
-$msg is a hash, with the following structure:
-
-  $msg = {
-    myself => The bot's current nickname on this context
-    src => Source's full nick!user@host
-    src_nick => Source nickname
-    src_user => Source username
-    src_host => Source hostname
-
-    channel => The first channel message was seen on
-    target_array => Array of channels message was seen on    
-
-    orig => Original, unparsed message content
-    message => Color/format-stripped message content
-    message_array => Color/format-stripped content, split to array
-
-    highlight => Boolean: was the bot being addressed?
-    cmdprefix => Boolean: was the string prefixed with CmdChar?
-    ## also see L</Bot_public_cmd_CMD>
-    cmd => The command used, if cmdprefix was true
-  };
-
-B<IMPORTANT:> We don't automatically decode any character encodings.
-This means that text may be a byte-string of unknown encoding.
-Storing or displaying the text may present complications.
-You may want decode_irc from L<IRC::Utils> for these purposes.
-See L<IRC::Utils/ENCODING> for more on encodings + IRC.
-
-Also see:
-
-=over
-
-=item *
-
-L<perluniintro>
-
-=item *
-
-L<perlunitut>
-
-=item *
-
-L<perlunicode>
-
-=back
-
-
-=head3 Bot_public_cmd_CMD
-
-Broadcast when a public command is triggered.
-
-Plugins can catch these events to respond to specific commands.
-
-CMD is the public command triggered; ie the first "word" of something
-like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
-
-Syntax is precisely the same as L</Bot_public_msg>, with one major 
-caveat: B<<$msg->{message_array} will not contain the command.>>
-
-This event is pushed to the pipeline before _public_msg.
-
-
-=head3 Bot_private_msg
-
-Broadcast when a private message is received.
-
-Syntax is the same as L</Bot_public_msg>, B<except> the first spotted 
-destination is stored in key C<target>
-
-The default IRC interface plugins only spawn a single client per server.
-It's fairly safe to assume that C<target> is the bot's current nickname.
-
-
-=head3 Bot_notice
-
-Broadcast when a /NOTICE is received.
-
-Syntax is the same as L</Bot_private_msg>
-
-
-=head3 Bot_ctcp_action
-
-Broadcast when a CTCP ACTION (/ME in most clients) is received.
-
-Syntax is similar to L</Bot_public_msg>, except the only keys available are:
-  context
-  myself
-  src src_nick src_user src_host
-  target target_array
-  message message_array orig
-
-
-
-=head2 Sent notification events
-
-
-=head3 Bot_message_sent
-
-Broadcast when a PRIVMSG has been sent to the server via an event;
-in other words, when a 'send_message' event was sent.
-
-Carries a copy of the target and text:
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $target = $$_[1];
-  my $string = $$_[2];
-
-This being IRC, there is no guarantee that the message actually went out.
-
-
-=head3 Bot_notice_sent
-
-Broadcast when a NOTICE has been sent out via a send_notice event.
-
-Same syntax as L</Bot_message_sent>.
-
-
-=head2 Channel state events
-
-
-=head3 Bot_chan_sync
-
-Broadcast when we've finished receiving channel status info.
-This generally indicates we're ready to talk to the channel.
-
-Carries the channel name:
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
-
-
-=head3 Bot_topic_changed
-
-Broadcast when a channel topic has changed.
-
-Carries a hash:
-
-  my ($self, $core) = @splice @_, 0, 2;
-  my $context = $$_[0];
-  my $t_change = $$_[1];
-
-$t_change has the following keys:
-
-  $t_change = {
-    src => Topic setter; may be an arbitrary string
-    src_nick => 
-    src_user => 
-    src_host =>
-    channel =>
-    topic => New topic string
-  };
-
-Note that the topic setter may be a server, just a nickname, 
-the name of a service, or some other arbitrary string.
-
-
-=head3 Bot_mode_changed
-
-Broadcast when a channel mode has changed.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my ($context, $modechg) = ($$_[0], $$_[1]);
-
-The $modechg hash has the following keys:
-
-  $modechg = {
-    src => Full nick!user@host (or a server name)
-    ## The other src_* variables are irrelevant if src is a server:
-    src_nick => Nickname of mode changer
-    src_user => Username of mode changer
-    src_host => Hostname of mode changer
-    channel => Channel mode changed on
-    mode => Mode change string
-    args => Array of arguments to modes, if any
-    hash => HashRef produced by IRC::Utils::parse_mode_line
-  };
-
-$modechg->{hash} is produced by L<IRC::Utils>.
-
-It has two keys: I<modes> and I<args>. They are both ARRAY references:
-
-  my @modes = @{ $modechg->{hash}->{modes} };
-  my @args = @{ $modechg->{hash}->{args} };
-
-If parsing failed, the hash is empty.
-
-The caveat to parsing modes is determining whether or not they have args.
-You can walk each individual mode and handle known types:
-
-  for my $mode (@modes) {
-    given ($mode) {
-      next when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
-      when ("l") {  ## limit mode has an arg
-        my $limit = shift @args;
-      }
-      when ("b") {
-        ## shift off a ban ...
-      }
-      ## etc
-    }
-  }
-
-Theoretically, you can find out which types should have args via ISUPPORT:
-
-  my $irc = $self->Servers->{Main}->{Object};
-  my $is_chanmodes = $irc->isupport('CHANMODES')
-                     || 'b,k,l,imnpst';  ## oldschool set
-  ## $m_list modes add/delete modes from a list (bans for example)
-  ## $m_always modes always have a param specified.
-  ## $m_only modes only have a param specified on a '+' operation.
-  ## $m_never will never have a parameter.
-  my ($m_list, $m_always, $m_only, $m_never) = split ',', $is_chanmodes;
-  ## get status modes (ops, voice ...)
-  ## allegedly not all servers report all PREFIX modes
-  my $m_status = $irc->isupport('PREFIX') || '(ov)@+';
-  $m_status =~ s/^\((\w+)\).*$/$1/; 
-  
-See L<http://www.irc.org/tech_docs/005.html> for more information on ISUPPORT.
-
-As of this writing the Cobalt core provides no convenience method for this.
-
-
-=head3 Bot_user_joined
-
-Broadcast when a user joins a channel we are on.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $join = $$_[1];
-
-$join is a hash with the following keys:
-
-  $join = {
-    src =>
-    src_nick =>
-    src_user =>
-    src_host =>
-    channel => Channel the user joined
-  };
-
-
-=head3 Bot_user_left
-
-Broadcast when a user parts a channel we are on.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $part = $$_[1];
-
-$part is a hash with the same keys as L</Bot_user_joined>.
-
-=head3 Bot_self_left
-
-Broadcast when the bot parts a channel, possibly via coercion.
-
-A plugin can catch I<Bot_part> events to find out that the bot was 
-told to depart from a channel. However, the bot may've been forced 
-to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART' 
-that will do this. I<Bot_self_left> indicates the bot left the channel, 
-as determined by matching the bot's nickname against the user who left.
-
-$$_[1] is the channel name.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
-
-B<IMPORTANT>:
-
-Uses eq_irc with the server's CASEMAPPING to determine whether this 
-is actually the bot leaving, in order to cope with servers issuing 
-forced parts with incorrect case.
-
-This method may be unreliable on servers with an incorrect CASEMAPPING 
-in ISUPPORT, as it will fall back to normal rfc1459 rules.
-
-Also see L</Bot_user_left>
-
-
-=head3 Bot_user_kicked
-
-Broadcast when a user (maybe us) is kicked.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $kick = $$_[1];
-
-$$_[1] is a hash with the following keys:
-
-  $kick = {
-    src => Origin of the kick
-    src_nick =>
-    src_user =>
-    src_host =>
-    channel => Channel kick took place on
-    kicked => User that was kicked
-  }
-
-
-
-=head2 User state events
-
-
-=head3 Bot_umode_changed
-
-Broadcast when mode changes on the bot's nickname (umode).
-
-The context and mode string is provided:
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $modestr = $$_[1];
-
-
-=head3 Bot_nick_changed
-
-Broadcast when a visible user's nickname changes.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $nchange = $$_[1];
-
-$$_[1] is a hash with the following keys:
-
-  $nchange = {
-    old => Previous nickname
-    new => New nickname
-    equal => Indicates a simple case change
-  }
-
-I<equal> is determined by attempting to get server CASEMAPPING= 
-(falling back to 'rfc1459' rules) and using L<IRC::Utils> to check 
-whether this appears to be just a case change. This method may be 
-unreliable on servers with an incorrect CASEMAPPING value in ISUPPORT.
-
-
-=head3 Bot_self_nick_changed
-
-Broadcast when our own nickname changed, possibly via coercion.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $new_nick = $$_[1];
-
-A I<nick_changed> event will be queued after I<self_nick_changed>.
-
-
-=head3 Bot_user_quit
-
-Broadcast when a visible user has quit.
-
-We can only receive quit notifications if we share channels with the user.
-
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $quit_h = $$_[1];
-
-$quit_h would be a hash with the following keys:
-
-  $quit_h = {
-    src =>
-    src_nick =>
-    src_user =>
-    src_host =>
-    reason =>
-  }
-
-
-
-=head1 ACCEPTED EVENTS
-
-=head2 Outgoing IRC commands
-
-=head3 send_message
-
-A C<send_message> event for our context triggers a PRIVMSG send.
-
-  $core->send_event( 'send_message', $context, $target, $string );
-
-=head3 send_notice
-
-A C<send_notice> event for our context triggers a NOTICE.
-
-  $core->send_event( 'send_notice', $context, $target, $string );
-
-
-=head3 send_raw
-
-FIXME
-
-=head3 mode
-
-A C<mode> event for our context attempts a mode change.
-
-Typically the target will be either a channel or the bot's own nickname.
-
-  $core->send_event( 'mode', $context, $target, $modestr );
-  ## example:
-  $core->send_event( 'mode', 'Main', '#mychan', '+ik some_key' );
-
-This being IRC, there is no guarantee that the bot has privileges to 
-effect the changes, or that the changes took place.
-
-=head3 kick
-
-A C<kick> event for our context attempts to kick a user.
-
-A reason can be supplied:
-
-  $core->send_event( 'kick', $context, $channel, $target, $reason );
-
-=head3 join
-
-A C<join> event for our context attempts to join a channel.
-
-  $core->send_event( 'join', $context, $channel );
-
-Catch L</Bot_chan_sync> to check for channel sync status.
-
-=head3 part
-
-A C<part> event for our context attempts to leave a channel.
-
-A reason can be supplied:
-
-  $core->send_event( 'part', $context, $channel, $reason );
-
-There is no guarantee that we were present on the channel in the 
-first place.
-
-
-=head1 AUTHOR
-
-Jon Portnoy <avenj@cobaltirc.org>
-
-L<http://www.cobaltirc.org>
-
-=cut
 
 use 5.12.1;
 use strict;
@@ -1318,4 +786,536 @@ sub Bot_send_raw {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+__END__
 
+=pod
+
+=head1 NAME
+
+Cobalt::IRC -- core (context "Main") IRC plugin
+
+
+=head1 DESCRIPTION
+
+Plugin authors will almost definitely want to read this reference.
+
+The core IRC plugin provides a single-server IRC interface via
+L<POE::Component::IRC>.
+
+B<The server context is always "Main">
+
+It does various work on incoming events we consider important enough
+to re-broadcast from the IRC component. This makes life easier on 
+plugins and reduces code redundancy.
+
+IRC-related events provide the $core->Servers context name in the 
+first argument:
+  my $context = $$_[0];
+
+Other arguments may vary by event. See below.
+
+
+=head1 EMITTED EVENTS
+
+
+=head2 Connection state events
+
+
+=head3 Bot_connected
+
+Issued when an irc_001 (welcome msg) event is received.
+
+Indicates the bot is now talking to an IRC server.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $server_name = $$_[1];
+
+The relevant $core->Servers->{$context} hash is updated prior to
+broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
+are now available for retrieval. You might use these to properly
+compare two nicknames, for example:
+
+  require IRC::Utils;  ## for eq_irc
+  my $context = $$_[0];
+  ## most servers are 'rfc1459', some may be ascii or -strict
+  ## (some return totally fubar values, and we'll default to rfc1459)
+  my $casemap = $core->Servers->{$context}->{CaseMap};
+  my $is_equal = IRC::Utils::eq_irc($nick_a, $nick_b, $casemap);
+
+=head3 Bot_disconnected
+
+Broadcast when irc_disconnected is received.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $server_name = $$_[1];
+
+$core->Servers->{$context}->{Connected} will be false until a reconnect.
+
+=head3 Bot_server_error
+
+Issued on unknown ERROR : events. Not a socket error, but connecting failed.
+
+The IRC component will provide a maybe-not-useful reason:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $reason = $$_[1];
+
+... Maybe you're zlined. :)
+
+
+
+=head2 Incoming message events
+
+=head3 Bot_public_msg
+
+Broadcast upon receiving public text (text in a channel).
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $msg = $$_[1];
+  my $stripped = $msg->{message};
+  ...
+
+$msg is a hash, with the following structure:
+
+  $msg = {
+    myself => The bot's current nickname on this context
+    src => Source's full nick!user@host
+    src_nick => Source nickname
+    src_user => Source username
+    src_host => Source hostname
+
+    channel => The first channel message was seen on
+    target_array => Array of channels message was seen on    
+
+    orig => Original, unparsed message content
+    message => Color/format-stripped message content
+    message_array => Color/format-stripped content, split to array
+
+    highlight => Boolean: was the bot being addressed?
+    cmdprefix => Boolean: was the string prefixed with CmdChar?
+    ## also see L</Bot_public_cmd_CMD>
+    cmd => The command used, if cmdprefix was true
+  };
+
+B<IMPORTANT:> We don't automatically decode any character encodings.
+This means that text may be a byte-string of unknown encoding.
+Storing or displaying the text may present complications.
+You may want decode_irc from L<IRC::Utils> for these purposes.
+See L<IRC::Utils/ENCODING> for more on encodings + IRC.
+
+Also see:
+
+=over
+
+=item *
+
+L<perluniintro>
+
+=item *
+
+L<perlunitut>
+
+=item *
+
+L<perlunicode>
+
+=back
+
+
+=head3 Bot_public_cmd_CMD
+
+Broadcast when a public command is triggered.
+
+Plugins can catch these events to respond to specific commands.
+
+CMD is the public command triggered; ie the first "word" of something
+like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
+
+Syntax is precisely the same as L</Bot_public_msg>, with one major 
+caveat: B<<$msg->{message_array} will not contain the command.>>
+
+This event is pushed to the pipeline before _public_msg.
+
+
+=head3 Bot_private_msg
+
+Broadcast when a private message is received.
+
+Syntax is the same as L</Bot_public_msg>, B<except> the first spotted 
+destination is stored in key C<target>
+
+The default IRC interface plugins only spawn a single client per server.
+It's fairly safe to assume that C<target> is the bot's current nickname.
+
+
+=head3 Bot_notice
+
+Broadcast when a /NOTICE is received.
+
+Syntax is the same as L</Bot_private_msg>
+
+
+=head3 Bot_ctcp_action
+
+Broadcast when a CTCP ACTION (/ME in most clients) is received.
+
+Syntax is similar to L</Bot_public_msg>, except the only keys available are:
+  context
+  myself
+  src src_nick src_user src_host
+  target target_array
+  message message_array orig
+
+
+
+=head2 Sent notification events
+
+
+=head3 Bot_message_sent
+
+Broadcast when a PRIVMSG has been sent to the server via an event;
+in other words, when a 'send_message' event was sent.
+
+Carries a copy of the target and text:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $target = $$_[1];
+  my $string = $$_[2];
+
+This being IRC, there is no guarantee that the message actually went out.
+
+
+=head3 Bot_notice_sent
+
+Broadcast when a NOTICE has been sent out via a send_notice event.
+
+Same syntax as L</Bot_message_sent>.
+
+
+=head2 Channel state events
+
+
+=head3 Bot_chan_sync
+
+Broadcast when we've finished receiving channel status info.
+This generally indicates we're ready to talk to the channel.
+
+Carries the channel name:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+
+
+=head3 Bot_topic_changed
+
+Broadcast when a channel topic has changed.
+
+Carries a hash:
+
+  my ($self, $core) = @splice @_, 0, 2;
+  my $context = $$_[0];
+  my $t_change = $$_[1];
+
+$t_change has the following keys:
+
+  $t_change = {
+    src => Topic setter; may be an arbitrary string
+    src_nick => 
+    src_user => 
+    src_host =>
+    channel =>
+    topic => New topic string
+  };
+
+Note that the topic setter may be a server, just a nickname, 
+the name of a service, or some other arbitrary string.
+
+
+=head3 Bot_mode_changed
+
+Broadcast when a channel mode has changed.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my ($context, $modechg) = ($$_[0], $$_[1]);
+
+The $modechg hash has the following keys:
+
+  $modechg = {
+    src => Full nick!user@host (or a server name)
+    ## The other src_* variables are irrelevant if src is a server:
+    src_nick => Nickname of mode changer
+    src_user => Username of mode changer
+    src_host => Hostname of mode changer
+    channel => Channel mode changed on
+    mode => Mode change string
+    args => Array of arguments to modes, if any
+    hash => HashRef produced by IRC::Utils::parse_mode_line
+  };
+
+$modechg->{hash} is produced by L<IRC::Utils>.
+
+It has two keys: I<modes> and I<args>. They are both ARRAY references:
+
+  my @modes = @{ $modechg->{hash}->{modes} };
+  my @args = @{ $modechg->{hash}->{args} };
+
+If parsing failed, the hash is empty.
+
+The caveat to parsing modes is determining whether or not they have args.
+You can walk each individual mode and handle known types:
+
+  for my $mode (@modes) {
+    given ($mode) {
+      next when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
+      when ("l") {  ## limit mode has an arg
+        my $limit = shift @args;
+      }
+      when ("b") {
+        ## shift off a ban ...
+      }
+      ## etc
+    }
+  }
+
+Theoretically, you can find out which types should have args via ISUPPORT:
+
+  my $irc = $self->Servers->{Main}->{Object};
+  my $is_chanmodes = $irc->isupport('CHANMODES')
+                     || 'b,k,l,imnpst';  ## oldschool set
+  ## $m_list modes add/delete modes from a list (bans for example)
+  ## $m_always modes always have a param specified.
+  ## $m_only modes only have a param specified on a '+' operation.
+  ## $m_never will never have a parameter.
+  my ($m_list, $m_always, $m_only, $m_never) = split ',', $is_chanmodes;
+  ## get status modes (ops, voice ...)
+  ## allegedly not all servers report all PREFIX modes
+  my $m_status = $irc->isupport('PREFIX') || '(ov)@+';
+  $m_status =~ s/^\((\w+)\).*$/$1/; 
+  
+See L<http://www.irc.org/tech_docs/005.html> for more information on ISUPPORT.
+
+As of this writing the Cobalt core provides no convenience method for this.
+
+
+=head3 Bot_user_joined
+
+Broadcast when a user joins a channel we are on.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $join = $$_[1];
+
+$join is a hash with the following keys:
+
+  $join = {
+    src =>
+    src_nick =>
+    src_user =>
+    src_host =>
+    channel => Channel the user joined
+  };
+
+
+=head3 Bot_user_left
+
+Broadcast when a user parts a channel we are on.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $part = $$_[1];
+
+$part is a hash with the same keys as L</Bot_user_joined>.
+
+=head3 Bot_self_left
+
+Broadcast when the bot parts a channel, possibly via coercion.
+
+A plugin can catch I<Bot_part> events to find out that the bot was 
+told to depart from a channel. However, the bot may've been forced 
+to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART' 
+that will do this. I<Bot_self_left> indicates the bot left the channel, 
+as determined by matching the bot's nickname against the user who left.
+
+$$_[1] is the channel name.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+
+B<IMPORTANT>:
+
+Uses eq_irc with the server's CASEMAPPING to determine whether this 
+is actually the bot leaving, in order to cope with servers issuing 
+forced parts with incorrect case.
+
+This method may be unreliable on servers with an incorrect CASEMAPPING 
+in ISUPPORT, as it will fall back to normal rfc1459 rules.
+
+Also see L</Bot_user_left>
+
+
+=head3 Bot_user_kicked
+
+Broadcast when a user (maybe us) is kicked.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $kick = $$_[1];
+
+$$_[1] is a hash with the following keys:
+
+  $kick = {
+    src => Origin of the kick
+    src_nick =>
+    src_user =>
+    src_host =>
+    channel => Channel kick took place on
+    kicked => User that was kicked
+  }
+
+
+
+=head2 User state events
+
+
+=head3 Bot_umode_changed
+
+Broadcast when mode changes on the bot's nickname (umode).
+
+The context and mode string is provided:
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $modestr = $$_[1];
+
+
+=head3 Bot_nick_changed
+
+Broadcast when a visible user's nickname changes.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $nchange = $$_[1];
+
+$$_[1] is a hash with the following keys:
+
+  $nchange = {
+    old => Previous nickname
+    new => New nickname
+    equal => Indicates a simple case change
+  }
+
+I<equal> is determined by attempting to get server CASEMAPPING= 
+(falling back to 'rfc1459' rules) and using L<IRC::Utils> to check 
+whether this appears to be just a case change. This method may be 
+unreliable on servers with an incorrect CASEMAPPING value in ISUPPORT.
+
+
+=head3 Bot_self_nick_changed
+
+Broadcast when our own nickname changed, possibly via coercion.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $new_nick = $$_[1];
+
+A I<nick_changed> event will be queued after I<self_nick_changed>.
+
+
+=head3 Bot_user_quit
+
+Broadcast when a visible user has quit.
+
+We can only receive quit notifications if we share channels with the user.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $quit_h = $$_[1];
+
+$quit_h would be a hash with the following keys:
+
+  $quit_h = {
+    src =>
+    src_nick =>
+    src_user =>
+    src_host =>
+    reason =>
+  }
+
+
+
+=head1 ACCEPTED EVENTS
+
+=head2 Outgoing IRC commands
+
+=head3 send_message
+
+A C<send_message> event for our context triggers a PRIVMSG send.
+
+  $core->send_event( 'send_message', $context, $target, $string );
+
+=head3 send_notice
+
+A C<send_notice> event for our context triggers a NOTICE.
+
+  $core->send_event( 'send_notice', $context, $target, $string );
+
+
+=head3 send_raw
+
+FIXME
+
+=head3 mode
+
+A C<mode> event for our context attempts a mode change.
+
+Typically the target will be either a channel or the bot's own nickname.
+
+  $core->send_event( 'mode', $context, $target, $modestr );
+  ## example:
+  $core->send_event( 'mode', 'Main', '#mychan', '+ik some_key' );
+
+This being IRC, there is no guarantee that the bot has privileges to 
+effect the changes, or that the changes took place.
+
+=head3 kick
+
+A C<kick> event for our context attempts to kick a user.
+
+A reason can be supplied:
+
+  $core->send_event( 'kick', $context, $channel, $target, $reason );
+
+=head3 join
+
+A C<join> event for our context attempts to join a channel.
+
+  $core->send_event( 'join', $context, $channel );
+
+Catch L</Bot_chan_sync> to check for channel sync status.
+
+=head3 part
+
+A C<part> event for our context attempts to leave a channel.
+
+A reason can be supplied:
+
+  $core->send_event( 'part', $context, $channel, $reason );
+
+There is no guarantee that we were present on the channel in the 
+first place.
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
