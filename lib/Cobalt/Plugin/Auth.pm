@@ -228,7 +228,9 @@ sub Bot_user_left {
   my $channel = $$_[1]->{channel};
   my $nick = $$_[1]->{src_nick};
 
-  ## FIXME ask our irc component (from core->Servers) if we still share channels?
+  ## FIXME ask our irc component (from core->Servers) if we still share channels? similar to cobalt behavior
+  ##   need a method for this ...
+
   return PLUGIN_EAT_NONE
 }
 
@@ -240,23 +242,22 @@ sub Bot_user_kicked {
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
-  ## User quit, clear relevant auth entries
   my $context = $$_[0];
   my $nick = $$_[1]->{src_nick};
+  ## User quit, clear relevant auth entries:
   $self->_do_logout($context, $nick);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  ## a nickname changed, adjust Auth accordingly
   my $context = $$_[0];
   my $old = $$_[1]->{old};
   my $new = $$_[1]->{new};
-
+  ## a nickname changed, adjust Auth accordingly:
   if (exists $core->State->{Auth}->{$context}->{$old}) {
     my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};
-    if ($pkg eq __PACKAGE__) {
+    if ($pkg eq __PACKAGE__) {  ## only adjust auths that're ours
       $core->State->{Auth}->{$context}->{$new} =
         delete $core->State->{Auth}->{$context}->{$old};
     }
@@ -315,6 +316,7 @@ sub _cmd_login {
   ## NOTE: usernames in accesslist are stored lowercase per rfc1459 rules:
   $l_user = lc_irc($l_user);
 
+  ## IMPORTANT:
   ## nicknames (for auth hash) remain unmolested
   ## case changes are managed by tracking actual nickname changes
   ## (that way we don't have to worry about it when checking access levels)
@@ -647,3 +649,37 @@ sub _write_access_list {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Auth -- standard access control plugin
+
+=head1 DESCRIPTION
+
+This plugin provides the standard authorization and access control 
+functionality for B<Cobalt>.
+
+
+=head1 CONFIGURATION
+
+=head2 plugins.conf
+
+=head2 auth.conf
+
+
+=head1 EMITTED EVENTS
+
+
+=head1 ACCEPTED EVENTS
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

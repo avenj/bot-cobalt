@@ -9,14 +9,19 @@ use Time::Piece;
 ## where to grab POD from:
 my $pod_root = "../../lib";
 
-my $outdir = "html";
-my $index = "html/index.html";
+my $outdir = "../../doc/html";
+my $index = $outdir."/index.html";
 
 my $files = {
-#  "Cobalt.pm" => {
-#    name => "Cobalt.html",
-#    desc => "<b>Cobalt core</b>",
-#  },
+  "Cobalt.pm" => {
+    name => "Cobalt.html",
+    desc => "<b>Cobalt core</b>",
+  },
+
+  "Cobalt/Manual/Plugins.pod" => {
+    name => "Cobalt-Manual-Plugins.html",
+    desc => "<b>The Cobalt Plugin Author's Manual</b>",
+  },
 
   "Cobalt/IRC.pm" => {
     name => "Cobalt-IRC.html",
