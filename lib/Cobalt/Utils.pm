@@ -18,7 +18,7 @@ our @EXPORT_OK = qw/
   mkpasswd
   passwdcmp
 
-  colorize
+  color
 /;
 
 our %EXPORT_TAGS = (
