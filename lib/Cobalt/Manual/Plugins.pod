@@ -1,0 +1,143 @@
+=head1 NAME
+
+Cobalt::Manual::Plugins - Plugin-writing fundamentals guide
+
+=head1 VERSION
+
+Plugins guide revision: 0001
+
+Last updated for cobalt 2.00
+
+=head1 DESCRIPTION
+
+This POD attempts to be a reasonably complete guide to writing useful 
+B<Cobalt2> plugins.
+
+Refer to L</SEE ALSO> for other relevant documentation.
+
+B<Plugin authors should at least read the Cobalt::IRC POD!>
+
+
+=head1 PLUGIN FUNDAMENTALS
+
+
+=head2 Module paths and configuration
+
+=head3 plugins.conf
+
+=head3 Accessing plugin configuration
+
+
+=head2 A basic plugin outline
+
+
+
+=head2 Receiving IRC events
+
+
+=head3 Messages
+
+=head3 Commands
+
+=head3 Other events
+
+All of the typical instances of "stuff going on" on IRC are 
+reported by the core IRC module in context "Main"
+
+B<
+The documentation for all events parsed and re-broadcast from IRC 
+is available via the Cobalt::IRC POD
+>
+
+See (FIXME - link) or I<perldoc lib::Cobalt::IRC> from the cobalt2 
+distribution's directory.
+
+=head2 Sending IRC events
+
+L<Cobalt::IRC> receives the following commonly-used events:
+
+=head3 Messages
+
+=head4 send_message
+
+=head4 send_notice
+
+
+=head3 Channel-related
+
+=head4 join
+
+=head4 part
+
+=head4 kick
+
+=head4 mode
+
+=head4 topic
+
+
+
+=head2 Core methods
+
+=head3 Accessors
+
+=head3 Timer management
+
+=head4 timer_set
+
+=head4 timer_del
+
+=head4 timer_del_pkg
+
+
+=head2 Syndicated core events
+
+=head3 Plugin-related
+
+=head3 Langset-related
+
+=head3 Timer-related
+
+=head3 Auth module
+
+
+=head1 ADVANCED CONCEPTS
+
+=head2 Breaking up lengthy loops
+
+FIXME discussion of pushing self-events back to pipeline to loop
+
+=head2 Custom per-plugin language sets
+
+FIXME discussion of using load_langset to create a 'local' RPL hash
+
+=head2 Spawning your own POE::Session
+
+FIXME discussion of plugins that initiate their own sessions
+
+FIXME registering for events from irc...?
+
+=head2 Manipulating plugin pipeline order
+
+
+
+=head1 IRC CAVEATS
+
+=head2 IRC casemapping rules
+
+=head2 Character encodings
+
+
+=head1 SEE ALSO
+
+Plugin authors should at least read the L<Cobalt::IRC> POD, and 
+probably L<Cobalt::Utils> as well.
+
+FIXME links etc
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+http://www.cobaltirc.org
