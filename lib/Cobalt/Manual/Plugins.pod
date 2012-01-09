@@ -20,20 +20,182 @@ B<Plugin authors should at least read the Cobalt::IRC POD!>
 
 =head1 PLUGIN FUNDAMENTALS
 
-
 =head2 Module paths and configuration
 
 =head3 plugins.conf
 
+Plugins specified in plugins.conf (located in our etc/) will be 
+automatically loaded at runtime in the order they are specified in.
+
+C<plugins.conf> is YAML in the following structure:
+
+  ---
+  MyPlugin:
+    Module: Cobalt::Plugin::User::MyPlugin
+    Config: plugins/mine/myplugin.conf
+
+Configuration files specified in 'Config: ' are expected to be valid YAML.
+They'll be automatically loaded at load-time; the data structure loaded 
+will be stored in the core 'cfg' attribute. See below.
+
+
 =head3 Accessing plugin configuration
+
+FIXME need core get_plugin_cfg
+
+FIXME discussion about direct access
 
 
 =head2 A basic plugin outline
 
+  package Cobalt::Plugin::User::MyPlugin;
+  our $VERSION = '0.001';
+  use strict;
+  use warnings;
+  
+  ## You need Object::Pluggable::Constants in order to return valid
+  ## pipeline control values, else you might break some or all plugins.
+  ##
+  ## See "Returning proper values" under "Handling events" in this POD.
+  ## 
+  ## PLUGIN_EAT_NONE is the most common.
+  ##
+  ## importing :ALL will give you all of them:
+  use Object::Pluggable::Constants qw/ :ALL /;
+  
+  ## Cobalt::Utils provides many useful methods:
+  use Cobalt::Utils qw/ :ALL /;
+  
+  ## minimalist object constructor:
+  sub new { bless( {}, shift ) }
+  
+  ## called when we are loaded:
+  sub Cobalt_register {
+    ## handlers receive $self and $core as first two args:
+    ## $self is "this object"
+    ## $core gives us access to core attributes and methods:
+    my ($self, $core) = @_;
+    
+    ## register to only receive public msg events:
+    $core->plugin_register( $self, 'SERVER',
+      [ 'public_msg' ]
+    );
+    
+    ## log that we're here now:
+    $core->log->info("Registered");
+    
+    ## ALWAYS return an Object::Pluggable::Constants value:
+    return PLUGIN_EAT_NONE
+  }
+  
+  ## called when we are unloaded:
+  sub Cobalt_unregister {
+    my ($self, $core) = @_;
+    $core->log->info("Unregistering; bye!");
+    return PLUGIN_EAT_NONE
+  }
+  
+  ## Syndicated events become prefixed with 'Bot_'
+  ## (when called send_event, leave the prefix out)
+  sub Bot_public_msg {
+    my ($self, $core) = @_;
+    ...
+  }
+  
+  1;  ## perl modules must end in '1;'
+  
+
+Also see the L<Cobalt::Manual::Examples> POD
+
+
+=head2 Handling events
+
+Plugins are fundamentally event driven.
+
+A plugin will (usually at load-time) register to receive some set of 
+events, which are pushed through the pipeline by the Cobalt core (with 
+help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
+
+=head3 Registering for events
+
+Registering for events typically happens at plugin load-time; in other 
+words, inside C<Cobalt_register>:
+
+  my ($self, $core) = @_;
+  
+  $core->plugin_register( $self, 'SERVER',
+    [ 'chan_sync' ],
+    [ 'public_msg' ],
+  );
+  
+  ## or to receive all events:
+  $core->plugin_register( $self, 'SERVER',
+    [ 'all' ],
+  );
+
+
+=head3 Event handlers
+
+Syndicated events become prefixed with Bot_ when handed off to plugins:
+
+  sub Bot_some_event {
+    my ($self, $core) = splice @_, 0, 2;
+    my $deref_first_arg = $$_[0];
+    ...
+  }
+
+B<IMPORTANT: the arguments passed to event handlers are ALWAYS references!>
+
+(If you don't know what that means, it's time to read L<perlreftut> and 
+L<perlref> immediately.)
+
+This means that it's intended behavior to be able to modify the event's 
+arguments before it continues through the plugin pipeline.
+
+B<That might not be what you want.>
+
+Be aware of this behavior and code appropriately.
+
+
+=head3 Returning proper values
+
+The plugin system is a pipeline.
+
+Unless manipulated manually, Cobalt's pipeline starts with the core 
+('Main' context) IRC plugin provided by L<Cobalt::IRC>. The remaining 
+plugins are loaded in the order they're specified in.
+
+That being the case, events will be handed on down the pipeline, 
+B<unless> a handler for a syndicated event returns an incorrect value.
+
+Your Bot_* event handlers should B<always> return an 
+L<Object::Pluggable::Constants> value. The two commonly used values are:
+
+=head4 PLUGIN_EAT_NONE
+
+Allow the event to continue to pass through the pipeline.
+
+B<This is the most common return value for event handlers.>
+
+=head4 PLUGIN_EAT_ALL 
+
+Eat the event, removing it from the plugin pipeline.
+
+Typically you might return *_EAT_ALL on self-syndicated events.
+
+For example, a plugin that breaks up a loop into chunks without its 
+own POE session might self-syndicate some kind of loop event, eating 
+the event when the loop is complete (also see L</"ADVANCED CONCEPTS">).
+
+This can also be useful when there is a good reason to terminate an 
+event's lifetime; for example, implementing a plugin that loads itself 
+at the front of the pipeline and restricts outgoing events based on 
+some criteria.
 
 
 =head2 Receiving IRC events
 
+=head3 Understanding server context
 
 =head3 Messages
 
@@ -56,14 +218,14 @@ distribution's directory.
 
 L<Cobalt::IRC> receives the following commonly-used events:
 
-=head3 Messages
+=head3 Sending messages
 
 =head4 send_message
 
 =head4 send_notice
 
 
-=head3 Channel-related
+=head3 Channel-related commands
 
 =head4 join
 
@@ -75,6 +237,32 @@ L<Cobalt::IRC> receives the following commonly-used events:
 
 =head4 topic
 
+
+=head3 Accessing the IRC component directly
+
+The IRC backend for the core distribution is L<POE::Component::IRC>,
+more specifically the C<State> subclass.
+
+L<POE::Component::IRC> is a very mature and complete IRC framework.
+
+If your plugin does any kind of IRC-related heavy lifting, you will 
+almost certainly want to consult the documentation for 
+L<POE::Component::IRC> and L<POE::Component::IRC::State>.
+
+
+=head4 Obtaining the IRC component
+
+You can retrieve the IRC component object for direct access via the 
+core's get_irc_obj method. Expects a server context:
+
+  sub Bot_public_msg {
+    my ($self, $core) = @_;
+    my $context = $$_[0];
+    my $irc = $core->get_irc_obj($context);
+  }
+
+
+=head4 Frequently useful PoCo::IRC commands
 
 
 =head2 Core methods
@@ -101,6 +289,15 @@ L<Cobalt::IRC> receives the following commonly-used events:
 =head3 Auth module
 
 
+=head1 PLUGIN DESIGN TIPS
+
+=head2 Keeping track of $core
+
+
+=head2 Using Moose
+
+
+
 =head1 ADVANCED CONCEPTS
 
 =head2 Breaking up lengthy loops
@@ -125,7 +322,10 @@ FIXME registering for events from irc...?
 
 =head2 IRC casemapping rules
 
+
+
 =head2 Character encodings
+
 
 
 =head1 SEE ALSO
@@ -134,6 +334,25 @@ Plugin authors should at least read the L<Cobalt::IRC> POD, and
 probably L<Cobalt::Utils> as well.
 
 FIXME links etc
+
+
+=head2 Relevant modules
+
+=over
+
+=item *
+
+L<POE::Component::Syndicator>
+
+=item *
+
+L<POE::Component::IRC>
+
+=item *
+
+L<POE::Component::IRC::State>
+
+=back
 
 
 =head1 AUTHOR
