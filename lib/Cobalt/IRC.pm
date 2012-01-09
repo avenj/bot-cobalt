@@ -697,6 +697,24 @@ sub Bot_send_notice {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_topic {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+  my $topic = $$_[2] || '';
+
+  unless ( $context
+           && $context eq 'Main'
+           && $channel
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
+
+  $self->irc->yield( 'topic', $channel, $topic );
+
+  return PLUGIN_EAT_NONE
+}
+
 sub Bot_mode {
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
@@ -1283,6 +1301,12 @@ Typically the target will be either a channel or the bot's own nickname.
 
 This being IRC, there is no guarantee that the bot has privileges to 
 effect the changes, or that the changes took place.
+
+=head3 topic
+
+A C<topic> event for our context attempts to change channel topic.
+
+  $core->send_event( 'topic', $context, $channel, $new_topic );
 
 =head3 kick
 
