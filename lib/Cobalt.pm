@@ -232,7 +232,9 @@ sub syndicator_stopped {
 sub ev_plugin_error {
   my ($kernel, $self, $err) = @_[KERNEL, OBJECT, ARG0];
   $self->log->warn("Plugin err: $err");
-  croak "Plugin error: $err";
+  ## syndicate a Bot_plugin_error
+  ## FIXME: irc plugin to relay these?
+  $self->send_event( 'plugin_error', $err );
 }
 
 
@@ -462,6 +464,12 @@ sub get_irc_obj {
   return ref $irc ? $irc : ();
 }
 
+
+sub get_plugin_cfg {
+  ## FIXME
+  ## return a _copy_, not a ref
+  ## that way we can worry less about stupid plugins breaking things
+}
 
 
 __PACKAGE__->meta->make_immutable;
