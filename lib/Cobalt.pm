@@ -1,6 +1,5 @@
 package Cobalt;
-
-our $VERSION = '2.0_002';
+our $VERSION = '2.00_3';
 
 use 5.12.1;
 use Carp;
@@ -273,14 +272,15 @@ sub timer_set {
   ##  $delay should always be in seconds
   ##   (timestr_to_secs from Cobalt::Utils may help)
   ##  $event should be a hashref:
-  ##   Type => <ONE OF: code, event, msg>
+  ##   Type => 'event' || 'msg'
   ##  If Type is 'event':
-  ##   Event =>
-  ##   Args =>
+  ##   Event => name of event to syndicate to plugins
+  ##   Args => [ array of arguments to event ]
   ##  If Type is 'msg':
-  ##   Target =>
-  ##   Content =>
-  ##  $id is optional
+  ##   Context => server context (defaults to 'Main')
+  ##   Target => target for privmsg
+  ##   Text => text string for privmsg
+  ##  $id is optional (randomized if unspecified)
   ##  if adding an existing id the old one will be deleted first.
 
   ##  Type options:
@@ -288,9 +288,9 @@ sub timer_set {
   ##   Event => "send_notice",  ## send notice example
   ##   Args  => [ ], ## optional array of args for event
   ## TYPE = msg
-  ##   Context => $server_context, # defaults to 'Main'
   ##   Target => $somewhere,
   ##   Text => $string,
+  ##   Context => $server_context, # defaults to 'Main'
 
   ## for example, a random-ID timer to join a channel 60s from now:
   ##  timer_set( 60,
@@ -466,3 +466,126 @@ sub get_irc_obj {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt -- a pluggable IRC bot framework
+
+
+=head1 DESCRIPTION
+
+B<Cobalt> is an IRC bot. Sort of.
+
+The Cobalt core (this module) simply ties an event syndicator 
+(L<POE::Component::Syndicator>) into a configuration management 
+system (using L<YAML>), a logging system (L<Log::Handler>), and some 
+other useful wheels, so you don't have to reinvent them.
+
+By default, the core will load the C<IRC.pm> plugin to provide a 
+single-server IRC interface, processing and re-broadcasting events from 
+L<POE::Component::IRC>.
+
+Most actual work is done by plugins that exist in the plugin pipeline. 
+
+Cobalt is packaged with various plugins, most of which aim to replicate 
+functionality found in C<darkbot> and the original implementation of 
+the C<cobalt> IRC bot.
+
+Plugins are simple to write but extremely flexible.
+
+The core also provides some useful attributes, exposing configuration 
+settings and state information to plugins in the pipeline.
+See L</ATTRIBUTES> for more information.
+
+There are some convenience methods available for accessing pieces of 
+state information, managing timers, and so forth. 
+See L</METHODS> for information on core methods.
+
+
+
+
+=head1 RELEVANT DOCUMENTATION
+
+FIXME
+
+
+=head1 LOGGING
+
+FIXME
+
+=head1 LANGUAGE SETS
+
+FIXME discussion of adding to ->lang
+FIXME discussion of accessing RPLs in ->lang
+
+
+=head1 ATTRIBUTES
+
+=head2 Configuration
+
+FIXME
+
+=head3 cfg
+
+FIXME
+
+=head3 var
+
+FIXME
+
+=head3 lang
+
+FIXME
+
+=head3 loglevel
+
+FIXME
+
+
+
+=head2 State Information
+
+
+=head3 Servers hash
+
+FIXME
+
+=head3 State hash
+
+FIXME
+
+B<<State->{Auth}>>
+
+
+
+B<<State->{Ignored}>>
+
+
+=head1 METHODS
+
+=head2 Accessors
+
+FIXME
+
+
+=head2 Plugin management
+
+FIXME
+
+
+=head2 Timer management
+
+FIXME
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

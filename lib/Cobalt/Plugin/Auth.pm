@@ -249,7 +249,7 @@ sub Bot_user_quit {
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  ## nickname changed, adjust Auth accordingly
+  ## a nickname changed, adjust Auth accordingly
   my $context = $$_[0];
   my $old = $$_[1]->{old};
   my $new = $$_[1]->{new};

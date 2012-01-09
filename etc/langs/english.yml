@@ -1,11 +1,22 @@
 ---
+
+## This is a cobalt2 core langset.
+##
+## It provides IRC message strings for core plugins incl. Cobalt::IRC
+##
+## Plugin authors:
+## See the Cobalt::Lang docs for information on loading langsets.
+##
+## The actual replies exist in 'RPL:' below.
+## Typically they are strings formattable by sprintf.
+
 NAME: english
 REV: 1   ## bump +1 on revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
 
- ## Core cobalt lang replies:
+ ## Core Cobalt::IRC set:
 
   ## RPL_PLUGIN_LOAD, $plugin_alias, $module
   RPL_PLUGIN_LOAD: "Plugin loaded: %s (%s)"
@@ -18,7 +29,9 @@ RPL:
 
   RPL_CHAN_SYNC: "Sync complete on %s"
 
-  ## Plugin::Version:
+
+ ## Plugin::Version:
+
   ## RPL_VERSION, $version, $perl_version, $poe_version, $pocoirc_version
   RPL_VERSION: "Running cobalt %s (perl-%s poe-%s pocoirc-%s) -- http://cobaltirc.org/dev/bots"
 

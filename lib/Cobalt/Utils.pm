@@ -199,14 +199,17 @@ Simple utility functions for Cobalt2 and plugins
 =head1 USAGE
 
 Import nothing:
+
   use Cobalt::Utils;
   my $hash = Cobalt::Utils::mkpasswd('things');
 
 Import some things:
+
   use Cobalt::Utils qw/ mkpasswd passwdcmp /;
   my $hash = mkpasswd('things');
 
 Import everything:
+
   use Cobalt::Utils qw/ :ALL /;
   my $hash = mkpasswd('things', 'md5');
   my $secs = timestr_to_secs('3h30m');
@@ -240,21 +243,25 @@ Useful for uptime reporting, for example:
 Add mIRC formatting and color codes to a string.
 
 Valid formatting codes:
+
   NORMAL BOLD UNDERLINE REVERSE ITALIC
 
 Valid color codes:
+
   WHITE BLACK BLUE GREEN RED BROWN PURPLE ORANGE YELLOW TEAL PINK
   LIGHT_CYAN LIGHT_BLUE LIGHT_GRAY LIGHT_GREEN
 
 Format/color type can be passed in upper or lower case.
 
 If passed just a color or format name, returns the control code.
+
 If passed nothing at all, returns the 'NORMAL' code.
 
   my $str = color('bold') . "bold text" . color() . "normal text";
 
 If passed a color or format name and a string, returns the formatted
 string, terminated by NORMAL:
+
   my $formatted = color('red', "red text") . "normal text";
 
 
