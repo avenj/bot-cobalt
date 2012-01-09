@@ -1,0 +1,296 @@
+<html><head><title>Cobalt::Manual::Plugins</title>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" >
+			<h1>Cobalt2 POD (Cobalt/Manual/Plugins.pod)</h1>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+
+</head>
+			<body class="pod">
+                                 <a name='___top' class='dummyTopAnchor' ></a>
+
+<div class='indexgroup'>
+<ul   class='indexList indexList1'>
+  <li class='indexItem indexItem1'><a href='#NAME'>NAME</a>
+  <li class='indexItem indexItem1'><a href='#VERSION'>VERSION</a>
+  <li class='indexItem indexItem1'><a href='#DESCRIPTION'>DESCRIPTION</a>
+  <li class='indexItem indexItem1'><a href='#PLUGIN_FUNDAMENTALS'>PLUGIN FUNDAMENTALS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#Module_paths_and_configuration'>Module paths and configuration</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#plugins.conf'>plugins.conf</a>
+      <li class='indexItem indexItem3'><a href='#Accessing_plugin_configuration'>Accessing plugin configuration</a>
+    </ul>
+    <li class='indexItem indexItem2'><a href='#A_basic_plugin_outline'>A basic plugin outline</a>
+    <li class='indexItem indexItem2'><a href='#Receiving_IRC_events'>Receiving IRC events</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#Messages'>Messages</a>
+      <li class='indexItem indexItem3'><a href='#Commands'>Commands</a>
+      <li class='indexItem indexItem3'><a href='#Other_events'>Other events</a>
+    </ul>
+    <li class='indexItem indexItem2'><a href='#Sending_IRC_events'>Sending IRC events</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#Messages'>Messages</a>
+      <ul   class='indexList indexList4'>
+        <li class='indexItem indexItem4'><a href='#send_message'>send_message</a>
+        <li class='indexItem indexItem4'><a href='#send_notice'>send_notice</a>
+      </ul>
+      <li class='indexItem indexItem3'><a href='#Channel-related'>Channel-related</a>
+      <ul   class='indexList indexList4'>
+        <li class='indexItem indexItem4'><a href='#join'>join</a>
+        <li class='indexItem indexItem4'><a href='#part'>part</a>
+        <li class='indexItem indexItem4'><a href='#kick'>kick</a>
+        <li class='indexItem indexItem4'><a href='#mode'>mode</a>
+        <li class='indexItem indexItem4'><a href='#topic'>topic</a>
+      </ul>
+    </ul>
+    <li class='indexItem indexItem2'><a href='#Core_methods'>Core methods</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#Accessors'>Accessors</a>
+      <li class='indexItem indexItem3'><a href='#Timer_management'>Timer management</a>
+      <ul   class='indexList indexList4'>
+        <li class='indexItem indexItem4'><a href='#timer_set'>timer_set</a>
+        <li class='indexItem indexItem4'><a href='#timer_del'>timer_del</a>
+        <li class='indexItem indexItem4'><a href='#timer_del_pkg'>timer_del_pkg</a>
+      </ul>
+    </ul>
+    <li class='indexItem indexItem2'><a href='#Syndicated_core_events'>Syndicated core events</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#Plugin-related'>Plugin-related</a>
+      <li class='indexItem indexItem3'><a href='#Langset-related'>Langset-related</a>
+      <li class='indexItem indexItem3'><a href='#Timer-related'>Timer-related</a>
+      <li class='indexItem indexItem3'><a href='#Auth_module'>Auth module</a>
+    </ul>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#ADVANCED_CONCEPTS'>ADVANCED CONCEPTS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#Breaking_up_lengthy_loops'>Breaking up lengthy loops</a>
+    <li class='indexItem indexItem2'><a href='#Custom_per-plugin_language_sets'>Custom per-plugin language sets</a>
+    <li class='indexItem indexItem2'><a href='#Spawning_your_own_POE%3A%3ASession'>Spawning your own POE::Session</a>
+    <li class='indexItem indexItem2'><a href='#Manipulating_plugin_pipeline_order'>Manipulating plugin pipeline order</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#IRC_CAVEATS'>IRC CAVEATS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#IRC_casemapping_rules'>IRC casemapping rules</a>
+    <li class='indexItem indexItem2'><a href='#Character_encodings'>Character encodings</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#SEE_ALSO'>SEE ALSO</a>
+  <li class='indexItem indexItem1'><a href='#AUTHOR'>AUTHOR</a>
+</ul>
+</div>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="NAME"
+>NAME</a></h1>
+
+<p>Cobalt::Manual::Plugins - Plugin-writing fundamentals guide</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="VERSION"
+>VERSION</a></h1>
+
+<p>Plugins guide revision: 0001</p>
+
+<p>Last updated for cobalt 2.00</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>This POD attempts to be a reasonably complete guide to writing useful <b>Cobalt2</b> plugins.</p>
+
+<p>Refer to <a href="#SEE_ALSO" class="podlinkpod"
+>&#34;SEE ALSO&#34;</a> for other relevant documentation.</p>
+
+<p><b>Plugin authors should at least read the Cobalt::IRC POD!</b></p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="PLUGIN_FUNDAMENTALS"
+>PLUGIN FUNDAMENTALS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Module_paths_and_configuration"
+>Module paths and configuration</a></h2>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="plugins.conf"
+>plugins.conf</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Accessing_plugin_configuration"
+>Accessing plugin configuration</a></h3>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="A_basic_plugin_outline"
+>A basic plugin outline</a></h2>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Receiving_IRC_events"
+>Receiving IRC events</a></h2>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Messages"
+>Messages</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Commands"
+>Commands</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Other_events"
+>Other events</a></h3>
+
+<p>All of the typical instances of &#34;stuff going on&#34; on IRC are reported by the core IRC module in context &#34;Main&#34;</p>
+
+<p><b> The documentation for all events parsed and re-broadcast from IRC is available via the Cobalt::IRC POD </b></p>
+
+<p>See (FIXME - link) or <i>perldoc lib::Cobalt::IRC</i> from the cobalt2 distribution&#39;s directory.</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Sending_IRC_events"
+>Sending IRC events</a></h2>
+
+<p><a href="http://search.cpan.org/perldoc?Cobalt%3A%3AIRC" class="podlinkpod"
+>Cobalt::IRC</a> receives the following commonly-used events:</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Messages"
+>Messages</a></h3>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="send_message"
+>send_message</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="send_notice"
+>send_notice</a></h4>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Channel-related"
+>Channel-related</a></h3>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="join"
+>join</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="part"
+>part</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="kick"
+>kick</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="mode"
+>mode</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="topic"
+>topic</a></h4>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Core_methods"
+>Core methods</a></h2>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Accessors"
+>Accessors</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Timer_management"
+>Timer management</a></h3>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="timer_set"
+>timer_set</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="timer_del"
+>timer_del</a></h4>
+
+<h4><a class='u' href='#___top' title='click to go to top of document'
+name="timer_del_pkg"
+>timer_del_pkg</a></h4>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Syndicated_core_events"
+>Syndicated core events</a></h2>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Plugin-related"
+>Plugin-related</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Langset-related"
+>Langset-related</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Timer-related"
+>Timer-related</a></h3>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Auth_module"
+>Auth module</a></h3>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="ADVANCED_CONCEPTS"
+>ADVANCED CONCEPTS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Breaking_up_lengthy_loops"
+>Breaking up lengthy loops</a></h2>
+
+<p>FIXME discussion of pushing self-events back to pipeline to loop</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Custom_per-plugin_language_sets"
+>Custom per-plugin language sets</a></h2>
+
+<p>FIXME discussion of using load_langset to create a &#39;local&#39; RPL hash</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Spawning_your_own_POE::Session"
+>Spawning your own POE::Session</a></h2>
+
+<p>FIXME discussion of plugins that initiate their own sessions</p>
+
+<p>FIXME registering for events from irc...?</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Manipulating_plugin_pipeline_order"
+>Manipulating plugin pipeline order</a></h2>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="IRC_CAVEATS"
+>IRC CAVEATS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="IRC_casemapping_rules"
+>IRC casemapping rules</a></h2>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Character_encodings"
+>Character encodings</a></h2>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="SEE_ALSO"
+>SEE ALSO</a></h1>
+
+<p>Plugin authors should at least read the <a href="http://search.cpan.org/perldoc?Cobalt%3A%3AIRC" class="podlinkpod"
+>Cobalt::IRC</a> POD,
+and probably <a href="http://search.cpan.org/perldoc?Cobalt%3A%3AUtils" class="podlinkpod"
+>Cobalt::Utils</a> as well.</p>
+
+<p>FIXME links etc</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jon Portnoy &#60;avenj@cobaltirc.org&#62;</p>
+
+<p>http://www.cobaltirc.org</p>
+
+<!-- end doc -->
+
+</body></html>

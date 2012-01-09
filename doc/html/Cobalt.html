@@ -1,0 +1,192 @@
+<html><head><title>Cobalt</title>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" >
+			<h1>Cobalt2 POD (Cobalt.pm)</h1>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+
+</head>
+			<body class="pod">
+                                 <a name='___top' class='dummyTopAnchor' ></a>
+
+<div class='indexgroup'>
+<ul   class='indexList indexList1'>
+  <li class='indexItem indexItem1'><a href='#NAME'>NAME</a>
+  <li class='indexItem indexItem1'><a href='#DESCRIPTION'>DESCRIPTION</a>
+  <li class='indexItem indexItem1'><a href='#RELEVANT_DOCUMENTATION'>RELEVANT DOCUMENTATION</a>
+  <li class='indexItem indexItem1'><a href='#LOGGING'>LOGGING</a>
+  <li class='indexItem indexItem1'><a href='#LANGUAGE_SETS'>LANGUAGE SETS</a>
+  <li class='indexItem indexItem1'><a href='#ATTRIBUTES'>ATTRIBUTES</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#Configuration'>Configuration</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#cfg'>cfg</a>
+      <li class='indexItem indexItem3'><a href='#var'>var</a>
+      <li class='indexItem indexItem3'><a href='#lang'>lang</a>
+      <li class='indexItem indexItem3'><a href='#loglevel'>loglevel</a>
+    </ul>
+    <li class='indexItem indexItem2'><a href='#State_Information'>State Information</a>
+    <ul   class='indexList indexList3'>
+      <li class='indexItem indexItem3'><a href='#Servers_hash'>Servers hash</a>
+      <li class='indexItem indexItem3'><a href='#State_hash'>State hash</a>
+    </ul>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#METHODS'>METHODS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#Accessors'>Accessors</a>
+    <li class='indexItem indexItem2'><a href='#Plugin_management'>Plugin management</a>
+    <li class='indexItem indexItem2'><a href='#Timer_management'>Timer management</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#AUTHOR'>AUTHOR</a>
+</ul>
+</div>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="NAME"
+>NAME</a></h1>
+
+<p>Cobalt -- a pluggable IRC bot framework</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p><b>Cobalt</b> is an IRC bot.
+Sort of.</p>
+
+<p>The Cobalt core (this module) simply ties an event syndicator (<a href="http://search.cpan.org/perldoc?POE%3A%3AComponent%3A%3ASyndicator" class="podlinkpod"
+>POE::Component::Syndicator</a>) into a configuration management system (using <a href="http://search.cpan.org/perldoc?YAML" class="podlinkpod"
+>YAML</a>),
+a logging system (<a href="http://search.cpan.org/perldoc?Log%3A%3AHandler" class="podlinkpod"
+>Log::Handler</a>),
+and some other useful wheels,
+so you don&#39;t have to reinvent them.</p>
+
+<p>By default,
+the core will load the <code>IRC.pm</code> plugin to provide a single-server IRC interface,
+processing and re-broadcasting events from <a href="http://search.cpan.org/perldoc?POE%3A%3AComponent%3A%3AIRC" class="podlinkpod"
+>POE::Component::IRC</a>.</p>
+
+<p>Most actual work is done by plugins that exist in the plugin pipeline.</p>
+
+<p>Cobalt is packaged with various plugins,
+most of which aim to replicate functionality found in <code>darkbot</code> and the original implementation of the <code>cobalt</code> IRC bot.</p>
+
+<p>Plugins are simple to write but extremely flexible.</p>
+
+<p>The core also provides some useful attributes,
+exposing configuration settings and state information to plugins in the pipeline.
+See <a href="#ATTRIBUTES" class="podlinkpod"
+>&#34;ATTRIBUTES&#34;</a> for more information.</p>
+
+<p>There are some convenience methods available for accessing pieces of state information,
+managing timers,
+and so forth.
+See <a href="#METHODS" class="podlinkpod"
+>&#34;METHODS&#34;</a> for information on core methods.</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="RELEVANT_DOCUMENTATION"
+>RELEVANT DOCUMENTATION</a></h1>
+
+<p>FIXME</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="LOGGING"
+>LOGGING</a></h1>
+
+<p>FIXME</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="LANGUAGE_SETS"
+>LANGUAGE SETS</a></h1>
+
+<p>FIXME discussion of adding to -&#62;lang FIXME discussion of accessing RPLs in -&#62;lang</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="ATTRIBUTES"
+>ATTRIBUTES</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Configuration"
+>Configuration</a></h2>
+
+<p>FIXME</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="cfg"
+>cfg</a></h3>
+
+<p>FIXME</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="var"
+>var</a></h3>
+
+<p>FIXME</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="lang"
+>lang</a></h3>
+
+<p>FIXME</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="loglevel"
+>loglevel</a></h3>
+
+<p>FIXME</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="State_Information"
+>State Information</a></h2>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Servers_hash"
+>Servers hash</a></h3>
+
+<p>FIXME</p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="State_hash"
+>State hash</a></h3>
+
+<p>FIXME</p>
+
+<p><b>&#60;State-</b>{Auth}&#62;&#62;</p>
+
+<p><b>&#60;State-</b>{Ignored}&#62;&#62;</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="METHODS"
+>METHODS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Accessors"
+>Accessors</a></h2>
+
+<p>FIXME</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Plugin_management"
+>Plugin management</a></h2>
+
+<p>FIXME</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="Timer_management"
+>Timer management</a></h2>
+
+<p>FIXME</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jon Portnoy &#60;avenj@cobaltirc.org&#62;</p>
+
+<p><a href="http://www.cobaltirc.org" class="podlinkurl"
+>http://www.cobaltirc.org</a></p>
+
+<!-- end doc -->
+
+</body></html>
