@@ -179,9 +179,7 @@ sub _start {
        && @{ $cfg->{IRC}->{AltServers} } )
   {
     for my $unparsed (@{ $cfg->{IRC}->{AltServers} }) {
-      ## will break on raw ipv6 addresses
-      ## .. but well .. "doctor it hurts when I do this"
-      my ($altserver, $sport) = split /:/, $unparsed;
+      my ($altserver, $port) = $unparsed =~ /^(.+):(\d+)$/;
       push( @{ $connector{servers} },  [ $altserver, $sport ] );
     }
     
