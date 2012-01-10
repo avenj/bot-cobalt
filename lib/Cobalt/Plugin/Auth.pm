@@ -127,14 +127,14 @@ sub Cobalt_register {
   }
   $self->AccessList( $alist );
 
-  ## Read in configured superusers
+  ## Read in configured superusers to AccessList
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
   my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
   for my $context (keys %su) {
 
     for my $user (keys $su{$context}) {
-      ## Usernames automatically get lowercased
+      ## Usernames on accesslist automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
       ## (we probably don't even know the server's CASEMAPPING= yet)
       $user = lc_irc $user;
@@ -187,6 +187,7 @@ sub Cobalt_register {
       'connected',
       'disconnected',
       'user_left',
+      'self_left',
       'user_kicked',
       'user_quit',
       'nick_changed',
@@ -237,6 +238,16 @@ sub Bot_user_left {
   ## Call _remove_if_lost to see if we can still track this user:
   $self->_remove_if_lost($context, $nick);
 
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_self_left {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my $channel = $$_[1];
+  ## The bot left a channel. Check auth status of all users.
+  ## This method may be unreliable on nets w/ busted CASEMAPPING=
+  $self->remove_if_lost($context);
   return PLUGIN_EAT_NONE
 }
 
