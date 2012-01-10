@@ -170,7 +170,7 @@ sub init {
 #    debug => 1,  ## shouldfix; enable on higher debug level?
     prefix => 'ev_',  ## event prefix for sessions
     reg_prefix => 'Cobalt_',
-    types => [ SERVER => 'Bot', USER => 'OUT' ],
+    types => [ SERVER => 'Bot', USER => 'Outgoing' ],
     options => { },
     object_states => [
       $self => [
@@ -514,8 +514,6 @@ state information, managing timers, and so forth.
 See L</METHODS> for information on core methods.
 
 
-
-
 =head1 RELEVANT DOCUMENTATION
 
 FIXME
@@ -527,9 +525,7 @@ FIXME
 
 =head1 LANGUAGE SETS
 
-FIXME discussion of adding to ->lang
-FIXME discussion of accessing RPLs in ->lang
-
+FIXME
 
 =head1 ATTRIBUTES
 
@@ -590,10 +586,16 @@ FIXME
 FIXME
 
 
+=head1 LICENSE
+
+Licensed under the same terms as Perl.
+
+
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
 
 L<http://www.cobaltirc.org>
+
 
 =cut

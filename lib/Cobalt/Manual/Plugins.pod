@@ -25,7 +25,7 @@ B<Plugin authors should at least read the Cobalt::IRC POD!>
 =head3 plugins.conf
 
 Plugins specified in plugins.conf (located in our etc/) will be 
-automatically loaded at runtime in the order they are specified in.
+automatically loaded at runtime.
 
 C<plugins.conf> is YAML in the following structure:
 
@@ -268,6 +268,8 @@ core's get_irc_obj method. Expects a server context:
 =head2 Core methods
 
 =head3 Accessors
+
+=head3 Logging
 
 =head3 Timer management
 

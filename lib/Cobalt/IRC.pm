@@ -179,7 +179,8 @@ sub _start {
        && @{ $cfg->{IRC}->{AltServers} } )
   {
     for my $unparsed (@{ $cfg->{IRC}->{AltServers} }) {
-      my ($altserver, $port) = $unparsed =~ /^(.+):(\d+)$/;
+      ## provided in conf in the format 'server:port' :
+      my ($altserver, $sport) = $unparsed =~ /^(.+):(\d+)$/;
       push( @{ $connector{servers} },  [ $altserver, $sport ] );
     }
     
@@ -486,9 +487,14 @@ sub irc_001 {
   ## this is unavoidable in some situations, however:
   ## misconfigured inspircd on paradoxirc gives a codepage for CASEMAPPING
   ## and a casemapping for CHARSET (which is supposed to be deprecated)
+  ## I strongly suspect there are other similarly broken servers around.
   ##
   ## we can try to check for this, but it's still a crapshoot.
-  ## smack your admins with a hammer instead.
+  ##
+  ## this 'fix' will still break when CASEMAPPING is nonsense and CHARSET
+  ## is set to 'ascii' but other casemapping rules are being followed.
+  ##
+  ## the better fix is to smack your admins with a hammer.
   my @valid_casemaps = qw/ rfc1459 ascii strict-rfc1459 /;
   unless ($casemap ~~ @valid_casemaps) {
     my $charset = lc( $self->irc->isupport('CHARSET') || '' );
@@ -1368,10 +1374,17 @@ There is no guarantee that we were present on the channel in the
 first place.
 
 
+=head1 LICENSE
+
+Licensed under the same terms as Perl. 
+
+
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
 
 L<http://www.cobaltirc.org>
+
+
 
 =cut

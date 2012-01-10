@@ -234,14 +234,16 @@ sub Bot_user_left {
 
   ## FIXME if this is our nick that left the channel, query shared chan status of all auth'd users in this server context
 
-  ## FIXME ask our irc component (from core->Servers) if we still share channels via _check_for_shared
+  ## Call _remove_if_lost to see if we can still track this user:
+  $self->_remove_if_lost($context, $nick);
 
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  ## similar to user_left
+  ## FIXME similar to user_left (self_kicked ...?)
+  $self->_remove_if_lost($context, $nick);
   return PLUGIN_EAT_NONE
 }
 
@@ -249,7 +251,8 @@ sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
   my $nick = $$_[1]->{src_nick};
-  ## User quit, clear relevant auth entries:
+  ## User quit, clear relevant auth entries
+  ## We can call _do_logout directly here:
   $self->_do_logout($context, $nick);
   return PLUGIN_EAT_NONE
 }
@@ -467,33 +470,6 @@ sub _do_login {
   return SUCCESS
 }
 
-sub _do_logout {
-  ## catch 'lost' users and handle logouts
-  ## send a logout event in addition to clearing auth hash
-  ## returns the deleted user auth hash (or nothing)
-  my ($self, $context, $nick) = @_;
-  my $core = $self->core;
-  if (exists $core->State->{Auth}->{$context}->{$nick}) {
-    my $pkg = $core->State->{Auth}->{$context}->{$nick}->{Package};
-    if ($pkg eq __PACKAGE__) {
-      ## FIXME accessors?
-      my $host = $core->State->{Auth}->{$context}->{$nick}->{Host};
-      my $username = $core->State->{Auth}->{$context}->{$nick}->{Username};
-      my $level =  $core->State->{Auth}->{$context}->{$nick}->{Level};
-      ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
-      $self->core->send_event( 'auth_user_logout',
-        $context,
-        $nick,
-        $host,
-        $username,
-        $level,
-        $pkg,
-      );
-      return delete $core->State->{Auth}->{$context}->{$nick};
-    }
-  }
-  return
-}
 
 sub _user_add {
   ## add users to AccessList and call a list sync
@@ -528,6 +504,56 @@ sub _user_chpass {
 
 ### Utility methods:
 
+sub _remove_if_lost {
+  my ($self, $context, $nick) = @_;
+  ## $self->_remove_if_lost( $context );
+  ## $self->_remove_if_lost( $context, $nickname );
+  ##
+  ## called by event handlers that track users (or the bot) leaving
+  ##
+  ## if a nickname is specified, ask _check_for_shared if we still see
+  ## this user, otherwise remove relevant Auth
+  ##
+  ## if no nickname is specified, do the above for all Auth'd users
+  ## in the specified context
+  ##
+  ## return list of removed users
+
+  ## no auth for specified context? then we don't care:
+  return unless exists $self->core->State->{Auth}->{$context};
+
+  my @removed;
+
+  if ($nick) {
+
+    ## ...auth for this nickname in this context?
+    return unless exists $self->core->State->{Auth}->{$context}->{$nick};
+
+    unless ( $self->_check_for_shared($context, $nick) ) {
+      ## we no longer share channels with this user
+      ## if they're auth'd and their authorization is "ours", kill it
+      ## call _do_logout to log them out and notify the pipeline
+      ##
+      ## _do_logout handles the messy details, incl. checking to make sure 
+      ## that we are the "owner" of this auth:
+      push(@removed, $nick) if $self->_do_logout($context, $nick);
+    }
+
+  } else {
+
+    ## no nickname specified
+    ## check trackable status all nicknames in State->{Auth}->{$context}
+    for $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
+      unless ( $self->_check_for_shared($context, $nick) ) {
+        push(@removed, $nick) if $self->_do_logout($context, $nick);
+      }
+    }
+
+  }
+
+  return @removed
+}
+
 sub _check_for_shared {
   ## $self->_check_for_shared( $context, $nickname );
   ##
@@ -535,7 +561,8 @@ sub _check_for_shared {
   ## Actually just a simple frontend to get_irc_obj & PoCo::IRC::State
   ##
   ## Returns boolean true or false.
-  ## Typically called after either the bot or a user leave a channel.
+  ## Typically called after either the bot or a user leave a channel
+  ## ( normally by _remove_if_lost() )
   ##
   ## Tells Auth whether or not we can sanely track this user.
   ## If we don't share channels it's difficult to get nick change
@@ -561,6 +588,38 @@ sub _clear_self {
     }
 
   }
+}
+
+sub _do_logout {
+  my ($self, $context, $nick) = @_;
+  ## $self->_do_logout( $context, $nick )
+  ## handles logout routines for 'lost' users
+  ## normally called by method _remove_if_lost
+  ##
+  ## sends auth_user_logout event in addition to clearing auth hash
+  ##
+  ## returns the deleted user auth hash (or nothing)
+  my $core = $self->core;
+  if (exists $core->State->{Auth}->{$context}->{$nick}) {
+    my $pkg = $core->State->{Auth}->{$context}->{$nick}->{Package};
+    if ($pkg eq __PACKAGE__) {
+      ## FIXME accessors?
+      my $host = $core->State->{Auth}->{$context}->{$nick}->{Host};
+      my $username = $core->State->{Auth}->{$context}->{$nick}->{Username};
+      my $level =  $core->State->{Auth}->{$context}->{$nick}->{Level};
+      ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
+      $self->core->send_event( 'auth_user_logout',
+        $context,
+        $nick,
+        $host,
+        $username,
+        $level,
+        $pkg,
+      );
+      return(delete $core->State->{Auth}->{$context}->{$nick});
+    }
+  }
+  return
 }
 
 sub _mkpasswd {
