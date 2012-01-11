@@ -200,6 +200,10 @@ sub Cobalt_register {
     ],
   );
 
+  ## clear any remaining auth states.
+  ## (assuming the plugin unloaded cleanly, there should be none)
+  $self->_clear_all;
+
   $core->log->info("Registered");
 
   return PLUGIN_EAT_NONE
@@ -208,7 +212,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering core IRC plugin");
-  $self->_clear_self;
+  $self->_clear_all;
   return PLUGIN_EAT_NONE
 }
 
@@ -218,14 +222,16 @@ sub Bot_connected {
   my ($self, $core) = splice @_, 0, 2;
   ## Bot's freshly connected to a context
   ## Clear any auth entries for this pkg + context
-  $self->_clear_self;
+  my $context = $$_[0];
+  $self->_clear_context($context);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_disconnected {
   my ($self, $core) = splice @_, 0, 2;
   ## disconnect event
-  $self->_clear_self;
+  my $context = $$_[0];
+  $self->_clear_context($context);
   return PLUGIN_EAT_NONE
 }
 
@@ -250,7 +256,7 @@ sub Bot_self_left {
   my $channel = $$_[1];
   ## The bot left a channel. Check auth status of all users.
   ## This method may be unreliable on nets w/ busted CASEMAPPING=
-  $self->remove_if_lost($context);
+  $self->_remove_if_lost($context);
   return PLUGIN_EAT_NONE
 }
 
@@ -264,6 +270,7 @@ sub Bot_self_kicked {
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
   my $context = $$_[0];
+  my $nick = $$_[1]->{src_nick};
   $self->_remove_if_lost($context, $nick);
   return PLUGIN_EAT_NONE
 }
@@ -501,6 +508,10 @@ sub _user_del {
   ## delete users from AccessList and call a list sync
 }
 
+sub _do_alist_modify {
+  ## _user_add/del operations
+}
+
 sub _user_list {
 
 }
@@ -513,13 +524,31 @@ sub _user_chflags {
 
 }
 
+sub _do_chflags {
+
+}
+
 sub _user_chmask {
   ## [+/-]mask syntax so as not to be confused with user del (much)
   ## FIXME normalize masks before adding ?
 }
 
+sub _do_chmask {
+
+}
+
 sub _user_chpass {
   ## superuser (or configurable level.. ?) chpass ability
+  ## return a formatted response to _cmd_user handler
+}
+
+sub _do_chpass {
+  my ($self, $context, $username, $passwd) = @_;
+  return unless exists $self->AccessList->{$context} &&
+                exists $self->AccessList->{$context}->{$username};
+  my $hashed = $self->_mkpasswd($passwd);
+  $self->AccessList->{$context}->{$username}->{Password} = $hashed;
+  return $hashed;
 }
 
 
@@ -546,8 +575,7 @@ sub _remove_if_lost {
   my @removed;
 
   if ($nick) {
-
-    ## ...auth for this nickname in this context?
+    ## ...does auth for this nickname in this context?
     return unless exists $self->core->State->{Auth}->{$context}->{$nick};
 
     unless ( $self->_check_for_shared($context, $nick) ) {
@@ -594,17 +622,23 @@ sub _check_for_shared {
   return @shared ? 1 : 0 ;
 }
 
-sub _clear_self {
+sub _clear_context {
+  my ($self, $context) = @_;
+  ## $self->_clear_context( $context )
+  ## Clear any $core->{Auth} states for this pkg + context
+  return unless $context;
+  for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
+    $self->_do_logout($context, $nick);
+  }
+}
+
+sub _clear_all {
   my ($self) = @_;
-  ## $self->clear_self()
-  ## Clear any $core->{Auth} states belonging to us
+  ## $self->_clear_all()
+  ## Clear any $core->{Auth} states belonging to this pkg
   for my $context (keys %{ $self->core->{Auth} }) {
     for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
-      my $pkg = $self->core->{Auth}->{$context}->{$nick}->{Package};
-      if ($pkg eq __PACKAGE__) {
-        $self->core->log->debug("cleared auth: $nick ($context)");
-        delete $self->core->{Auth}->{$context}->{$nick};
-      }
+      $self->_do_logout($context, $nick);
     }
   }
 }
@@ -620,12 +654,14 @@ sub _do_logout {
   ## returns the deleted user auth hash (or nothing)
   my $core = $self->core;
   my $auth_context = $core->State->{Auth}->{$context};
+
   if (exists $auth_context->{$nick}) {
     my $pkg = $auth_context->{$nick}->{Package};
     if ($pkg eq __PACKAGE__) {
       my $host = $auth_context->{$nick}->{Host};
       my $username = $auth_context->{$nick}->{Username};
       my $level =  $auth_context->{$nick}->{Level};
+
       ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
       $self->core->send_event( 'auth_user_logout',
         $context,
@@ -635,7 +671,12 @@ sub _do_logout {
         $level,
         $pkg,
       );
-      return(delete $auth_context->{$nick});
+
+      $self->core->log->debug(
+        "cleared auth state: $username ($nick on $context)"
+      );
+
+      return delete $auth_context->{$nick};
     }
   }
   return
@@ -658,6 +699,7 @@ sub _mkpasswd {
 
 ### Access list mgmt methods
 ### (YAML frontend)
+### These can also be used to read/write arbitrary authdbs
 
 sub _read_access_list {
   my ($self, $authdb) = @_;
@@ -764,6 +806,24 @@ Cobalt::Plugin::Auth -- standard access control plugin
 This plugin provides the standard authorization and access control 
 functionality for B<Cobalt>.
 
+=head1 COMMANDS
+
+=head2 Logging in
+
+=head2 Changing your password
+
+=head2 User administration
+
+=head3 user add
+
+=head3 user del
+
+=head3 user chflags
+
+=head3 user chpass
+
+
+
 
 =head1 CONFIGURATION
 
@@ -774,8 +834,57 @@ functionality for B<Cobalt>.
 
 =head1 EMITTED EVENTS
 
+=head2 Bot_auth_user_login
+
+=head2 Bot_auth_failed_login
+
+=head2 Bot_auth_user_logout
+
+
 
 =head1 ACCEPTED EVENTS
+
+Listens for the following events:
+
+=over
+
+=item *
+
+Bot_connected
+
+=item *
+
+Bot_disconnected
+
+=item *
+
+Bot_private_msg
+
+=item *
+
+Bot_user_left
+
+=item *
+
+Bot_self_left
+
+=item *
+
+Bot_user_kicked
+
+=item *
+
+Bot_self_kicked
+
+=item *
+
+Bot_user_quit
+
+=item *
+
+Bot_nick_changed
+
+=back
 
 
 =head1 AUTHOR
