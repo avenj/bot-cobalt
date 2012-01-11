@@ -1,0 +1,118 @@
+<html><head><title>Cobalt::Lang</title>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" >
+			<h1>Cobalt2 POD (Cobalt/Lang.pm)</h1>
+			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
+
+</head>
+			<body class="pod">
+                                 <a name='___top' class='dummyTopAnchor' ></a>
+
+<div class='indexgroup'>
+<ul   class='indexList indexList1'>
+  <li class='indexItem indexItem1'><a href='#NAME'>NAME</a>
+  <li class='indexItem indexItem1'><a href='#SYNOPSIS'>SYNOPSIS</a>
+  <li class='indexItem indexItem1'><a href='#DESCRIPTION'>DESCRIPTION</a>
+  <li class='indexItem indexItem1'><a href='#METHODS'>METHODS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#load_langset'>load_langset</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#EMITTED_EVENTS'>EMITTED EVENTS</a>
+  <ul   class='indexList indexList2'>
+    <li class='indexItem indexItem2'><a href='#langset_loaded'>langset_loaded</a>
+    <li class='indexItem indexItem2'><a href='#langset_error'>langset_error</a>
+  </ul>
+  <li class='indexItem indexItem1'><a href='#AUTHOR'>AUTHOR</a>
+</ul>
+</div>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="NAME"
+>NAME</a></h1>
+
+<p>Cobalt::Lang -- read cobalt2 langsets</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="SYNOPSIS"
+>SYNOPSIS</a></h1>
+
+<pre>  ## Load an initial langset out of $etcdir/langs/ :
+  $core-&#62;lang( $core-&#62;load_langset(&#39;english&#39;) );</pre>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="DESCRIPTION"
+>DESCRIPTION</a></h1>
+
+<p>Provides language set loading for the Cobalt core.</p>
+
+<p>Langsets should be in a YAML format readable by <a href="http://search.cpan.org/perldoc?YAML%3A%3ASyck" class="podlinkpod"
+>YAML::Syck</a>.</p>
+
+<p><b>IMPORTANT</b>: Langset names are automatically lowercased. Bear this in mind when naming langsets for plugins. They should always be lowercase.</p>
+
+<p>Responses are expected to be found in the YAML langset&#39;s &#39;RPL:&#39; key. (The corresponding hash is what is actually returned when loading a set.)</p>
+
+<p>Typically the keys of the &#39;RPL&#39; hash contain values which are strings formattable by sprintf.</p>
+
+<p>Inspect <code>etc/langs/english.yml</code> for an example.</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="METHODS"
+>METHODS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="load_langset"
+>load_langset</a></h2>
+
+<p>Used by the core to load a specified language set.</p>
+
+<p>If passed a single argument, loads the specified .yml file out of $etcdir/langs/:</p>
+
+<pre>  ## done by cobalt core to (re)load the -&#62;lang hash:
+  $core-&#62;lang( $core-&#62;load_langset(&#39;english&#39;) );</pre>
+
+<p>If passed two arguments, the second argument is considered to be a path prefix.</p>
+
+<p>Plugins can use this to read in a langset file, if they like:</p>
+
+<pre>  require Cobalt::Lang;
+  my $lang = Cobalt::Lang-&#62;new;
+  my $etc = $core-&#62;cfg-&#62;{path};  ## location of our etc/
+  ## read in etc/langs/plugin/myplugin-english.yml:
+  my $prefix = $etc . &#34;/langs/plugin/myplugin-&#34;;
+  my $rpl_hash = $lang-&#62;load_langset(&#39;english&#39;, $prefix);</pre>
+
+<p>It is generally advisable that plugins don&#39;t modify the $core-&#62;lang hash unless they are also part of the core distribution.</p>
+
+<p>That being said, if you do so, you may want to check for rehashes (if the core reloads -&#62;lang, your changes will go missing).</p>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="EMITTED_EVENTS"
+>EMITTED EVENTS</a></h1>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="langset_loaded"
+>langset_loaded</a></h2>
+
+<p>Syndicated when a language set is loaded.</p>
+
+<p>$$_[0] is the (lowercased) langset name.</p>
+
+<p>$$_[1] is the path to the set that was loaded.</p>
+
+<h2><a class='u' href='#___top' title='click to go to top of document'
+name="langset_error"
+>langset_error</a></h2>
+
+<h1><a class='u' href='#___top' title='click to go to top of document'
+name="AUTHOR"
+>AUTHOR</a></h1>
+
+<p>Jon Portnoy &#60;avenj@cobaltirc.org&#62;</p>
+
+<p><a href="http://www.cobaltirc.org" class="podlinkurl"
+>http://www.cobaltirc.org</a></p>
+
+<!-- end doc -->
+
+</body></html>
