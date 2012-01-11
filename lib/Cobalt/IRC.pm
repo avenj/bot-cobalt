@@ -544,6 +544,12 @@ sub irc_kick {
     reason => $reason,
   };
 
+  my $me = $self->irc->nick_name();
+  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  if ( eq_irc($me, $nick, $casemap) ) {
+    $self->core->send_event( 'self_kicked', 'Main', $src, $channel, $reason );
+  }
+
   ## Bot_user_kicked:
   $self->core->send_event( 'user_kicked', 'Main', $kick );
 }
@@ -1215,6 +1221,18 @@ in ISUPPORT, as it will fall back to normal rfc1459 rules.
 
 Also see L</Bot_user_left>
 
+=head3 Bot_self_kicked
+
+Broadcast when the bot was seemingly kicked from a channel.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my ($src, $chan, $reason) = ($$_[1], $$_[2], $$_[3]);
+
+Relies on the same logic as L</Bot_self_left> -- be sure to read the 
+note in that section (above).
+
+The bot will probably attempt to auto-rejoin.
 
 =head3 Bot_user_kicked
 
