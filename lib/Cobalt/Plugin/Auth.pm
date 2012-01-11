@@ -186,11 +186,16 @@ sub Cobalt_register {
     [
       'connected',
       'disconnected',
+
+      'user_quit',
       'user_left',
       'self_left',
+
+      'self_kicked',
       'user_kicked',
-      'user_quit',
+
       'nick_changed',
+
       'private_msg',
     ],
   );
@@ -233,8 +238,6 @@ sub Bot_user_left {
   my $channel = $$_[1]->{channel};
   my $nick = $$_[1]->{src_nick};
 
-  ## FIXME if this is our nick that left the channel, query shared chan status of all auth'd users in this server context
-
   ## Call _remove_if_lost to see if we can still track this user:
   $self->_remove_if_lost($context, $nick);
 
@@ -251,9 +254,16 @@ sub Bot_self_left {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_self_kicked {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  $self->_remove_if_lost($context);
+  return PLUGIN_EAT_NONE
+}
+
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME similar to user_left (self_kicked ...?)
+  my $context = $$_[0];
   $self->_remove_if_lost($context, $nick);
   return PLUGIN_EAT_NONE
 }
@@ -589,7 +599,6 @@ sub _clear_self {
   ## $self->clear_self()
   ## Clear any $core->{Auth} states belonging to us
   for my $context (keys %{ $self->core->{Auth} }) {
-
     for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
       my $pkg = $self->core->{Auth}->{$context}->{$nick}->{Package};
       if ($pkg eq __PACKAGE__) {
@@ -597,7 +606,6 @@ sub _clear_self {
         delete $self->core->{Auth}->{$context}->{$nick};
       }
     }
-
   }
 }
 
@@ -611,13 +619,13 @@ sub _do_logout {
   ##
   ## returns the deleted user auth hash (or nothing)
   my $core = $self->core;
-  if (exists $core->State->{Auth}->{$context}->{$nick}) {
-    my $pkg = $core->State->{Auth}->{$context}->{$nick}->{Package};
+  my $auth_context = $core->State->{Auth}->{$context};
+  if (exists $auth_context->{$nick}) {
+    my $pkg = $auth_context->{$nick}->{Package};
     if ($pkg eq __PACKAGE__) {
-      ## FIXME accessors?
-      my $host = $core->State->{Auth}->{$context}->{$nick}->{Host};
-      my $username = $core->State->{Auth}->{$context}->{$nick}->{Username};
-      my $level =  $core->State->{Auth}->{$context}->{$nick}->{Level};
+      my $host = $auth_context->{$nick}->{Host};
+      my $username = $auth_context->{$nick}->{Username};
+      my $level =  $auth_context->{$nick}->{Level};
       ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
       $self->core->send_event( 'auth_user_logout',
         $context,
@@ -627,7 +635,7 @@ sub _do_logout {
         $level,
         $pkg,
       );
-      return(delete $core->State->{Auth}->{$context}->{$nick});
+      return(delete $auth_context->{$nick});
     }
   }
   return
