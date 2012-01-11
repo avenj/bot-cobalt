@@ -62,6 +62,22 @@ sub read_cfg {
 
     my $cf_yml = read_file($conf->{path}."/".$cf_plugin);
     $conf->{plugin_cf}->{$pkg} = Load $cf_yml;
+
+    ## see if plugins.conf had "Opts" for this entry
+    ## typically should be a hash, fe.x:
+    ## Opts:
+    ##   Level: 1
+    ## (although the option to use an array is there)
+    ## typically used for plugins that have other opts but don't
+    ## have their own conf file
+    if ($conf->{plugins}->{$plugin}->{Opts}
+        && ref $conf->{plugins}->{$plugin}->{Opts}) 
+    {
+      ## if Opts are specified, reference from ->{plugin_cf}->{$pkg}->{PluginOpts}
+      ## makes it easier for plugins to grab their 'Opts' from plugins.conf
+      $conf->{plugin_cf}->{$pkg}->{PluginOpts} = 
+        $conf->{plugins}->{$plugin}->{Opts};
+    }
   }
 
   return $conf
