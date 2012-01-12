@@ -324,13 +324,8 @@ sub Bot_private_msg {
   }
 
   if ($resp) {
-    $core->send_event( 'send_notice',
-      {
-        context => $context,
-        target => $msg->{src_nick},
-        txt => $resp,
-      }
-    );    
+    my $target = $msg->{src_nick};
+    $core->send_event( 'send_notice', $context, $target, $resp );
   }
 
   return PLUGIN_EAT_NONE
