@@ -4,7 +4,7 @@ Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0002
+Plugins guide revision: 0003
 
 Last updated for cobalt 2.00
 
@@ -158,11 +158,13 @@ Syndicated events become prefixed with Bot_ when handed off to plugins:
 
   sub Bot_some_event {
     my ($self, $core) = splice @_, 0, 2;
-    my $deref_first_arg = $$_[0];
+    my $deref_first_arg = ${ $_[0] };
     ...
   }
 
 B<IMPORTANT: the arguments passed to event handlers are ALWAYS references!>
+
+(Sometimes, they're references to references, such as a hashref.)
 
 (If you don't know what that means, it's time to read L<perlreftut> and 
 L<perlref> immediately.)
@@ -170,9 +172,10 @@ L<perlref> immediately.)
 This means that it's intended behavior to be able to modify the event's 
 arguments before it continues through the plugin pipeline.
 
-B<That might not be what you want.>
-
 Be aware of this behavior and code appropriately.
+
+Don't be confused, yet! For the most part, you can just dereference args 
+as shown in the example above.
 
 
 =head3 Returning proper values
@@ -275,7 +278,7 @@ core's get_irc_obj method. Expects a server context:
 
   sub Bot_public_msg {
     my ($self, $core) = @_;
-    my $context = $$_[0];
+    my $context = ${$_[0]};
     my $irc = $core->get_irc_obj($context);
   }
 

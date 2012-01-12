@@ -20,7 +20,9 @@ plugins and reduces code redundancy.
 
 IRC-related events provide the $core->Servers context name in the 
 first argument:
-  my $context = $$_[0];
+
+  ## args to pluggable events are always references:
+  my $context = ${ $_[0] };  ## dereference.
 
 Other arguments may vary by event. See below.
 
@@ -38,8 +40,8 @@ Issued when an irc_001 (welcome msg) event is received.
 Indicates the bot is now talking to an IRC server.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $server_name = $$_[1];
+  my $context = ${$_[0]};
+  my $server_name = ${$_[1]};
 
 The relevant $core->Servers->{$context} hash is updated prior to
 broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
@@ -47,7 +49,7 @@ are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
 
   require IRC::Utils;  ## for eq_irc
-  my $context = $$_[0];
+  my $context = ${$_[0]};
   ## most servers are 'rfc1459', some may be ascii or -strict
   ## (some return totally fubar values, and we'll default to rfc1459)
   my $casemap = $core->Servers->{$context}->{CaseMap};
@@ -58,8 +60,8 @@ compare two nicknames, for example:
 Broadcast when irc_disconnected is received.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $server_name = $$_[1];
+  my $context = ${$_[0]};
+  my $server_name = ${$_[1]};
 
 $core->Servers->{$context}->{Connected} will be false until a reconnect.
 
@@ -70,8 +72,8 @@ Issued on unknown ERROR : events. Not a socket error, but connecting failed.
 The IRC component will provide a maybe-not-useful reason:
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $reason = $$_[1];
+  my $context = ${$_[0]};
+  my $reason = ${$_[1]};
 
 ... Maybe you're zlined. :)
 
@@ -84,8 +86,8 @@ The IRC component will provide a maybe-not-useful reason:
 Broadcast upon receiving public text (text in a channel).
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $msg = $$_[1];
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
   my $stripped = $msg->{message};
   ...
 
@@ -193,9 +195,9 @@ in other words, when a 'send_message' event was sent.
 Carries a copy of the target and text:
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $target = $$_[1];
-  my $string = $$_[2];
+  my $context = ${$_[0]};
+  my $target = ${$_[1]};
+  my $string = ${$_[2]};
 
 This being IRC, there is no guarantee that the message actually went out.
 
@@ -218,8 +220,8 @@ This generally indicates we're ready to talk to the channel.
 Carries the channel name:
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
 
 
 =head3 Bot_topic_changed
@@ -229,8 +231,8 @@ Broadcast when a channel topic has changed.
 Carries a hash:
 
   my ($self, $core) = @splice @_, 0, 2;
-  my $context = $$_[0];
-  my $t_change = $$_[1];
+  my $context  = ${$_[0]};
+  my $t_change = ${$_[1]};
 
 $t_change has the following keys:
 
@@ -252,7 +254,8 @@ the name of a service, or some other arbitrary string.
 Broadcast when a channel mode has changed.
 
   my ($self, $core) = splice @_, 0, 2;
-  my ($context, $modechg) = ($$_[0], $$_[1]);
+  my $context = ${$_[0]};
+  my $modechg = ${$_[1]};
 
 The $modechg hash has the following keys:
 
@@ -318,8 +321,8 @@ As of this writing the Cobalt core provides no convenience method for this.
 Broadcast when a user joins a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $join = $$_[1];
+  my $context = ${$_[0]};
+  my $join = ${$_[1]};
 
 $join is a hash with the following keys:
 
@@ -337,8 +340,8 @@ $join is a hash with the following keys:
 Broadcast when a user parts a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $part = $$_[1];
+  my $context = ${$_[0]};
+  my $part = ${$_[1]};
 
 $part is a hash with the same keys as L</Bot_user_joined>.
 
@@ -352,11 +355,11 @@ to PART by the IRCD. Many daemons provide a 'REMOVE' and/or 'SAPART'
 that will do this. I<Bot_self_left> indicates the bot left the channel, 
 as determined by matching the bot's nickname against the user who left.
 
-$$_[1] is the channel name.
+${$_[1]} is the channel name.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
 
 B<IMPORTANT>:
 
@@ -374,8 +377,8 @@ Also see L</Bot_user_left>
 Broadcast when the bot was seemingly kicked from a channel.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my ($src, $chan, $reason) = ($$_[1], $$_[2], $$_[3]);
+  my $context = ${$_[0]};
+  my ($src, $chan, $reason) = (${$_[1]}, ${$_[2]}, ${$_[3]});
 
 Relies on the same logic as L</Bot_self_left> -- be sure to read the 
 note in that section (above).
@@ -387,10 +390,10 @@ The bot will probably attempt to auto-rejoin.
 Broadcast when a user (maybe us) is kicked.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $kick = $$_[1];
+  my $context = ${$_[0]};
+  my $kick = ${$_[1]};
 
-$$_[1] is a hash with the following keys:
+${$_[1]} is a hash with the following keys:
 
   $kick = {
     src => Origin of the kick
@@ -413,8 +416,8 @@ Broadcast when mode changes on the bot's nickname (umode).
 The context and mode string is provided:
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $modestr = $$_[1];
+  my $context = ${$_[0]};
+  my $modestr = ${$_[1]};
 
 
 =head3 Bot_nick_changed
@@ -422,10 +425,10 @@ The context and mode string is provided:
 Broadcast when a visible user's nickname changes.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $nchange = $$_[1];
+  my $context = ${$_[0]};
+  my $nchange = ${$_[1]};
 
-$$_[1] is a hash with the following keys:
+${$_[1]} is a hash with the following keys:
 
   $nchange = {
     old => Previous nickname
@@ -444,8 +447,8 @@ unreliable on servers with an incorrect CASEMAPPING value in ISUPPORT.
 Broadcast when our own nickname changed, possibly via coercion.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $new_nick = $$_[1];
+  my $context  = ${$_[0]};
+  my $new_nick = ${$_[1]};
 
 A I<nick_changed> event will be queued after I<self_nick_changed>.
 
@@ -457,8 +460,8 @@ Broadcast when a visible user has quit.
 We can only receive quit notifications if we share channels with the user.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $quit_h = $$_[1];
+  my $context = ${$_[0]};
+  my $quit_h  = ${$_[1]};
 
 $quit_h would be a hash with the following keys:
 
