@@ -34,7 +34,10 @@ sub rplprintf {
   return unless $string;
   $vars = {} unless $vars;
   ## rplprintf( $string, $vars )
-  ## rplprintf( "Error for %user: %err")
+  ##
+  ## variables can be terminated with % or a space:
+  ## rplprintf( "Error for %user%: %err")
+  ##
   ## used for formatting lang RPLs
   ## $vars should be a hash keyed by variable, f.ex:
   ##   'user' => $username,
@@ -48,7 +51,7 @@ sub rplprintf {
     return $replace
   }
 
-  my $regex = qr/(%(\S+))/;
+  my $regex = qr/(%([^\s%]+)%?)/;
 
   $string =~ s/$regex/_repl($1, $2, $vars)/ge;
 
@@ -317,7 +320,7 @@ strings.
 
 For example:
 
-  $string = "Access denied for %user (%host)";
+  $string = "Access denied for %user (%host%)";
   $response = rplprintf( $string,
     { 
       user => "Joe",
@@ -327,6 +330,8 @@ For example:
 
 Intended for formatting langset RPLs before sending.
 
+Variable names can be terminated with a space or % -- both are demonstrated 
+in the example above.
 
 =head2 Password handling
 
