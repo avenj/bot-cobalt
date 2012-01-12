@@ -1,5 +1,5 @@
 ---
-
+## etc/langs/english.yml
 ## This is a cobalt2 core langset.
 ##
 ## It provides IRC message strings for core plugins incl. Cobalt::IRC
@@ -10,23 +10,24 @@
 ##
 ## The actual replies exist in 'RPL:' below.
 ## Typically they are strings formattable by Cobalt::Utils::rplprintf
+## The list of available variables is documented with each RPL.
 
 NAME: english
-REV: 1   ## bump +1 on revisions please
+REV: 2   ## bump +1 on revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
 
  ## Core Cobalt::IRC set:
 
-  ## RPL_PLUGIN_LOAD, $plugin_alias, $module
-  RPL_PLUGIN_LOAD: "Plugin loaded: %s (%s)"
+  ## RPL_PLUGIN_LOAD: %plugin, %module
+  RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module)"
 
-  ## RPL_PLUGIN_UNLOAD, $plugin_alias, $module
-  RPL_PLUGIN_UNLOAD: "Plugin removed: %s (%s)"
+  ## RPL_PLUGIN_UNLOAD: %plugin, %module
+  RPL_PLUGIN_UNLOAD: "Plugin removed: %plugin (%module)"
 
-  ## RPL_PLUGIN_ERR, $plugin_alias, $error
-  RPL_PLUGIN_ERR: "Failed plugin load: %s: %s"
+  ## RPL_PLUGIN_ERR, %plugin, %err
+  RPL_PLUGIN_ERR: "Failed plugin load: %plugin: %err"
 
   ## RPL_CHAN_SYNC: %chan
   RPL_CHAN_SYNC: "Sync complete on %chan"
@@ -49,13 +50,13 @@ RPL:
 
  ## Plugin::Auth:
 
-  ## Broken syntax RPLs
+  ## Broken syntax RPLs:
   AUTH_BADSYN_LOGIN: "Bad syntax. Usage: LOGIN <username> <passwd>"
 
-  ## AUTH_SUCCESS, %context, %src, %nick, %user, %lev
+  ## AUTH_SUCCESS: %context, %src, %nick, %user, %lev
   AUTH_SUCCESS: "Successful auth [%nick] (%user - %lev)"
 
-  ## AUTH_FAIL_*, same vars available as SUCCESS except for 'lev':
+  ## AUTH_FAIL_*: $context, %src, %nick, %user
   AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src]"
   AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user)"
   AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user)"
@@ -81,11 +82,11 @@ RPL:
 
  ## Plugin::Info3:
 
-  ## RPL_DONTKNOW, $topic
-  RPL_DONTKNOW: I don't know anything about %s
+  ## RPL_DONTKNOW, %topic
+  RPL_DONTKNOW: I don't know anything about %topic
 
-  ## RPL_WHAT, $nickname
-  RPL_WHAT: "%s, what?"
+  ## RPL_WHAT, %nick
+  RPL_WHAT: "%nick, what?"
 
   RPL_INFO3_ADD:
 
