@@ -1,7 +1,7 @@
 <html><head><title>Cobalt::IRC</title>
 			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
 			<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" >
-			<h1>Cobalt2 POD (Cobalt/IRC.pm)</h1>
+			<h1>Cobalt2 POD (lib/Cobalt/IRC.pm)</h1>
 			<link rel="stylesheet" type="text/css" title="pod_stylesheet" href="http://search.cpan.org/s/style.css">
 
 </head>
@@ -41,6 +41,7 @@
       <li class='indexItem indexItem3'><a href='#Bot_user_joined'>Bot_user_joined</a>
       <li class='indexItem indexItem3'><a href='#Bot_user_left'>Bot_user_left</a>
       <li class='indexItem indexItem3'><a href='#Bot_self_left'>Bot_self_left</a>
+      <li class='indexItem indexItem3'><a href='#Bot_self_kicked'>Bot_self_kicked</a>
       <li class='indexItem indexItem3'><a href='#Bot_user_kicked'>Bot_user_kicked</a>
     </ul>
     <li class='indexItem indexItem2'><a href='#User_state_events'>User state events</a>
@@ -441,6 +442,21 @@ name="Bot_self_left"
 
 <p>Also see <a href="#Bot_user_left" class="podlinkpod"
 >&#34;Bot_user_left&#34;</a></p>
+
+<h3><a class='u' href='#___top' title='click to go to top of document'
+name="Bot_self_kicked"
+>Bot_self_kicked</a></h3>
+
+<p>Broadcast when the bot was seemingly kicked from a channel.</p>
+
+<pre>  my ($self, $core) = splice @_, 0, 2;
+  my $context = $$_[0];
+  my ($src, $chan, $reason) = ($$_[1], $$_[2], $$_[3]);</pre>
+
+<p>Relies on the same logic as <a href="#Bot_self_left" class="podlinkpod"
+>&#34;Bot_self_left&#34;</a> -- be sure to read the note in that section (above).</p>
+
+<p>The bot will probably attempt to auto-rejoin.</p>
 
 <h3><a class='u' href='#___top' title='click to go to top of document'
 name="Bot_user_kicked"

@@ -1,0 +1,67 @@
+=pod
+
+=head1 NAME
+
+Manual::PluginConf - quick cobalt2 config-file primer
+
+=head1 DESCRIPTION
+
+This document is aimed at plugin authors in need of a better 
+understanding of I<Config:> plugin configuration files.
+
+B<Cobalt> configuration files are typically presented in B<YAML>.
+
+Typically, you will see structures like this:
+
+  $ cat etc/plugins/mine/myplugin.conf
+  ---
+  ## config for MyPlugin
+  ## RequiredLevels: hash specifying access levels for commands:
+  RequiredLevels:
+    cmd_ensnackulate: 2
+    cmd_refrobulate: 1
+
+...which would be converted, upon load, into something like this:
+
+  my $pkg = __PACKAGE__;
+  $core->cfg->{plugin_cf}->{$pkg}->{RequiredLevels} = {
+    'cmd_ensnackulate' => 2,
+    'cmd_refrobulate' => 1,
+  };
+
+
+=head1 BOOLEANS
+
+Many configuration options, especially in the Cobalt core, are simple 
+boolean true/false:
+
+  ## Example of a boolean true or false
+  ## if UseSSL is commented out, 0, or ~ (undef), it is "false"
+  ## true if 1 or some other positive value like a string ("Yes")
+  UseSSL: 1
+  
+  ## ...just as valid for a simple boolean check:
+  UseSSL: "Yes please!"
+
+=head1 STRINGS
+
+
+=head1 HASHES
+
+
+=head1 LISTS
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=head1 SEE ALSO
+
+L<http://yaml.org/spec/1.0/>
+
+L<YAML::Syck>
+
+=cut

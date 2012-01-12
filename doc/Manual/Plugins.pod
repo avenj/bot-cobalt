@@ -1,10 +1,10 @@
 =head1 NAME
 
-Cobalt2 plugin-writing fundamentals guide
+Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0001
+Plugins guide revision: 0002
 
 Last updated for cobalt 2.00
 
@@ -15,7 +15,14 @@ B<Cobalt2> plugins.
 
 Refer to L</SEE ALSO> for other relevant documentation.
 
-B<Plugin authors should at least read the Cobalt::IRC POD!>
+B<Plugin authors should at least read the Plugins::IRC POD!>
+
+  $ cd doc/
+  $ perldoc Plugins::IRC
+
+Configuration files are typically YAML1.0; for a quick primer, see 
+C<perldoc Manual::PluginConf>. More extensive YAML documentation is 
+widely available online.
 
 
 =head1 PLUGIN FUNDAMENTALS
@@ -33,11 +40,17 @@ C<plugins.conf> is YAML in the following structure:
   MyPlugin:
     Module: Cobalt::Plugin::User::MyPlugin
     Config: plugins/mine/myplugin.conf
+    ## Optional:
+    Opts:
+      Level: 2
 
 Configuration files specified in 'Config: ' are expected to be valid YAML.
 They'll be automatically loaded at load-time; the data structure loaded 
 will be stored in the core 'cfg' attribute. See below.
 
+Simple plugins might only need one or two config options; in this case, 
+you can specify a B<Opts:> directive. It should be a hash (or a list, 
+in very odd cases).
 
 =head3 Accessing plugin configuration
 

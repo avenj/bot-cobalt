@@ -7,7 +7,7 @@ use App::Pod2CpanHtml;
 use Time::Piece;
 
 ## where to grab POD from:
-my $pod_root = "../../lib";
+my $pod_root = "../../";
 
 my $outdir = "../../doc/html";
 my $index = $outdir."/index.html";
@@ -16,8 +16,8 @@ my $files = {
 
   Manuals => {
 
-    "Cobalt/Manual/Plugins.pod" => {
-      name => "Cobalt-Manual-Plugins.html",
+    "doc/Writing_Plugins.pod" => {
+      name => "Writing_Plugins.html",
       desc => "<b>The Cobalt Plugin Author's Manual</b>",
     },
 
@@ -25,22 +25,22 @@ my $files = {
 
   Modules => {
 
-    "Cobalt.pm" => {
+    "lib/Cobalt.pm" => {
       name => "Cobalt.html",
       desc => "<b>Cobalt core</b>",
     },
 
-    "Cobalt/IRC.pm" => {
+    "lib/Cobalt/IRC.pm" => {
      name => "Cobalt-IRC.html",
       desc => "<b>Core single-server IRC interface</b>",
     },
 
-    "Cobalt/Utils.pm" => {
+    "lib/Cobalt/Utils.pm" => {
       name => "Cobalt-Utils.html",
       desc => "<b>Utils for Cobalt plugins</b>",
     },
 
-    "Cobalt/Lang.pm" => {
+    "lib/Cobalt/Lang.pm" => {
       name => "Cobalt-Lang.html",
       desc => "<b>Cobalt language set handler</b>",
     },

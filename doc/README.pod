@@ -4,14 +4,19 @@
 
 cobalt2 README file
 
+=head1 CONFIGURATION
+
+
 =head1 INVOCATION
+
 
 
 =head1 DOCUMENTATION
 
-=head2 Usage
+=head2 Usage-related
 
-=head2 Plugins
+
+=head2 Writing plugins
 
 
 =head1 DIRECTORY LAYOUT
