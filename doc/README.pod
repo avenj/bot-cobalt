@@ -1,0 +1,26 @@
+=pod
+
+=head1 NAME
+
+cobalt2 README file
+
+=head1 INVOCATION
+
+
+=head1 DOCUMENTATION
+
+=head2 Usage
+
+=head2 Plugins
+
+
+=head1 DIRECTORY LAYOUT
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

@@ -1,4 +1,5 @@
 package Cobalt::Plugin::Version;
+our $VERSION = '0.10';
 ## Always declare a package name as the first line.
 ## For example, if your module lives in:
 ##   lib/Cobalt/Plugin/User/MyPlugin.pm
