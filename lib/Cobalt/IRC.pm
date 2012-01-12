@@ -552,7 +552,7 @@ sub irc_kick {
   };
 
   my $me = $self->irc->nick_name();
-  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
   if ( eq_irc($me, $nick, $casemap) ) {
     $self->core->send_event( 'self_kicked', 'Main', $src, $channel, $reason );
   }
@@ -668,7 +668,7 @@ sub irc_part {
   };
 
   my $me = $self->irc->nick_name();
-  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
   ## FIXME; we could try an 'eq' here ... but is a part issued by
   ## force methods going to be guaranteed the same case ... ?
   if ( eq_irc($me, $nick, $casemap) ) {
