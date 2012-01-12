@@ -345,8 +345,8 @@ sub _cmd_login {
   my $nick = $msg->{src_nick};
 
   unless (defined $l_user && defined $l_pass) {
-    ## pointless use of sprintf in case we add args later:
-    return sprintf($self->core->lang->{AUTH_BADSYN_LOGIN});
+    ## bad syntax resp, currently takes no args ...
+    return rplprintf( $self->core->lang->{AUTH_BADSYN_LOGIN} );
   }
 
   ## NOTE: usernames in accesslist are stored lowercase per rfc1459 rules:
@@ -360,23 +360,29 @@ sub _cmd_login {
   ## _do_login returns constants we can translate into a langset RPL:
   ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST
   my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
+  my $rplvars = {
+    context => $context,
+    src => $origin,
+    nick => $nick,
+    user => $l_user,
+  };
   my $resp;
   given ($retval) {
     when (SUCCESS) {
-      ## AUTH_SUCCESS $username $level
-      $resp = sprintf( $self->core->lang->{AUTH_SUCCESS},
-        $l_user,
-        $self->core->State->{Auth}->{$context}->{$nick}->{Level},
-      );
+      ## AUTH_SUCCESS
+      ## add level to rplvars
+      $rplvars->{lev} = 
+        $self->core->State->{Auth}->{$context}->{$nick}->{Level};  ## FIXME accessor
+      $resp = rplprintf( $self->core->lang->{AUTH_SUCCESS}, $rplvars );
     }
     when (E_NOSUCH) {
-      $resp = sprintf( $self->core->lang->{AUTH_FAIL_NO_SUCH}, $l_user );
+      $resp = rplprintf( $self->core->lang->{AUTH_FAIL_NO_SUCH}, $rplvars );
     }
     when (E_BADPASS) {
-      $resp = sprintf( $self->core->lang->{AUTH_FAIL_BADPASS}, $l_user );
+      $resp = rplprintf( $self->core->lang->{AUTH_FAIL_BADPASS}, $rplvars );
     }
     when (E_BADHOST) {
-      $resp = sprintf( $self->core->lang->{AUTH_FAIL_BADHOST}, $l_user );
+      $resp = rplprintf( $self->core->lang->{AUTH_FAIL_BADHOST}, $rplvars );
     }
   }
 

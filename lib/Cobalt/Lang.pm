@@ -87,7 +87,8 @@ Responses are expected to be found in the YAML langset's 'RPL:' key.
 (The corresponding hash is what is actually returned when loading a set.)
 
 Typically the keys of the 'RPL' hash contain values which are strings 
-formattable by sprintf.
+potentially containing variables formattable by C<rplprintf> from 
+L<Cobalt::Utils>.
 
 Inspect C<etc/langs/english.yml> for an example.
 

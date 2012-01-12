@@ -28,6 +28,10 @@ use IRC::Utils qw/
   matches_mask normalize_mask
 /;
 
+use Cobalt::Utils qw/
+  rplprintf
+/;
+
 
 has 'core' => (
   is => 'rw',
@@ -250,7 +254,9 @@ sub _start {
 sub irc_chan_sync {
   my ($self, $chan) = @_[OBJECT, ARG0];
 
-  my $resp = sprintf( $self->core->lang->{RPL_CHAN_SYNC}, $chan );
+  my $resp = rplprintf( $self->core->lang->{RPL_CHAN_SYNC},
+    { 'chan' => $chan } 
+  );
 
   ## issue Bot_chan_sync
   $self->core->send_event( 'chan_sync', 'Main', $chan );

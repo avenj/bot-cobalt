@@ -32,8 +32,10 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Cobalt::Utils provides a handful of functional utils.
-## We just need secs_to_timestr to compose uptime strings:
-use Cobalt::Utils qw/ secs_to_timestr /;
+## We need secs_to_timestr to compose uptime strings
+## (and rplprintf to format langset replies)
+## also see Cobalt::Utils POD
+use Cobalt::Utils qw/ secs_to_timestr rplprintf /;
 
 ## Minimalist constructor example.
 ## This is all you need to create an object for this plugin:
@@ -90,25 +92,29 @@ sub Bot_public_msg {
       my $startedts = $core->State->{StartedTS} // 0;
       my $delta = time() - $startedts;
 
-      $resp = sprintf( $core->lang->{RPL_INFO},
-        'cobalt '.$core->version,       ## version str
-        scalar keys $core->plugin_list, ## plugin count
-        secs_to_timestr($delta),        ## uptime str
-        $core->State->{Counters}->{Sent}, ## sent msg events
+      $resp = rplprintf( $core->lang->{RPL_INFO},
+        {
+          version => 'cobalt '.$core->version,
+          plugins => scalar keys $core->plugin_list,
+          uptime => secs_to_timestr($delta),
+          sent => $core->State->{Counters}->{Sent},
+        }
       );
     }
 
     when (/^version$/i) {
-      $resp = sprintf( $core->lang->{RPL_VERSION},
-        $core->version,
-        $^V,
-        $POE::VERSION,
-        $POE::Component::IRC::VERSION,
+      $resp = rplprintf( $core->lang->{RPL_VERSION},
+        {
+          version => 'cobalt '.$core->version,
+          perl_v => $^V,
+          poe_v => $POE::VERSION,
+          pocoirc_v => $POE::Component::IRC::VERSION,
+        }
       );
     }
 
     when (/^os$/i) {
-      $resp = sprintf( $core->lang->{RPL_OS}, $^O );        
+      $resp = rplprintf( $core->lang->{RPL_OS}, { os => $^O } );
     }
 
   }

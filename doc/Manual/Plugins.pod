@@ -20,10 +20,6 @@ B<Plugin authors should at least read the Plugins::IRC POD!>
   $ cd doc/
   $ perldoc Plugins::IRC
 
-Configuration files are typically YAML1.0; for a quick primer, see 
-C<perldoc Manual::PluginConf>. More extensive YAML documentation is 
-widely available online.
-
 
 =head1 PLUGIN FUNDAMENTALS
 
@@ -44,7 +40,11 @@ C<plugins.conf> is YAML in the following structure:
     Opts:
       Level: 2
 
-Configuration files specified in 'Config: ' are expected to be valid YAML.
+Configuration files specified in 'Config: ' are expected to be valid YAML1.0.
+
+For a quick primer, see C<perldoc Manual::PluginConf>. More extensive YAML 
+documentation is widely available online.
+
 They'll be automatically loaded at load-time; the data structure loaded 
 will be stored in the core 'cfg' attribute. See below.
 
@@ -52,9 +52,14 @@ Simple plugins might only need one or two config options; in this case,
 you can specify a B<Opts:> directive. It should be a hash (or a list, 
 in very odd cases).
 
+If an Opts: directive is supplied, it will be loaded into 
+'cfg->{plugin_cf}->{$pkg}->{ExtraOpts}'. See below.
+
 =head3 Accessing plugin configuration
 
 FIXME need core get_plugin_cfg
+
+FIXME discussion about ExtraOpts
 
 FIXME discussion about direct access
 

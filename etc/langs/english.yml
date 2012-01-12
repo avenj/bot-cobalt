@@ -6,9 +6,10 @@
 ##
 ## Plugin authors:
 ## See the Cobalt::Lang docs for information on loading langsets.
+## See the Cobalt::Utils docs for help with formatting RPL strings.
 ##
 ## The actual replies exist in 'RPL:' below.
-## Typically they are strings formattable by sprintf.
+## Typically they are strings formattable by Cobalt::Utils::rplprintf
 
 NAME: english
 REV: 1   ## bump +1 on revisions please
@@ -27,54 +28,55 @@ RPL:
   ## RPL_PLUGIN_ERR, $plugin_alias, $error
   RPL_PLUGIN_ERR: "Failed plugin load: %s: %s"
 
-  RPL_CHAN_SYNC: "Sync complete on %s"
+  ## RPL_CHAN_SYNC: %chan
+  RPL_CHAN_SYNC: "Sync complete on %chan"
 
 
  ## Plugin::Version:
 
-  ## RPL_VERSION, $version, $perl_version, $poe_version, $pocoirc_version
-  RPL_VERSION: "Running cobalt %s (perl-%s poe-%s pocoirc-%s) -- http://cobaltirc.org/dev/bots"
+  ## RPL_VERSION: %version, %perl_v, %poe_v, %pocoirc_v
+  RPL_VERSION: "Running %version (perl-%perl_v poe-%poe_v pocoirc-%pocoirc_v) -- http://www.cobaltirc.org"
 
-  ## RPL_INFO, $version, $plugin-count, $uptime, $sent_messages
-  RPL_INFO: Running %s. I have %d plugins loaded. I've been up for %s and responded %d times.
+  ## RPL_INFO: %version, %plugins, %uptime, %sent
+  RPL_INFO: "Running %version. I have %plugins plugins loaded. I've been up for %uptime and responded %sent times."
 
-  ## RPL_OS, $operating_system
-  RPL_OS: "I am running %s"
+  ## RPL_OS: %os
+  RPL_OS: "I am running %os"
 
-  ## RPL_NO_ACCESS, $nickname
-  RPL_NO_ACCESS: "%s, you are not authorized!"
+  ## RPL_NO_ACCESS: %nick
+  RPL_NO_ACCESS: "%nick, you are not authorized!"
 
 
  ## Plugin::Auth:
 
-  ## AUTH_SUCCESS, $auth_username, $level
-  AUTH_SUCCESS: "Successful auth (%s - %s)"
-
   ## Broken syntax RPLs
   AUTH_BADSYN_LOGIN: "Bad syntax. Usage: LOGIN <username> <passwd>"
 
-  ## AUTH_FAIL_*, $auth_username
-  AUTH_FAIL_BADHOST: "Login failed; host mismatch (%s)"
-  AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%s)"
-  AUTH_FAIL_NO_SUCH: "Login failed; no such user (%s)"
+  ## AUTH_SUCCESS, %context, %src, %nick, %user, %lev
+  AUTH_SUCCESS: "Successful auth [%nick] (%user - %lev)"
+
+  ## AUTH_FAIL_*, same vars available as SUCCESS except for 'lev':
+  AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src]"
+  AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user)"
+  AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user)"
 
   ## AUTH_STATUS, $nick, $level
-  AUTH_STATUS: "Current level for %s: %s"
+  AUTH_STATUS: ~
 
   ## AUTH_USER_ADDED, $username, $mask, $level
-  AUTH_USER_ADDED: "Added user %s (%s) level %s"
+  AUTH_USER_ADDED: ~
 
   ## AUTH_MASK_ADDED, $mask, $username
-  AUTH_MASK_ADDED: "Added new mask (%s) to user %s"
+  AUTH_MASK_ADDED: ~
 
   ## AUTH_MASK_DELETED, $mask, $username
-  AUTH_MASK_DELETED: "Deleted mask (%s) from user %s"
+  AUTH_MASK_DELETED: ~
 
   ## AUTH_USER_DELETED, $username, $level
-  AUTH_USER_DELETED: "Deleted user %s (was level %s)"
+  AUTH_USER_DELETED: ~
 
   ## AUTH_USER_EXISTS, $username
-  AUTH_USER_EXISTS: "Username %s already exists."
+  AUTH_USER_EXISTS: ~
 
 
  ## Plugin::Info3:
