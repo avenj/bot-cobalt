@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use 5.12.1;
 use strict;
@@ -19,11 +19,42 @@ our @EXPORT_OK = qw/
   passwdcmp
 
   color
+
+  rplprintf
 /;
 
 our %EXPORT_TAGS = (
   ALL => [ @EXPORT_OK ],
 );
+
+
+## String formatting, usually for langsets:
+sub rplprintf {
+  my ($string, $vars) = @_;
+  return unless $string;
+  $vars = {} unless $vars;
+  ## rplprintf( $string, $vars )
+  ## rplprintf( "Error for %user: %err")
+  ## used for formatting lang RPLs
+  ## $vars should be a hash keyed by variable, f.ex:
+  ##   'user' => $username,
+  ##   'err'  => $error,
+
+  sub _repl {
+    ## _repl($1, $2, $vars)
+    my ($orig, $match, $vars) = @_;
+    return $orig unless defined $vars->{$match};
+    my $replace = $vars->{$match};
+    return $replace
+  }
+
+  my $regex = qr/(%(\S+))/;
+
+  $string =~ s/$regex/_repl($1, $2, $vars)/ge;
+
+  return $string  
+}
+
 
 ## IRC color codes:
 sub color {
@@ -72,6 +103,7 @@ sub color {
   my $selected = $colors{$format};
 
   return $selected . $str . $colors{NORMAL} if $str;
+
   return $selected || $colors{NORMAL};
 };
 
@@ -194,7 +226,13 @@ Cobalt::Utils
 
 =head1 DESCRIPTION
 
-Simple utility functions for Cobalt2 and plugins
+Cobalt::Utils provides a set of simple utility functions for the 
+B<cobalt2> core and plugins.
+
+Plugin authors may wish to make use of these; simply importing the 
+C<:ALL> set from Cobalt::Utils will give you access to the entirety of
+this utility module, including useful string formatting tools, safe 
+password hashing functions, etc. See L</USAGE/>, below.
 
 =head1 USAGE
 
@@ -236,7 +274,7 @@ Useful for uptime reporting, for example:
   my $uptime_str = secs_to_timestr($delta);
 
 
-=head2 IRC-related tools
+=head2 String formatting
 
 =head3 color
 
@@ -263,6 +301,31 @@ If passed a color or format name and a string, returns the formatted
 string, terminated by NORMAL:
 
   my $formatted = color('red', "red text") . "normal text";
+
+
+=head3 rplprintf
+
+String formatting with replacement of arbitrary variables.
+
+  rplprintf( $string, $hash );
+
+The first argument to C<rplprintf> should be the template string. 
+It may contain variables in the form of C<%var> to be replaced.
+
+The second argument is the hashref mapping C<%var> variables to 
+strings.
+
+For example:
+
+  $string = "Access denied for %user (%host)";
+  $response = rplprintf( $string,
+    { 
+      user => "Joe",
+      host => "joe!joe@example.org",
+    } 
+  );  ## 'Access denied for Joe (joe!joe@example.org)'
+
+Intended for formatting langset RPLs before sending.
 
 
 =head2 Password handling
