@@ -32,7 +32,8 @@ sub Cobalt_unregister {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
 
   return PLUGIN_EAT_NONE
 }

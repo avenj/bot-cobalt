@@ -222,7 +222,7 @@ sub Bot_connected {
   my ($self, $core) = splice @_, 0, 2;
   ## Bot's freshly connected to a context
   ## Clear any auth entries for this pkg + context
-  my $context = $$_[0];
+  my $context = ${$_[0]};
   $self->_clear_context($context);
   return PLUGIN_EAT_NONE
 }
@@ -230,8 +230,10 @@ sub Bot_connected {
 sub Bot_disconnected {
   my ($self, $core) = splice @_, 0, 2;
   ## disconnect event
-  my $context = $$_[0];
+  my $context = ${$_[0]};
+
   $self->_clear_context($context);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -240,9 +242,11 @@ sub Bot_user_left {
   ## User left a channel
   ## If we don't share other channels, this user can't be tracked
   ## (therefore clear any auth entries for user belonging to us)
-  my $context = $$_[0];
-  my $channel = $$_[1]->{channel};
-  my $nick = $$_[1]->{src_nick};
+  my $context = ${$_[0]};
+  my $left    = ${$_[1]};
+
+  my $channel = $left->{channel};
+  my $nick    = $left->{src_nick};
 
   ## Call _remove_if_lost to see if we can still track this user:
   $self->_remove_if_lost($context, $nick);
@@ -252,8 +256,8 @@ sub Bot_user_left {
 
 sub Bot_self_left {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
   ## The bot left a channel. Check auth status of all users.
   ## This method may be unreliable on nets w/ busted CASEMAPPING=
   $self->_remove_if_lost($context);
@@ -262,23 +266,23 @@ sub Bot_self_left {
 
 sub Bot_self_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
+  my $context = ${$_[0]};
   $self->_remove_if_lost($context);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $nick = $$_[1]->{src_nick};
+  my $context = ${$_[0]};
+  my $nick    = ${$_[1]}->{src_nick};
   $self->_remove_if_lost($context, $nick);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $nick = $$_[1]->{src_nick};
+  my $context = ${$_[0]};
+  my $nick    = ${$_[1]}->{src_nick};
   ## User quit, clear relevant auth entries
   ## We can call _do_logout directly here:
   $self->_do_logout($context, $nick);
@@ -287,9 +291,9 @@ sub Bot_user_quit {
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $old = $$_[1]->{old};
-  my $new = $$_[1]->{new};
+  my $context = ${$_[0]};
+  my $old = ${$_[1]}->{old};
+  my $new = ${$_[1]}->{new};
   ## a nickname changed, adjust Auth accordingly:
   if (exists $core->State->{Auth}->{$context}->{$old}) {
     my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};
@@ -304,8 +308,8 @@ sub Bot_nick_changed {
 
 sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $msg = $$_[1];
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
 
   my $resp;
 
@@ -537,6 +541,7 @@ sub _do_chflags {
 sub _user_chmask {
   ## [+/-]mask syntax so as not to be confused with user del (much)
   ## FIXME normalize masks before adding ?
+  ## call a list sync
 }
 
 sub _do_chmask {

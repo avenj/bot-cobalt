@@ -34,8 +34,8 @@ sub Cobalt_unregister {
 
 sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $msg = $$_[1];
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
 
   my $me = $msg->{myself};
 

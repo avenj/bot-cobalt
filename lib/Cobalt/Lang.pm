@@ -130,11 +130,14 @@ That being said, if you do so, you may want to check for rehashes
 
 Syndicated when a language set is loaded.
 
-$$_[0] is the (lowercased) langset name.
+${$_[0]} is the (lowercased) langset name.
 
-$$_[1] is the path to the set that was loaded.
+${$_[1]} is the path to the set that was loaded.
 
 =head2 langset_error
+
+FIXME
+
 
 =head1 AUTHOR
 

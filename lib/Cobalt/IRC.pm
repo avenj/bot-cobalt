@@ -26,6 +26,7 @@ use IRC::Utils qw/
   lc_irc uc_irc eq_irc
   strip_color strip_formatting
   matches_mask normalize_mask
+  parse_mode_line
 /;
 
 use Cobalt::Utils qw/
@@ -581,7 +582,7 @@ sub irc_mode {
   };
   ## try to guess whether the mode change was umode (us):
   my $me = $self->irc->nick_name();
-  my $casemap = $self->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
   if ( eq_irc($me, $changed_on, $casemap) ) {
     ## our umode changed
     $self->core->send_event( 'umode_changed', 'Main', $modestr );
@@ -702,7 +703,9 @@ sub irc_quit {
 
 sub Bot_send_message {
   my ($self, $core) = splice @_, 0, 2;
-  my ($context, $target, $txt) = ($$_[0], $$_[1], $$_[2]);
+  my $context = ${$_[0]};
+  my $target  = ${$_[1]};
+  my $txt     = ${$_[2]};
 
   ## core->send_event( 'send_message', $context, $target, $string );
 
@@ -726,7 +729,9 @@ sub Bot_send_message {
 
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
-  my ($context, $target, $txt) = ($$_[0], $$_[1], $$_[2]);
+  my $context = ${$_[0]};
+  my $target  = ${$_[1]};
+  my $txt     = ${$_[2]};
 
   ## core->send_event( 'send_notice', $context, $target, $string );
 
@@ -749,9 +754,9 @@ sub Bot_send_notice {
 
 sub Bot_topic {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
-  my $topic = $$_[2] || '';
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+  my $topic   = ${$_[2]} || '';
 
   unless ( $context
            && $context eq 'Main'
@@ -767,9 +772,9 @@ sub Bot_topic {
 
 sub Bot_mode {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $target = $$_[1];  ## channel or self normally
-  my $modestr = $$_[2]; ## modes + args
+  my $context = ${$_[0]};
+  my $target  = ${$_[1]}; ## channel or self normally
+  my $modestr = ${$_[2]}; ## modes + args
 
   unless ( $context
            && $context eq 'Main'
@@ -789,10 +794,10 @@ sub Bot_mode {
 
 sub Bot_kick {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
-  my $target = $$_[2];
-  my $reason = $$_[3] // 'Kicked';
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+  my $target  = ${$_[2]};
+  my $reason  = ${$_[3]} // 'Kicked';
 
   unless ( $context
            && $context eq 'Main'
@@ -809,8 +814,8 @@ sub Bot_kick {
 
 sub Bot_join {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
 
   unless ( $context
            && $context eq 'Main'
@@ -826,9 +831,9 @@ sub Bot_join {
 
 sub Bot_part {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = $$_[0];
-  my $channel = $$_[1];
-  my $reason = $$_[2] // 'Leaving';
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+  my $reason  = ${$_[2]} // 'Leaving';
 
   unless ( $context
            && $context eq 'Main'

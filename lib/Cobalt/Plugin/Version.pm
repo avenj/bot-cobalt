@@ -74,10 +74,10 @@ sub Cobalt_unregister {
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
 
-  ## Arguments are provided as a reference.
+  ## Arguments are provided as references
   ## deref:
-  my $context = $$_[0];  ## our server context
-  my $msg = $$_[1];      ## our msg hash
+  my $context = ${$_[0]};  ## our server context
+  my $msg = ${$_[1]};      ## our msg hash
 
   ## return unless bot is addressed:
   return PLUGIN_EAT_NONE unless $msg->{highlight};
