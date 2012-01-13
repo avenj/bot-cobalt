@@ -270,6 +270,8 @@ sub timer_set {
   ## generic/easy timer set method
   ## $core->timer_set($delay, $event, $id)
 
+  ## Returns timer ID on success
+
   ##  $delay should always be in seconds
   ##   (timestr_to_secs from Cobalt::Utils may help)
   ##  $event should be a hashref:
@@ -358,8 +360,11 @@ sub timer_set {
       Args => [ @event_args ],
       AddedBy => scalar caller(),
     };
+
+    return $id
   } else {
-    $self->log->warn("timer_set called but no timer added?");
+    $self->log->debug("timer_set called but no timer added; bad type?");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
   }
 
 }
@@ -374,7 +379,6 @@ sub timer_del {
 sub timer_del_pkg {
   my $self = shift;
   my $pkg = shift || return;
-  my @dead_timers;
   ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
@@ -545,8 +549,8 @@ sub get_channels_cfg {
   my ($self, $context) = @_;
   unless ($context) {
     $self->log->debug("get_channels_cfg called but no context specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
+    $self->log->debug("returning undef to ".join(' ', (caller)[0,2]) );
+    return undef
   } 
   ## Returns empty hash if there's no conf for this channel:
   return \%{ $self->cfg->{channels}->{$context} // {} }
