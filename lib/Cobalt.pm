@@ -19,7 +19,6 @@ use Cobalt::IRC;
 
 ## a whole bunch of attributes ...
 
-
 has 'cfg' => (
   is => 'rw',
   isa => 'HashRef',
@@ -387,7 +386,8 @@ sub timer_del_pkg {
 }
 
 
-### Core Auth pieces.
+### Accessors acting on State->{Auth}:
+
 ## Work is mostly done by Auth.pm or equivalent
 ## These are just easy ways to get at the hash.
 
@@ -396,6 +396,18 @@ sub auth_level {
   ## unidentified users get access level 0 by default
   ## FIXME: configurable default access level
   my ($self, $context, $nickname) = @_;
+
+  if (! $context) {
+    $self->log->debug("auth_level called but no context specified");
+    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
+    return undef
+  } elsif (! $nickname) {
+    $self->log->debug("auth_level called but no nickname specified");
+    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
+    return undef
+  }
+
+  ## We might have proper args but no auth for this user:
 
   return 0 unless exists $self->State->{Auth}->{$context};
   my $context_rec = $self->State->{Auth}->{$context};
@@ -410,6 +422,16 @@ sub auth_username {
   ## retrieve an auth username by context -> IRC nick
   ## retval is boolean untrue if user can't be found
   my ($self, $context, $nickname) = @_;
+
+  if (! $context) {
+    $self->log->debug("auth_username called but no context specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2] ) );
+    return
+  } elsif (! $nickname) {
+    $self->log->debug("auth_username called but no nickname specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2] ) );
+    return
+  }
 
   return unless exists $self->State->{Auth}->{$context};
   my $context_rec = $self->State->{Auth}->{$context};
@@ -456,19 +478,92 @@ sub auth_pkg {
 }
 
 
+### Accessors acting on ->Servers:
+
 sub get_irc_obj {
   ## retrieve our POE::Component::IRC obj for $context
   my ($self, $context) = @_;
-  return unless exists $self->Servers->{$context};
+  if (! $context) {
+    $self->log->debug("get_irc_obj called but no context specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+  elsif (! exists $self->Servers->{$context} ) {
+    $self->log->debug("get_irc_obj called but context $context not found");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+
   my $irc = $self->Servers->{$context}->{Object} // return;
   return ref $irc ? $irc : ();
 }
 
+sub get_irc_casemap {
+  my ($self, $context) = @_;
+  if (! $context) {
+    $self->log->debug("get_irc_casemap called but no context specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+  elsif (! exists $self->Servers->{$context} ) {
+    $self->log->debug("get_irc_casemap called but context $context not found");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+
+  my $map = $self->core->Servers->{$context}->{CaseMap} // 'rfc1459';
+  return $map
+}
+
+sub get_irc_server {
+  ## return a REF to the hash for this server context.
+  my ($self, $context) = @_;
+  if (! $context) {
+    $self->log->debug("get_irc_server called but no context specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+  elsif (! exists $self->Servers->{$context} ) {
+    $self->log->debug("get_irc_server called but context $context not found");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  }
+
+  return $self->core->Servers->{$context};  
+}
+
+
+### Accessors acting on ->cfg:
+
+sub get_core_cfg {
+  ## Get (a copy of) $core->cfg->{core}:
+  my ($self) = @_;
+  return \%{ $self->cfg->{core} };
+}
+
+sub get_channels_cfg {
+  my ($self, $context) = @_;
+  unless ($context) {
+    $self->log->debug("get_channels_cfg called but no context specified");
+    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    return
+  } 
+  ## Returns empty hash if there's no conf for this channel:
+  return \%{ $self->cfg->{channels}->{$context} // {} }
+}
 
 sub get_plugin_cfg {
-  ## FIXME
-  ## return a _copy_, not a ref
+  my ($self, $pkg) = @_;
+  ## my $plugcf = $core->get_plugin_cfg( __PACKAGE__ )
+  ## Returns false if no cfg for this pkg was found.
+  my $plugin_cf = $self->cfg->{plugin_cf}->{$pkg} // return;
+  unless (ref $plugin_cf eq 'HASH') {
+    $self->log->debug("get_plugin_cfg; $pkg cfg not a HASH");
+    return
+  }
+  ## return a copy, not a ref to the original.
   ## that way we can worry less about stupid plugins breaking things
+  return \%{ $plugin_cf };
 }
 
 
