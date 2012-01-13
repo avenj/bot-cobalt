@@ -229,6 +229,7 @@ if (ref $cfg->{Extras}) {
 
    if ($parsed) {
      my $full_out = $destdir . "/" . $relative_out . $ext;
+     say "Writing: $full_out";
      write_file($full_out, $parsed);
    } else {
      carp "parser ran but $parsed empty for item $item_name";

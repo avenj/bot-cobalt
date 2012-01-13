@@ -79,7 +79,7 @@ sub Bot_plugins_initialized {
 
 sub _start_irc {
   my ($self) = @_;
-  my $cfg = $self->core->cfg->{core};
+  my $cfg = $self->core->get_core_cfg();
 
   my $server = $cfg->{IRC}->{ServerAddr} // 'irc.cobaltirc.org' ;
   my $port   = $cfg->{IRC}->{ServerPort} // 6667 ;
@@ -166,7 +166,7 @@ sub _start_irc {
 
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $cfg = $self->core->cfg->{core};
+  my $cfg = $self->core->get_core_cfg();
 
   $self->core->log->debug("pocoirc plugin load");
 
@@ -218,8 +218,8 @@ sub _start {
   }
 
   ## channel config to feed autojoin plugin
-  ## single-server core irc module just grabs 'Main' context
-  my $chanhash = $self->core->cfg->{channels}->{Main} // {} ;
+  ## single-server core irc module just grabs 'Main' context:
+  my $chanhash = $self->core->get_channels_cfg("Main") || {};
   ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
   my %ajoin;
   for my $chan (%{ $chanhash }) {
@@ -263,11 +263,13 @@ sub irc_chan_sync {
   $self->core->send_event( 'chan_sync', 'Main', $chan );
 
   ## ON if cobalt.conf->Opts->NotifyOnSync is true or not specified:
+  my $cf_core = $self->core->get_core_cfg();
   my $notify = 
-    ($self->core->cfg->{core}->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
+    ($cf_core->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
+
+  my $chan_h = $self->core->get_channels_cfg("Main") || {};
 
   ## check if we have a specific setting for this channel (override):
-  my $chan_h = $self->core->cfg->{channels}->{Main} // { };
   if ( exists $chan_h->{$chan}
        && ref $chan_h->{$chan} eq 'HASH' 
        && exists $chan_h->{$chan}->{notify_on_sync} ) 
@@ -275,8 +277,7 @@ sub irc_chan_sync {
     $notify = $chan_h->{$chan}->{notify_on_sync} ? 1 : 0;
   }
 
-  $self->irc->yield(privmsg => $chan => $resp)
-    if $notify;
+  $self->irc->yield(privmsg => $chan => $resp) if $notify;
 }
 
 sub irc_public {
@@ -334,7 +335,8 @@ sub irc_public {
   $msg->{highlight} = 1 if $txt =~ /^${me}.?\s+/i;
 
   ## flag messages prefixed by cmdchar
-  my $cmdchar = $self->core->cfg->{core}->{Opts}->{CmdChar} // '!';
+  my $cf_core = $self->core->get_core_cfg();
+  my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!';
   if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
     ## Commands always get lowercased:
     my $cmd = lc $1;
@@ -375,7 +377,7 @@ sub irc_msg {
   ## private msg handler
   ## similar to irc_public
 
-  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $map = $self->core->get_irc_casemap("Main");
   for my $mask (keys $self->core->State->{Ignored}) {
     return if matches_mask( $mask, $src, $map );
   }

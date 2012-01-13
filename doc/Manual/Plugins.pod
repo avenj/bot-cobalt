@@ -1,3 +1,5 @@
+=pod
+
 =head1 NAME
 
 Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
@@ -382,3 +384,6 @@ L<POE::Component::IRC::State>
 Jon Portnoy <avenj@cobaltirc.org>
 
 http://www.cobaltirc.org
+
+
+=cut

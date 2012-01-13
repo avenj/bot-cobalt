@@ -18,10 +18,7 @@ BEGIN {
 use lib $lib;
 
 my $etc = File::Spec->rel2abs(join '/', @root, 'etc');
-croak("can't locate confdir: $etc") unless $etc and -d $etc;
-
 my $var = File::Spec->rel2abs(join '/', @root, 'var');
-croak("can't locate var; $var") unless $var and -d $var;
 
 use Getopt::Long;
 my $opt_debug = 0;
@@ -33,12 +30,12 @@ GetOptions(
 
   'version' => sub {
     require Cobalt;
-    print("cobalt $Cobalt::VERSION\n"); exit 0
+    print("cobalt $Cobalt::VERSION\n"); 
+    exit 0
   },
 
   'config=s' => \$etc,
   'etc=s'    => \$etc,
-
   'var=s' => \$var,
 
   'debug!'  => \$opt_debug,
@@ -93,8 +90,9 @@ sub show_help {
   exit 0
 }
 
-
-say("-> debug ON, overriding loglevel") if $opt_debug;
+croak "can't locate etc: $etc" unless $etc and -d $etc;
+croak "can't locate var; $var" unless $var and -d $var;
+say "-> debug ON, overriding loglevel" if $opt_debug;
 
 $loglevel = lc $loglevel;
 my @loglevels = qw/debug info notice warn warning

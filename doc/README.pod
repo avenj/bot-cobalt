@@ -6,7 +6,7 @@ README - Getting started with Cobalt2
 
 =head1 VERSION
 
-README revision B<0001>
+README revision B<0002>
 
 Last updated for cobalt B<2.00>
 
@@ -16,6 +16,12 @@ FIXME
 
 
 =head1 DEPENDENCIES
+
+=head2 Required modules
+
+
+=head2 Recommended modules
+
 
 =head2 Testing for dependencies
 
@@ -34,28 +40,38 @@ FIXME
 =head2 Informational options
 
    --version 
-     Display current Cobalt.pm version 
+     Display current Cobalt version
+  
+   --help
+     Display invocation help
+  
    --dumpconfig 
-     Display current Cobalt::Conf data structures.
+     Display current Cobalt::Conf data structures
 
 =head2 Run-mode related options
 
    --nodetach / --nodaemon 
      Run in the foreground (do not daemonize) 
+  
    --loglevel=LOGLEVEL 
-     Specify log verbosity. Defaults to 'info' 
+     Specify log verbosity. Defaults to 'info'
+
      Valid levels, most verbose to least: 
        debug info notice warn err crit alert emerg 
+
+     Most Cobalt log messages are logged to 'debug' or 'info'
+  
    --debug 
      Enable debug output. Overrides loglevel. 
 
 =head2 Path-related options
 
    --etc=/path/to/etcdir 
-     Specify a confdir. Defaults to INSTALLDIR/etc/ 
+     Specify a confdir. Defaults to EXECDIR/etc/ 
+  
    --var=/path/to/vardir 
      Specify directory used for logs and databases
-     Defaults to INSTALLDIR/var/ 
+     Defaults to EXECDIR/var/
 
 
 =head1 CONFIGURATION

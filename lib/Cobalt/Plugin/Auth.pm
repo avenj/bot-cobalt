@@ -114,8 +114,7 @@ sub Cobalt_register {
   ## Set $self->core to make life easier on our internals:
   $self->core($core);
 
-  my $pkg = __PACKAGE__;
-  my $p_cfg = $core->cfg->{plugin_cf}->{$pkg};
+  my $p_cfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   my $relative_path = $p_cfg->{Opts}->{AuthDB} || 'db/authdb.yml';
   my $authdb = $core->var ."/". $relative_path;
@@ -374,10 +373,8 @@ sub _cmd_login {
   my $resp;
   given ($retval) {
     when (SUCCESS) {
-      ## AUTH_SUCCESS
-      ## add level to rplvars
-      $rplvars->{lev} = 
-        $self->core->State->{Auth}->{$context}->{$nick}->{Level};  ## FIXME accessor
+      ## add level to rplvars:
+      $rplvars->{lev} = $self->core->auth_level($context, $nick);
       $resp = rplprintf( $self->core->lang->{AUTH_SUCCESS}, $rplvars );
     }
     when (E_NOSUCH) {
@@ -700,8 +697,7 @@ sub _mkpasswd {
   ## $self->_mkpasswd( $passwd );
   ## simple frontend to Cobalt::Utils::mkpasswd()
   ## handles grabbing cfg opts for us:
-  my $pkg = __PACKAGE__;
-  my $cfg = $self->core->cfg->{plugin_cf}->{$pkg};
+  my $cfg = $self->core->get_plugin_cfg( __PACKAGE__ );
   my $method = $cfg->{Method} // 'bcrypt';
   my $bcrypt_cost = $cfg->{Bcrypt_Cost} // '08';
   return mkpasswd($passwd, $method, $bcrypt_cost);
@@ -796,8 +792,7 @@ sub _write_access_list {
   );
   close($db_out);
 
-  my $pkg = __PACKAGE__;
-  my $p_cfg = $core->cfg->{plugin_cf}->{$pkg};
+  my $p_cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $perms = $p_cfg->{Opts}->{AuthDB_Perms} // 0600;
   chmod($perms, $authdb);
 }
