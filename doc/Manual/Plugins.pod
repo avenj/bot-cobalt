@@ -123,7 +123,7 @@ FIXME discussion about direct access
   1;  ## perl modules must end in '1;'
   
 
-Also see the L<Cobalt::Manual::Examples> POD
+Also see the L<Manual::Examples> POD
 
 
 =head2 Handling events
@@ -232,8 +232,7 @@ The documentation for all events parsed and re-broadcast from IRC
 is available via the Cobalt::IRC POD
 >
 
-See (FIXME - link) or I<perldoc lib::Cobalt::IRC> from the cobalt2 
-distribution's directory.
+See L<Cobalt::IRC>.
 
 =head2 Sending IRC events
 

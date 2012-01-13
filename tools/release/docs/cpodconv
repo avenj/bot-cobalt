@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 my $VERSION = '0.10';
 
+## ugly little release tool for my own purposes ...
 ## walk cobalt/doc looking for .pm/.pod
 ## 
 ## create wikidoc/ :
@@ -21,7 +22,6 @@ use File::Slurp qw/read_file write_file/;
 use File::Spec;
 
 use Pod::Find qw/pod_find contains_pod/;
-
 
 use CobaltdocToDoku;
 
@@ -240,5 +240,10 @@ sub pod_to_doku {
 
 
 sub pod_to_text {
+
+}
+
+
+sub pod_to_html {
 
 }

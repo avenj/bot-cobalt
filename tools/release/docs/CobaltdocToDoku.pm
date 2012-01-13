@@ -188,7 +188,7 @@ sub _format_link {
 
   ## if this is a Cobalt:: or Manual:: page, link within cobalt:docs:
   if ($attr->{to} =~ /^(Cobalt|Manual)/) {
-    $to = "cobalt:docs:" . $to
+    $to = "bots:cobalt:docs:" . $to
   } else {
     ## if this isn't a Cobalt:: or Manual:: page it's probably CPANable:
     my $cpans = "http://search.cpan.org/perldoc?";
