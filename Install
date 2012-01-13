@@ -70,7 +70,7 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
           Term::ReadKey->import('ReadMode');
           ReadMode('noecho');
           print "Password: ";
-          my $pwd = <STDIN>;
+          my $pwd = <STDIN>; chomp($pwd);
           ReadMode(0);
           require Cobalt::Utils;
           say "\n HASH:\n".Cobalt::Utils::mkpasswd($pwd);
@@ -94,4 +94,8 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
 
 
 say "> Finished.";
-say "You may want to read the README and ./cobalt --help";
+say "> Absolute paths based on current execdir:";
+say "  lib/ : $lib";
+say "  tools/ : $tools";
+say "  etc/ : $etc";
+say "\nYou may want to read the README and ./cobalt --help";
