@@ -194,6 +194,56 @@ for my $rootname (sort keys %$docmaps) {  ## 'Cobalt', 'Manual', ...
   }
 }
 
+if (ref $cfg->{Extras}) {
+  for my $item_name (keys %{ $cfg->{Extras} }) {
+    my $in_path = $cfg->{OPTS}->{ROOT} ."/". $cfg->{Extras}->{$item_name}->{IN};
+
+    unless (-f $in_path) {
+      carp "extra file $in_path specified but not found";
+      next 
+    }
+
+    unless ( contains_pod($in_path) ) {
+      carp "extra file $in_path specified but no POD in document";
+      next
+    }
+
+    my $relative_out = $cfg->{Extras}->{$item_name}->{OUT};
+    my $linksep = '/';
+    my($ext, $parsed, $out_path);
+    given ($outtype) {
+      
+      when ("doku") {
+        $relative_out = lc $relative_out;
+        $linksep = ':' ;
+        $ext = '.txt';
+        $parsed = pod_to_doku($in_path);
+      }
+
+    }
+
+   if ($parsed) {
+     my $full_out = $destdir . "/" . $relative_out . $ext;
+     write_file($full_out, $parsed);
+   } else {
+     carp "parser ran but $parsed empty for item $item_name";
+     next
+   }
+
+   my @split = split /\//, $cfg->{Extras}->{$item_name}->{OUT};
+   my $linkroot = $cfg->{OPTS}->{PARSER}->{$outtype}->{LINKROOT} // '';
+    ## add to index under 'Other'
+   push( @{ $index_items->{Other} },
+          {
+             Title => $item_name,
+             Link => $linkroot . join($linksep, @split),
+          },
+   );
+ 
+
+  }
+}
+
 if ($cfg->{OPTS}->{PARSER}->{$outtype}->{INDEXFILE}) {
   ## Attempt to write an index
   my $tmpl_vars = { IndexItems => $index_items };
@@ -201,7 +251,12 @@ if ($cfg->{OPTS}->{PARSER}->{$outtype}->{INDEXFILE}) {
     if scalar keys $index_items;
   my $index_out_path = $destdir ."/". 
     $cfg->{OPTS}->{PARSER}->{$outtype}->{INDEXFILE};
-  write_file( $index_out_path, $index_content ) if $index_content;
+  if ($index_content) {
+    say "Writing index . . .";
+    write_file($index_out_path, $index_content);
+  } else {
+    carp "Empty index_content?";
+  }
 }
 
 
