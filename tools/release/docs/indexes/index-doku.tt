@@ -4,7 +4,7 @@ This is a file listing for [[bots:cobalt|cobalt2]] POD.
 
 It has been automatically converted to DokuWiki format.
 
-(You may want to check out the [[bots:cobalt:docs:|main documentation index]])
+  * [[bots:cobalt:docs:|main documentation index]]
 
 [% FOREACH Category IN IndexItems.keys.sort %]
 

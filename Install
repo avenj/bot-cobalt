@@ -26,7 +26,6 @@ sub _ans {
 }
 
 
-
 say "> Welcome to cobalt2!";
 
 print "> Should I attempt to check module dependencies? [Y/n] ";
@@ -46,7 +45,7 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
 
 say "> There are three core conf files:";
 print "  * $_\n" for @confs;
-say "> Would you like to edit them now? [Y/n] ";
+print "> Would you like to edit them now? [Y/n] ";
 if ( _ans(my $stdin = <STDIN>, 'y') ) {
   my $editor;
   unless ($ENV{EDITOR}) {
@@ -61,6 +60,8 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
       say "> Editing $etc/$file";
       system(qq{$editor $etc/$file});
     }
+    say "You will probably still want to edit plugin-specific configs.";
+    say "The full path to your etc/ is: \n$etc";
   } else {
     say ">! No editor found; skipping configuration files.";
   }
@@ -72,3 +73,4 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
 
 
 say "> Finished.";
+say "You may want to read the README and ./cobalt --help";

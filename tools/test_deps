@@ -26,7 +26,6 @@ my @required = qw/
     POE::Component::Syndicator
 
     YAML::Syck
-
   /;
 
 ## bundled plugins, mostly
@@ -48,7 +47,7 @@ for my $module (sort @required) {
 }
 
 
-say "Checking recommend modules . . .";
+say "> Checking recommended modules . . .";
 for my $module (sort keys %{ $optional }) {
   eval "require $module";
   unless ($@) {
@@ -72,19 +71,34 @@ if (@missing) {
           join("\n", @missing), "\n";
 
   my $themit = @missing == 1 ? 'it' : 'them' ;
-  print "> Should I try to install $themit via CPAN? [Y/n] ";
+  print "> Should I try to install $themit via CPANPLUS? [Y/n] ";
   my $yn = <STDIN>;  chomp($yn);
   $yn = 'Y' unless $yn;
   given ($yn)  {
     when (/Y(es)?$/i) {
-      require CPAN;
+      say " ... if you've yet to run CPANPLUS, this may take a few ...";
+      require CPANPLUS;
+      CPANPLUS->import("install");
+
+      my @failed;
       for my $module (@missing) {
-        ## double-check to see if we got it in a deptree somewheres
+        ## double-check to see if we got it in a deptree somewheres:
         eval "require $module";
-        CPAN::Shell->install($module) if $@;
+        if ($@) {
+          push(@failed, $module) unless install($module);
+        } else { say " found: $module"; }
       }
+
+      if (@failed) {
+        say "! Some modules failed to install:";
+        print join "\n", @failed, "\n";
+      }
+
     }
 
-    default { say "\nYou may want to install manually via `cpan` or `cpanm`"; }
+    default { 
+      say "\nYou may want to install manually via `cpan` or `cpanm` \n";
+    }
   }
 }
+

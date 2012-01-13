@@ -1,10 +1,10 @@
 #!/usr/bin/env perl
-my $VERSION = '0.10';
+my $VERSION = '0.11';
 
 ## ugly little release tool for my own purposes ...
 ## walk cobalt/doc looking for .pm/.pod
-## create dokuwiki files for publishing online, or specified format
-## accepts types: doku, text, html
+## create dokuwiki files for publishing online (or specify format)
+## currently accepts types: doku, text
 ## index templates live in indexes/
 
 use 5.12.1;
@@ -48,7 +48,7 @@ my $index_items = { };
 use Getopt::Long;
 GetOptions(
   help => \&show_help,
-  version => sub { say "$0 $VERSION" ; exit 1 },
+  version => sub { say "$0 $VERSION" ; exit 0 },
 
   'config=s'  => \$conffile,
   'type=s'    => \$outtype,
@@ -66,7 +66,7 @@ sub show_help {
                        " [def.: $indexdir]\n",
     "  --dest=PATH     Path to destination dir [def.: $destdir]\n",
   );
-  exit 1
+  exit 0
 }
 
 croak "could not locate cfg: $conffile" unless -f $conffile;
@@ -179,7 +179,7 @@ for my $rootname (sort keys %$docmaps) {  ## 'Cobalt', 'Manual', ...
       my $path_to_file = $dir_fullpath . "/" . $specified;
 
       if ( contains_pod($path_to_file) ) {
-        push(@podpaths, File::Spec->rel2abs($path_to_file) );
+        ## FIXME  
       } else {
         say "filepath $path_to_file in FILES but no POD?";
         next
