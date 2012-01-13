@@ -1,0 +1,90 @@
+#!/usr/bin/env perl
+## Check for cobalt2 dependencies
+## Prompt to see if we should try to install them
+
+use 5.12.1;
+use strict;
+use warnings;
+
+my @missing;
+my @required = qw/
+    Moose
+    MooseX::NonMoose
+    namespace::autoclean
+
+    Crypt::Eksblowfish
+
+    File::Slurp
+
+    Log::Handler
+
+    Proc::PID::File
+
+    IRC::Utils
+    POE::Component::IRC
+
+    POE::Component::Syndicator
+
+    YAML::Syck
+
+  /;
+
+## bundled plugins, mostly
+##  module => reason
+my $optional = {
+    'Term::ReadKey' => 'Used by tools/mkpasswd',
+#    'Template' => ''
+};
+
+print "> Checking required modules; ".scalar(@required)." to check\n";
+
+for my $module (sort @required) {
+    eval "require $module";
+    if ($@) {
+      push(@missing, $module);
+    } else {
+      say " found $module";
+    }
+}
+
+
+say "Checking recommend modules . . .";
+for my $module (sort keys %{ $optional }) {
+  eval "require $module";
+  unless ($@) {
+    say " found $module";
+    next
+  } else {
+    print "Missing:\n",
+          "$module  --  ".$optional->{$module},
+          "\n> Add $module to install list? [Y/n] " ;
+    my $yn = <STDIN>; chomp($yn);
+    $yn = $yn ? $yn : 'Y' ;
+    given ($yn) {
+      push(@missing, $module) when /Y(es)?$/i;
+      default { say "Skipping $module" ; next }
+    }
+  }
+}
+
+if (@missing) {
+  print " !! missing modules:\n",
+          join("\n", @missing), "\n";
+
+  my $themit = @missing == 1 ? 'it' : 'them' ;
+  print "> Should I try to install $themit via CPAN? [Y/n] ";
+  my $yn = <STDIN>;  chomp($yn);
+  $yn = 'Y' unless $yn;
+  given ($yn)  {
+    when (/Y(es)?$/i) {
+      require CPAN;
+      for my $module (@missing) {
+        ## double-check to see if we got it in a deptree somewheres
+        eval "require $module";
+        CPAN::Shell->install($module) if $@;
+      }
+    }
+
+    default { say "\nYou may want to install manually via `cpan` or `cpanm`"; }
+  }
+}
