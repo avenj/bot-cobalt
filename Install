@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+
+## Simplistic cobalt2 "installer" walkthru
+
+use 5.12.1;
+use strict;
+use warnings;
+
+use File::Spec;
+use File::Basename;
+my(@root, $tools, $etc);
+BEGIN {
+ @root = File::Spec->splitdir(dirname(__FILE__));
+ $tools = File::Spec->rel2abs(join '/', @root, 'tools');
+ $etc = File::Spec->rel2abs(join '/', @root, 'etc');
+}
+
+
+my @confs = qw{ cobalt.conf channels.conf plugins.conf };
+
+sub _ans {
+  my ($stdin, $default) = @_;
+  chomp($stdin);
+  $stdin = $stdin ? $stdin : $default ;
+  return unless $stdin =~ /^Y/i;
+}
+
+
+
+say "> Welcome to cobalt2!";
+
+print "> Should I attempt to check module dependencies? [Y/n] ";
+if ( _ans(my $stdin = <STDIN>, 'y') ) {
+  unless (-f qq{$tools/test_deps}) {
+    say ">! Can't find test_deps: $tools/test_deps";
+    die
+  } else {
+    say "> Executing test_deps, one moment . . .";
+    system(qq{$tools/test_deps});
+    say "> Dependency check finished.\n";
+  }
+} else {
+  say ">! Skipping dependency check . . .\n";
+}
+
+
+say "> There are three core conf files:";
+print "  * $_\n" for @confs;
+say "> Would you like to edit them now? [Y/n] ";
+if ( _ans(my $stdin = <STDIN>, 'y') ) {
+  my $editor;
+  unless ($ENV{EDITOR}) {
+    say ">! You don't seem to have EDITOR set.";
+    say ">! You can enter one here, or press enter to skip.";
+    say "> Edit with: ";
+    $editor = <STDIN> ; chomp($editor);
+  } else { $editor = $ENV{EDITOR}; }
+
+  if ($editor) {
+    for my $file (@confs) {
+      say "> Editing $etc/$file";
+      system(qq{$editor $etc/$file});
+    }
+  } else {
+    say ">! No editor found; skipping configuration files.";
+  }
+
+} else {
+  say ">! Skipping configuration files.";
+}
+
+
+
+say "> Finished.";
