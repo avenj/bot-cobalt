@@ -72,7 +72,8 @@ use IRC::Utils qw/
   matches_mask normalize_mask
   parse_user
   lc_irc uc_irc eq_irc /;
-use Cobalt::Utils qw/ mkpasswd passwdcmp /;
+
+use Cobalt::Utils qw/ :ALL /;
 
 ### Serialization:
 use YAML::Syck;
@@ -178,6 +179,8 @@ sub Cobalt_register {
             normalize_mask( $su{$context}->{$user}->{Mask} ) 
           ];
         }
+
+      $core->log->debug("added superuser: $user (context: $context)");
     }
 
   }
@@ -319,12 +322,13 @@ sub Bot_private_msg {
   ## simple method check/dispatch:
   my $method = "_cmd_".$command;
   if ( $self->can($method) ) {
-    $self->log->debug("dispatching '$command' for ".$msg->{src_nick});
+    $core->log->debug("dispatching '$command' for ".$msg->{src_nick});
     $resp = $self->$method($context, $msg);
   }
 
   if ($resp) {
     my $target = $msg->{src_nick};
+    $core->log->debug("dispatching send_notice to $target");
     $core->send_event( 'send_notice', $context, $target, $resp );
   }
 
@@ -358,6 +362,8 @@ sub _cmd_login {
 
   ## _do_login returns constants we can translate into a langset RPL:
   ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST
+
+  ## FIXME: E_NOCHANS (and check for shared channels in order to allow a login)
   my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
   my $rplvars = {
     context => $context,
@@ -432,7 +438,7 @@ sub _do_login {
   ## note that this'll autoviv a nonexistant AccessList context
   ## (which is alright, but it's good to be aware of it)
   unless (exists $self->AccessList->{$context}->{$username}) {
-    $self->log->debug("[$context] authfail; no such user: $username ($host)");
+    $self->core->log->debug("[$context] authfail; no such user: $username ($host)");
     ## auth_failed_login ($context, $nick, $username, $host, $error_str)
     $self->core->send_event( 'auth_failed_login',
       $context,
@@ -453,7 +459,7 @@ sub _do_login {
   }
 
   unless (@matched_masks) {
-    $self->log->debug("[$context] authfail; no host match: $username ($host)");
+    $self->core->log->debug("[$context] authfail; no host match: $username ($host)");
     $self->core->send_event( 'auth_failed_login',
       $context,
       $nick,
@@ -465,7 +471,7 @@ sub _do_login {
   }
 
   unless ( passwdcmp($passwd, $user_record->{Password}) ) {
-    $self->log->debug("[$context] authfail; bad passwd: $username ($host)");
+    $self->core->log->debug("[$context] authfail; bad passwd: $username ($host)");
     $self->core->send_event( 'auth_failed_login',
       $context,
       $nick,
@@ -487,7 +493,7 @@ sub _do_login {
     Flags => \%flags,
   };
 
-  $self->log->debug(
+  $self->core->log->debug(
     "[$context] successful auth: $username (lev $level) ($host)"
   );
 

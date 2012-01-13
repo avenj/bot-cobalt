@@ -235,7 +235,7 @@ B<cobalt2> core and plugins.
 Plugin authors may wish to make use of these; simply importing the 
 C<:ALL> set from Cobalt::Utils will give you access to the entirety of
 this utility module, including useful string formatting tools, safe 
-password hashing functions, etc. See L</USAGE/>, below.
+password hashing functions, etc. See L</USAGE>, below.
 
 =head1 USAGE
 
