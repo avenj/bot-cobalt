@@ -143,17 +143,30 @@ for my $rootname (sort keys %$docmaps) {  ## 'Cobalt', 'Manual', ...
         when ("doku") {
           $parsed = pod_to_doku($filepath);
           $ext = ".txt";
+
+          ## doku files need to be all-lowercase:
+          
         }
 
       }
 
       ## see if our destdir exists:
       my $name = pop @split;
-      my $out_path = $destdir . "/". join("/", @split) ;
+      my $out_path;
+      if ($outtype eq 'doku') {
+        $out_path = $destdir . "/". join("/", map { lc($_) } @split);
+        $name = lc($name);
+      } else {
+        $out_path = $destdir . "/". join("/", @split) ;
+      }
       File::Path::make_path($out_path) unless -d $out_path;
       
       ## piece together output path:
-      $out_path = $destdir ."/". join("/", @split) ."/". $name . $ext;
+      if ($outtype eq 'doku') {
+        $out_path = $destdir ."/". join("/", map { lc($_) } @split) ."/". $name . $ext;
+      } else {
+        $out_path = $destdir ."/". join("/", @split) ."/". $name . $ext;
+      }
 
       ## try to write converted file:
       say "Writing: $out_path";
@@ -179,14 +192,37 @@ for my $rootname (sort keys %$docmaps) {  ## 'Cobalt', 'Manual', ...
    say "Skipping $rootname, no files specified";
    next
   }
+}
 
-
+if ($cfg->{OPTS}->{PARSER}->{$outtype}->{INDEXFILE}) {
+  ## Attempt to write an index
+  my $tmpl_vars = { IndexItems => $index_items };
+  my $index_content = parse_index($tmpl_vars) 
+    if scalar keys $index_items;
+  my $index_out_path = $destdir ."/". 
+    $cfg->{OPTS}->{PARSER}->{$outtype}->{INDEXFILE};
+  write_file( $index_out_path, $index_content ) if $index_content;
 }
 
 
 sub parse_index {
-  my ($type) = @_;
+  my ($vars) = @_;
   ## read/parse TT index files
+  my $index_path = $indexdir ."/". "index-". $outtype . ".tt";
+  unless (-f $index_path) {
+    say "No index generated for $outtype; $index_path not found";
+    return
+  }
+  my $tt = Template->new( { EVAL_PERL => 1, } );
+  my $tmpl = read_file($index_path);
+  my $out;
+  $tt->process(\$tmpl, $vars, \$out);
+
+  unless ($out) {
+    carp "parsed index came out blank?";
+    return
+  }
+  return $out;
 }
 
 sub pod_to_doku {

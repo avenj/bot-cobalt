@@ -1,0 +1,18 @@
+====== Cobalt POD docs ======
+
+This is a file listing for cobalt2 POD.
+
+It has been automatically converted to DokuWiki format.
+
+
+[% FOREACH Category IN IndexItems.keys.sort %]
+
+===== [% Category %] =====
+
+ [% FOREACH LinkItem IN IndexItems.$Category.sort %]
+
+  * [[[% LinkItem.Link %]|[% LinkItem.Title %]]]
+
+ [% END %]
+
+[% END %]

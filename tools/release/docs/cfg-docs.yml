@@ -8,7 +8,7 @@ OPTS:
   PARSER:
     doku:
       ## For constructing dokuwiki links:
-      LINKROOT: 'cobalt:docs:'
+      LINKROOT: 'bots:cobalt:docs:'
       INDEXFILE: 'filelist.txt'
 
 MAP:
