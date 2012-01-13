@@ -92,6 +92,8 @@ L<Cobalt::Utils>.
 
 Inspect C<etc/langs/english.yml> for an example.
 
+Be sure to read the L<Cobalt::Utils> documentation for more on variable 
+replacement with C<rplprintf>
 
 =head1 METHODS
 

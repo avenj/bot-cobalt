@@ -45,7 +45,7 @@ sub Bot_public_cmd_alarmclock {
 
   my $pkg = __PACKAGE__;
   my $cfg = $core->cfg->{plugin_cf}->{$pkg};
-  my $minlevel = $cfg->{PluginOpts}->{Level} // 1;
+  my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
   ## FIXME: auth check
 
   ## This is the array of (format-stripped) args to the _public_cmd_

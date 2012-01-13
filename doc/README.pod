@@ -2,16 +2,151 @@
 
 =head1 NAME
 
-cobalt2 README file
+README - Getting started with Cobalt2
 
-=head1 CONFIGURATION
+=head1 VERSION
+
+README revision B<0001>
+
+Last updated for cobalt B<2.00>
+
+=head1 QUICK START
+
+FIXME
+
+
+=head1 DEPENDENCIES
+
+=head2 Testing for dependencies
+
+
+=head2 Using CPAN
+
+
+=head2 Using local::lib
+
+
+=head2 Using perlbrew
 
 
 =head1 INVOCATION
 
 
+=head1 CONFIGURATION
+
+By default, Cobalt will look for "core" configuration files in 
+C<EXECDIR/etc/>, where EXECDIR is the directory C<cobalt> is being 
+executed from:
+
+  $ cd /home/myself/cobalt
+  $ ./cobalt
+  ## EXECDIR is now /home/myself/cobalt/
+
+(See L</INVOCATION> for information on using a different C<etc/>)
+
+Configuration files are stored in YAML1.0.
+
+Cobalt needs at least the following files:
+
+=over
+
+=item *
+
+etc/cobalt.conf
+
+=item *
+
+etc/channels.conf
+
+=item *
+
+etc/plugins.conf
+
+=back
+
+
+=head2 cobalt.conf
+
+C<etc/cobalt.conf> contains the Cobalt core configuration, including IRC-related 
+configuration for the core single-server IRC plugin, L<Cobalt::IRC>.
+
+The default example cobalt.conf should be enough to get started; simply 
+edit the B<IRC:> section appropriately. Defaults should be safe for the 
+remaining directives.
+
+A few tips:
+
+=over
+
+=item *
+
+If you're unsure, quote your strings. See L<http://yaml.org/spec/1.0/> for 
+more about YAML syntax. YAML will tell you when you've gone wrong, but it 
+may not be the most verbose of error messages . . .
+
+=item * 
+
+If you choose to use <AltServers>, pay close attention to the comments in 
+the example C<cobalt.conf>; if the AltServers aren't compatible with your 
+UseSSL/IPv6 settings, you may have failures upon reconnect attempts.
+
+=item *
+
+If your bot is having difficulty connecting, you may want to ensure that 
+you do not mistakenly have B<UseSSL> enabled on a non-SSL server/port or 
+vice-versa.
+
+=back
+
+
+=head2 channels.conf
+
+C<etc/channels.conf> FIXME
+
+
+=head2 plugins.conf
+
+C<etc/plugins.conf> configures the plugin loader.
+
+The format is:
+
+  ---
+  <PluginName>:
+    Module: Cobalt::Plugin::<Module>
+
+    ## Optional per-plugin
+    ## 'Config' is considered relative to our 'etc/'
+    Config: plugin/<Config_file>
+
+    ## Optional per-plugin
+    ## 'Opts' may specify a set of options for the plugin
+    Opts:
+      <Option>: <Value>
+
+Here's an example and very basic plugins.conf:
+
+  ---
+  Auth:
+    Module: Cobalt::Plugin::Auth
+    Config: auth.conf
+
+  Alarmclock:
+    Module: Cobalt::Plugin::Alarmclock
+    Opts:
+      LevelRequired: 1
+
+The default Cobalt2 C<plugins.conf> comes configured with a fairly 
+standard set of plugins replicating the significant pieces of older 
+monolithic implementations of C<cobalt>. It should be more than enough 
+to get started with; new plugins will be added with future releases.
+
+Writing your own plugins is easy with just a bit of basic Perl experience.
+Core modules are mostly well-commented and easy to use as a learning tool.
+See L</DOCUMENTATION> for some help getting going with plugin authoring.
+
 
 =head1 DOCUMENTATION
+
 
 =head2 Usage-related
 
@@ -20,6 +155,22 @@ cobalt2 README file
 
 
 =head1 DIRECTORY LAYOUT
+
+  doc/                    Documentation
+    doc/Manual/           Manual PODs
+
+  etc/                    Configuration files
+    etc/langs/            Language sets
+    etc/plugins/          Plugin-specific configs
+
+  lib/                    Modules
+    lib/Cobalt/
+    lib/Cobalt/Plugin/    Pluggable modules
+
+  tools/                  Stand-alone utilities
+
+  var/                    Logs and other dynamic data
+    var/db/               Databases
 
 
 =head1 AUTHOR

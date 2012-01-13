@@ -15,7 +15,7 @@ MAP:
   Cobalt:            ## the root name, ie $destdir/Cobalt/
     DIR: lib/Cobalt  ## relative to Opts->ROOT
     SLURP_ALL: 1     ## BOOL: try to parse all .pm / .pod found ?
-# otherwise, specify a list:
+# otherwise, specify a list: FIXME
 #    FILES:
 #      - Some/Pod.pod
 

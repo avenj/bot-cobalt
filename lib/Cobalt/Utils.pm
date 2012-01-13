@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use 5.12.1;
 use strict;
@@ -233,7 +233,7 @@ Cobalt::Utils provides a set of simple utility functions for the
 B<cobalt2> core and plugins.
 
 Plugin authors may wish to make use of these; simply importing the 
-C<:ALL> set from Cobalt::Utils will give you access to the entirety of
+B<:ALL> set from Cobalt::Utils will give you access to the entirety of
 this utility module, including useful string formatting tools, safe 
 password hashing functions, etc. See L</USAGE>, below.
 
@@ -249,17 +249,18 @@ Import some things:
   use Cobalt::Utils qw/ mkpasswd passwdcmp /;
   my $hash = mkpasswd('things');
 
-Import everything:
+Import all the things:
 
   use Cobalt::Utils qw/ :ALL /;
   my $hash = mkpasswd('things', 'md5');
   my $secs = timestr_to_secs('3h30m');
+  ...
 
 
 =head1 FUNCTIONS
 
 
-=head2 Date and time
+=head2 Date and Time
 
 =head3 timestr_to_secs
 
@@ -267,9 +268,11 @@ Convert a string such as "2h10m" into seconds.
 
   my $delay_s = timestr_to_secs('1h33m10s');
 
+Useful for dealing with timers.
+
 =head3 secs_to_timestr
 
-Convert a TS delta into a string.
+Convert a timestamp delta into a string.
 
 Useful for uptime reporting, for example:
 
@@ -277,7 +280,7 @@ Useful for uptime reporting, for example:
   my $uptime_str = secs_to_timestr($delta);
 
 
-=head2 String formatting
+=head2 String Formatting
 
 =head3 color
 
@@ -296,7 +299,7 @@ Format/color type can be passed in upper or lower case.
 
 If passed just a color or format name, returns the control code.
 
-If passed nothing at all, returns the 'NORMAL' code.
+If passed nothing at all, returns the 'NORMAL' reset code:
 
   my $str = color('bold') . "bold text" . color() . "normal text";
 
@@ -308,14 +311,15 @@ string, terminated by NORMAL:
 
 =head3 rplprintf
 
-String formatting with replacement of arbitrary variables.
+rplprintf provides string formatting with replacement of arbitrary 
+variables.
 
   rplprintf( $string, $hash );
 
 The first argument to C<rplprintf> should be the template string. 
-It may contain variables in the form of C<%var> to be replaced.
+It may contain variables in the form of B<%var> to be replaced.
 
-The second argument is the hashref mapping C<%var> variables to 
+The second argument is the hashref mapping B<%var> variables to 
 strings.
 
 For example:
@@ -326,18 +330,26 @@ For example:
       user => "Joe",
       host => "joe!joe@example.org",
     } 
-  );  ## 'Access denied for Joe (joe!joe@example.org)'
+  );  ## -> 'Access denied for Joe (joe!joe@example.org)'
 
 Intended for formatting langset RPLs before sending.
 
 Variable names can be terminated with a space or % -- both are demonstrated 
-in the example above.
+in the example above. You'll need to terminate with a trailing % if there 
+are characters following, as in the above example: I<(%host%)>
 
 =head2 Password handling
 
 =head3 mkpasswd
 
-Simple interface for creating hashed passwords:
+Simple interface for creating hashed passwords.
+
+Defaults to creating a password using L<Crypt::Eksblowfish::Bcrypt> 
+with bcrypt work cost '08'
+
+Systems not using B<glibc-2.7+> may not be able to use SHA(256/512) methods.
+
+bcrypt is strongly recommended; MD5 is also supported.
 
   ## create a bcrypted password (work cost 08)
   ## bcrypt is blowfish with a work cost factor.
@@ -361,9 +373,14 @@ Simple interface for creating hashed passwords:
 
 =head3 passwdcmp
 
+Compare hashed passwords.
+
+Compatible with whatever methods C<mkpasswd> 
+supports on your system.
+
   return passwdcmp($password, $hashed);
 
-Returns the hash if the cleartext password is a match.
+Returns the hash if the cleartext password is a match. 
 Otherwise, returns 0.
 
 =head1 AUTHOR
