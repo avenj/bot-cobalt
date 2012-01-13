@@ -59,11 +59,26 @@ If an Opts: directive is supplied, it will be loaded into
 
 =head3 Accessing plugin configuration
 
-FIXME need core get_plugin_cfg
+Typically, a plugin's configuration is loaded into memory and stored 
+in the Core C<cfg> attribute.
+
+The normal way to access a plugin's configuration structure is via the 
+core method B<get_plugin_cfg>:
+
+  ## Our __PACKAGE__ must be specified:
+  my $plug_cf = $core->get_plugin_cfg( __PACKAGE__ );
+  unless ($plug_cf) {
+    ## No configuration found for our plugin ...
+  }
+
+FIXME examples
 
 FIXME discussion about ExtraOpts
 
 FIXME discussion about direct access
+
+See also: L</"Core methods">
+
 
 
 =head2 A basic plugin outline
@@ -103,6 +118,10 @@ FIXME discussion about direct access
     
     ## log that we're here now:
     $core->log->info("Registered");
+
+    ## we could save $core to $self->{core} to make life easier 
+    ## on our internal methods, perhaps:
+    $self->{core} = $core;
     
     ## ALWAYS return an Object::Pluggable::Constants value:
     return PLUGIN_EAT_NONE
@@ -111,6 +130,7 @@ FIXME discussion about direct access
   ## called when we are unloaded:
   sub Cobalt_unregister {
     my ($self, $core) = @_;
+    ## . . . do some clean up, perhaps . . .
     $core->log->info("Unregistering; bye!");
     return PLUGIN_EAT_NONE
   }
@@ -119,6 +139,8 @@ FIXME discussion about direct access
   ## (when called send_event, leave the prefix out)
   sub Bot_public_msg {
     my ($self, $core) = @_;
+    my $context = $$_[0];
+    my $msghash = $$_[1];
     ...
   }
   
@@ -185,8 +207,8 @@ as shown in the example above.
 The plugin system is a pipeline.
 
 Unless manipulated manually, Cobalt's pipeline starts with the core 
-('Main' context) IRC plugin provided by L<Cobalt::IRC>. The remaining 
-plugins are loaded in the order they're specified in.
+('Main' context) IRC plugin provided by L<Cobalt::IRC>, followed by 
+any plugins specified in plugins.conf.
 
 That being the case, events will be handed on down the pipeline, 
 B<unless> a handler for a syndicated event returns an incorrect value.
@@ -289,7 +311,138 @@ core's get_irc_obj method. Expects a server context:
 
 =head2 Core methods
 
+The Cobalt core provides various useful accessors and methods for plugins.
+
+B<NOTE:> The object reference to the Cobalt core object is referred to here 
+as C<$core>. How you keep track of $core is your business; storing it in 
+$self is generally fairly convenient:
+
+  ## often in our Cobalt_register method:
+  $self->{core} = $core;
+  ...
+  ## later, in an internal method...
+  my $plug_cf = $self->{core}->get_plugin_cfg(__PACKAGE__);
+
+
 =head3 Accessors
+
+=head4 get_core_cfg
+
+  my $core_cf = $core->get_core_cfg()
+
+Retrieves the 'core' configuration directives from C<cobalt.conf>.
+
+=head4 get_channels_cfg
+
+  my $chan_cf = $core->get_channels_cfg( $context );
+
+Retrieves per-context channel configuration from C<channels.conf>.
+
+The server context must be specified. 'undef' will be returned if it is not.
+
+Returns an empty hash if there is no channel configuration for this 
+server context.
+
+=head4 get_plugin_cfg
+
+  my $plug_cf = $core->get_plugin_cfg( __PACKAGE__ ) || {};
+
+Retrieves the configuration hash for a specific plugin.
+
+The package name for the plugin must be specified.
+
+Returns a hashref that is a copy of the plugin's config, as found 
+in I<$core->cfg->{plugin_cf}->{__PACKAGE__}>
+
+Returns boolean false if there is no plugin configuration stored in 
+memory:
+
+  $core->log->warn("Missing config for __PACKAGE__")
+    unless $core->get_plugin_cfg( __PACKAGE__ );
+
+
+=head4 get_irc_casemap
+
+  my $casemapping = $core->get_irc_casemap( $context );
+
+Retrieves the CASEMAPPING rules for the specified server context, 
+which should be one of: I<rfc1459>, I<strict-rfc1459>, I<ascii>
+
+The server's casemapping is (should be) declared in ISUPPORT (numeric 005) 
+upon connect and can be used to establish whether or not the character sets 
+{}|^ are equivalent to []\~ -- see L</"IRC CAVEATS"> below for more 
+information.
+
+This can be used to feed the C<lc_irc/uc_irc/eq_irc> functions from 
+L<IRC::Utils> and determine issues like nickname equivalency:
+
+  use IRC::Utils qw/lc_irc eq_irc/;
+  my $casemapping = $core->get_irc_casemap( $context );
+  my $irc_lower = lc_irc($nickname, $
+
+
+=head4 get_irc_obj
+
+  my $irc = $core->get_irc_obj( $context );
+
+Retrieve the L<POE::Component::IRC> object for a specified context, which 
+is likely to actually be a L<POE::Component::IRC::State> instance.
+
+This can be used to query or post events to the IRC component directly.
+
+See the L<POE::Component::IRC> and L<POE::Component::IRC::State> docs for 
+more on interacting directly with the IRC component.
+
+
+=head4 get_irc_server
+
+  my $server_state = $core->get_irc_server( $context );
+
+Retrieves the appropriate hash reference from B<$core->Servers>
+
+A server context must be specified.
+
+The referenced hash has the following keys:
+
+=over
+
+=item *
+
+B<Object>: The POE::Component::IRC object, see L</get_irc_obj>
+
+=item *
+
+B<Connected>: Boolean true/false; flipped on connect/disconnect events
+
+=item *
+
+B<ConnectedAt>: Most recent irc_001 (welcome) event timestamp
+
+=item *
+
+B<Name>: What we think this server is called
+
+=item *
+
+B<CaseMap>: The server's announced CASEMAPPING (or 'rfc1459'); see L</"IRC CAVEATS">
+
+=item *
+
+B<MaxModes>: The server's announced MAXMODES (or 4)
+
+
+
+=back
+
+
+=head4 auth_level
+
+=head4 auth_username
+
+=head4 auth_flags
+
+=head4 auth_pkg
+
 
 =head3 Logging
 
@@ -357,7 +510,12 @@ FIXME registering for events from irc...?
 Plugin authors should at least read the L<Cobalt::IRC> POD, and 
 probably L<Cobalt::Utils> as well.
 
-FIXME links etc
+The easiest way to browse documentation is our POD converted to DokuWiki, 
+available online:
+
+L<http://www.cobaltirc.org/docs/wiki/doku.php?id=bots:cobalt:docs:>
+
+FIXME
 
 
 =head2 Relevant modules
