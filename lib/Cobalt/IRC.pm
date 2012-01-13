@@ -124,8 +124,6 @@ sub _start_irc {
     # some reasonable defaults:
     CaseMap => 'rfc1459', # for feeding eq_irc et al
     MaxModes => 3,        # for splitting long modestrings
-    
-    ConnectedAt => time(),
   };
 
   $self->irc($i);
@@ -477,6 +475,7 @@ sub irc_001 {
   ## server welcome message received.
   ## set up some stuff relevant to our server context:
   $self->core->Servers->{Main}->{Connected} = 1;
+  $self->core->Servers->{Main}->{ConnectedAt} = time;
   $self->core->Servers->{Main}->{MaxModes} = 
     $self->irc->isupport('MODES') // 4;
   ## irc comes with odd case-mapping rules.
