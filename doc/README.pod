@@ -29,7 +29,33 @@ FIXME
 =head2 Using perlbrew
 
 
-=head1 INVOCATION
+=head1 USAGE
+
+=head2 Informational options
+
+   --version 
+     Display current Cobalt.pm version 
+   --dumpconfig 
+     Display current Cobalt::Conf data structures.
+
+=head2 Run-mode related options
+
+   --nodetach / --nodaemon 
+     Run in the foreground (do not daemonize) 
+   --loglevel=LOGLEVEL 
+     Specify log verbosity. Defaults to 'info' 
+     Valid levels, most verbose to least: 
+       debug info notice warn err crit alert emerg 
+   --debug 
+     Enable debug output. Overrides loglevel. 
+
+=head2 Path-related options
+
+   --etc=/path/to/etcdir 
+     Specify a confdir. Defaults to INSTALLDIR/etc/ 
+   --var=/path/to/vardir 
+     Specify directory used for logs and databases
+     Defaults to INSTALLDIR/var/ 
 
 
 =head1 CONFIGURATION
@@ -42,7 +68,7 @@ executed from:
   $ ./cobalt
   ## EXECDIR is now /home/myself/cobalt/
 
-(See L</INVOCATION> for information on using a different C<etc/>)
+(See L</USAGE> for information on using a different C<etc/>)
 
 Configuration files are stored in YAML1.0.
 
