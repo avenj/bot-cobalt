@@ -32,7 +32,6 @@ my $tags = {
            };
 
 sub new {
-
     my $class                   = shift;
     my $self                    = Pod::Simple::Wiki->new('wiki', @_);
        $self->{_tags}           = $tags;
@@ -46,7 +45,6 @@ sub new {
 # Formatting in headings doesn't look great or is ignored in some formats.
 #
 sub _skip_headings {
-
     my $self = shift;
 
     if ($self->{_in_head1} or
@@ -66,7 +64,6 @@ sub _skip_headings {
 # Indents an "over-item" to the correct level.
 #
 sub _indent_item {
-
     my $self         = shift;
     my $item_type    = $_[0];
     my $item_param   = $_[1];
@@ -84,15 +81,11 @@ sub _indent_item {
     }
 }
 
-###############################################################################
 #
 # _handle_text()
 #
-# Perform any necessary transforms on the text. This is mainly used to escape
-# inadvertent CamelCase words.
-#
+# Perform any necessary transforms on the text. 
 sub _handle_text {
-
     my $self = shift;
     my $text = $_[0];
 
@@ -120,10 +113,8 @@ sub _handle_text {
 
 
 
-###############################################################################
 #
 # Functions to deal with =over ... =back regions for
-#
 # Bulleted lists
 # Numbered lists
 # Text     lists
@@ -133,9 +124,7 @@ sub _end_item_text     {$_[0]->_output('\n')}
 
 
 
-###############################################################################
-#
-# Functions to deal with links.
+## Functions to deal with links.
 
 sub _start_L {
   my ($self, $attr) = @_;
@@ -158,8 +147,6 @@ sub _end_L {
 } # end _end_L
 
 
-###############################################################################
-#
 # _format_link
 
 sub _format_link {
@@ -208,14 +195,12 @@ sub _format_link {
 
 
 
-###############################################################################
 #
 # _start_Para()
 #
 # Special handling for paragraphs that are part of an "over" block.
 #
 sub _start_Para {
-
     my $self         = shift;
     my $indent_level = $self->{_item_indent};
 

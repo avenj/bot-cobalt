@@ -10,6 +10,9 @@ OPTS:
       ## For constructing dokuwiki links:
       LINKROOT: 'bots:cobalt:docs:'
       INDEXFILE: 'filelist.txt'
+    txt:
+      LINKROOT: ''
+      INDEXFILE: 'INDEX'
 
 MAP:
   Cobalt:            ## the root name, ie $destdir/Cobalt/

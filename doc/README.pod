@@ -86,7 +86,7 @@ may not be the most verbose of error messages . . .
 
 =item * 
 
-If you choose to use <AltServers>, pay close attention to the comments in 
+If you choose to use B<AltServers>, pay close attention to the comments in 
 the example C<cobalt.conf>; if the AltServers aren't compatible with your 
 UseSSL/IPv6 settings, you may have failures upon reconnect attempts.
 

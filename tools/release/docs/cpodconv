@@ -3,11 +3,9 @@ my $VERSION = '0.10';
 
 ## ugly little release tool for my own purposes ...
 ## walk cobalt/doc looking for .pm/.pod
-## 
-## create wikidoc/ :
-##  lib/Cobalt/ -> wikidoc/Cobalt/
-##  doc/Manual/ -> wikidoc/Manual/
-## others? manual mapping?
+## create dokuwiki files for publishing online, or specified format
+## accepts types: doku, text, html
+## index templates live in indexes/
 
 use 5.12.1;
 use strict;
@@ -143,9 +141,11 @@ for my $rootname (sort keys %$docmaps) {  ## 'Cobalt', 'Manual', ...
         when ("doku") {
           $parsed = pod_to_doku($filepath);
           $ext = ".txt";
+        }
 
-          ## doku files need to be all-lowercase:
-          
+        when ("txt") {
+          $parsed = pod_to_text($filepath);
+          $ext = '.txt';
         }
 
       }
@@ -220,6 +220,11 @@ if (ref $cfg->{Extras}) {
         $parsed = pod_to_doku($in_path);
       }
 
+      when ("txt") {
+        $ext = '.txt';
+        $parsed = pod_to_text($in_path);
+      }
+
     }
 
    if ($parsed) {
@@ -282,23 +287,27 @@ sub parse_index {
 
 sub pod_to_doku {
   my ($path) = @_;
-
   my $parser = CobaltdocToDoku->new;
-
   my $out;
   $parser->output_string( \$out );
-
   $parser->parse_file( $path );
-
-  return $out;
+  return $out
 }
 
 
 sub pod_to_text {
-
+  my ($path) = @_;
+  require Pod::Text;
+  my $parser = Pod::Text->new;
+  my $out;
+  $parser->output_string( \$out );
+  $parser->parse_file( $path );
+  return $out
 }
 
 
 sub pod_to_html {
-
+  my ($path) = @_;
+  my $out;
+  return $out
 }
