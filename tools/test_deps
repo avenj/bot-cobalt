@@ -36,13 +36,14 @@ my $optional = {
 };
 
 print "> Checking required modules; ".scalar(@required)." to check\n";
-
+my $i;
 for my $module (sort @required) {
+    ++$i;
     eval "require $module";
     if ($@) {
       push(@missing, $module);
     } else {
-      say " found $module";
+      say " ($i) found $module";
     }
 }
 

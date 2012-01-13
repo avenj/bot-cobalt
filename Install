@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-
+## cobalt2/Install
 ## Simplistic cobalt2 "installer" walkthru
 
 use 5.12.1;
@@ -8,15 +8,16 @@ use warnings;
 
 use File::Spec;
 use File::Basename;
-my(@root, $tools, $etc);
+my(@root, $tools, $etc, $lib);
 BEGIN {
- @root = File::Spec->splitdir(dirname(__FILE__));
+ @root  = File::Spec->splitdir(dirname(__FILE__));
  $tools = File::Spec->rel2abs(join '/', @root, 'tools');
- $etc = File::Spec->rel2abs(join '/', @root, 'etc');
+ $etc   = File::Spec->rel2abs(join '/', @root, 'etc');
+ $lib   = File::Spec->rel2abs(join '/', @root, 'lib');
 }
+use lib $lib;
 
-
-my @confs = qw{ cobalt.conf channels.conf plugins.conf };
+my @confs = qw{ cobalt.conf auth.conf channels.conf plugins.conf };
 
 sub _ans {
   my ($stdin, $default) = @_;
@@ -43,7 +44,7 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
 }
 
 
-say "> There are three core conf files:";
+say "> These are the core conf files:";
 print "  * $_\n" for @confs;
 print "> Would you like to edit them now? [Y/n] ";
 if ( _ans(my $stdin = <STDIN>, 'y') ) {
@@ -57,6 +58,26 @@ if ( _ans(my $stdin = <STDIN>, 'y') ) {
 
   if ($editor) {
     for my $file (@confs) {
+      if (basename($file, '.conf', '.yml') eq 'auth') {
+        say "> Auth plugin confs may include user directives with hashed"
+            ." passwords.";
+        say "> Typically hashed passwords can be created via tools/mkpasswd";
+        say "> I can do this for you, using Cobalt::Utils and bcrypt.";
+        say "> (This, of course, assumes that your kit is complete.)";
+        print "> Would you like to generate a hash before editing '$file'? [Y/n] ";
+        if ( _ans(my $stdin = <STDIN>, 'y') ) {
+          require Term::ReadKey;
+          Term::ReadKey->import('ReadMode');
+          ReadMode('noecho');
+          print "Password: ";
+          my $pwd = <STDIN>;
+          ReadMode(0);
+          require Cobalt::Utils;
+          say "\n HASH:\n".Cobalt::Utils::mkpasswd($pwd);
+          say "Hit enter when you'd like to continue.";
+          <STDIN>;
+        }
+      }
       say "> Editing $etc/$file";
       system(qq{$editor $etc/$file});
     }
