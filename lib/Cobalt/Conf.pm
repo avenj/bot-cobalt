@@ -10,12 +10,15 @@ package Cobalt::Conf;
 ## See plugins.conf for more information.
 
 use 5.12.1;
-use Moose;
+use strict;
+use warnings;
 use Carp;
+
+use Moose;
+use namespace::autoclean;
+
 use File::Slurp;
 use YAML::Syck;
-
-use namespace::autoclean;
 
 has 'etc' => (
   is => 'ro',

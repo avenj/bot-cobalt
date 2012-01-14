@@ -28,6 +28,8 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
+use Cobalt::Utils qw/ color rplprintf /;
+use Cobalt::Serializer;
 
 ## retval constants
 use constant {
