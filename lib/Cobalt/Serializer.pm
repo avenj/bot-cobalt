@@ -26,7 +26,7 @@ sub new {
   ##
   ## Specify something with a 'log' method:
   ## ->new( Logger => $core );
-  ## ->new( Logger => $core, LogLevel => 'emerg' );
+  ## ->new( Logger => $core, LogMethod => 'emerg' );
   my $self = {};
   my $class = shift;
   bless $self, $class;
@@ -38,7 +38,7 @@ sub new {
       carp "'Logger' specified but no log method found";
     } else { 
       $self->{logger} = $logger; 
-      $self->{LogLevel} = $args{LogLevel} ? $args{LogLevel} : 'emerg';
+      $self->{LogMethod} = $args{LogMethod} ? $args{LogMethod} : 'emerg';
     }
   }
 
@@ -68,7 +68,7 @@ sub freeze {
 }
 
 sub thaw {
-  ## ->thaw($ref)
+  ## ->thaw($data)
   ## deserialize data in specified Format
   my ($self, $data) = @_;
   return unless defined $data;
@@ -114,7 +114,7 @@ sub readfile {
 
 sub _log {
   my ($self, $message) = @_;
-  my $level = $self->{LogLevel} // 'emerg';
+  my $level = $self->{LogMethod} // 'emerg';
   unless ($self->{logger} && $self->{logger}->log->can($level) ) {
     carp "$message\n";
   } else {
@@ -240,3 +240,204 @@ sub _write_serialized {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Serializer - easy data serialization
+
+=head1 SYNOPSIS
+
+  use Cobalt::Serializer;
+
+  ## Spawn a YAML1.0 handler:
+  my $serializer = Cobalt::Serializer->new;
+
+  ## Spawn a JSON handler
+  my $serializer = Cobalt::Serializer->new( Format => 'JSON' );
+
+  ## Spawn a YAML1.1 handler that logs to $core->log->crit:
+  my $serializer = Cobalt::Serializer->new(
+    Format => 'YAMLXS',
+    Logger => $core,
+    LogMethod => 'crit',
+  );
+
+  ## Serialize some data to our Format:
+  my $ref = { Stuff => { Things => [ 'a', 'b'] } };
+  my $frozen = $serializer->freeze( $ref );
+
+  ## Turn it back into a Perl data structure:
+  my $thawed = $serializer->thaw( $frozen );
+
+  ## Serialize some $ref to a file at $path
+  ## The file will be overwritten
+  ## Returns false on failure
+  $serializer->writefile( $path, $ref );
+
+  ## Turn a serialized file back into a $ref
+  ## Boolean false on failure
+  my $ref = $serializer->readfile( $path );
+
+
+=head1 DESCRIPTION
+
+Various pieces of B<Cobalt2> need to read and write data from/to disk.
+
+This simple OO frontend makes it trivially easy to work with a selection of 
+serialization formats.
+
+Currently supported:
+
+=over
+
+=item L<YAML::Syck> (YAML 1.0)
+
+=item L<YAML::XS> (YAML1.1)
+
+=item L<JSON>
+
+=back
+
+
+=head1 METHODS
+
+=head2 new
+
+  my $serializer = $serializer->new;
+  my $serializer = $serializer->new( %opts );
+
+Spawn a serializer instance.
+
+The default is to spawn a YAML (1.0 spec) serializer with no logger.
+
+Optionally, any combination of the following B<%opts> may be specified:
+
+=head3 Format
+
+Specify a serialization format.
+
+Currently available formats are:
+
+=over
+
+=item *
+
+B<YAML> - YAML1.0 via L<YAML::Syck>
+
+=item *
+
+B<YAMLXS> - YAML1.1 via L<YAML::XS>
+
+=item *
+
+B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
+
+=back
+
+The default is B<YAML>
+
+=head3 Logger
+
+By default, all user-directed output is printed via C<carp>.
+There should be no output unless something goes wrong.
+
+If you're not writing a B<Cobalt> plugin, you can likely stop reading now.
+
+Alternately, you can log error messages via a specified object's 
+interface to a logging mechanism.
+
+B<Logger> is used to specify an object that has a C<log> attribute.
+
+The C<log> method of the object specified is typically expected to return 
+a reference to a logger's object; the logger is expected to handle a 
+L</LogMethod>, 
+
+That is to say:
+
+  ## in a cobalt2 plugin . . . 
+  ## $core provides the ->log attribute containing a Log::Handler
+  my $serializer = Cobalt::Serializer->new( Logger => $core );
+  ## now errors will go to $core->log->$LogMethod()
+  ## (log->emerg() by default)
+
+This is kludgy and should be fixed, as should the confusing nature of 
+the log attribute vs the log() builtin.
+
+Also see the L</LogMethod> directive.
+
+=head3 LogMethod
+
+When using a L</Logger>, you can specify LogMethod to change which log
+method is called (typically the verbosity level to display messages at). 
+
+  ## A slightly lower priority logger
+  my $serializer = Cobalt::Serializer->new(
+    Logger => $core,
+    LogMethod => 'warn',
+  );
+
+Defaults to B<emerg>, a high-priority message. It's probably safe to leave 
+this alone; it will work for at least L<Log::Handler> and L<Log::Log4perl>.
+
+
+=head2 freeze
+
+  my $frozen = $serializer->freeze($ref);
+
+Turn the specified reference I<$ref> into the configured B<Format>.
+
+Upon success returns a scalar containing the serialized format, suitable for 
+saving to disk, transmission, etc.
+
+
+=head2 thaw
+
+  my $ref = $serializer->thaw($data);
+
+Turn the specified serialized data (stored in a scalar) back into a Perl 
+data structure.
+
+(Try L<Data::Dumper> if you're not sure what your data actually looks like.)
+
+
+
+=head2 writefile
+
+  print "failed!" unless $serializer->writefile($path, $ref);
+
+L</freeze> the specified C<$ref> and write the serialized data to C<$path>
+
+Will fail with errors if $path is not writable for whatever reason; finding 
+out if your destination path is writable is up to you.
+
+Uses B<flock> to lock the file for writing; the call is non-blocking, therefore 
+writing to an already-locked file will fail with errors rather than waiting.
+
+Will be false on apparent failure, probably with some carping.
+
+
+=head2 readfile
+
+  my $ref = $serializer->readfile($path);
+
+Read the serialized file at the specified C<$path> (if possible) and 
+L</thaw> the data structures back into a reference.
+
+Will fail with errors if $path cannot be found or is unreadable.
+
+If the file is malformed or not of the expected B<Format> the parser will 
+whine at you.
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+
+=cut
