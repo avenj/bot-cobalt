@@ -5,7 +5,7 @@ use 5.12.1;
 use strict;
 use warnings;
 
-use Cobalt::Utils qw/ timestr_to_secs /;
+use Cobalt::Utils qw/ timestr_to_secs rplprintf /;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
@@ -43,11 +43,12 @@ sub Bot_public_cmd_alarmclock {
   my $resp;
 
   my $setter = $msg->{src_nick};
-
-  my $pkg = __PACKAGE__;
-  my $cfg = $core->cfg->{plugin_cf}->{$pkg};
+  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
-  ## FIXME: auth check
+
+  ## Quietly do nothing for unauthorized users
+  return PLUGIN_EAT_NONE 
+    unless ( $core->auth_level($context, $setter) >= $minlevel);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my @args = @{ $msg->{message_array} };  
@@ -57,10 +58,29 @@ sub Bot_public_cmd_alarmclock {
   ## the rest of this string is the alarm text:
   my $txtstr  = join ' ', @args;
 
-  ## FIXME: set a Timer
-  ## generic interface for this?
+  $txtstr = "$setter: ALARMCLOCK: ".$txtstr ;
 
-  ## FIXME: send a response
+  ## set a timer
+  my $secs = timestr_to_secs($timestr) || 1;
+  my $channel = $msg->{channel};
+
+  $core->timer_set( $secs,
+    {
+      Type => 'msg',
+      Context => $context,
+      Target => $channel,
+      Text => $txtstr,
+    }
+  );
+
+  $resp = rplprintf( $core->lang->{ALARMCLOCK_SET},
+    {
+      nick => $setter,
+      secs => $secs,
+      timestr => $timestr,
+    }
+  );
+
   if ($resp) {
     my $target = $msg->{channel};
     $core->send_event( 'send_message', $context, $target, $resp );
