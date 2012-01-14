@@ -288,7 +288,8 @@ Cobalt::Serializer - easy data serialization
 Various pieces of B<Cobalt2> need to read and write data from/to disk.
 
 This simple OO frontend makes it trivially easy to work with a selection of 
-serialization formats.
+serialization formats, automatically enabling Unicode encode/decode and 
+optionally providing the ability to read/write files directly.
 
 Currently supported:
 
@@ -414,6 +415,7 @@ L</freeze> the specified C<$ref> and write the serialized data to C<$path>
 Will fail with errors if $path is not writable for whatever reason; finding 
 out if your destination path is writable is up to you.
 
+B<IMPORTANT:>
 Uses B<flock> to lock the file for writing; the call is non-blocking, therefore 
 writing to an already-locked file will fail with errors rather than waiting.
 
