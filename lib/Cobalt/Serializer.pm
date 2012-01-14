@@ -226,7 +226,7 @@ sub _read_serialized {
     or ($self->_log("open failed for $path: $!") and return);
 
   if ($lock) {
-    flock($in_fh, LOCK_SH)
+    flock($in_fh, LOCK_SH)  # blocking call
     or ($self->_log("LOCK_SH failed for $path: $!") and return);
    }
 
@@ -459,7 +459,7 @@ method is called (typically the priority/verbosity level).
     LogMethod => 'warn',
   );
 
-  ## A Log::Tiny logger, from a module:
+  ## A module using a Log::Tiny logger:
   my $serializer = Cobalt::Serializer->new(
     Logger => $self->{logger_object},
     ## Log::Tiny expects uppercase log methods:
@@ -526,8 +526,14 @@ You can turn this behavior off:
 
   $serializer->readfile($path, { Locking => 0 });
 
-Will fail with errors if $path cannot be found, is unreadable, or is locked 
-for writing (LOCK_EX).
+B<IMPORTANT:>
+This is not a non-blocking lock. C<readfile> will block until a lock is 
+gained (to prevent data structures from "running dry" in between writes).
+This is the opposite of what L</writefile> does, the general concept being 
+that preserving the data existing on disk takes priority.
+Turn off B<Locking> if this is not the behavior you want.
+
+Will fail with errors if $path cannot be found or is unreadable.
 
 If the file is malformed or not of the expected L</Format> the parser will 
 whine at you.
