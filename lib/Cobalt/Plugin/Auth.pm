@@ -74,6 +74,7 @@ use IRC::Utils qw/
   lc_irc uc_irc eq_irc /;
 
 use Cobalt::Utils qw/ :ALL /;
+use Cobalt::Serializer;
 
 ### Serialization:
 use YAML::Syck;
@@ -705,8 +706,7 @@ sub _mkpasswd {
 
 
 
-### Access list mgmt methods
-### (YAML frontend)
+### Access list rw methods (serialize to YAML)
 ### These can also be used to read/write arbitrary authdbs
 
 sub _read_access_list {
@@ -722,26 +722,8 @@ sub _read_access_list {
     return { }
   }
 
-  open(my $db_in, '<', $authdb)
-    or (
-      $core->log->emerg("Open failed in _read_access_list: $!")
-      and return
-  );
-  flock($db_in, LOCK_SH)
-    or (
-      $core->log->emerg("LOCK_SH failed in _read_access_list: $!")
-      and return
-  );
-  my $yaml = <$db_in>;
-
-  flock($db_in, LOCK_UN)
-    or $core->log->warn("LOCK_UN failed in _read_access_list: $!");
-  close($db_in);
-
-  utf8::encode($yaml);
-
-  my $accesslist = Load $yaml;
-
+  my $serializer = Cobalt::Serializer->new( Logger => $core );
+  my $accesslist = $serializer->readfile($authdb);
   return $accesslist
 }
 
@@ -751,11 +733,12 @@ sub _write_access_list {
   $alist  = $self->AccessList unless $alist;
   my $core = $self->core;
 
-  ## we don't want to write superusers back out:
+  ## we don't want to write superusers back out
+  ## copy from ref to a fresh hash to fuck with:
   my %hash = %$alist;
   for my $context (keys %hash) {
-    for my $user (keys %{$hash{$context}}) {
-      if ($hash{$context}->{$user}->{Flags}->{SUPERUSER}) {
+    for my $user (keys %{ $hash{$context} }) {
+      if ( $hash{$context}->{$user}->{Flags}->{SUPERUSER} ) {
         delete $hash{$context}->{$user};
       }
     }
@@ -766,31 +749,10 @@ sub _write_access_list {
   ## don't need to write empty access lists to disk ...
   return unless scalar keys %hash;
 
-  my $yaml = Dump \%hash;
-
-  utf8::decode($yaml);
-
-  open(my $db_out, '>>', $authdb)
-    or (
-      $core->log->emerg("Open failed in _write_access_list: $!")
-      and return
-  );
-  flock($db_out, LOCK_EX | LOCK_NB)
-    or ( 
-      $core->log->emerg("LOCK_EX failed in _write_access_list: $!")
-      and return
-  );
-
-  seek($db_out, 0, 0);
-  truncate($db_out, 0);
-  print $db_out $yaml;
-
-  flock($db_out, LOCK_UN)
-    or (
-      $core->log->emerg("LOCK_UN failed in _write_access_list: $!")
-      and return
-  );
-  close($db_out);
+  my $serializer = Cobalt::Serializer->new(Logger => $core);
+  unless ( $serializer->writefile($authdb, \%hash) ) {
+    $core->log->emerg("Failed to serialize db to disk: $authdb");
+  }
 
   my $p_cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $perms = $p_cfg->{Opts}->{AuthDB_Perms} // 0600;
@@ -800,6 +762,7 @@ sub _write_access_list {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+
 __END__
 
 
