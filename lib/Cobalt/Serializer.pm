@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.10';
+our $VERSION = '0.12';
 
 use 5.12.1;
 use strict;
@@ -19,26 +19,35 @@ sub new {
   ## my $serializer = Cobalt::Serializer->new( %opts )
   ## Serialize to YAML using YAML::Syck:
   ## ->new()
-  ## -or-
+  ## - or -
+  ## ->new($format)
+  ## ->new('JSON')  # f.ex
+  ## - or -
   ## ->new( Format => 'JSON' )   ## --> to JSON
-  ## -or-
+  ## - or -
   ## ->new( Format => 'YAMLXS' ) ## --> to YAML1.1
-  ##
-  ## Specify something with a 'log' method:
-  ## ->new( Logger => $core );
-  ## ->new( Logger => $core, LogMethod => 'emerg' );
+  ## - and / or -
+  ## Specify something with a LogMethod method, default 'error':
+  ## ->new( Logger => $core->log );
+  ## ->new( Logger => $core->log, LogMethod => 'crit' );
   my $self = {};
   my $class = shift;
   bless $self, $class;
-  my %args = @_;
+  my %args;
+  if (@_ > 1) {
+     %args = @_;
+  } else {
+    $args{Format} = shift;
+  }
 
   if ($args{Logger}) {
+    $self->{LogMethod} = $args{LogMethod} ? $args{LogMethod} : 'error';
+    my $logmethod = $self->{LogMethod};
     my $logger = $args{Logger};
-    unless (ref $logger && $logger->can('log') ) {
-      carp "'Logger' specified but no log method found";
+    unless (ref $logger && $logger->can($logmethod) ) {
+      carp "'Logger' specified but log method $logmethod not found";
     } else { 
       $self->{logger} = $logger; 
-      $self->{LogMethod} = $args{LogMethod} ? $args{LogMethod} : 'emerg';
     }
   }
 
@@ -109,16 +118,22 @@ sub readfile {
   return $thawed;
 }
 
+sub version {
+  my ($self) = @_;
+  my $module = Modules->{ $self->{Format} };
+  eval "require $module";
+  return($module, $module->VERSION);
+}
 
 ## Internals
 
 sub _log {
   my ($self, $message) = @_;
-  my $level = $self->{LogMethod} // 'emerg';
-  unless ($self->{logger} && $self->{logger}->log->can($level) ) {
+  my $method = $self->{LogMethod};
+  unless ($self->{logger} && $self->{logger}->can($method) ) {
     carp "$message\n";
   } else {
-    $self->{logger}->log->$level($message);
+    $self->{logger}->$method($message);
   }
 }
 
@@ -281,12 +296,14 @@ Cobalt::Serializer - easy data serialization
   my $serializer = Cobalt::Serializer->new;
 
   ## Spawn a JSON handler
+  my $serializer = Cobalt::Serializer->new('JSON');
+  ## ...same as:
   my $serializer = Cobalt::Serializer->new( Format => 'JSON' );
 
   ## Spawn a YAML1.1 handler that logs to $core->log->crit:
   my $serializer = Cobalt::Serializer->new(
     Format => 'YAMLXS',
-    Logger => $core,
+    Logger => $core->log,
     LogMethod => 'crit',
   );
 
@@ -321,35 +338,41 @@ This simple OO frontend makes it trivially easy to work with a selection of
 serialization formats, automatically enabling Unicode encode/decode and 
 optionally providing the ability to read/write files directly.
 
-Currently supported:
-
-=over
-
-=item L<YAML::Syck> (YAML 1.0)
-
-=item L<YAML::XS> (YAML1.1)
-
-=item L<JSON>
-
-=back
-
 
 =head1 METHODS
 
 =head2 new
 
-  my $serializer = $serializer->new;
-  my $serializer = $serializer->new( %opts );
+  my $serializer = Cobalt::Serializer->new;
+  my $serializer = Cobalt::Serializer->new( $format );
+  my $serializer = Cobalt::Serializer->new( %opts );
 
-Spawn a serializer instance.
+Spawn a serializer instance. Will croak if you are missing the relevant 
+serializer module; see L</Format>, below.
 
-The default is to spawn a YAML (1.0 spec) serializer with no logger.
+The default is to spawn a B<YAML::Syck> (YAML1.0) serializer with error 
+logging to C<carp>.
 
-Optionally, any combination of the following B<%opts> may be specified:
+You can spawn an instance using a different Format by passing a simple 
+scalar argument:
+
+  $handle_syck = Cobalt::Serializer->new('YAML');
+  $handle_yaml = Cobalt::Serializer->new('YAMLXS');
+  $handle_json = Cobalt::Serializer->new('JSON');
+
+Alternately, any combination of the following B<%opts> may be specified:
+
+  $serializer = Cobalt::Serializer->new(
+    Format =>
+    Logger =>
+    LogMethod =>
+  );
+
+See below for descriptions.
 
 =head3 Format
 
-Specify a serialization format.
+Specify an input and output serialization format.
 
 Currently available formats are:
 
@@ -369,57 +392,91 @@ B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
 
 =back
 
-The default is B<YAML>
+The default is B<YAML> I<(YAML Ain't Markup Language)>
+
+YAML is very powerful, and the appearance of the output makes it easy for 
+humans to read and edit.
+
+JSON is a more simplistic format, often more suited for network transmission.
+It also has the benefit of being included in the Perl core as of perl-5.14.
 
 =head3 Logger
 
-By default, all user-directed output is printed via C<carp>.
-There should be no output unless something goes wrong.
+By default, all error output is delivered via C<carp>.
 
-If you're not writing a B<Cobalt> plugin, you can likely stop reading now.
+If you're not writing a B<Cobalt> plugin, you can likely stop reading right 
+there; that'll do for the general case, and your module or application can 
+worry about STDERR.
 
-Alternately, you can log error messages via a specified object's 
+However, if you'd like, you can log error messages via a specified object's 
 interface to a logging mechanism.
 
-B<Logger> is used to specify an object that has a C<log> attribute.
-
-The C<log> method of the object specified is typically expected to return 
-a reference to a logger's object; the logger is expected to handle a 
-L</LogMethod>, 
+B<Logger> is used to specify an object that has a logging method of some 
+sort.
 
 That is to say:
 
-  ## in a cobalt2 plugin . . . 
-  ## $core provides the ->log attribute containing a Log::Handler
-  my $serializer = Cobalt::Serializer->new( Logger => $core );
+  ## In a typical cobalt2 plugin . . . 
+  ## assumes $core has already been set to the Cobalt core object
+  ## $core provides the ->log attribute containing a Log::Handler:
+  my $serializer = Cobalt::Serializer->new( Logger => $core->log );
   ## now errors will go to $core->log->$LogMethod()
-  ## (log->emerg() by default)
+  ## (log->error() by default)
 
-This is kludgy and should be fixed, as should the confusing nature of 
-the log attribute vs the log() builtin.
+  ##
+  ## Meanwhile, in a stand-alone app or module . . .
+  ##
+  sub configure_logger {
+    . . .
+    ## Pick your poison ... Set up whatever logger you like
+    ## Log::Handler, Log::Log4perl, Log::Log4perl::Tiny, Log::Tiny, 
+    ## perhaps a custom job, whatever ...
+    ## The only real requirement is that it have an OO interface
+  }
+
+  sub do_some_work {
+    ## Typically, a complete logging module provides a mechanism for 
+    ## easy retrieval of the log obj, such as get_logger
+    ## (otherwise keeping track of it is up to you)
+    my $log_obj = Log::Log4perl->get_logger('My.Logger');
+
+    my $serializer = Cobalt::Serializer->new( Logger => $log_obj );
+    ## Now errors are logged as: $log_obj->error($err)
+    . . .
+  }
+
 
 Also see the L</LogMethod> directive.
 
 =head3 LogMethod
 
 When using a L</Logger>, you can specify LogMethod to change which log
-method is called (typically the verbosity level to display messages at). 
+method is called (typically the priority/verbosity level). 
 
-  ## A slightly lower priority logger
+  ## A slightly lower priority logger:
   my $serializer = Cobalt::Serializer->new(
     Logger => $core,
     LogMethod => 'warn',
   );
 
-Defaults to B<emerg>, a high-priority message. It's probably safe to leave 
-this alone; it will work for at least L<Log::Handler> and L<Log::Log4perl>.
+  ## A Log::Tiny logger, from a module:
+  my $serializer = Cobalt::Serializer->new(
+    Logger => $self->{logger_object},
+    ## Log::Tiny expects uppercase log methods:
+    LogMethod => 'ERROR',
+  );
+
+
+Defaults to B<error>, which should work for at least L<Log::Handler>, 
+L<Log::Log4perl>, and L<Log::Log4perl::Tiny>.
 
 
 =head2 freeze
 
+Turn the specified reference I<$ref> into the configured B<Format>.
+
   my $frozen = $serializer->freeze($ref);
 
-Turn the specified reference I<$ref> into the configured B<Format>.
 
 Upon success returns a scalar containing the serialized format, suitable for 
 saving to disk, transmission, etc.
@@ -427,10 +484,11 @@ saving to disk, transmission, etc.
 
 =head2 thaw
 
-  my $ref = $serializer->thaw($data);
-
 Turn the specified serialized data (stored in a scalar) back into a Perl 
 data structure.
+
+  my $ref = $serializer->thaw($data);
+
 
 (Try L<Data::Dumper> if you're not sure what your data actually looks like.)
 
@@ -438,9 +496,9 @@ data structure.
 
 =head2 writefile
 
-  print "failed!" unless $serializer->writefile($path, $ref);
-
 L</freeze> the specified C<$ref> and write the serialized data to C<$path>
+
+  print "failed!" unless $serializer->writefile($path, $ref);
 
 Will fail with errors if $path is not writable for whatever reason; finding 
 out if your destination path is writable is up to you.
@@ -458,10 +516,10 @@ Will be false on apparent failure, probably with some carping.
 
 =head2 readfile
 
-  my $ref = $serializer->readfile($path);
-
 Read the serialized file at the specified C<$path> (if possible) and 
 L</thaw> the data structures back into a reference.
+
+  my $ref = $serializer->readfile($path);
 
 By default, attempts to gain a shared (LOCK_SH) lock on the file.
 You can turn this behavior off:
@@ -471,8 +529,22 @@ You can turn this behavior off:
 Will fail with errors if $path cannot be found, is unreadable, or is locked 
 for writing (LOCK_EX).
 
-If the file is malformed or not of the expected B<Format> the parser will 
+If the file is malformed or not of the expected L</Format> the parser will 
 whine at you.
+
+
+=head2 version
+
+Obtains the backend serializer and its VERSION for the current instance.
+
+  my ($module, $modvers) = $serializer->version;
+
+Returns a list of two values: the module name and its version.
+
+  ## via Devel::REPL:
+  $ Cobalt::Serializer->new->version
+  $VAR1 = 'YAML::Syck';
+  $VAR2 = 1.19;
 
 
 =head1 AUTHOR
@@ -480,6 +552,25 @@ whine at you.
 Jon Portnoy <avenj@cobaltirc.org>
 
 L<http://www.cobaltirc.org>
+
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+L<YAML::Syck> -- YAML1.0: L<http://yaml.org/spec/1.0/>
+
+=item *
+
+L<YAML::XS> -- YAML1.1: L<http://yaml.org/spec/1.1/>
+
+=item *
+
+L<JSON>, L<JSON::XS> -- JSON: L<http://www.json.org/>
+
+=back
 
 
 =cut
