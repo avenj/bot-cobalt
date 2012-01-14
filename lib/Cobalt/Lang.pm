@@ -5,11 +5,14 @@ our $VERSION = "0.002";
 ##  langset_loaded ($lang, $lang-specified, $path)
 
 use 5.12.1;
-use Moose;
+use strict;
+use warnings;
 use Carp;
-use File::Slurp;
-use YAML::Syck;
+
+use Moose;
 use namespace::autoclean;
+
+use Cobalt::Serializer;
 
 sub langset_load { load_langset(@_) }
 sub load_langset {  ## load_langset(language)
@@ -33,10 +36,13 @@ sub load_langset {  ## load_langset(language)
     return { }
   }
 
-  $self->log->info("Loading language set: $lang");
-  my $cf_lang = read_file($path);
-  utf8::encode($cf_lang);
-  my $langset = Load $cf_lang;
+  $self->log->info("Loading language set: $lang")
+    if $self->can('log');
+
+  my %opts;
+  $opts{Logger} = $self if $self->can('log');
+  my $serializer = Cobalt::Serializer->new(%opts);
+  my $langset = $serializer->readfile($path);
 
   ## FIXME langset validation ?
 
