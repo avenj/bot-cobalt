@@ -722,7 +722,7 @@ sub _read_access_list {
     return { }
   }
 
-  my $serializer = Cobalt::Serializer->new( Logger => $core );
+  my $serializer = Cobalt::Serializer->new( Logger => $core->log );
   my $accesslist = $serializer->readfile($authdb);
   return $accesslist
 }
@@ -749,7 +749,7 @@ sub _write_access_list {
   ## don't need to write empty access lists to disk ...
   return unless scalar keys %hash;
 
-  my $serializer = Cobalt::Serializer->new(Logger => $core);
+  my $serializer = Cobalt::Serializer->new( Logger => $core->log );
   unless ( $serializer->writefile($authdb, \%hash) ) {
     $core->log->emerg("Failed to serialize db to disk: $authdb");
   }

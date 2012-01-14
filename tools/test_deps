@@ -31,8 +31,10 @@ my @required = qw/
 ## bundled plugins, mostly
 ##  module => reason
 my $optional = {
-    'Term::ReadKey' => 'Used by tools/mkpasswd',
-#    'Template' => ''
+  'DBM::Deep' => 'Used by Plugin::RDB',
+
+  'Term::ReadKey' => 'Used by tools/mkpasswd',
+#  'Template' => 'Used by documentation tools'
 };
 
 print "> Checking required modules; ".scalar(@required)." to check\n";

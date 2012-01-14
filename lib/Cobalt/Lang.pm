@@ -40,7 +40,7 @@ sub load_langset {  ## load_langset(language)
     if $self->can('log');
 
   my %opts;
-  $opts{Logger} = $self if $self->can('log');
+  $opts{Logger} = $self->log if $self->can('log');
   my $serializer = Cobalt::Serializer->new(%opts);
   my $langset = $serializer->readfile($path);
 
