@@ -1,5 +1,5 @@
 package Cobalt::Lang;
-our $VERSION = "0.002";
+our $VERSION = "0.10";
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)

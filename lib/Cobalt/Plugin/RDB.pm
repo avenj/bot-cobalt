@@ -1,4 +1,5 @@
 package Cobalt::Plugin::RDB;
+our $VERSION = '0.10';
 
 use 5.12.1;
 use strict;
