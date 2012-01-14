@@ -259,6 +259,23 @@ Import all the things:
 
 =head1 FUNCTIONS
 
+=head2 Exportable functions
+
+=over 
+
+=item L</timestr_to_secs>
+
+=item L</secs_to_timestr>
+
+=item L</color>
+
+=item L</rplprintf>
+
+=item L</mkpasswd>
+
+=item L</passwdcmp>
+
+=back
 
 =head2 Date and Time
 
