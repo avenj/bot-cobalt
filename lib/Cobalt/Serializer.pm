@@ -79,8 +79,8 @@ sub thaw {
 }
 
 sub writefile {
-  my ($self, $path, $ref) = @_;
-  ## $serializer->writefile($path, $ref);
+  my ($self, $path, $ref, $opts) = @_;
+  ## $serializer->writefile($path, $ref [, { Opts });
   ## serialize arbitrary data and write it to disk
   if      (!$path) {
     $self->_log("writefile called without path argument");
@@ -90,11 +90,11 @@ sub writefile {
     return
   }
   my $frozen = $self->freeze($ref);
-  $self->_write_serialized($path, $frozen); 
+  $self->_write_serialized($path, $frozen, $opts); 
 }
 
 sub readfile {
-  my ($self, $path) = @_;
+  my ($self, $path, $opts) = @_;
   ## my $ref = $serializer->readfile($path)
   ## thaw a file into data structure
   if (!$path) {
@@ -104,7 +104,7 @@ sub readfile {
     $self->_log("readfile called on unreadable file $path");
     return
   }
-  my $data = $self->_read_serialized($path);
+  my $data = $self->_read_serialized($path, $opts);
   my $thawed = $self->thaw($data);
   return $thawed;
 }
@@ -195,22 +195,33 @@ sub _load_json {
 
 
 sub _read_serialized {
-  my ($self, $path) = @_;
+  my ($self, $path, $opts) = @_;
   return unless $path;
   if (-d $path || ! -e $path) {
     $self->_log("file not readable: $path");
     return
   }
 
+  my $lock = 1;
+  if (defined $opts && ref $opts eq 'HASH') {
+    $lock = $opts->{Locking} if defined $opts->{Locking};
+  }
+
   open(my $in_fh, '<', $path)
     or ($self->_log("open failed for $path: $!") and return);
-  flock($in_fh, LOCK_SH)
+
+  if ($lock) {
+    flock($in_fh, LOCK_SH)
     or ($self->_log("LOCK_SH failed for $path: $!") and return);
+   }
 
   my $data = join('', <$in_fh>);
 
-  flock($in_fh, LOCK_UN)
+  if ($lock) {
+    flock($in_fh, LOCK_UN)
     or $self->_log("LOCK_UN failed for $path: $!");
+  }
+
   close($in_fh)
     or $self->_log("close failed for $path: $!");
 
@@ -218,13 +229,21 @@ sub _read_serialized {
 }
 
 sub _write_serialized {
-  my ($self, $path, $data) = @_;
+  my ($self, $path, $data, $opts) = @_;
   return unless $path and defined $data;
+
+  my $lock = 1;
+  if (defined $opts && ref $opts eq 'HASH') {
+    $lock = $opts->{Locking} if defined $opts->{Locking};
+  }
 
   open(my $out_fh, '>>', $path)
     or ($self->_log("open failed for $path: $!") and return);
-  flock($out_fh, LOCK_EX | LOCK_NB)
+
+  if ($lock) {
+    flock($out_fh, LOCK_EX | LOCK_NB)
     or ($self->_log("LOCK_EX failed for $path: $!") and return);
+  }
 
   seek($out_fh, 0, 0)
     or ($self->_log("seek failed for $path: $!") and return);
@@ -232,6 +251,11 @@ sub _write_serialized {
     or ($self->_log("truncate failed for $path") and return);
 
   print $out_fh $data;
+
+  if ($lock) {
+    flock($out_fh, LOCK_UN)
+    or $self->_log("LOCK_UN failed for $path: $!");
+  }
 
   close($out_fh)
     or $self->_log("close failed for $path: $!");
@@ -278,9 +302,15 @@ Cobalt::Serializer - easy data serialization
   ## Returns false on failure
   $serializer->writefile( $path, $ref );
 
+  ## Do the same thing, but without locking
+  $serializer->writefile( $path, $ref, { Locking => 0 } );
+
   ## Turn a serialized file back into a $ref
   ## Boolean false on failure
   my $ref = $serializer->readfile( $path );
+
+  ## Do the same thing, but without locking
+  my $ref = $serializer->readfile( $path, { Locking => 0 } );
 
 
 =head1 DESCRIPTION
@@ -415,6 +445,10 @@ L</freeze> the specified C<$ref> and write the serialized data to C<$path>
 Will fail with errors if $path is not writable for whatever reason; finding 
 out if your destination path is writable is up to you.
 
+Locks the file by default. You can turn this behavior off:
+
+  $serializer->writefile($path, $ref, { Locking => 0 });
+
 B<IMPORTANT:>
 Uses B<flock> to lock the file for writing; the call is non-blocking, therefore 
 writing to an already-locked file will fail with errors rather than waiting.
@@ -429,7 +463,13 @@ Will be false on apparent failure, probably with some carping.
 Read the serialized file at the specified C<$path> (if possible) and 
 L</thaw> the data structures back into a reference.
 
-Will fail with errors if $path cannot be found or is unreadable.
+By default, attempts to gain a shared (LOCK_SH) lock on the file.
+You can turn this behavior off:
+
+  $serializer->readfile($path, { Locking => 0 });
+
+Will fail with errors if $path cannot be found, is unreadable, or is locked 
+for writing (LOCK_EX).
 
 If the file is malformed or not of the expected B<Format> the parser will 
 whine at you.
