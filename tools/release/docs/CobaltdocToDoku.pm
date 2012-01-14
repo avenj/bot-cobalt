@@ -120,7 +120,7 @@ sub _handle_text {
 # Text     lists
 # Block    lists
 #
-sub _end_item_text     {$_[0]->_output('\n')}
+sub _end_item_text     {$_[0]->_output("\n")}
 
 
 
