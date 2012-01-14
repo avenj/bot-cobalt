@@ -49,10 +49,14 @@ RPL:
   ## RPL_NO_ACCESS: %nick
   RPL_NO_ACCESS: "%nick%, you are not authorized!"
 
+ ## Plugin::Alarmclock:
+
+  ## ALARMCLOCK_SET: %nick, %secs, %timestr
+  ALARMCLOCK_SET: "Alarmclock added for %secs seconds (%nick%)."
 
  ## Plugin::Auth:
 
-  ## Broken syntax RPLs:
+  ## Broken syntax RPLs, no args:
   AUTH_BADSYN_LOGIN: "Bad syntax. Usage: LOGIN <username> <passwd>"
 
   ## AUTH_SUCCESS: %context, %src, %nick, %user, %lev
