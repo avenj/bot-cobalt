@@ -1,3 +1,72 @@
+package Cobalt::Plugin::FloodProtect;
+our $VERSION = '0.10';
+
 ## store ignorelist in ->State
 ## IRC.pm/MultiServer.pm should check ignorelist before dispatch
 ## manage temp ignores
+
+use 5.12.1;
+use strict;
+use warnings;
+
+use Cobalt::Utils qw/ timestr_to_secs /;
+
+use Object::Pluggable::Constants qw/ :ALL /;
+
+sub new {
+  my $self = {};
+  my $class = shift;
+  bless $self, $class;
+  return $self
+}
+
+
+sub Cobalt_register {
+  my ($self, $core) = splice @_, 0, 2;
+
+  $self->{core} = $core;
+
+  ## FIXME grab a cfg file to determine flood rates and ignore expiries
+  ## per-channel and per-privmsg should include ctcp actions
+  ## per-ctcp should exclude actions
+
+  $core->plugin_register($self, 'SERVER',
+    [
+      'public_msg',
+      'private_msg',
+      'notice',
+      'ctcp_action',
+# FIXME autoload for irc events so we can grab irc_ctcp etc 
+    ],
+
+  );
+
+  $core->log->info("Registered");
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Cobalt_unregister {
+  my ($self, $core) = splice @_, 0, 2;
+  ## FIXME cleanup our ignorelist entries
+  $core->log->info("Unregistered");
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_public_msg {
+}
+
+sub Bot_private_msg {
+}
+
+sub Bot_notice {
+
+}
+
+sub Bot_ctcp_action {
+
+}
+
+1;
+
+__END__
