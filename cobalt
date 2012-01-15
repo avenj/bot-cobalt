@@ -29,8 +29,8 @@ GetOptions(
   'help' => \&show_help,
 
   'version' => sub {
-    require Cobalt;
-    print("cobalt $Cobalt::VERSION\n"); 
+    require Cobalt::Core;
+    print("cobalt $Cobalt::Core::VERSION\n"); 
     exit 0
   },
 
@@ -62,7 +62,7 @@ sub show_help {
     "cobalt2 invocation help \n\n",
     "  Information:\n",
     "   --version \n",
-    "     Display current Cobalt.pm version \n",
+    "     Display current Cobalt::Core version \n",
     "   --dumpconfig \n",
     "     Display current Cobalt::Conf data structures.\n",
 
@@ -138,10 +138,10 @@ if ($opt_detach)
 $pid->touch();
 
 
-require Cobalt;
+require Cobalt::Core;
 require Cobalt::Conf;
 my $cfg = Cobalt::Conf->new(etc => $etc)->read_cfg;
-Cobalt->new(
+Cobalt::Core->new(
   cfg => $cfg,
   loglevel => $loglevel, 
   debug => $opt_debug,

@@ -1,5 +1,5 @@
-package Cobalt;
-our $VERSION = '2.00_4';
+package Cobalt::Core;
+our $VERSION = '2.00_5';
 
 use 5.12.1;
 use Carp;

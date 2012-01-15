@@ -1,0 +1,9 @@
+# cobalt2 Changes
+
+
+* cobalt-2.00
+
+  Until a release is available, development history lives exclusively 
+  in `git`
+  -> $ git clone git://eris.cobaltirc.org/cobalt2
+  -> http://cobaltirc.org/dev/bots
