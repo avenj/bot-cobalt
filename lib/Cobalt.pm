@@ -215,6 +215,9 @@ sub syndicator_started {
   $self->send_event('plugins_initialized', $_[ARG0]);
 
   $self->log->info("-> started, plugins_initialized sent");
+
+  ## kickstart timer pool
+  $kernel->yield('timer_check_pool');
 }
 
 sub shutdown {
@@ -254,6 +257,7 @@ sub timer_check_pool {
     if ( $execute_ts <= time ) {
       my $event = $timer->{Event};
       my @args = @{ $timer->{Args} };
+      $self->log->debug("timer execute: $id (ev: $event)");
       ## dispatch this event:
       $self->send_event( $event, @args );
       ## send executed_timer to indicate this timer's done:
@@ -515,7 +519,7 @@ sub get_irc_casemap {
     return
   }
 
-  my $map = $self->core->Servers->{$context}->{CaseMap} // 'rfc1459';
+  my $map = $self->Servers->{$context}->{CaseMap} // 'rfc1459';
   return $map
 }
 
@@ -533,7 +537,7 @@ sub get_irc_server {
     return
   }
 
-  return $self->core->Servers->{$context};  
+  return $self->Servers->{$context};  
 }
 
 
