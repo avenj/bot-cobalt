@@ -33,6 +33,8 @@ my @required = qw/
 my $optional = {
   'DBM::Deep' => 'Used by Plugin::RDB',
 
+  'JSON' => 'Used by network tools',
+
   'POE::Component::SSLify' => 'Used for SSL-enabled IRC',
 
   'Term::ReadKey' => 'Used by tools/mkpasswd',
