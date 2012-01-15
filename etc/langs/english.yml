@@ -58,7 +58,7 @@ RPL:
  ## Plugin::Alarmclock:
 
   ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
-  ALARMCLOCK_SET: "Alarmclock added for %secs seconds (%nick%) [timerID: %timerid%]."
+  ALARMCLOCK_SET: "Alarm set to trigger in %secs%s (%nick%) [timerID: %timerid%]"
 
  ## Plugin::Auth:
 
