@@ -15,12 +15,12 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 2   ## bump +1 on revisions please
+REV: 3   ## bump +1 on significant revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
 
- ## Core Cobalt::IRC set:
+ ## Core Cobalt set:
 
   ## RPL_PLUGIN_LOAD: %plugin, %module
   RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module%)"
@@ -28,8 +28,14 @@ RPL:
   ## RPL_PLUGIN_UNLOAD: %plugin, %module
   RPL_PLUGIN_UNLOAD: "Plugin removed: %plugin (%module%)"
 
-  ## RPL_PLUGIN_ERR, %plugin, %err
+  ## RPL_PLUGIN_ERR: %plugin, %err
   RPL_PLUGIN_ERR: "Failed plugin load: %plugin%: %err"
+
+  ## RPL_TIMER_ERR
+  RPL_TIMER_ERR: "Failed to add timer; unknown timer_set failure"
+
+
+ ## Cobalt::IRC:
 
   ## RPL_CHAN_SYNC: %chan
   RPL_CHAN_SYNC: "Sync complete on %chan"
@@ -51,8 +57,8 @@ RPL:
 
  ## Plugin::Alarmclock:
 
-  ## ALARMCLOCK_SET: %nick, %secs, %timestr
-  ALARMCLOCK_SET: "Alarmclock added for %secs seconds (%nick%)."
+  ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
+  ALARMCLOCK_SET: "Alarmclock added for %secs seconds (%nick%) [timerID: %timerid%]."
 
  ## Plugin::Auth:
 

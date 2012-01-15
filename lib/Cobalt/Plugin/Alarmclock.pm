@@ -52,8 +52,7 @@ sub Bot_public_cmd_alarmclock {
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my @args = @{ $msg->{message_array} };  
-  ## E.g.:
-  ##  !alarmclock 1h10m things and stuff
+  ## -> f.ex.:  split ' ', !alarmclock 1h10m things and stuff
   my $timestr = shift @args;
   ## the rest of this string is the alarm text:
   my $txtstr  = join ' ', @args;
@@ -64,7 +63,7 @@ sub Bot_public_cmd_alarmclock {
   my $secs = timestr_to_secs($timestr) || 1;
   my $channel = $msg->{channel};
 
-  $core->timer_set( $secs,
+  my $id = $core->timer_set( $secs,
     {
       Type => 'msg',
       Context => $context,
@@ -73,13 +72,18 @@ sub Bot_public_cmd_alarmclock {
     }
   );
 
-  $resp = rplprintf( $core->lang->{ALARMCLOCK_SET},
-    {
-      nick => $setter,
-      secs => $secs,
-      timestr => $timestr,
-    }
-  );
+  if ($id) {
+    $resp = rplprintf( $core->lang->{ALARMCLOCK_SET},
+      {
+        nick => $setter,
+        secs => $secs,
+        timerid => $id,
+        timestr => $timestr,
+      }
+    );
+  } else {
+    $resp = rplprintf( $core->lang->{RPL_TIMER_ERR} );
+  }
 
   if ($resp) {
     my $target = $msg->{channel};
