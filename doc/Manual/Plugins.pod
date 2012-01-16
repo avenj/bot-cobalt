@@ -6,7 +6,7 @@ Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0003
+Plugins guide revision: 0004
 
 Last updated for cobalt 2.00
 
@@ -446,13 +446,103 @@ B<MaxModes>: The server's announced MAXMODES (or 4)
 
 =head3 Logging
 
-=head3 Timer management
+
+
+=head3 Timers
+
+Core timers live in $core->TimerPool ; if need be, you can access 
+the timer pool directly via $core->TimerPool->{TIMERS}.
+
+Typically most plugins will only need the following functionality:
 
 =head4 timer_set
 
+Set up a new timer for an event or message.
+
+  $core->timer_set( $delay, $ev_hash );
+  $core->timer_set( $delay, $ev_hash, $id );
+
+Returns the timer ID on success, boolean false on failure.
+
+Expects at least a delay (in seconds) and a hashref specifying what to 
+do when the delay has elapsed.
+
+  ## New 60 second 'msg' timer with a random unique ID:
+  ## Send $string to $channel on $context
+  ## (A triggered 'msg' timer broadcasts a 'send_message' event)
+  my $id = $core->timer_set( 60,
+    {
+      ## The type of timer; 'msg' or 'event':
+      Type => 'msg',
+
+      ## This is a 'msg' timer; we need to know what to send:
+      Context => $context,
+      Target  => $channel,
+      Text    => $string,
+    }
+  );
+
+
+If no B<Type> is specified, I<event> is assumed:
+
+  ## Trigger event $event in $secs with (optional) @args:
+  my $id = $core->timer_set( $secs,
+    {
+      Event => $event,
+      Args  => [ @args ],
+    }
+  );
+
+
+By default, a random timer ID is chosen (and returned).
+
+You can also specify an ID:
+
+  ## Set a timer with specified ID 'MyTimer'
+  ## Will overwrite any preexisting timers with the same ID
+  $core->timer_set( 
+    $secs,
+    { Event => $event, Args => [ @args ] },
+    'MyTimer'
+  );
+
+This can be useful for resetting timers you've already set; grab the ID 
+returned by a C<timer_set()> call and reset it to change the event or delay.
+
+You may want C<timestr_to_secs> from L<Cobalt::Utils> for easy 
+conversion of human-readable strings into seconds.
+
+If you need better accuracy, you'll need to use your own alarm()/delay() 
+calls to L<POE::Kernel>; the timer pool is checked every second or so.
+
+
 =head4 timer_del
 
+Delete a timer by ID.
+
+  my $deleted = $core->timer_del( $id );
+
+Returns the deleted TimerPool entry, or nothing if there was no such ID.
+
+The returned result (if there is one) can be fed back to L</timer_set> 
+if needed:
+
+  ## hang on to this timer for now:
+   my $postponed = $core->timer_del( $id ) ;
+  ## . . . situation changes . . .
+   if ( $core->timer_set( 60, $postponed, $id ) ) {
+     ## readding postponed timer successful
+   }
+
+
 =head4 timer_del_pkg
+
+Delete all core timers owned by __PACKAGE__ :
+
+  $core->timer_del_pkg( __PACKAGE__ );
+
+Typically used by plugins that may need to clean up their core timers 
+upon unregistering.
 
 
 =head2 Syndicated core events
