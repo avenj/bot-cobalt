@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Manual::PluginConf - quick cobalt2 config-file primer
+Cobalt::Manual::PluginConf - quick cobalt2 config-file primer
 
 =head1 DESCRIPTION
 

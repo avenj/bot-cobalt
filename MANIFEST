@@ -1,5 +1,6 @@
+Build.PL
 Changes
-cobalt
+bin/cobalt
 doc/Manual/Examples.pod
 doc/Manual/PluginConf.pod
 doc/Manual/Plugins.pod
@@ -16,6 +17,9 @@ lib/Cobalt/Conf.pm
 lib/Cobalt/Core.pm
 lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm
+lib/Cobalt/Manual/Examples.pod
+lib/Cobalt/Manual/PluginConf.pod
+lib/Cobalt/Manual/Plugins.pod
 lib/Cobalt/Plugin/Alarmclock.pm
 lib/Cobalt/Plugin/Auth.pm
 lib/Cobalt/Plugin/ChanMgr.pm
@@ -43,6 +47,8 @@ lib/Cobalt/Serializer.pm
 lib/Cobalt/Utils.pm
 Makefile.PL
 MANIFEST			This list of files
+META.json
+META.yml
 tools/mkpasswd
 tools/release/create_installer
 tools/release/docs/cfg-docs.yml

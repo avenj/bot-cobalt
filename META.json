@@ -1,0 +1,131 @@
+{
+   "abstract" : "Pluggable IRC bot (cobalt2)",
+   "author" : [
+      "Jon Portnoy <avenj@cobaltirc.org>"
+   ],
+   "dynamic_config" : 1,
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Cobalt",
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "Module::Build" : "0.38"
+         }
+      },
+      "runtime" : {
+         "recommends" : {
+            "DBM::Deep" : "2.00",
+            "POE::Component::SSLify" : 0,
+            "Template" : 0,
+            "Term::ReadKey" : 0
+         },
+         "requires" : {
+            "Carp" : 0,
+            "Crypt::Eksblowfish" : 0,
+            "File::Basename" : 0,
+            "File::Find" : 0,
+            "File::Slurp" : 0,
+            "File::Spec" : 0,
+            "Getopt::Long" : 0,
+            "IRC::Utils" : "0.12",
+            "JSON" : 0,
+            "Log::Handler" : 0,
+            "Moose" : 0,
+            "MooseX::NonMoose" : 0,
+            "Object::Pluggable" : 0,
+            "POE" : "1.311",
+            "POE::Component::IRC" : "6.75",
+            "POE::Component::Syndicator" : 0,
+            "POE::Session" : 0,
+            "Proc::PID::File" : 0,
+            "YAML::Syck" : 0,
+            "namespace::autoclean" : 0,
+            "perl" : "v5.12.1"
+         }
+      }
+   },
+   "provides" : {
+      "Cobalt::Conf" : {
+         "file" : "lib/Cobalt/Conf.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Core" : {
+         "file" : "lib/Cobalt/Core.pm",
+         "version" : "2.00_5"
+      },
+      "Cobalt::IRC" : {
+         "file" : "lib/Cobalt/IRC.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Lang" : {
+         "file" : "lib/Cobalt/Lang.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Alarmclock" : {
+         "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Auth" : {
+         "file" : "lib/Cobalt/Plugin/Auth.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Calc" : {
+         "file" : "lib/Cobalt/Plugin/Extras/Calc.pm",
+         "version" : 0
+      },
+      "Cobalt::Plugin::Extras::Ignore" : {
+         "file" : "lib/Cobalt/Plugin/Extras/Ignore.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Extras::TempConv" : {
+         "file" : "lib/Cobalt/Plugin/Extras/TempConv.pm",
+         "version" : "1.0"
+      },
+      "Cobalt::Plugin::FloodProtect" : {
+         "file" : "lib/Cobalt/Plugin/FloodProtect.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Games" : {
+         "file" : "lib/Cobalt/Plugin/Games.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Games::Dice" : {
+         "file" : "lib/Cobalt/Plugin/Games/Dice.pm",
+         "version" : "0.01"
+      },
+      "Cobalt::Plugin::Info3" : {
+         "file" : "lib/Cobalt/Plugin/Info3.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::RDB" : {
+         "file" : "lib/Cobalt/Plugin/RDB.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Version" : {
+         "file" : "lib/Cobalt/Plugin/Version.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Serializer" : {
+         "file" : "lib/Cobalt/Serializer.pm",
+         "version" : "0.12"
+      },
+      "Cobalt::Utils" : {
+         "file" : "lib/Cobalt/Utils.pm",
+         "version" : "0.13"
+      }
+   },
+   "release_status" : "testing",
+   "resources" : {
+      "license" : [
+         "http://dev.perl.org/licenses/"
+      ]
+   },
+   "version" : "2.00_5"
+}

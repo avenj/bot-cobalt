@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
+Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 

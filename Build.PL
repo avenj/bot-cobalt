@@ -3,8 +3,10 @@
 use Module::Build;
 
 my $build = Module::Build->new(
-  module_name => 'Cobalt',
-  author => 'Jon Portnoy <avenj@cobaltirc.org>',
+  dist_name => 'Cobalt',
+  dist_abstract => 'Pluggable IRC bot (cobalt2)',
+  dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
+  dist_version_from => 'lib/Cobalt/Core.pm',
   license => 'perl',
 
   ## A passthru-to-build makefile:

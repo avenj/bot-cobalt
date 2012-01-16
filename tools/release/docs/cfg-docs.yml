@@ -22,9 +22,9 @@ MAP:
 #    FILES:
 #      - Some/Pod.pod
 
-  Manual:
-    DIR: doc/Manual
-    SLURP_ALL: 1
+#  Manual:
+#    DIR: doc/Manual
+#    SLURP_ALL: 1
 
 ## FIXME: Extras
 Extras:

@@ -203,7 +203,6 @@ sub rc_check {
 
 sub kit_check {
   say "> Checking your kit, one moment.";
-
   print "> Checking for Term::ReadKey . . . ";
   eval "require Term::ReadKey";
   if ($@) {
