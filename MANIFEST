@@ -59,3 +59,4 @@ tools/release/docs/indexes/index-txt.tt
 tools/test_deps
 var/.keep
 var/db/.keep
+bin/cobalt2

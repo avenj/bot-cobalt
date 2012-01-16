@@ -16,6 +16,7 @@ my $build = Module::Build->new(
    ### Core set ###
       'perl' => '5.12.1',
       'Carp' => 0,
+      'Data::Dumper' => 0,
       'File::Find' => 0,
       'File::Spec' => 0,
       'File::Basename' => 0,
