@@ -17,10 +17,7 @@ B<Cobalt2> plugins.
 
 Refer to L</SEE ALSO> for other relevant documentation.
 
-B<Plugin authors should at least read the Plugins::IRC POD!>
-
-  $ cd doc/
-  $ perldoc Plugins::IRC
+B<Plugin authors should at least read the L<Cobalt::IRC> POD!>
 
 
 =head1 PLUGIN FUNDAMENTALS
@@ -42,13 +39,13 @@ C<plugins.conf> is YAML in the following structure:
     Opts:
       Level: 2
 
-Configuration files specified in 'Config: ' are expected to be valid YAML1.0.
-
-For a quick primer, see C<perldoc Manual::PluginConf>. More extensive YAML 
-documentation is widely available online.
+Configuration files specified in 'Config: ' are expected to be valid 
+B<YAML1.0>. You can read all about YAML at L<http://www.yaml.org> -- 
+for the most part, YAML is fairly self-explanatory.
 
 They'll be automatically loaded at load-time; the data structure loaded 
-will be stored in the core 'cfg' attribute. See below.
+will be stored in the core B<cfg> attribute, keyed by the plugin's 
+package name.
 
 Simple plugins might only need one or two config options; in this case, 
 you can specify a B<Opts:> directive. It should be a hash (or a list, 
@@ -56,6 +53,7 @@ in very odd cases).
 
 If an Opts: directive is supplied, it will be loaded into 
 'cfg->{plugin_cf}->{$pkg}->{ExtraOpts}'. See below.
+
 
 =head3 Accessing plugin configuration
 
@@ -158,6 +156,11 @@ A plugin will (usually at load-time) register to receive some set of
 events, which are pushed through the pipeline by the Cobalt core (with 
 help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
 
+If your plugin needs to have a certain priority in the pipeline, you're 
+going to want to spend some quality time reading the L<Object::Pluggable> 
+and especially L<Object::Pluggable::Pipeline> documentation. The methods 
+described regarding pipeline manipulation are available via C<$core>.
+
 =head3 Registering for events
 
 Registering for events typically happens at plugin load-time; in other 
@@ -188,9 +191,8 @@ Syndicated events become prefixed with Bot_ when handed off to plugins:
 
 B<IMPORTANT: the arguments passed to event handlers are ALWAYS references!>
 
-(Sometimes, they're references to references, such as a hashref.)
-
-(If you don't know what that means, it's time to read L<perlreftut> and 
+(Sometimes, they're references to references, such as a hashref.
+If you don't know what that means, it's time to read L<perlreftut> and 
 L<perlref> immediately.)
 
 This means that it's intended behavior to be able to modify the event's 
@@ -242,9 +244,15 @@ some criteria.
 
 =head3 Understanding server context
 
+FIXME
+
 =head3 Messages
 
+FIXME
+
 =head3 Commands
+
+FIXME
 
 =head3 Other events
 
@@ -266,20 +274,33 @@ L<Cobalt::IRC> receives the following commonly-used events:
 
 =head4 send_message
 
+FIXME
+
 =head4 send_notice
 
+FIXME
 
 =head3 Channel-related commands
 
 =head4 join
 
+FIXME
+
 =head4 part
+
+FIXME
 
 =head4 kick
 
+FIXME
+
 =head4 mode
 
+FIXME
+
 =head4 topic
+
+FIXME
 
 
 =head3 Accessing the IRC component directly
@@ -307,6 +328,9 @@ core's get_irc_obj method. Expects a server context:
 
 
 =head4 Frequently useful PoCo::IRC commands
+
+FIXME
+
 
 
 =head2 Core methods
@@ -430,22 +454,29 @@ B<CaseMap>: The server's announced CASEMAPPING (or 'rfc1459'); see L</"IRC CAVEA
 
 B<MaxModes>: The server's announced MAXMODES (or 4)
 
-
-
 =back
 
 
 =head4 auth_level
 
+FIXME
+
 =head4 auth_username
+
+FIXME
 
 =head4 auth_flags
 
+FIXME
+
 =head4 auth_pkg
+
+FIXME
 
 
 =head3 Logging
 
+FIXME
 
 
 =head3 Timers
@@ -547,22 +578,47 @@ upon unregistering.
 
 =head2 Syndicated core events
 
+FIXME
+
 =head3 Plugin-related
+
+FIXME
 
 =head3 Langset-related
 
+FIXME
+
 =head3 Timer-related
 
+FIXME
+
 =head3 Auth module
+
+FIXME
+
 
 
 =head1 PLUGIN DESIGN TIPS
 
+=head2 Useful tools
+
+FIXME
+
+=head3 Cobalt::Utils
+
+FIXME brief primer on useful Cobalt::Utils funcs
+
+=head3 IRC::Utils
+
+FIXME brief primer on IRC::Utils funcs
+
 =head2 Keeping track of $core
 
+FIXME
 
 =head2 Using Moose
 
+FIXME
 
 
 =head1 ADVANCED CONCEPTS
@@ -583,16 +639,52 @@ FIXME registering for events from irc...?
 
 =head2 Manipulating plugin pipeline order
 
+FIXME
+
+=head2 Using POE::Component::IRC plugins
+
+FIXME
 
 
 =head1 IRC CAVEATS
 
 =head2 IRC casemapping rules
 
+Determining whether or not nicknames and channels are equivalent on IRC 
+is not as easy as it looks.
+
+Per the RFC (L<http://tools.ietf.org/html/rfc1459#section-2.2>):
+
+  the characters {}| are
+  considered to be the lower case equivalents of the characters []\,
+  respectively
+
+This set ( {}| == []\ ) is called B<strict-rfc1459> and identified as such in 
+a server's I<ISUPPORT CASEMAPPING=> directive.
+
+More often, servers use the set commonly identified as B<rfc1459>:
+
+  ## rfc1459 lower->upper case change: {}|^ == []\~
+  $value =~ tr/a-z{}|^/A-Z[]\\~/;
+
+Some servers may use normal ASCII case rules; they will typically announce 
+B<ascii> in I<CASEMAPPING=>.
+
+L<Cobalt::IRC> will attempt to determine and save a server's CASEMAPPING value 
+at connect time. Some broken server configurations announce junk in 
+I<CASEMAPPING> and their actual valid casemapping ruleset in I<CHARSET>; 
+L<Cobalt::IRC> will fall back to I<CHARSET> if I<CHARSET> is a valid casemap 
+but I<CASEMAPPING> is invalid. If all else fails, B<rfc1459> is used. The 
+saved value can be used to feed C<eq_irc> and friends from L<IRC::Utils> and
+determine nickname/channel equivalency.
+
+See L</get_irc_casemap> and L<IRC::Utils>
+
 
 
 =head2 Character encodings
 
+FIXME
 
 
 =head1 SEE ALSO
@@ -600,21 +692,19 @@ FIXME registering for events from irc...?
 Plugin authors should at least read the L<Cobalt::IRC> POD, and 
 probably L<Cobalt::Utils> as well.
 
-The easiest way to browse documentation is our POD converted to DokuWiki, 
-available online:
+B<The easiest way to browse documentation is our POD converted to DokuWiki, 
+available online:>
 
 L<http://www.cobaltirc.org/docs/wiki/doku.php?id=bots:cobalt:docs:>
 
-FIXME
 
-
-=head2 Relevant modules
+=head2 Relevant CPAN documentation
 
 =over
 
 =item *
 
-L<POE::Component::Syndicator>
+L<IRC::Utils>
 
 =item *
 
@@ -623,6 +713,22 @@ L<POE::Component::IRC>
 =item *
 
 L<POE::Component::IRC::State>
+
+=item *
+
+L<POE::Component::Syndicator>
+
+=item *
+
+L<Object::Pluggable>
+
+=item *
+
+L<Object::Pluggable::Pipeline>
+
+=item *
+
+L<Object::Pluggable::Constants>
 
 =back
 
