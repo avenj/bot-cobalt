@@ -5,6 +5,7 @@ WriteMakefile(
     NAME              => 'Cobalt',
     LICENSE           => 'perl',
     VERSION_FROM      => 'lib/Cobalt/Core.pm', # finds $VERSION
+    MIN_PERL_VERSION  => '5.12.1',
     PREREQ_PM         => {
       'Crypt::Eksblowfish' => 0,
 
