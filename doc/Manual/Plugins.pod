@@ -145,8 +145,6 @@ See also: L</"Core methods">
   1;  ## perl modules must end in '1;'
   
 
-Also see the L<Manual::Examples> POD
-
 
 =head2 Handling events
 
