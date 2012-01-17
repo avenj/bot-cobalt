@@ -71,3 +71,7 @@
 
 # Avoid archives of this distribution
 \bCobalt-[\d\.\_]+
+
+^tools/release
+^tools/test_deps
+^TODO$

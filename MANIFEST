@@ -1,10 +1,17 @@
+bin/cobalt2
+bin/cobalt2-mkpasswd
 Build.PL
 Changes
-bin/cobalt2
 doc/README.pod
 etc/auth.conf
 etc/channels.conf
 etc/cobalt.conf
+etc/examples/auth.conf
+etc/examples/channels.conf
+etc/examples/cobalt.conf
+etc/examples/plugins.conf
+etc/examples/plugins/info3.conf
+etc/examples/plugins/randstuff.conf
 etc/langs/ebonics.yml
 etc/langs/english.yml
 etc/plugins.conf
@@ -46,14 +53,5 @@ Makefile.PL
 MANIFEST			This list of files
 META.json
 META.yml
-tools/mkpasswd
-tools/release/create_installer
-tools/release/docs/cfg-docs.yml
-tools/release/docs/CobaltdocToDoku.pm
-tools/release/docs/cpodconv
-tools/release/docs/indexes/index-doku.tt
-tools/release/docs/indexes/index-txt.tt
-tools/test_deps
 var/.keep
 var/db/.keep
-bin/cobalt2
