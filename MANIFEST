@@ -1,4 +1,5 @@
 bin/cobalt2
+bin/cobalt2-installer
 bin/cobalt2-mkpasswd
 Build.PL
 Changes
