@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 ## cobalt2 Cobalt::Core frontend
 
 use 5.12.1;
@@ -250,3 +250,51 @@ sub _start_cobalt {
   POE::Kernel->run;
 
 }
+
+
+=pod
+
+=head1 NAME
+
+cobalt2 - Cobalt IRC bot
+
+=head1 SYNOPSIS
+
+  # Start cobalt2 in the background
+  # Grab etc/var paths from ~/.cobalt2rc
+  cobalt2
+
+  # Start but do not detach
+  # '--nodaemon' is also valid
+  cobalt2 --nodetach
+
+  # Start in the foreground in debug mode
+  cobalt2 --debug --nodetach
+
+  # Start cobalt2 using a specified rcfile
+  cobalt2 --rcfile=/path/to/cobalt2rc
+
+  # Start cobalt2, only log warnings and above
+  cobalt2 --loglevel=warn
+
+
+=head1 OPTIONS
+
+FIXME
+
+
+=head1 SEE ALSO
+
+
+L<Cobalt::Manual::Plugins>
+
+L<Cobalt::IRC>
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
