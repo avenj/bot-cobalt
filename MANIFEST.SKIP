@@ -73,5 +73,3 @@
 \bCobalt-[\d\.\_]+
 
 ^tools/release
-^tools/test_deps
-^TODO$
