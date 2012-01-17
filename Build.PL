@@ -17,9 +17,10 @@ my $build = Module::Build->new(
       'perl' => '5.12.1',
       'Carp' => 0,
       'Data::Dumper' => 0,
-      'File::Find' => 0,
-      'File::Spec' => 0,
       'File::Basename' => 0,
+      'File::Find' => 0,
+      'File::Path' => 0,
+      'File::Spec' => 0,
       'Getopt::Long' => 0,
 
    ### Cobalt set ###
@@ -55,8 +56,8 @@ my $build = Module::Build->new(
     ### POE::
       'POE::Component::SSLify' => 0,
     ### Utils / misc
-      # templating
-#      'Template' => 0,
+     # templating (cpodconv/release tools)
+      'Template' => 0,
       # terminal interaction
       'Term::ReadKey' => 0,
   },
