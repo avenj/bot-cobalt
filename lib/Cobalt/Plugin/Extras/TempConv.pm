@@ -36,13 +36,7 @@ sub Cobalt_unregister {
 }
 
 ## !temp(conv):
-sub Bot_public_cmd_tempconv {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };  my $msg = ${ $_[1] };
-  $self->respond($context, $msg);
-  return PLUGIN_EAT_ALL
-}
-
+sub Bot_public_cmd_tempconv { Bot_public_cmd_temp(@_) }
 sub Bot_public_cmd_temp {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };  my $msg = ${ $_[1] };

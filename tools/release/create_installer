@@ -114,21 +114,13 @@ carp "failed chmod 755 $outpath" unless chmod(0755, $outpath);
 say ">> Done";
 
 ######################################################################
+### End of create_installer.
+### The cobalt2-installer src follows (in DATA handle)
 ######################################################################
 
-## The installer should read it back from its DATA, deserialize and write 
-## back the example files
-
-## FIXME use template::toolkit on the write back side
-## then we can prompt for conf values and set UserConf or something appropriately for write
-
-######################################################################
-## End of create_installer.
-## The cobalt2-installer src follows.
-######################################################################
 __DATA__
 #!perl
-my $version = '0.11';
+my $version = '0.12';
 
 use 5.12.1;
 use strict;
@@ -379,3 +371,46 @@ my $rplvars = Conf_interactive();
 Conf_write_confs($rplvars);
 
 say ">! Finished.";
+
+=pod
+
+=head1 NAME
+
+cobalt2-installer - install a cobalt2 instance
+
+=head1 SYNOPSIS
+
+B<cobalt2-installer> [ --rcfile=PATH ]
+
+=head1 DESCRIPTION
+
+A simple walk-through installer for the cobalt2 IRC bot.
+
+Asks a few questions and copies initial confs and langsets to a specified 
+directory, giving your cobalt2 bot a convenient home.
+
+Typically you would run this installer before starting Cobalt:
+
+  ## From a shell
+  ## Build and install normally via build or makefile ...
+  ~/cobalt2 $ perl Build.PL
+  ~/cobalt2 $ perl Build && perl Build install
+  ## Initiate a new cobalt2 instance
+  ## Each instance has its own rcfile
+  $ cobalt2-installer
+  $ cobalt2
+
+You can run multiple instances of Cobalt, but they each need their own 
+I<etc> and I<var> directories, specified in their own rcfile:
+
+  ## Initiate another cobalt2 instance
+  $ cobalt2-installer --rcfile=${HOME}/cobalts/MyCobalt.rc
+  $ cobalt2 --rcfile=${HOME}/cobalts/MyCobalt.rc
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
