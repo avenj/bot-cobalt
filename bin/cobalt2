@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 ## cobalt2 Cobalt::Core frontend
 
 use 5.12.1;
@@ -39,7 +39,8 @@ GetOptions(
     print("cobalt $Cobalt::Core::VERSION\n"); 
     exit 0
   },
-  dumpconfig => sub {    ## FIXME needs to check/read cobalt2rc if no etcdir specified
+  dumpconfig => sub {    ## FIXME needs to check/read cobalt2rc if no basedir specified
+    my $etcdir = $basedir . "/etc";
     my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
     require Data::Dumper;
     no warnings;
@@ -52,7 +53,7 @@ GetOptions(
 
 );
 
-sub show_help {
+sub show_help {   ## FIXME
   print(
     "cobalt2 invocation help \n\n",
     "  Information:\n",
@@ -208,7 +209,7 @@ sub _check_cfs {
 
 sub _start_cobalt {
   my $pid = Proc::PID::File->new(
-    dir => $var,
+    dir => $vardir,
     name => 'cobalt',
   );
   if ($pid->alive) {
@@ -228,7 +229,7 @@ sub _start_cobalt {
     $fork = fork;
     exit 1 if not defined $fork;
     exit 0 if $fork;
-    chdir(join('/', @root));
+    chdir('/');
     open(STDIN, '<', '/dev/null');
     open(STDOUT, '>>', '/dev/null');
     open(STDERR, '>>', '/dev/null');

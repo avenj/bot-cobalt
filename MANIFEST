@@ -1,9 +1,6 @@
 Build.PL
 Changes
-bin/cobalt
-doc/Manual/Examples.pod
-doc/Manual/PluginConf.pod
-doc/Manual/Plugins.pod
+bin/cobalt2
 doc/README.pod
 etc/auth.conf
 etc/channels.conf
