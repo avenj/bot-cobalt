@@ -1,12 +1,13 @@
-#!/usr/bin/env perl
-# Cobalt tools/mkpasswd
+#!perl
+
+# cobalt2-mkpasswd
 # bcrypt-enabled mkpasswd
 
 use 5.10.0;
 use strict;
 use warnings;
 
-my $version = 1;
+my $version = '0.10';
 
 use Term::ReadKey;
 
@@ -176,13 +177,9 @@ sub pwd_compare {
 
 =head1 NAME
 
- mkpasswd
+ cobalt2-mkpasswd - bcrypt-enabled mkpasswd
 
-=head1 DESCRIPTION
-
-  bcrypt-enabled mkpasswd
-
-=head1 USAGE
+=head1 SYNOPSIS
 
  mkpasswd [OPTIONS]... [PASSWD]
 
@@ -211,7 +208,7 @@ sub pwd_compare {
      Must be a two-digit power of 2.
      Pad with zeros as necessary.
 
-=head1 BCRYPT
+=head1 DESCRIPTION
 
 While SHA512 isn't a bad choice if you have it, bcrypt has the 
 advantage of including a configurable work cost factor.
