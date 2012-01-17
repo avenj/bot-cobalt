@@ -1,0 +1,10 @@
+- Outgoing_* events and documentation for same
+
+- Some sort of irc_* event _default broadcaster
+  Convert to Bot_IRC_* events?
+
+- move plugin lang RPLs to prefixed yml file and autoload
+
+- handle signals
+
+- import tools for darkbot/cobalt1 files
