@@ -182,3 +182,17 @@ print(
 <STDIN>;
 
 say "> using rcfile: $rcfile";
+
+## prompt user for a rcfile path
+
+## prompt user for a relative basedir
+
+## install rcfile
+
+## read back rcfile to determine var/etc paths
+
+## try to create conf dir structure
+
+## run interactive conf
+
+## write confs

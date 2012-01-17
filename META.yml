@@ -72,6 +72,7 @@ recommends:
 requires:
   Carp: 0
   Crypt::Eksblowfish: 0
+  Data::Dumper: 0
   File::Basename: 0
   File::Find: 0
   File::Slurp: 0

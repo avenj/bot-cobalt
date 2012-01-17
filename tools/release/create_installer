@@ -19,6 +19,8 @@ use File::Spec;
 
 STDOUT->autoflush(1);
 
+## FIXME pack langdir also
+
 my $etcdir = qq{../../etc/examples};
 my $outpath = qq{cobalt2-installer};
 
@@ -203,12 +205,10 @@ unless ($var) {
   croak "no VAR specified";
 }
 
-## FIXME cf_check to see if these dirs exist and if etc contains confs already
-# if core confs exist, offer to move them and write new ones or quit
-# if not, write new ones (with templates?)
-
 ## Fetch confs from <DATA>
 my $confs_r = deserialize_confs();
+
+configure_myself();
 
 write_confs($confs_r, $base);
 
@@ -225,31 +225,38 @@ sub write_confs {
   my ($ref, $root_path) = @_;
   return unless ref $ref eq 'HASH';
   for my $path (keys %$ref) {
-    #FIXME
-    # if the path exists, prompt user for what to do
+    check_for_existing_cf($path);
 
-    # 
+    check_for_path($path);
+
   }
 }
 
 sub check_for_existing_cf {
+  my ($path) = @_;
   ## called by write_confs for each path
   ## if the file exists, prompt user for what to do, act accordingly
+
+  if (-e $path) {
+    say ">! Already exists: $path";
+    print "Should I move it and write a new one? \n"; # FIXME
+  }
 }
 
 sub check_for_path {
+  my ($path) = @_;
   ## called by write_confs for each path
   ## if the preceeding dir structure doesn't exist, try to create it
 }
 
 sub configure_myself {
   ## prompt user for common conf opts
-  ## set up template vars appropriately
+  ## set up template vars hash appropriately (use rplprintf?)
 }
 
 sub template_conf {
   ## called by write_confs
-  ## process a conf template
+  ## process a conf template, use rplprintf?
 }
 
 sub deserialize_confs {
@@ -307,17 +314,6 @@ sub rc_read {
   return ($BASE, $ETC, $VAR);
 }
 
-sub cf_check {
-  # FIXME we know where to look for confs, now see if we have core confs
-  # if not, call cf_write
-}
-
-sub cf_write {
-  # create dir structure as-needed
-  # write out confs
-  # prompt for common config values and use template?
-}
-
 sub rc_check {
   unless (-e $rcfile) {
     say ">! $rcfile not found; assuming first run.\n";
@@ -343,6 +339,17 @@ sub kit_check {
     Term::ReadKey->import('ReadMode');
     print "OK\n";
   }
+
+  print "Checking for Cobalt::Utils . . . ";
+  eval "require Cobalt::Utils";
+  if ($@) {
+    print(
+      "failed\n",
+      ">! Did not find Cobalt::Utils.\n",
+      ">! Have you installed Cobalt properly?\n",
+    );
+    die "did not find Cobalt::Utils";
+  } else { print "OK\n"; }
 }
 
 

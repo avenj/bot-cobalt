@@ -23,7 +23,6 @@ my $build = Module::Build->new(
       'Getopt::Long' => 0,
 
    ### Cobalt set ###
-
      # Crypt
       'Crypt::Eksblowfish' => 0,
      # Files
@@ -41,14 +40,12 @@ my $build = Module::Build->new(
       'namespace::autoclean' => 0,
      # Object fuckery
       'Object::Pluggable' => 0,
-
      # POE::
       'POE' => '1.311',
       'POE::Session' => 0,
       # pocoirc6.75 contained bugfix fixing use of LocalAddr
       'POE::Component::IRC'        => '6.75',
       'POE::Component::Syndicator' => 0,
-
      # Process mgmt
       'Proc::PID::File' => 0,
   },
@@ -56,13 +53,11 @@ my $build = Module::Build->new(
   recommends => {
     ### DBs
       'DBM::Deep' => '2.00',
-
     ### POE::
       'POE::Component::SSLify' => 0,
-
     ### Utils / misc
       # templating
-      'Template' => 0,
+#      'Template' => 0,
       # terminal interaction
       'Term::ReadKey' => 0,
   },
