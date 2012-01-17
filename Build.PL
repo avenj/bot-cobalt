@@ -38,14 +38,13 @@ my $build = Module::Build->new(
       'Moose' => 0,
       'MooseX::NonMoose' => 0,
       'namespace::autoclean' => 0,
-     # Object fuckery
-      'Object::Pluggable' => 0,
      # POE::
       'POE' => '1.311',
       'POE::Session' => 0,
       # pocoirc6.75 contained bugfix fixing use of LocalAddr
       'POE::Component::IRC'        => '6.75',
       'POE::Component::Syndicator' => 0,
+      'Object::Pluggable::Constants' => 0,
      # Process mgmt
       'Proc::PID::File' => 0,
   },

@@ -2,7 +2,7 @@
 
 ## __DATA__ contains the actual src for cobalt2-installer.
 ##
-## Walks a specified 'etc/examples' dir and builds a self-contained 
+## Walks a specified 'etc/' dir and builds a self-contained 
 ## install tool out of our __DATA__ and the found example config files.
 ##
 ## The resulting installer's own __DATA__ contains serialized versions of 
@@ -19,9 +19,7 @@ use File::Spec;
 
 STDOUT->autoflush(1);
 
-## FIXME pack langdir also
-
-my $etcdir = qq{../../etc/examples};
+my $etcdir = qq{../../etc};
 my $outpath = qq{cobalt2-installer};
 
 use Getopt::Long;
@@ -33,10 +31,10 @@ GetOptions(
        " builds a standalone cobalt2-installer\n",
        "\n",
        "  -h | --help \n",
-       "  -e | --etcdir=PATH  Specify path to etc/examples/ \n",
-       "                      [$etcdir] \n",
-       "  -o | --output=PATH  Specify path to output file \n",
-       "                      [$outpath] \n",       
+       "  -e | --etcdir=PATH    Specify path to etc/ to pack \n",
+       "                        [$etcdir] \n",
+       "  -o | --output=PATH    Specify path to output file \n",
+       "                        [$outpath] \n",       
      );
      exit 0
    },
