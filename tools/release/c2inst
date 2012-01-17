@@ -5,6 +5,9 @@ use 5.12.1;
 use strict;
 use warnings;
 use Carp;
+
+use File::Path;
+
 use JSON;
 
 use Cobalt::Utils qw/ rplprintf /;
@@ -31,13 +34,13 @@ GetOptions(
     exit 0
    },
 
-
   'rcfile=s' => \$rcfile,
   'config=s' => \$rcfile,
 );
 
 
 sub _deserialize_etc {
+  ## Pulls our /etc from our DATA handle
   my $json;
   {  local $/ ; $json = <DATA>;  }
   my $ref = decode_json $json; 
@@ -46,6 +49,7 @@ sub _deserialize_etc {
 
 sub _slurp {
   my ($path) = @_;
+  ## Slurp a file
   my $str;
   open(my $fh, '<', $path) or croak "failed file read: $path: $!" ;
   {  local $/ ; $str = <$fh>;  }
@@ -98,16 +102,43 @@ sub RC_Write {
 
 ## Conf_* funcs
 
-sub Conf_create_dir_structure {
-  ## recursively scan the list of files
-  ## create a list of dirs to check
-  ## create them if they don't exist
-}
-
 sub Conf_write_confs {
-  ## should have a vars hash for rplprintf and a dir structure
+  ## Conf_write_confs($vars_replacement_hash)
+  my ($vars_h) = @_;
+  my ($base, $etc, $var) = RC_Read();
+  my $ref = _deserialize_etc();
+  ## should have a vars hash for rplprintf, and RC_Read can give us an etc dir path
+  ## use File::Path to create our dir structure
   ## write our deserialized confs back out
   ## run rplprintf against each file before writing
+  for my $confpath (keys %$ref) {
+
+    my $output_path = $base . "/" . $confpath ;
+    (undef, my $dir, my $file) = File::Spec->splitpath($output_path);
+    File::Path::mkpath($dir) if $dir;
+    croak "tried to create $dir but can't be found?" unless -e $dir;
+
+    my $content = $ref->{$confpath};
+    my $output = rplprintf( $content, $vars_h );
+
+    say ">! Attempting to write $output_path . . .";
+
+    if (-e $output_path) {
+      say ">! Exists already: $output_path";
+      print "Should I overwrite it? [y/N] ";
+      if ( _ans(my $in = <STDIN>, 'N') ) {
+        say ">! Overwriting $output_path";
+      } else { next }
+    }
+
+    open(my $fh, '>', $output_path) or croak "open failed: $output_path: $!";
+    print $fh $output;
+    close($fh) or carp "close failed on $output_path: $!";
+
+    say ">! Wrote $confpath";
+  }
+
+  say ">! Finished writing confs.";
 }
 
 
@@ -121,10 +152,7 @@ sub Conf_interactive {
     "Defaults are shown [like this]\n\n",
   );
 
-
   say ">! Configuring cobalt.conf";
-
-  say "  IRC OPTIONS";
 
   say "Bot's nickname [cobalt2] ";
   $cf->{CFG_BOT_NICK} = <STDIN>;
@@ -169,6 +197,9 @@ sub Conf_interactive {
   # FIXME channels.conf
   # FIXME auth.conf
   # plugins.conf is probably fine with a suitable example file
+
+
+  return $cf
 }
 
 
@@ -181,18 +212,38 @@ print(
 );
 <STDIN>;
 
-say "> using rcfile: $rcfile";
+say "> Default rcfile: $rcfile";
 
 ## prompt user for a rcfile path
+print "> Enter a different rcfile location? [y/N] ";
+if ( _ans(my $in = <STDIN>, 'N') ) {
+  do {
+    print "> Path to rcfile: ";
+    $rcfile = <STDIN>; chomp($rcfile);
+  } until $rcfile;
+}
+
+say ">! using rcfile: $rcfile";
 
 ## prompt user for a relative basedir
+say "> Cobalt needs a place for etc/ and var/ to live.";
+say "> Normally this would be somewhere in your HOME directory.";
+say "> Specify a directory relative to your HOME for cobalt to live:";
+print "[cobalt2] ";
+my $relative_basedir = <STDIN> ; chomp($relative_basedir);
 
-## install rcfile
+if (-e $rcfile) {
+  say ">! $rcfile seems to already exist.";
+  say ">! Should I overwrite it? [y/N] ";
+  if ( _ans(my $in = <STDIN>, 'N') ) {
+    RC_Write($relative_basedir);
+  } else {
+    say ">! Skipping rcfile write; attempting to use existing.";
+  }
+} else {
+  RC_Write($relative_basedir);
+}
 
-## read back rcfile to determine var/etc paths
+my $rplvars = Conf_interactive();
 
-## try to create conf dir structure
-
-## run interactive conf
-
-## write confs
+Conf_write_confs($rplvars);
