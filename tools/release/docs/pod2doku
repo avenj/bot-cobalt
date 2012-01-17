@@ -1,0 +1,172 @@
+#!/usr/bin/env perl
+my $VERSION = '0.20';
+use 5.12.1;
+use strict;
+use warnings;
+use Carp;
+
+use File::Basename;
+use File::Path;
+use File::Slurp;
+use File::Spec;
+
+use YAML::Syck;
+
+use Pod::Find qw/pod_find contains_pod/;
+
+use Template;
+
+use CobaltdocToDoku;
+
+my $conffile = qq{cfg-docs.yml};
+my $destdir  = qq{wikidoc};
+my $indexdir = qq{indexes};
+
+my $cfg;
+
+use Getopt::Long;
+GetOptions(
+  help => \&show_help,
+  version => sub { say "$0 $VERSION" ; exit 0 },
+
+  'config=s'  => \$conffile,
+  'destdir=s' => \$destdir,
+  'indexes=s' => \$indexdir,
+);
+
+sub show_help {
+  print(
+    "cpodconv -- walk configured dirs, turn POD into other formats\n",
+    "intended for cobalt2 releases and doc updates\n\n",
+    "  --config=PATH   Path to YAML config file [def.: $conffile]\n",
+    "  --indexes=PATH  Path to dir containing index-doku.tt",
+                       " [def.: $indexdir]\n",
+    "  --dest=PATH     Path to destination dir [def.: $destdir]\n",
+  );
+  exit 0
+}
+
+sub build_dir_map {
+  ## iterate lib/ bin/ in Opts->{RootPath}
+  ## find PODs
+  my $rootdir = $cfg->{Opts}->{RootPath} // croak "undefined Opts->RootPath";
+  croak "rootdir $rootdir not a dir" unless -d $rootdir;
+
+  ## get absolute paths
+  my $binpath = $rootdir."/bin";
+  my $libpath = $rootdir."/lib";
+  my %binpods = pod_find( { -verbose => 1 }, $binpath );
+  my %libpods = pod_find( { -verbose => 1 }, $libpath );
+
+  my $pod_h = {};
+
+  sub _create_pod_hash {
+    my ($pod, $relative_path) = @_;
+    my $basepath = $relative_path;
+    $basepath =~ s/(\.pod|\.pm)$//;
+    ## $pod = absolute path to .pod/.pm/whatever
+    ## $relative_path = stripped incl. bin/
+    ##   eg Cobalt/Plugin/Auth.pm
+    ## $basepath = $relative_path stripped of suffix
+    ##   eg Cobalt/Plugin/Auth
+    my @basepath_split = split '/', $basepath;
+    ## @basepath_split = ( 'Cobalt', 'Plugin', 'Auth' )
+
+    ## eg Cobalt::Plugin::Auth
+    my $pod_name = join '::', @basepath_split ;
+
+    ## construct a dokuwiki-compat dest_path
+    ## this will be written under our specified output dir
+    ## e.g. cobalt/plugin/auth.txt
+    my $dest_path = File::Spec->catfile( map { lc $_ } @basepath_split );
+    $dest_path =~ tr/\-/_/;
+
+    my $linkroot = $cfg->{Opts}->{doku}->{LINKROOT} ;
+
+    $pod_h->{$pod} = {
+      ## Destdir + destpath with .txt appended
+      Dest => $destdir ."/". $dest_path.'.txt',
+      IndexItem => {
+        Title => $pod_name,
+        ## $linkroot:PATH:TO:FILE:WITHOUT:SUFFIX
+        Link => join(':', $linkroot, @basepath_split ),
+      },
+    }
+  }
+
+  for my $pod (keys %binpods) {
+    my $relative_path = File::Spec->abs2rel($pod, $binpath);
+    _create_pod_hash($pod, $relative_path);
+  }
+
+  for my $pod (keys %libpods) {
+    my $relative_path = File::Spec->abs2rel($pod, $libpath);
+    _create_pod_hash($pod, $relative_path);
+  }
+
+  use Data::Dumper;
+  print Dumper $pod_h;
+
+  ## build a hash containing:
+  ##  - path to original POD
+  ##  - path to destination (munged to work with doku)
+  ##    - mkpath can create the $dir from splitpath on our destination
+  ##  - an IndexItem for this POD containing whatever we need to feed the index template
+
+  return $pod_h
+}
+
+
+sub parse_index {
+  my ($vars) = @_;
+  ## feed me a TT vars hash, read/parse TT index files
+  my $index_path = $indexdir ."/". "index-doku.tt";
+  unless (-f $index_path) {
+    say "No index generated for doku; $index_path not found";
+    return
+  }
+  my $tt = Template->new( { EVAL_PERL => 1, } );
+  my $tmpl = read_file($index_path);
+  my $out;
+  $tt->process(\$tmpl, $vars, \$out);
+  
+  unless ($out) {
+    carp "parsed index came out blank?"; 
+    return
+  }
+  return $out;
+}
+
+sub pod_to_doku {
+  ## take a path, turn it into a dokuwiki-ified string
+  my ($path) = @_;
+  my $parser = CobaltdocToDoku->new;
+  my $out;
+  $parser->output_string( \$out );
+  $parser->parse_file( $path );
+  return $out
+}
+
+sub pod_to_text {
+  ## take a path, turn it into a text string
+  my ($path) = @_;
+  require Pod::Text;
+  my $parser = Pod::Text->new;
+  my $out;
+  $parser->output_string( \$out );
+  $parser->parse_file( $path );
+  return $out
+}
+
+
+## Load conf
+$cfg = LoadFile( $conffile );
+
+## Build layout hash
+my $pod_h = build_dir_map();
+
+## Iterate layout hash, mkpath, convert, write
+
+## Build index
+
+
