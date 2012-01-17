@@ -20,7 +20,7 @@ use File::Spec;
 STDOUT->autoflush(1);
 
 my $etcdir = qq{../../etc};
-my $outpath = qq{cobalt2-installer};
+my $outpath = qq{../../bin/cobalt2-installer};
 
 use Getopt::Long;
 GetOptions(
@@ -225,7 +225,7 @@ sub RC_Write {
   say ">! wrote rcfile";
   say ">! ETC is: ". $ENV{HOME} ."/". $relative_base . "/etc" ;
   say ">! VAR is: ". $ENV{HOME} ."/". $relative_base . "/var" ;
-  say ">! To change, edit $rcfile";
+  say ">! To change, edit $rcfile\n";
 }
 
 
@@ -242,7 +242,7 @@ sub Conf_write_confs {
   ## run rplprintf against each file before writing
   for my $confpath (keys %$ref) {
 
-    my $output_path = $base . "/" . $confpath ;
+    my $output_path = $etc ."/". $confpath ;
     (undef, my $dir, my $file) = File::Spec->splitpath($output_path);
     File::Path::mkpath($dir) if $dir;
     croak "tried to create $dir but can't be found?" unless -e $dir;
@@ -283,39 +283,39 @@ sub Conf_interactive {
 
   say ">! Configuring cobalt.conf";
 
-  say "Bot's nickname [cobalt2] ";
+  print "Bot's nickname [cobalt2] ";
   $cf->{CFG_BOT_NICK} = <STDIN>;
   chomp $cf->{CFG_BOT_NICK} ;
   $cf->{CFG_BOT_NICK} ||= 'cobalt2';
 
-  say "Bot's username [cobalt] ";
+  print "Bot's username [cobalt] ";
   $cf->{CFG_BOT_USERNAME} = <STDIN>;
   chomp $cf->{CFG_BOT_USERNAME} ;
   $cf->{CFG_BOT_USERNAME} ||= 'cobalt';
 
-  say "Bot's 'realname' [cobalt2 bot] ";
+  print "Bot's 'realname' [cobalt2 bot] ";
   $cf->{CFG_BOT_REALNAME} = <STDIN>;
   chomp $cf->{CFG_BOT_REALNAME} ;
   $cf->{CFG_BOT_REALNAME} ||= 'cobalt2 bot';
 
-  say "Remote ServerAddr [irc.cobaltirc.org] ";
+  print "Remote ServerAddr [irc.cobaltirc.org] ";
   $cf->{CFG_SERVER_ADDR} = <STDIN>;
   chomp $cf->{CFG_SERVER_ADDR} ;
-  $cf->{CFG_SERVER_PORT} ||= 'irc.cobaltirc.org';
+  $cf->{CFG_SERVER_ADDR} ||= 'irc.cobaltirc.org';
 
-  say "Use SSL for this server? [y/N] ";
+  print "Use SSL for this server? [y/N] ";
   my $usessl = _ans(my $in = <STDIN>, 'n');
   $cf->{CFG_USE_SSL} = $usessl ? 1 : 0 ;
 
   my $default_irc_port = $usessl ? 6697 : 6667 ;
-  say "Remote port [$default_irc_port] ";
+  print "Remote port [$default_irc_port] ";
   $cf->{CFG_SERVER_PORT} = <STDIN>;
   chomp $cf->{CFG_SERVER_PORT} ;
   $cf->{CFG_SERVER_PORT} ||= $default_irc_port;
 
   say "You need to specify a command character for the bot.";
   say "This is used to prefix various plugin-provided commands.";
-  say "Bot's command character [ ! ] ";
+  print "Bot's command character [ ! ] ";
   $cf->{CFG_CMD_CHAR} = <STDIN>;
   chomp $cf->{CFG_CMD_CHAR};
   $cf->{CFG_CMD_CHAR} ||= '!' ;
@@ -337,7 +337,7 @@ print(
   "This is the cobalt2 install helper.\n",
   "This script will create a cobalt2rc file specifying install paths.\n",
   "It will also help you initialize some starter cobalt2 conf files.\n",
-  "> Press ENTER to continue, Ctrl+C to quit.\n",
+  "> Press ENTER to continue, Ctrl+C to quit.",
 );
 <STDIN>;
 

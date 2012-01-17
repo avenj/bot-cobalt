@@ -12,9 +12,6 @@ my $opt_detach = 0;
 my $loglevel = 'info';
 my $basedir;
 
-require Cobalt::Core;
-require Cobalt::Conf;
-
 use Proc::PID::File;
 
 use Getopt::Long;
@@ -36,11 +33,13 @@ GetOptions(
   ## Informational
   help => \&show_help,
   version => sub {
+    require Cobalt::Core;
     print("cobalt $Cobalt::Core::VERSION\n"); 
     exit 0
   },
   dumpconfig => sub {    ## FIXME needs to check/read cobalt2rc if no basedir specified
     my $etcdir = $basedir . "/etc";
+    require Cobalt::Conf;
     my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
     require Data::Dumper;
     no warnings;
@@ -237,8 +236,9 @@ sub _start_cobalt {
   }
   $pid->touch();
 
+  require Cobalt::Conf;
+  require Cobalt::Core;
   my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
-
   Cobalt::Core->new(
     cfg => $cfg,
     loglevel => $loglevel, 
