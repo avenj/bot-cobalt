@@ -34,7 +34,7 @@ GetOptions(
 
   'help' => sub {
     print(
-      "mkpasswd [OPTS]... [PASSWD]\n",
+      "$0 [OPTS]... [PASSWD]\n",
       "Opts:\n",
       " --benchmark\n",
       "   Show timers. [Default: off]\n",
