@@ -106,6 +106,7 @@ sub Conf_write_confs {
   ## Conf_write_confs($vars_replacement_hash)
   my ($vars_h) = @_;
   my ($base, $etc, $var) = RC_Read();
+  File::Path::mkpath( $var );
   my $ref = _deserialize_etc();
   ## should have a vars hash for rplprintf, and RC_Read can give us an etc dir path
   ## use File::Path to create our dir structure
