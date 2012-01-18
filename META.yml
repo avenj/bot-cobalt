@@ -66,31 +66,30 @@ provides:
     version: 0.13
 recommends:
   DBM::Deep: 2.00
-  POE::Component::SSLify: 0
+  POE::Component::SSLify: 1.006
   Term::ReadKey: 0
 requires:
   Carp: 0
-  Crypt::Eksblowfish: 0
+  Crypt::Eksblowfish: 0.003
   Data::Dumper: 0
   File::Basename: 0
   File::Find: 0
-  File::Path: 0
-  File::Slurp: 0
+  File::Path: 2.00
+  File::Slurp: 9999.00
   File::Spec: 0
   Getopt::Long: 0
   IRC::Utils: 0.12
-  JSON: 0
-  Log::Handler: 0
-  Moose: 0
-  MooseX::NonMoose: 0
-  Object::Pluggable::Constants: 0
+  JSON: 2.00
+  Log::Handler: 0.71
+  Moose: 2.00
+  MooseX::NonMoose: 0.18
+  Object::Pluggable: 1.27
   POE: 1.311
   POE::Component::IRC: 6.75
-  POE::Component::Syndicator: 0
-  POE::Session: 0
-  Proc::PID::File: 0
-  YAML::Syck: 0
-  namespace::autoclean: 0
+  POE::Component::Syndicator: 0.06
+  Proc::PID::File: 1.26
+  YAML::Syck: 1.18
+  namespace::autoclean: 0.12
   perl: v5.12.1
 resources:
   license: http://dev.perl.org/licenses/
