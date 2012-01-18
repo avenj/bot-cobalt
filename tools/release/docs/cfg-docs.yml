@@ -1,35 +1,14 @@
 ---
 ## cfg-docs.yml - cobalt2 pod parser config
 
-OPTS:
-  ROOT: /home/avenj/pl/cobalt2
+Opts:
+  RootPath: /home/avenj/pl/cobalt2
 
-  ## Opts for specific output parsers:
-  PARSER:
-    doku:
-      ## For constructing dokuwiki links:
-      LINKROOT: 'bots:cobalt:docs:'
-      INDEXFILE: 'filelist.txt'
-    txt:
-      LINKROOT: ''
-      INDEXFILE: 'INDEX'
+  doku: 
+    # LINKROOT will be appended w/ :path:to:doc
+    LINKROOT: 'bots:cobalt:docs'
+    INDEXFILE: 'filelist.txt'
 
-MAP:
-  Cobalt:            ## the root name, ie $destdir/Cobalt/
-    DIR: lib/Cobalt  ## relative to Opts->ROOT
-    SLURP_ALL: 1     ## BOOL: try to parse all .pm / .pod found ?
-# otherwise, specify a list: FIXME
-#    FILES:
-#      - Some/Pod.pod
-
-  Executables:
-    DIR: bin/
-    SLURP_ALL: 1
-
-## FIXME: Extras
-Extras:
-  ## Mapping of specific files to specific (relative) paths
-  ## These will be added to the index under 'Other'
-  README:
-    IN: doc/README.pod  ## path to input file
-    OUT: README   ## .ext will be appended automagically
+  txt:
+    LINKROOT: ''
+    INDEXFILE: 'INDEX'

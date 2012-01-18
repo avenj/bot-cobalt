@@ -56,10 +56,17 @@ my $build = Module::Build->new(
     ### POE::
       'POE::Component::SSLify' => 0,
     ### Utils / misc
-     # templating (cpodconv/release tools)
-      'Template' => 0,
       # terminal interaction
       'Term::ReadKey' => 0,
+
+    ### Release tools, commented for now
+     # templating (cpodconv/release tools)
+#      'Template' => 0,
+     # POD conversion
+#      'Pod::Find' => 0,
+#      'Pod::Simple::Wiki' => 0,
+     
+
   },
 );
 

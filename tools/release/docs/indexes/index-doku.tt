@@ -6,14 +6,12 @@ It has been automatically converted to DokuWiki format.
 
   * [[bots:cobalt:docs:|main documentation index]]
 
-[% FOREACH Category IN IndexItems.keys.sort %]
+[% FOREACH Category IN IndexItems.keys.sort -%]
 
 ===== [% Category %] =====
 
- [% FOREACH LinkItem IN IndexItems.$Category.sort %]
-
+ [%- FOREACH LinkItem IN IndexItems.$Category.sort %]
   * [[[% LinkItem.Link %]|[% LinkItem.Title %]]]
-
- [% END %]
+ [%- END -%]
 
 [% END %]

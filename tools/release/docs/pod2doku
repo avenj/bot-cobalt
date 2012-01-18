@@ -56,12 +56,15 @@ sub build_dir_map {
   my $binpath = $rootdir."/bin";
   my $libpath = $rootdir."/lib";
   my %binpods = pod_find( { -verbose => 1 }, $binpath );
-  my %libpods = pod_find( { -verbose => 1 }, $libpath );
+  print "Found binpods: \n";
+  print "$_\n" for keys %binpods;
+  my %libpods = pod_find( { -verbose => 0 }, $libpath );
+  print "Found libpods: \n";
+  print "$_\n" for keys %libpods;
 
   my $pod_h = {};
-
   sub _create_pod_hash {
-    my ($pod, $relative_path) = @_;
+    my ($pod, $relative_path, $type) = @_;
     my $basepath = $relative_path;
     $basepath =~ s/(\.pod|\.pm)$//;
     ## $pod = absolute path to .pod/.pm/whatever
@@ -83,29 +86,32 @@ sub build_dir_map {
 
     my $linkroot = $cfg->{Opts}->{doku}->{LINKROOT} ;
 
+    my $link = join(':', $linkroot, @basepath_split );
+    $link =~ tr/\-/_/;
+    no warnings;
     $pod_h->{$pod} = {
       ## Destdir + destpath with .txt appended
       Dest => $destdir ."/". $dest_path.'.txt',
       IndexItem => {
+        Type => $type,  ## category names (bin/  lib/)
         Title => $pod_name,
         ## $linkroot:PATH:TO:FILE:WITHOUT:SUFFIX
-        Link => join(':', $linkroot, @basepath_split ),
+        Link => $link,
       },
-    }
+    };
+    use warnings;
+
   }
 
   for my $pod (keys %binpods) {
     my $relative_path = File::Spec->abs2rel($pod, $binpath);
-    _create_pod_hash($pod, $relative_path);
+    _create_pod_hash($pod, $relative_path, 'bin/');
   }
 
   for my $pod (keys %libpods) {
     my $relative_path = File::Spec->abs2rel($pod, $libpath);
-    _create_pod_hash($pod, $relative_path);
+    _create_pod_hash($pod, $relative_path, 'lib/');
   }
-
-  use Data::Dumper;
-  print Dumper $pod_h;
 
   ## build a hash containing:
   ##  - path to original POD
@@ -147,18 +153,6 @@ sub pod_to_doku {
   return $out
 }
 
-sub pod_to_text {
-  ## take a path, turn it into a text string
-  my ($path) = @_;
-  require Pod::Text;
-  my $parser = Pod::Text->new;
-  my $out;
-  $parser->output_string( \$out );
-  $parser->parse_file( $path );
-  return $out
-}
-
-
 ## Load conf
 $cfg = LoadFile( $conffile );
 
@@ -166,7 +160,38 @@ $cfg = LoadFile( $conffile );
 my $pod_h = build_dir_map();
 
 ## Iterate layout hash, mkpath, convert, write
+my $index_items = {};  ## keyed on a category name
+for my $pod_in (keys %$pod_h) {
+  my $doku_str = pod_to_doku($pod_in);
+
+  my $destpath = $pod_h->{$pod_in}->{Dest};
+
+  ## mkpath as necessary
+  (undef, my $dir, undef) = File::Spec->splitpath($destpath);
+  mkpath($dir);
+
+  ## write file out
+  say "Writing $destpath";
+  open(my $fh, '>', $destpath) or croak "open failed: $destpath: $!";
+  print $fh $doku_str;
+  close($fh) or carp "close failed: $destpath: $!";
+
+  ## add index items to category
+  my $indexitem = $pod_h->{$pod_in}->{IndexItem};
+  my $cat = $indexitem->{Type};
+  push(@{ $index_items->{$cat} },
+    {
+      Link  => $indexitem->{Link},
+      Title => $indexitem->{Title},
+    },
+  );
+}
 
 ## Build index
-
+my $index = parse_index( { IndexItems => $index_items } );
+my $index_path = $destdir ."/". $cfg->{Opts}->{doku}->{INDEXFILE};
+say "Writing index: ${index_path}" ;
+open(my $fh, '>', $index_path) or croak "open failed: $index_path: $!";
+print $fh $index;
+close ($fh);
 
