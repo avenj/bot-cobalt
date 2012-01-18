@@ -19,42 +19,49 @@ my $build = Module::Build->new(
       'Data::Dumper' => 0,
       'File::Basename' => 0,
       'File::Find' => 0,
-      'File::Path' => 0,
+      'File::Path' => '2.00',
       'File::Spec' => 0,
       'Getopt::Long' => 0,
 
    ### Cobalt set ###
      # Crypt
-      'Crypt::Eksblowfish' => 0,
+      'Crypt::Eksblowfish' => '0.003',
+
      # Files
-      'File::Slurp' => 0,
+      'File::Slurp' => '9999.00',
+
      # Utils
-      'IRC::Utils' => '0.12',
+      'IRC::Utils'  => '0.12',
+
      # Serialization
-      'JSON'        => 0,
-      'YAML::Syck'  => 0,
+      'JSON'        => '2.00',
+      'YAML::Syck'  => '1.18',
+
      # Logging
-      'Log::Handler' => 0,
+      'Log::Handler' => '0.71',
+
      # Moose + related
-      'Moose' => 0,
-      'MooseX::NonMoose' => 0,
-      'namespace::autoclean' => 0,
+      'Moose'                => '2.00',
+      'MooseX::NonMoose'     => '0.18',
+      'namespace::autoclean' => '0.12',
+
      # POE::
-      'POE' => '1.311',
-      'POE::Session' => 0,
+      'POE'            => '1.311',
+
       # pocoirc6.75 contained bugfix fixing use of LocalAddr
       'POE::Component::IRC'        => '6.75',
-      'POE::Component::Syndicator' => 0,
-      'Object::Pluggable::Constants' => 0,
+      'POE::Component::Syndicator' => '0.06',
+      'Object::Pluggable'          => '1.27',
+
      # Process mgmt
-      'Proc::PID::File' => 0,
+      'Proc::PID::File' => '1.26',
   },
 
   recommends => {
     ### DBs
       'DBM::Deep' => '2.00',
     ### POE::
-      'POE::Component::SSLify' => 0,
+      'POE::Component::SSLify' => '1.006',
     ### Utils / misc
       # terminal interaction
       'Term::ReadKey' => 0,
