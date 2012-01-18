@@ -10,7 +10,7 @@ It has been automatically converted to DokuWiki format.
 
 ===== [% Category %] =====
 
- [%- FOREACH LinkItem IN IndexItems.$Category.sort %]
+ [%- FOREACH LinkItem IN IndexItems.$Category %]
   * [[[% LinkItem.Link %]|[% LinkItem.Title %]]]
  [%- END -%]
 

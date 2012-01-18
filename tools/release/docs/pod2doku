@@ -161,7 +161,7 @@ my $pod_h = build_dir_map();
 
 ## Iterate layout hash, mkpath, convert, write
 my $index_items = {};  ## keyed on a category name
-for my $pod_in (keys %$pod_h) {
+for my $pod_in (sort keys %$pod_h) {
   my $doku_str = pod_to_doku($pod_in);
 
   my $destpath = $pod_h->{$pod_in}->{Dest};
