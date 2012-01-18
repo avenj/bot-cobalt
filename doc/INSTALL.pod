@@ -1,0 +1,48 @@
+=pod
+
+=for comment
+This POD used to generate 'INSTALL' in dist root
+
+=head1 NAME
+
+INSTALL - Varied approaches to installing Cobalt
+
+=head1 Perl and perl library paths
+
+
+=head2 Using local::lib
+
+
+=head2 Using perlbrew
+
+
+=head1 SEE ALSO
+
+=over 
+
+=item *
+
+B<CPAN>> -- L<cpan>, L<CPAN>
+
+=item *
+
+L<Module::Build>
+
+=item * 
+
+B<cpanm> -- L<http://cpanmin.us> & L<App::cpanminus>
+
+=item *
+
+B<perlbrew> -- L<http://perlbrew.pl> & L<App::perlbrew>
+
+=back
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

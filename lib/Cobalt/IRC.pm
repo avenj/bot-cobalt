@@ -869,7 +869,6 @@ __END__
 
 Cobalt::IRC -- core (context "Main") IRC plugin
 
-
 =head1 DESCRIPTION
 
 Plugin authors will almost definitely want to read this reference.
@@ -1174,8 +1173,8 @@ Theoretically, you can find out which types should have args via ISUPPORT:
   ## get status modes (ops, voice ...)
   ## allegedly not all servers report all PREFIX modes
   my $m_status = $irc->isupport('PREFIX') || '(ov)@+';
-  $m_status =~ s/^\((\w+)\).*$/$1/; 
-  
+  $m_status =~ s/^\((\w+)\).*$/$1/;
+
 See L<http://www.irc.org/tech_docs/005.html> for more information on ISUPPORT.
 
 As of this writing the Cobalt core provides no convenience method for this.

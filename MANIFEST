@@ -3,6 +3,7 @@ bin/cobalt2-installer
 bin/cobalt2-mkpasswd
 Build.PL
 Changes
+doc/INSTALL.pod
 doc/README.pod
 doc/TODO
 etc/auth.conf

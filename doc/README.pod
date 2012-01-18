@@ -1,38 +1,98 @@
 =pod
 
+=for comment
+This POD used to generate dist's 'README'
+
 =head1 NAME
 
-README - Getting started with Cobalt2
+README - Getting started with Cobalt
 
 =head1 VERSION
 
-README revision B<0002>
+README revision B<0003>
 
-Last updated for cobalt B<2.00>
+Last updated for Cobalt B<2.00_6>
+
+L<http://www.cobaltirc.org/dev/bots/cobalt>
 
 =head1 QUICK START
 
-FIXME
+=head2 Installing the distribution
+
+Installing B<cobalt2> is just like installing any other Perl distribution:
+
+  ## A simple install using Build.PL:
+  ~/cobalt-2.00 $ perl Build.PL
+  ~/cobalt-2.00 $ ./Build
+  ## If you want a site-wide install, you may need to be root to install
+  ## See INSTALL for more information on using a local perl5lib
+  ~/cobalt-2.00 $ ./Build install
+
+Often it is better to use a local lib dir; see B<INSTALL> for more detailed 
+instructions on various approaches to installing B<Cobalt>.
+
+The saying goes that perl5 is a VM and CPAN is the language ;-)
+
+That being the case, B<Cobalt> requires a goodly handful of modules.
+The C<Build> script will attempt to use L<CPAN> to pull in any necessary 
+dependencies.
+
+It is highly recommended that you allow L<CPAN> to pull in 
+'recommended' dependencies; these are typically modules used by plugins in 
+the core set.
 
 
-=head1 DEPENDENCIES
+=head2 Initializing a new instance
 
-=head2 Required modules
+A B<cobalt2> instance needs its own C<etc/> and C<var/> directories. These 
+are specified via a simple B<rcfile> for each particular instance.
+
+B<cobalt2-installer> will initialize a new rcfile for a Cobalt bot and 
+try to help you set up an initial set of core configuration files:
+
+  $ cobalt2-installer
+
+See L</CONFIGURATION> for more on configuring Cobalt.
+
+You can, of course, run multiple B<cobalt2> instances; each just needs its 
+own B<rcfile>:
+
+  $ cobalt2-installer --rcfile=${HOME}/CobaltRCs/MyCobalt1.rc
+  $ cobalt2 --rcfile=${HOME}/CobaltRCs/MyCobalt1.rc
 
 
-=head2 Recommended modules
+=head2 Starting the bot
+
+That's it! You should be ready to start B<cobalt2> -- you may want to use 
+some debug options the first time:
+
+  # Launch cobalt2 in the foreground w/ debug logging:
+   $ cobalt2 --nodetach --debug
+
+Normally, you'd just launch cobalt2 in the background and forget about it:
+
+  # Launch cobalt2 in the background w/ normal log output:
+   $ cobalt2
 
 
-=head2 Testing for dependencies
+=head2 Using crontab
 
+If your system has a running C<crond>, it's easy to use C<crontab> to 
+check to make sure your bot is running.
 
-=head2 Using CPAN
+B<cobalt2> will track its PID via the bot's C<var/> directory and refuse 
+to start if it is already running. That means a very basic crontab job only 
+has to call cobalt2 again:
 
+  ## Find out where cobalt2 lives
+  ## (That way we can feed cron a full path)
+   $ which cobalt2
+   /path/to/bin/cobalt2
 
-=head2 Using local::lib
-
-
-=head2 Using perlbrew
+  ## Add to crontab (10 minute check delays)
+  ## This example sends output nowhere
+   $ crontab -e
+   */10 * * * * /path/to/bin/cobalt2 >/dev/null 2>&1
 
 
 =head1 USAGE
@@ -41,14 +101,12 @@ FIXME
 
    --version 
      Display current Cobalt version
-  
+
    --help
      Display invocation help
-  
-   --dumpconfig 
-     Display current Cobalt::Conf data structures
 
-=head2 Run-mode related options
+
+=head2 Run-related options
 
    --nodetach / --nodaemon 
      Run in the foreground (do not daemonize) 
@@ -66,25 +124,21 @@ FIXME
 
 =head2 Path-related options
 
-   --etc=/path/to/etcdir 
-     Specify a confdir. Defaults to EXECDIR/etc/ 
-  
-   --var=/path/to/vardir 
-     Specify directory used for logs and databases
-     Defaults to EXECDIR/var/
+   --rcfile=/path/to/rcfile
+     Path to cobalt2 rcfile
+     Defaults to ${HOME}/.cobalt2rc
+
+   --base=/path/to/cobalt/basedir
+     Set a base path for bot's 'etc/' and 'var/' dirs
+     Overrides rcfile
 
 
 =head1 CONFIGURATION
 
-By default, Cobalt will look for "core" configuration files in 
-C<EXECDIR/etc/>, where EXECDIR is the directory C<cobalt> is being 
-executed from:
+This section will likely be moved out to Cobalt::Manual:: namespace soon.
 
-  $ cd /home/myself/cobalt
-  $ ./cobalt
-  ## EXECDIR is now /home/myself/cobalt/
-
-(See L</USAGE> for information on using a different C<etc/>)
+B<cobalt2> will search for configuration files in the directory specified by 
+the '$ETC' entry in the B<rcfile> (see L</"Initializing a new instance">).
 
 Configuration files are stored in YAML1.0.
 
@@ -105,6 +159,11 @@ etc/channels.conf
 etc/plugins.conf
 
 =back
+
+
+Running B<cobalt2-installer> may be enough to get started; however, it is 
+B<HIGHLY> recommended that you review the files thoroughly. They are 
+typically reasonably well-commented.
 
 
 =head2 cobalt.conf
@@ -189,30 +248,16 @@ See L</DOCUMENTATION> for some help getting going with plugin authoring.
 
 =head1 DOCUMENTATION
 
+FIXME
 
 =head2 Usage-related
 
+FIXME
 
 =head2 Writing plugins
 
+FIXME
 
-=head1 DIRECTORY LAYOUT
-
-  doc/                    Documentation
-    doc/Manual/           Manual PODs
-
-  etc/                    Configuration files
-    etc/langs/            Language sets
-    etc/plugins/          Plugin-specific configs
-
-  lib/                    Modules
-    lib/Cobalt/
-    lib/Cobalt/Plugin/    Pluggable modules
-
-  tools/                  Stand-alone utilities
-
-  var/                    Logs and other dynamic data
-    var/db/               Databases
 
 
 =head1 AUTHOR
