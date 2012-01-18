@@ -58,8 +58,6 @@ sub show_help {   ## FIXME
     "  Information:\n",
     "   --version \n",
     "     Display current Cobalt::Core version \n",
-    "   --dumpconfig \n",
-    "     Display current Cobalt::Conf data structures.\n",
 
     "\n",
     "  Execution:\n",
@@ -74,11 +72,11 @@ sub show_help {   ## FIXME
 
     "\n",
     "  Paths:\n",
-    "   --etc=/path/to/etcdir \n",
-    "     Specify a confdir. Defaults to INSTALLDIR/etc/ \n",
-    "   --var=/path/to/vardir \n",
-    "     Specify directory used for logs and databases\n",
-    "     Defaults to INSTALLDIR/var/ \n\n",
+    "   --rcfile=/path/to/rcfile \n",
+    "     Specify a rcfile. Defaults to \$HOME/.cobalt2rc \n",
+    "   --base=/path/to/basedir \n",
+    "     Specify base path for 'etc/' and 'var/' for this instance\n",
+    "     Overrides rcfile. \n\n",
     ## FIXME; note on POCOIRC_DEBUG and POE debug opts ?
   );
 
