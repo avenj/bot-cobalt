@@ -5,9 +5,4 @@
 
 - move plugin lang RPLs to prefixed yml file and autoload
 
-- handle signals
-
 - import tools for darkbot/cobalt1 files
-
-
-- fix bustedass cpodconv
