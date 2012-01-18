@@ -23,7 +23,6 @@
          "recommends" : {
             "DBM::Deep" : "2.00",
             "POE::Component::SSLify" : 0,
-            "Template" : 0,
             "Term::ReadKey" : 0
          },
          "requires" : {
@@ -32,6 +31,7 @@
             "Data::Dumper" : 0,
             "File::Basename" : 0,
             "File::Find" : 0,
+            "File::Path" : 0,
             "File::Slurp" : 0,
             "File::Spec" : 0,
             "Getopt::Long" : 0,
@@ -40,7 +40,7 @@
             "Log::Handler" : 0,
             "Moose" : 0,
             "MooseX::NonMoose" : 0,
-            "Object::Pluggable" : 0,
+            "Object::Pluggable::Constants" : 0,
             "POE" : "1.311",
             "POE::Component::IRC" : "6.75",
             "POE::Component::Syndicator" : 0,
@@ -59,7 +59,7 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_5"
+         "version" : "2.00_6"
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
@@ -128,5 +128,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_5"
+   "version" : "2.00_6"
 }
