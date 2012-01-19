@@ -316,9 +316,21 @@ sub Conf_interactive {
   say ">! Done configuring cobalt.conf" ;
   say ">! There are many more opts; review the file!";
 
-  # FIXME channels.conf
-  # FIXME auth.conf
   # plugins.conf is probably fine with a suitable example file
+  
+  say ">! Configuring channels.conf";
+  say "You're going to want to set up an initial channel.";
+
+  print "Channel name [#otw] ";
+  $cf->{CHAN} = <STDIN>;
+  chomp $cf->{CHAN};
+  $cf->{CHAN} ||= '#otw';
+
+  ## FIXME ChanMgr?
+  say "You may want to edit channels.conf and add other channels.";
+
+  say ">! Configuring auth.conf";
+  ## FIXME
 
 
   return $cf

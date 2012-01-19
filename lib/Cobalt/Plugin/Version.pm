@@ -85,7 +85,6 @@ sub Bot_public_msg {
   my $resp;
 
   ## $message_array->[1] is the first word aside from botnick.
-  ## FIXME: moar complete documentation on $msg
   given ($msg->{message_array}->[1]) {
 
     when (/^info$/i) {

@@ -1,5 +1,5 @@
 package Cobalt::Lang;
-our $VERSION = "0.10";
+our $VERSION = "0.12";
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
@@ -144,7 +144,12 @@ ${$_[1]} is the path to the set that was loaded.
 
 =head2 langset_error
 
-FIXME
+Syndicated when there is some problem loading a langset.
+
+A string describing the general problem is the only argument.
+
+If an appropriate logger is available, the error will also be logged to 
+the 'debug' loglevel.
 
 
 =head1 AUTHOR

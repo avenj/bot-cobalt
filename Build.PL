@@ -28,7 +28,7 @@ my $build = Module::Build->new(
       'Crypt::Eksblowfish' => '0.003',
 
      # Files
-      'File::Slurp' => '9999.00',
+      'File::Slurp' => '9999',
 
      # Utils
       'IRC::Utils'  => '0.12',
