@@ -71,7 +71,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use IRC::Utils qw/
   matches_mask normalize_mask
   parse_user
-  lc_irc uc_irc eq_irc /;
+  lc_irc uc_irc eq_irc 
+/;
 
 use Cobalt::Utils qw/ :ALL /;
 use Cobalt::Serializer;

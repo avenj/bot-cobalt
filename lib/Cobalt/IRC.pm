@@ -719,7 +719,7 @@ sub Bot_send_message {
   }
 
   ## Issue USER event Outgoing_message for output filters
-  $core->send_user_event( 'message', 'Main', $target, $txt );
+  $core->send_user_event( 'message', [ 'Main', $target, $txt ] );
 
   $self->irc->yield(privmsg => $target => $txt);
 
@@ -746,7 +746,7 @@ sub Bot_send_notice {
   }
 
   ## USER event Outgoing_notice
-  $core->send_user_event( 'notice', 'Main', $target, $txt );
+  $core->send_user_event( 'notice', [ 'Main', $target, $txt ] );
 
   $self->irc->yield(notice => $target => $txt);
 

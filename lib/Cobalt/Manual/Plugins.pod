@@ -42,8 +42,9 @@ C<plugins.conf> is YAML in the following structure:
 Configuration files specified in 'Config: ' are expected to be valid 
 B<YAML1.0>. You can read all about YAML at L<http://www.yaml.org> -- 
 for the most part, YAML is fairly self-explanatory.
+See L<Cobalt::Manual::PluginConf> for more about YAML and plugin configs.
 
-They'll be automatically loaded at load-time; the data structure loaded 
+They'll be automatically loaded at run-time; the data structure loaded 
 will be stored in the core B<cfg> attribute, keyed by the plugin's 
 package name.
 
