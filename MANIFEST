@@ -20,6 +20,7 @@ lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm
 lib/Cobalt/Manual/Examples.pod
 lib/Cobalt/Manual/PluginConf.pod
+lib/Cobalt/Manual/PluginDist.pod
 lib/Cobalt/Manual/Plugins.pod
 lib/Cobalt/Plugin/Alarmclock.pm
 lib/Cobalt/Plugin/Auth.pm
