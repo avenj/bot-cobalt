@@ -201,7 +201,7 @@ sub mkpasswd {
         ## not documented because you shouldn't be an idiot:
         $cost = '0'.$cost if length $cost == 1;
         ## bcrypt expects 16 octets of salt:
-        $salt = join '', map { chr(int(rand(256))) } 1 .. 16;
+        $salt = join '', map { chr int rand 256 } 1 .. 16;
         ## ...base64-encoded via bcrypt's en_base64:
         $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
         ## actual settings string to feed bcrypt ($2a$COST$SALT)
