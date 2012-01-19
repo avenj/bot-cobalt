@@ -1,15 +1,15 @@
 #!perl
 
 # cobalt2-mkpasswd
-# bcrypt-enabled mkpasswd
+# simple bcrypt-enabled mkpasswd
+# no Cobalt:: dependencies and licensed under the same terms as Perl
+# feel free to use as an easy bcrypt frontend in other projects
 
 use 5.10.0;
 use strict;
 use warnings;
 
-my $version = '0.10';
-
-use Term::ReadKey;
+my $version = '0.11';
 
 use Time::HiRes qw/ gettimeofday tv_interval /;
 
@@ -68,11 +68,15 @@ my $pwd;
 if (@ARGV) {
   $pwd = $ARGV[0];
 } else {
-  ReadMode('noecho');
+  eval "require Term::ReadKey";
+  if ($@) {
+    warn "WARNING: Term::ReadKey missing, cannot blank passwd prompt\n"
+  } else { Term::ReadKey->import('ReadMode') }
+  ReadMode('noecho') if exists &ReadMode;
   print "Password: ";
   $pwd = <STDIN>;
+  ReadMode(0) if exists &ReadMode;
   chomp($pwd);
-  ReadMode(0);
   print "\n";
 }
 
@@ -125,11 +129,11 @@ sub pwd_generate {
         my $cost = $bcrypt_cost // '08';
         $cost = '0'.$cost if length $cost == 1;
         ## bcrypt expects 16 octets of salt:
-        $salt = join('', map { chr(int(rand(256))) } 1 .. 16);
+        $salt = join '', map { chr int rand 256 } 1 .. 16;
         ## ...base64-encoded via bcrypt's en_base64:
         $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
         ## actual settings string to feed bcrypt ($2a$COST$SALT)
-        $salt = join('', '$2a$', $cost, '$', $salt);
+        $salt = join '', '$2a$', $cost, '$', $salt;
         return Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $salt)
       }
     } 
@@ -220,6 +224,8 @@ number of passwords against yours.
 
 =head1 AUTHOR
 
-http://www.cobaltirc.org
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
