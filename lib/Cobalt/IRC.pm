@@ -710,8 +710,6 @@ sub Bot_send_message {
 
   ## core->send_event( 'send_message', $context, $target, $string );
 
-  ## FIXME: send_user_event for output filters (Outgoing_message)
-
   unless ( $context
            && $context eq 'Main'
            && $target
@@ -719,6 +717,9 @@ sub Bot_send_message {
   ) { 
     return PLUGIN_EAT_NONE 
   }
+
+  ## Issue USER event Outgoing_message for output filters
+  $core->send_user_event( 'message', 'Main', $target, $txt );
 
   $self->irc->yield(privmsg => $target => $txt);
 
@@ -736,8 +737,6 @@ sub Bot_send_notice {
 
   ## core->send_event( 'send_notice', $context, $target, $string );
 
-  ## FIXME: send_user_event for output filters (Outgoing_notice)
-
   unless ( $context
            && $context eq 'Main'
            && $target
@@ -745,6 +744,9 @@ sub Bot_send_notice {
   ) { 
     return PLUGIN_EAT_NONE 
   }
+
+  ## USER event Outgoing_notice
+  $core->send_user_event( 'notice', 'Main', $target, $txt );
 
   $self->irc->yield(notice => $target => $txt);
 
@@ -784,7 +786,6 @@ sub Bot_mode {
   ) { 
     return PLUGIN_EAT_NONE 
   }
-
 
   my ($mode, @args) = split ' ', $modestr;
 
@@ -1336,6 +1337,26 @@ $quit_h would be a hash with the following keys:
     src_host =>
     reason =>
   }
+
+
+=head2 Outgoing messages
+
+It's possible to write plugins that register for B<USER> events to catch 
+messages before they are dispatched to IRC.
+
+Using this mechanism, you can write output filters:
+
+FIXME -- short example, link to docs
+
+The following B<USER> events are emitted:
+
+=head3 Outgoing_message
+
+FIXME
+
+=head3 Outgoing_notice
+
+FIXME
 
 
 
