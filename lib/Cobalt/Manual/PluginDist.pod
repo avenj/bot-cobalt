@@ -1,0 +1,8 @@
+=pod
+
+=head1 NAME
+
+Cobalt::Manual::PluginDist
+
+=cut
+

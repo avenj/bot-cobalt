@@ -24,7 +24,7 @@ provides:
     version: 0.10
   Cobalt::Lang:
     file: lib/Cobalt/Lang.pm
-    version: 0.10
+    version: 0.12
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.10
