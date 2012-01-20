@@ -11,6 +11,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Utils qw/ rplprintf /;
 
+BEGIN { $^P |= 0x10; }
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -19,9 +21,7 @@ sub Cobalt_register {
   $core->plugin_register( $self, 'SERVER',
     'public_cmd_plugin',
   );
-
   $core->log->info("Registered");
-
   return PLUGIN_EAT_NONE
 }
 
@@ -50,9 +50,21 @@ sub _unload {
   } else {
     $core->log->info('Attempting to unload $alias per request');
     if ( $core->plugin_del($alias) ) {
-      delete $INC{$plugisa};
+      my $module = $plugisa;
+      $module .= '.pm' if $module !~ /\.pm$/;
+      $module =~ s/::/\//g;
+      delete $INC{$module};
       undef $plug_obj;
-      ## FIXME; hmm.. maybe clean up symbol table ?
+      ## shamelessly 'adapted' from PocoIRC's Plugin::PlugMan
+      ## clean up symbol table
+      for my $sym (grep { index($_, "$plugisa:") == 0 } keys %DB::sub) {
+        eval { undef &$sym };
+        $core->log->warn("cleanup: $sym: $@") if $@;
+        delete $DB::sub{$sym};
+      }
+      ## also cleanup our config if there is one:
+      delete $core->cfg->{plugin_cf}->{$plugisa};
+      
       $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
         { plugin => $alias } 
       );
