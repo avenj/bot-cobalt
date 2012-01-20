@@ -58,6 +58,65 @@ sub _unload {
   return $resp
 }
 
+sub _load {
+  my ($self, $alias, $module) = @_;
+  my $core = $self->{core};
+  my $resp;
+
+  return "Bad syntax; usage: load <alias> [module]"
+    unless $alias;
+
+  if ($module) {
+    ## user specified a module for this alias
+    ## (should only be used for plugins without a conf)
+    eval "require $module";
+    if ($@) {
+      ## 'require' failed, probably because we can't find it
+      return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+        {
+          plugin => $alias,
+          err => "Module $module cannot be found/loaded",
+        }      
+      );
+    } else {
+      ## module found, attempt to load it
+      unless ( $module->can('new') && my $obj = $module->new() ) {
+        return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+          {
+            plugin => $alias,
+            err => "Module $module doesn't appear to have new()",
+          }
+        );
+      }
+      ## plugin_add returns # of plugins in pipeline on success:
+
+      my $loaded = $core->plugin_add( $alias, $obj );
+      if ($loaded) {
+        return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
+          {
+            plugin => $alias,
+            module => $module,
+          }
+        );
+      } else {
+        return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+          {
+            plugin => $alias,
+            err => "Unknown plugin_add failure",
+          }
+        );
+      }
+
+    }
+
+  } else {
+    ## FIXME
+    ## no module specified, check plugins.conf for one
+    ## if found in plugins conf, load plugin + opts + load/rehash cfg
+  }
+
+}
+
 
 sub Bot_public_cmd_plugin {
   my ($self, $core) = splice @_, 0, 2;
@@ -81,7 +140,6 @@ sub Bot_public_cmd_plugin {
     given (lc $operation) {
       when ('load') {
         ## syntax: !plugin load <alias>, !plugin load <alias> <module>
-        ## if found in plugins conf, load plugin + opts + rehash cfg
       }
 
       when ('unload') {

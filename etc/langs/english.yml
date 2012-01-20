@@ -15,7 +15,7 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 3   ## bump +1 on significant revisions please
+REV: 4   ## bump +1 on significant revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
