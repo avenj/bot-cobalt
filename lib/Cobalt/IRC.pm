@@ -719,12 +719,14 @@ sub Bot_send_message {
   }
 
   ## Issue USER event Outgoing_message for output filters
-  $core->send_user_event( 'message', [ 'Main', $target, $txt ] );
-
-  $self->irc->yield(privmsg => $target => $txt);
-
-  $core->send_event( 'message_sent', 'Main', $target, $txt );
-  ++$core->State->{Counters}->{Sent};
+  my @msg = ( 'Main', $target, $txt );
+  my $eat = $core->send_user_event( 'message', \@msg );
+  unless ($eat == PLUGIN_EAT_ALL) {
+    my ($target, $txt) = @msg[1,2];
+    $self->irc->yield(privmsg => $target => $txt);
+    $core->send_event( 'message_sent', 'Main', $target, $txt );
+    ++$core->State->{Counters}->{Sent};
+  }
 
   return PLUGIN_EAT_NONE
 }
