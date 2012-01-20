@@ -25,11 +25,14 @@ RPL:
   ## RPL_PLUGIN_LOAD: %plugin, %module
   RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module%)"
 
-  ## RPL_PLUGIN_UNLOAD: %plugin, %module
-  RPL_PLUGIN_UNLOAD: "Plugin removed: %plugin (%module%)"
+  ## RPL_PLUGIN_UNLOAD: %plugin
+  RPL_PLUGIN_UNLOAD: "Plugin removed: %plugin"
 
   ## RPL_PLUGIN_ERR: %plugin, %err
   RPL_PLUGIN_ERR: "Failed plugin load: %plugin%: %err"
+
+  ## RPL_PLUGIN_UNLOAD_ERR: %plugin, %err
+  RPL_PLUGIN_UNLOAD_ERR: "Failed plugin unload: %plugin%: %err"
 
   ## RPL_TIMER_ERR
   RPL_TIMER_ERR: "Failed to add timer; unknown timer_set failure"
