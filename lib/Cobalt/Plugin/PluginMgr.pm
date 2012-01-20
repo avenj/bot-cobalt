@@ -11,8 +11,6 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Utils qw/ rplprintf /;
 
-BEGIN { $^P |= 0x10; }
-
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -36,7 +34,7 @@ sub _unload {
   my $core = $self->{core};
   my $resp;
   my $plug_obj = $core->plugin_get($alias);
-  my $plugisa = ref $plug_obj;
+  my $plugisa = ref $plug_obj || return "_unload broken, no PLUGISA?";
 
   unless ($alias) {
     $resp = "Bad syntax; no plugin alias specified";
@@ -48,20 +46,26 @@ sub _unload {
             }
     );
   } else {
-    $core->log->info("Attempting to unload $alias per request");
+    $core->log->info("Attempting to unload $alias ($plugisa) per request");
     if ( $core->plugin_del($alias) ) {
-      my $module = $plugisa;
-      $module .= '.pm' if $module !~ /\.pm$/;
-      $module =~ s/::/\//g;
-      delete $INC{$module};
-      undef $plug_obj;
-      ## shamelessly 'adapted' from PocoIRC's Plugin::PlugMan
+
+      ## shamelessly borrowed from Class::Unload
+
+      ## clear from %INC:
+      my $included = join( '/', split /(?:'|::)/, $plugisa ) . '.pm';
+      $core->log->debug("removing from INC: $included");
+      delete $INC{$included};
+
       ## clean up symbol table
-      for my $sym (grep { index($_, "$plugisa:") == 0 } keys %DB::sub) {
-        eval { undef &$sym };
-        $core->log->warn("cleanup: $sym: $@") if $@;
-        delete $DB::sub{$sym};
+      no strict 'refs';
+      @{$plugisa.'::ISA'} = ();
+      my $s_table = $plugisa.'::';
+      for my $symbol (keys %$s_table) {
+        next if $symbol =~ /\A[^:]+::\z/;
+        delete $s_table->{$symbol};
       }
+      use strict;
+
       ## also cleanup our config if there is one:
       delete $core->cfg->{plugin_cf}->{$plugisa};
       
@@ -87,24 +91,27 @@ sub _load_module {
 
   eval "require $module";
   if ($@) {
-    ## 'require' failed, probably because we can't find it
-    my $lib = $module;
-    $lib .= '.pm' if $lib !~ /\.pm$/;
-    $lib =~ s/::/\//g;  
-    delete $INC{$lib};
-    for my $sym (grep { index($_, "$module:") == 0 } keys %DB::sub) {
-        eval { undef &$sym };
-        $core->log->warn("cleanup: $sym: $@") if $@;
-        delete $DB::sub{$sym};
+    my $err = $@;
+    $core->log->warn("Plugin load failure; $err");
+    ## 'require' failed
+    my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';
+    $core->log->debug("removing from INC: $included");
+    delete $INC{$included};
+    no strict 'refs';
+    @{$module.'::ISA'} = ();
+    my $s_table = $module.'::';
+    for my $symbol (keys %$s_table) {
+      next if $symbol =~ /\A[^:]+::\z/;
+      delete $s_table->{$symbol};
     }
-    $core->log->warn("Plugin load failure; $@");
+    use strict;
+
     return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
-          err => "Module $module cannot be found/loaded: $@",
+          err => "Module $module cannot be found/loaded: $err",
         }      
     );
-
   } else {
     ## module found, attempt to load it
     unless ( $module->can('new') ) {
