@@ -195,7 +195,7 @@ sub Bot_public_cmd_plugin {
 
   my $operation = $msg->{message_array}->[0];
 
-  unless ( $core->auth_level($context, $nick) > $required_lev ) {
+  unless ( $core->auth_level($context, $nick) >= $required_lev ) {
     $resp = rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
   } else {
     given (lc $operation) {
