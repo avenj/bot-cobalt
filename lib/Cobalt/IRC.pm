@@ -748,11 +748,13 @@ sub Bot_send_notice {
   }
 
   ## USER event Outgoing_notice
-  $core->send_user_event( 'notice', [ 'Main', $target, $txt ] );
-
-  $self->irc->yield(notice => $target => $txt);
-
-  $core->send_event( 'notice_sent', 'Main', $target, $txt );
+  my @notice = ( 'Main', $target, $txt );
+  my $eat = $core->send_user_event( 'notice', \@notice );
+  unless ($eat == PLUGIN_EAT_ALL) {
+    my ($target, $txt) = @notice[1,2];
+    $self->irc->yield(notice => $target => $txt);
+    $core->send_event( 'notice_sent', 'Main', $target, $txt );
+  }
 
   return PLUGIN_EAT_NONE
 }
