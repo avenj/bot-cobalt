@@ -92,6 +92,11 @@ sub _load_module {
     $lib .= '.pm' if $lib !~ /\.pm$/;
     $lib =~ s/::/\//g;  
     delete $INC{$lib};
+    for my $sym (grep { index($_, "$module:") == 0 } keys %DB::sub) {
+        eval { undef &$sym };
+        $core->log->warn("cleanup: $sym: $@") if $@;
+        delete $DB::sub{$sym};
+    }
     $core->log->warn("Plugin load failure; $@");
     return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
