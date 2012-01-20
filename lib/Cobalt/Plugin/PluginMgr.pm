@@ -166,8 +166,7 @@ sub _load {
     ## (should only be used for plugins without a conf)
     return $self->_load_module($alias, $module);
   } else {
-    my $cfg = $core->get_core_cfg;
-    my $pluginscf = $cfg->{plugins};  # plugins.conf
+    my $pluginscf = $core->cfg->{plugins};  # plugins.conf
 
     unless (exists $pluginscf->{$alias}
             && ref $pluginscf->{$alias} eq 'HASH') {
