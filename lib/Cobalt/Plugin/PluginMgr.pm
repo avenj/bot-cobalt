@@ -52,7 +52,8 @@ sub _unload {
                              { plugin => $alias } )
                   :
                   rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
-                             { plugin => $alias, err => 'Unknown failure' ) ;
+                             { plugin => $alias, err => 'Unknown failure' } ) 
+                  ;
   }
 
   return $resp
@@ -80,7 +81,7 @@ sub _load {
       );
     } else {
       ## module found, attempt to load it
-      unless ( $module->can('new') && my $obj = $module->new() ) {
+      unless ( $module->can('new') ) {
         return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
           {
             plugin => $alias,
@@ -88,8 +89,17 @@ sub _load {
           }
         );
       }
-      ## plugin_add returns # of plugins in pipeline on success:
+      my $obj = $module->new();
+      unless ($obj && ref $obj) {
+        return rplprintf(
+          {
+            plugin => $alias,
+            err => "Constructor for $module returned junk",
+          }
+        );
+      }
 
+      ## plugin_add returns # of plugins in pipeline on success:
       my $loaded = $core->plugin_add( $alias, $obj );
       if ($loaded) {
         return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
@@ -113,6 +123,7 @@ sub _load {
     ## FIXME
     ## no module specified, check plugins.conf for one
     ## if found in plugins conf, load plugin + opts + load/rehash cfg
+    ## otherwise error out
   }
 
 }
@@ -163,7 +174,7 @@ sub Bot_public_cmd_plugin {
           );
          } else {
            ## call _unload and send any response from there
-           ## call _load on our alias and plug_obj
+           ## call _load on our alias and plug_obj, send that in $resp
          }
       }
 
