@@ -48,7 +48,7 @@ sub _unload {
             }
     );
   } else {
-    $core->log->info('Attempting to unload $alias per request');
+    $core->log->info("Attempting to unload $alias per request");
     if ( $core->plugin_del($alias) ) {
       my $module = $plugisa;
       $module .= '.pm' if $module !~ /\.pm$/;
@@ -198,9 +198,12 @@ sub Bot_public_cmd_plugin {
   unless ( $core->auth_level($context, $nick) >= $required_lev ) {
     $resp = rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
   } else {
-    given (lc $operation) {
+    given ( lc($operation || '') ) {
       when ('load') {
         ## syntax: !plugin load <alias>, !plugin load <alias> <module>
+        my $alias = $msg->{message_array}->[1];
+        my $module = $msg->{message_array}->[2];
+        $resp = $self->_load($alias, $module);
       }
 
       when ('unload') {
@@ -234,19 +237,11 @@ sub Bot_public_cmd_plugin {
 
       when ('list') {
         ## don't set a resp, just build and send a list
-        my @loaded;  ## array of arrays, 'Alias', 'Version'
-        my $pluglist = $core->plugin_list;
-        for my $plugin_alias ( %$pluglist ) {
-          my $plug_obj = $pluglist->{$plugin_alias};
-          my $plug_vers = $plug_obj->VERSION // '0' ;
-          push(@loaded, [ $plugin_alias, $plug_vers ] );
-        }
-
+        my $pluglist = $core->plugin_list();
+        push(my @loaded, sort keys %$pluglist);
         my $str = "Plugins:";
-        while (@loaded) {
-          my $plugin_info = shift @loaded;
-          ## Alias-Version:
-          $str .= ' ' . $plugin_info->[0] .'-'. $plugin_info->[1];
+        while (my $plugin_alias = shift @loaded) {
+          $str .= ' ' . $plugin_alias;
           if ($str && (length($str) > 300 || !@loaded) ) {
             ## either this string has gotten long or we're done
             $core->send_event( 'send_message', $context, $chan, $str );
