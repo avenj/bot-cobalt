@@ -173,7 +173,7 @@ sub _load {
       return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
-          err => "No '$alias' plugin found in plugins.conf",
+          err => "No '${alias}' plugin found in plugins.conf",
         }
       );
     }
@@ -182,7 +182,7 @@ sub _load {
       return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
-          err => "No Module specified in plugins.conf for plugin '$alias'",
+          err => "No Module specified in plugins.conf for plugin '${alias}'",
         }
       );
     }

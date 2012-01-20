@@ -54,7 +54,7 @@ sub respond {
   $temp = 0   unless $temp;
   $temp = MAX_TEMP if $temp > MAX_TEMP;
   $type = 'F' unless $type;
-  my ($f, $k, $c);
+  my ($f, $k, $c) = (0)x3;
   given (uc $type) {
     ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) when 'F';
     ($f, $k, $c) = ( _c2f($temp), _c2k($temp), $temp ) when 'C';
