@@ -35,10 +35,12 @@ sub _unload {
   my ($self, $alias) = @_;
   my $core = $self->{core};
   my $resp;
+  my $plug_obj = $core->plugin_get($alias);
+  my $plugisa = ref $plug_obj;
 
   unless ($alias) {
     $resp = "Bad syntax; no plugin alias specified";
-  } elsif (! $core->plugin_get($alias) ) {
+  } elsif (! $plug_obj ) {
     $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
             { 
               plugin => $alias,
@@ -47,22 +49,84 @@ sub _unload {
     );
   } else {
     $core->log->info('Attempting to unload $alias per request');
-    $resp = $core->plugin_del($alias) ?
-                  rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
-                             { plugin => $alias } )
-                  :
-                  rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
-                             { plugin => $alias, err => 'Unknown failure' } ) 
-                  ;
+    if ( $core->plugin_del($alias) ) {
+      delete $INC{$plugisa};
+      undef $plug_obj;
+      ## FIXME; hmm.. maybe clean up symbol table ?
+      $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
+        { plugin => $alias } 
+      );
+    } else {
+      $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
+        { plugin => $alias, err => 'Unknown failure' }
+      );
+    }
+
   }
 
   return $resp
 }
 
+sub _load_module {
+  ## _load_module( 'Auth', 'Cobalt::Plugin::Auth' ) f.ex
+  ## returns a response string for irc
+  my ($self, $alias, $module) = @_;
+  my $core = $self->{core};
+
+  eval "require $module";
+  if ($@) {
+    ## 'require' failed, probably because we can't find it
+    return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+        {
+          plugin => $alias,
+          err => "Module $module cannot be found/loaded",
+        }      
+    );
+  } else {
+    ## module found, attempt to load it
+    unless ( $module->can('new') ) {
+      return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+          {
+            plugin => $alias,
+            err => "Module $module doesn't appear to have new()",
+          }
+      );
+    }
+
+  }
+  my $obj = $module->new();
+  unless ($obj && ref $obj) {
+      return rplprintf(
+          {
+            plugin => $alias,
+            err => "Constructor for $module returned junk",
+          }
+      );
+  }
+
+  ## plugin_add returns # of plugins in pipeline on success:
+  my $loaded = $core->plugin_add( $alias, $obj );
+  if ($loaded) {
+      return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
+          {
+            plugin => $alias,
+            module => $module,
+          }
+      );
+  } else {
+      return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+          {
+            plugin => $alias,
+            err => "Unknown plugin_add failure",
+          }
+      );
+  }
+
+}
+
 sub _load {
   my ($self, $alias, $module) = @_;
   my $core = $self->{core};
-  my $resp;
 
   return "Bad syntax; usage: load <alias> [module]"
     unless $alias;
@@ -70,60 +134,34 @@ sub _load {
   if ($module) {
     ## user specified a module for this alias
     ## (should only be used for plugins without a conf)
-    eval "require $module";
-    if ($@) {
-      ## 'require' failed, probably because we can't find it
+    return $self->_load_module($alias, $module);
+  } else {
+    my $cfg = $core->get_core_cfg;
+    my $pluginscf = $cfg->{plugins};  # plugins.conf
+
+    unless (exists $pluginscf->{$alias}
+            && ref $pluginscf->{$alias} eq 'HASH') {
       return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
-          err => "Module $module cannot be found/loaded",
-        }      
+          err => "No '$alias' plugin found in plugins.conf",
+        }
       );
-    } else {
-      ## module found, attempt to load it
-      unless ( $module->can('new') ) {
-        return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
-          {
-            plugin => $alias,
-            err => "Module $module doesn't appear to have new()",
-          }
-        );
-      }
-      my $obj = $module->new();
-      unless ($obj && ref $obj) {
-        return rplprintf(
-          {
-            plugin => $alias,
-            err => "Constructor for $module returned junk",
-          }
-        );
-      }
-
-      ## plugin_add returns # of plugins in pipeline on success:
-      my $loaded = $core->plugin_add( $alias, $obj );
-      if ($loaded) {
-        return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
-          {
-            plugin => $alias,
-            module => $module,
-          }
-        );
-      } else {
-        return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
-          {
-            plugin => $alias,
-            err => "Unknown plugin_add failure",
-          }
-        );
-      }
-
     }
 
-  } else {
+    unless ($pluginscf->{$alias}->{Module}) {
+      return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
+        {
+          plugin => $alias,
+          err => "No Module specified in plugins.conf for plugin '$alias'",
+        }
+      );
+    }
+
+    my $module = $pluginscf->{$alias}->{Module};
+    # $self->_load_module($alias, $module);
     ## FIXME
-    ## no module specified, check plugins.conf for one
     ## if found in plugins conf, load plugin + opts + load/rehash cfg
-    ## otherwise error out
   }
 
 }
@@ -136,10 +174,10 @@ sub Bot_public_cmd_plugin {
 
   my $chan = $msg->{channel};
   my $nick = $msg->{src_nick};
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   ## default to superuser-only:
-  my $required_lev = $cfg->{PluginOpts}->{LevelRequired} // 9999;
+  my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
 
   my $resp;
 
@@ -174,7 +212,11 @@ sub Bot_public_cmd_plugin {
           );
          } else {
            ## call _unload and send any response from there
+           my $unload_resp = $self->_unload($alias);
+           $core->send_event( 'send_message', $context, $chan, $unload_resp );
            ## call _load on our alias and plug_obj, send that in $resp
+           my $pkgisa = ref $plug_obj;
+           $resp = $self->_load($alias, $pkgisa);
          }
       }
 
@@ -211,7 +253,5 @@ sub Bot_public_cmd_plugin {
 
   return PLUGIN_EAT_ALL
 }
-
-
 
 1;
