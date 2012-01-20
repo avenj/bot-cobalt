@@ -9,6 +9,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use IRC::Utils qw/ strip_color /;
 
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
