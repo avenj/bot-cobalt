@@ -88,12 +88,18 @@ sub _load_module {
   eval "require $module";
   if ($@) {
     ## 'require' failed, probably because we can't find it
+    my $lib = $module;
+    $lib .= '.pm' if $lib !~ /\.pm$/;
+    $lib =~ s/::/\//g;  
+    delete $INC{$lib};
+    $core->log->warn("Plugin load failure; $@");
     return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
-          err => "Module $module cannot be found/loaded",
+          err => "Module $module cannot be found/loaded: $@",
         }      
     );
+
   } else {
     ## module found, attempt to load it
     unless ( $module->can('new') ) {
