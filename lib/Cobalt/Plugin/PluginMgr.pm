@@ -156,7 +156,7 @@ sub _load_module {
 }
 
 sub _load {
-  my ($self, $alias, $module) = @_;
+  my ($self, $alias, $module, $reload) = @_;
   my $core = $self->{core};
 
   return "Bad syntax; usage: load <alias> [module]"
@@ -164,12 +164,15 @@ sub _load {
 
   ## FIXME check list to see if alias is already loaded
 
+  my $pluginscf = $core->cfg->{plugins};  # plugins.conf
+
   if ($module) {
-    ## user specified a module for this alias
-    ## (should only be used for plugins without a conf)
+    ## user (or 'reload') specified a module for this alias
+    ## it could still have conf opts specified:
+    $self->_load_conf($alias, $module, $pluginscf);
     return $self->_load_module($alias, $module);
+
   } else {
-    my $pluginscf = $core->cfg->{plugins};  # plugins.conf
 
     unless (exists $pluginscf->{$alias}
             && ref $pluginscf->{$alias} eq 'HASH') {
@@ -191,18 +194,29 @@ sub _load {
       );
     }
 
-    ## (re)load this plugin's configuration before loadtime
-    my $etcdir = $core->cfg->{path};
-    my $cconf = Cobalt::Conf->new(etc => $etcdir);
-    ## use our current plugins.conf (not a rehash)
-    my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
-    $thisplugcf = {} unless ref $thisplugcf;
-    ## directly fuck with core's cfg hash:
-    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
+    ## read conf into core:
+    $self->_load_conf($alias, $pkgname, $pluginscf);
+
     ## load the plugin:
     return $self->_load_module($alias, $pkgname);
   }
 
+}
+
+sub _load_conf {
+  my ($self, $alias, $pkgname, $pluginscf) = @_;
+  my $core = $self->{core};
+
+  $pluginscf = $self->_read_core_plugins_conf unless $pluginscf;
+
+  ## (re)load this plugin's configuration before loadtime
+  my $etcdir = $core->cfg->{path};
+  my $cconf = Cobalt::Conf->new(etc => $etcdir);
+  ## use our current plugins.conf (not a rehash)
+  my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
+  $thisplugcf = {} unless ref $thisplugcf;
+  ## directly fuck with core's cfg hash:
+  $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
 }
 
 
