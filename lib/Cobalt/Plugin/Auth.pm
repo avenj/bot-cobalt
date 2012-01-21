@@ -649,6 +649,7 @@ sub _clear_all {
   ## Clear any $core->{Auth} states belonging to this pkg
   for my $context (keys %{ $self->core->{Auth} }) {
     for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
+      $self->core->log->debug("clearing: $nick [$context]");
       $self->_do_logout($context, $nick);
     }
   }
@@ -668,7 +669,8 @@ sub _do_logout {
 
   if (exists $auth_context->{$nick}) {
     my $pkg = $auth_context->{$nick}->{Package};
-    if ($pkg eq __PACKAGE__) {
+    my $current_pkg = __PACKAGE__;
+    if ($pkg eq $current_pkg) {
       my $host = $auth_context->{$nick}->{Host};
       my $username = $auth_context->{$nick}->{Username};
       my $level =  $auth_context->{$nick}->{Level};
@@ -760,8 +762,7 @@ sub _write_access_list {
   chmod($perms, $authdb);
 }
 
-
-__PACKAGE__->meta->make_immutable;
+## Moosey plugins specifically MUST NOT be made immutable!
 no Moose; 1;
 
 __END__
