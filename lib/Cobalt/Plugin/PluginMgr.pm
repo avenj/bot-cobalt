@@ -162,6 +162,8 @@ sub _load {
   return "Bad syntax; usage: load <alias> [module]"
     unless $alias;
 
+  ## FIXME check list to see if alias is already loaded
+
   if ($module) {
     ## user specified a module for this alias
     ## (should only be used for plugins without a conf)
@@ -198,7 +200,7 @@ sub _load {
     ## directly fuck with core's cfg hash:
     $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf || {};
     ## load the plugin:
-    $self->_load_module($alias, $pkgname);
+    return $self->_load_module($alias, $pkgname);
   }
 
 }
