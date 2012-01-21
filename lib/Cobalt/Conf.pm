@@ -35,6 +35,11 @@ sub _read_conf {
   ## deserialize a YAML1.0 conf
   my ($self, $relative_to_etc) = @_;
 
+  unless ($relative_to_etc) {
+    carp "no path specified in _read_conf?"
+    return
+  }
+
   my $etc = $self->{etc};
   unless (-e $self->{etc}) {
     carp "cannot find etcdir: $self->{etc}";
@@ -84,10 +89,10 @@ sub _read_plugin_conf {
 
   return unless exists $plugins_conf->{$plugin};
 
-  my $this_plug_cf = $self->_read_conf( $plugins_conf->{$plugin}->{Config} );
-  unless ($this_plug_cf && ref $this_plug_cf eq 'HASH') {
-    ## no luck, set empty hash
-    $this_plug_cf = { };
+  $this_plug_cf = { };
+  if ( $plugins_conf->{$plugin}->{Config} ) {
+    $this_plug_cf = 
+      $self->_read_conf( $plugins_conf->{$plugin}->{Config} ) || {};
   }
 
   ## we might still have Opts (PluginOpts) directive:
