@@ -82,15 +82,7 @@ sub _read_plugin_conf {
                   $plugins_conf
                   : $self->_read_core_plugins_conf ;
 
-  ## at the moment we just go away quietly if there's no Config
-  ## shouldfix; handle this when calling rather than here .. ?
-  ## may be useful to be able to specify a config on an online load
-  ## this is mostly to make _autoloads life easier
-  if (!exists $plugins_conf->{$plugin} ||
-      ! $plugins_conf->{$plugin}->{Config}) {
-    ## no config entry for this plugin, do nothing quietly
-    return
-  }
+  return unless exists $plugins_conf->{$plugin};
 
   my $this_plug_cf = $self->_read_conf( $plugins_conf->{$plugin}->{Config} );
   unless ($this_plug_cf && ref $this_plug_cf eq 'HASH') {
@@ -101,7 +93,7 @@ sub _read_plugin_conf {
   ## we might still have Opts (PluginOpts) directive:
   if ( defined $plugins_conf->{$plugin}->{Opts} ) {
     ## copy to PluginOpts
-    $this_plug_cf->{PluginOpts} = delete $plugins_conf->{Opts};
+    $this_plug_cf->{PluginOpts} = delete $plugins_conf->{$plugin}->{Opts};
   }
 
   return $this_plug_cf

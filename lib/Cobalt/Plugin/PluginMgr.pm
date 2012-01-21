@@ -194,9 +194,9 @@ sub _load {
     my $etcdir = $core->cfg->{path};
     my $cconf = Cobalt::Conf->new(etc => $etcdir);
     ## use our current plugins.conf (not a rehash)
-    my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf) || {};
+    my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
     ## directly fuck with core's cfg hash:
-    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
+    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf || {};
     ## load the plugin:
     $self->_load_module($alias, $pkgname);
   }

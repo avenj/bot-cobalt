@@ -690,6 +690,10 @@ sub _do_logout {
       );
 
       return delete $auth_context->{$nick};
+    } else {
+      $self->core->log->debug(
+        "skipped auth state, not ours: $nick [$context]"
+      );
     }
   }
   return
