@@ -1,4 +1,4 @@
-package Cobalt::Plugin::OutputFilters::StripFormatting;
+package Cobalt::Plugin::OutputFilters::StripFormat;
 our $VERSION = '0.10';
 
 use 5.12.1;

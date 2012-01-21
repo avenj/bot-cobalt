@@ -27,6 +27,7 @@ lib/Cobalt/Plugin/Auth.pm
 lib/Cobalt/Plugin/ChanMgr.pm
 lib/Cobalt/Plugin/Extras/BanMgr.pm
 lib/Cobalt/Plugin/Extras/Calc.pm
+lib/Cobalt/Plugin/Extras/Debug.pm
 lib/Cobalt/Plugin/Extras/Ignore.pm
 lib/Cobalt/Plugin/Extras/MultiServer.pm
 lib/Cobalt/Plugin/Extras/Relay.pm
@@ -40,6 +41,8 @@ lib/Cobalt/Plugin/Games/RockPaperScissors.pm
 lib/Cobalt/Plugin/Games/Roulette.pm
 lib/Cobalt/Plugin/Games/Trivia.pm
 lib/Cobalt/Plugin/Info3.pm
+lib/Cobalt/Plugin/OutputFilters/StripColors.pm
+lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
 lib/Cobalt/Plugin/PluginMgr.pm
 lib/Cobalt/Plugin/RDB.pm
 lib/Cobalt/Plugin/Rehash.pm

@@ -34,6 +34,9 @@ provides:
   Cobalt::Plugin::Calc:
     file: lib/Cobalt/Plugin/Extras/Calc.pm
     version: 0
+  Cobalt::Plugin::Extras::Debug:
+    file: lib/Cobalt/Plugin/Extras/Debug.pm
+    version: 0.001
   Cobalt::Plugin::Extras::Ignore:
     file: lib/Cobalt/Plugin/Extras/Ignore.pm
     version: 0.10
@@ -52,6 +55,15 @@ provides:
   Cobalt::Plugin::Info3:
     file: lib/Cobalt/Plugin/Info3.pm
     version: 0.10
+  Cobalt::Plugin::OutputFilters::StripColors:
+    file: lib/Cobalt/Plugin/OutputFilters/StripColors.pm
+    version: 0.10
+  Cobalt::Plugin::OutputFilters::StripFormat:
+    file: lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
+    version: 0.10
+  Cobalt::Plugin::PluginMgr:
+    file: lib/Cobalt/Plugin/PluginMgr.pm
+    version: 0.10
   Cobalt::Plugin::RDB:
     file: lib/Cobalt/Plugin/RDB.pm
     version: 0.10
@@ -63,7 +75,7 @@ provides:
     version: 0.12
   Cobalt::Utils:
     file: lib/Cobalt/Utils.pm
-    version: 0.13
+    version: 0.14
 recommends:
   DBM::Deep: 2.00
   POE::Component::SSLify: 1.006
