@@ -14,78 +14,156 @@ use strict;
 use warnings;
 use Carp;
 
-use Moose;
-use namespace::autoclean;
+use Cobalt::Serializer;
 
-use File::Slurp;
-use YAML::Syck;
+sub new {
+  my $class = shift;
+  my $self = {};
+  my %args = @_;
+  bless $self, $class;
 
-has 'etc' => (
-  is => 'ro',
-  isa => 'Str',
-  required => 1
-);
+  unless ($args{etc}) {
+    croak "constructor requires argument: etc => PATH";
+  } else {
+    $self->{etc} = $args{etc};
+  }
+
+  return $self
+}
+
+sub _read_conf {
+  ## deserialize a YAML1.0 conf
+  my ($self, $relative_to_etc) = @_;
+
+  my $etc = $self->{etc};
+  unless (-e $self->{etc}) {
+    carp "cannot find etcdir: $self->{etc}";
+    return
+  }
+
+  my $path = $etc ."/". $relative_to_etc;
+  unless (-e $path) {
+    carp "cannot find $path at $self->{etc}";
+    return
+  }
+
+  my $serializer = Cobalt::Serializer->new;
+  my $thawed = $serializer->readfile( $path );
+
+  unless ($thawed) {
+    carp "Serializer failure!";
+    return
+  }
+
+  return $thawed
+}
+
+sub _read_core_cobalt_conf {
+  my ($self) = @_;
+  return $self->_read_conf("cobalt.conf");
+}
+
+sub _read_core_channels_conf {
+  my ($self) = @_;
+  return $self->_read_conf("channels.conf");
+}
+
+sub _read_core_plugins_conf {
+  my ($self) = @_;
+  return $self->_read_conf("plugins.conf");
+}
+
+sub _read_plugin_conf {
+  ## read a conf for a specific plugin
+  ## must be defined in plugins.conf when this method is called
+  ## IMPORTANT: re-reads plugins.conf per call unless specified
+  my ($self, $plugin, $plugins_conf) = @_;
+  $plugins_conf = ref $plugins_conf eq 'HASH' ?
+                  $plugins_conf
+                  : $self->_read_core_plugins_conf ;
+
+  ## at the moment we just go away quietly if there's no Config
+  ## shouldfix; handle this when calling rather than here .. ?
+  ## may be useful to be able to specify a config on an online load
+  ## this is mostly to make _autoloads life easier
+  if (!exists $plugins_conf->{$plugin} ||
+      ! $plugins_conf->{$plugin}->{Config}) {
+    ## no config entry for this plugin, do nothing quietly
+    return
+  }
+
+  my $this_plug_cf = $self->_read_conf( $plugins_conf->{$plugin}->{Config} );
+  unless ($this_plug_cf && ref $this_plug_cf eq 'HASH') {
+    ## no luck, set empty hash
+    $this_plug_cf = { };
+  }
+
+  ## we might still have Opts (PluginOpts) directive:
+  if ( defined $plugins_conf->{$plugin}->{Opts} ) {
+    ## copy to PluginOpts
+    $this_plug_cf->{PluginOpts} = delete $plugins_conf->{Opts};
+  }
+
+  return $this_plug_cf
+}
+
+sub _autoload_plugin_confs {
+  my $self = shift;
+  my $plugincf = shift || $self->_read_core_plugins_conf;
+  my $perpkgcf = { };
+
+  for my $plugin_alias (keys %$plugincf) {
+    ## core plugin_cf is keyed on __PACKAGE__ definitions:
+    my $pkg = $plugincf->{$plugin_alias}->{Module};
+    unless ($pkg) {
+      carp "skipping $plugin_alias, no Module directive";
+      next
+    }
+    $perpkgcf->{$pkg} = $self->_read_plugin_conf($plugin_alias, $plugincf);
+  }
+
+  return $perpkgcf
+}
+
 
 sub read_cfg {
   my ($self) = @_;
-  my $conf = { };
+  my $conf = {};
 
-  $conf->{path} = $self->etc;
-  croak "can't find confdir: $conf->{path}" unless -d $conf->{path};
+  $conf->{path} = $self->{etc};
+  $conf->{path_chan_cf} = $conf->{path} ."/channels.conf" ;
+  $conf->{path_plugins_cf} = $conf->{path} . "/plugins.conf" ;
 
-  ## Core (cobalt.conf)
-  $conf->{path_cobalt_cf} = $conf->{path}."/cobalt.conf";
-  croak "cannot find cobalt.conf at $conf->{path}"
-    unless -f $conf->{path_cobalt_cf};
+  my $core_cf = $self->_read_core_cobalt_conf;
+  if ($core_cf && ref $core_cf eq 'HASH') {
+    $conf->{core} = $core_cf;
+  } else {
+    croak "failed to load cobalt.conf";
+  }
 
-  my $cf_core = read_file( $conf->{path_cobalt_cf} );
-  $conf->{core} = Load $cf_core;
+  my $chan_cf = $self->_read_core_channels_conf;
+  if ($chan_cf && ref $chan_cf eq 'HASH') {
+    $conf->{channels} = $chan_cf;
+  } else {
+    carp "failed to load channels.conf";
+    ## busted cf, set up an empty context
+    $conf->{channels} = { Main => {} } ;
+  }
 
-  ## Channels (channels.conf)
-  $conf->{path_chan_cf} = $conf->{path}."/channels.conf" ;
-  croak "cannot find channels.conf at $conf->{path}"
-    unless -f $conf->{path_chan_cf};
+  my $plug_cf = $self->_read_core_plugins_conf;
+  if ($plug_cf && ref $plug_cf eq 'HASH') {
+    $conf->{plugins} = $plug_cf;
+  } else {
+    carp "failed to load plugins.conf";
+    $conf->{plugins} = { } ;
+  }
 
-  my $cf_chan = read_file( $conf->{path_chan_cf} );
-  $conf->{channels} = Load $cf_chan;
-
-  ## Plugins (plugins.conf)
-  $conf->{path_plugins_cf} = $conf->{path}."/plugins.conf";
-  croak "can't find plugins.conf at $conf->{path}" unless -f $conf->{path_plugins_cf};
-  my $cf_yml_plugins = read_file($conf->{path_plugins_cf});
-  $conf->{plugins} = Load $cf_yml_plugins;
-
-  # Plugin-specific configs, relative to etc/
-  for my $plugin (keys %{ $conf->{plugins} })
-  {
-    my $pkg = $conf->{plugins}->{$plugin}->{Module} || next;
-    my $cf_plugin = $conf->{plugins}->{$plugin}->{Config} || next;
-    croak "can't find plugin conf $cf_plugin"
-      unless -f $conf->{path}."/".$cf_plugin;
-
-    my $cf_yml = read_file($conf->{path}."/".$cf_plugin);
-    $conf->{plugin_cf}->{$pkg} = Load $cf_yml;
-
-    ## see if plugins.conf had "Opts" for this entry
-    ## typically should be a hash, fe.x:
-    ## Opts:
-    ##   Level: 1
-    ## (although the option to use an array is there)
-    ## typically used for plugins that have other opts but don't
-    ## have their own conf file
-    if ($conf->{plugins}->{$plugin}->{Opts}
-        && ref $conf->{plugins}->{$plugin}->{Opts}) 
-    {
-      ## if Opts are specified, reference from ->{plugin_cf}->{$pkg}->{PluginOpts}
-      ## makes it easier for plugins to grab their 'Opts' from plugins.conf
-      $conf->{plugin_cf}->{$pkg}->{PluginOpts} = 
-        $conf->{plugins}->{$plugin}->{Opts};
-    }
+  if (scalar keys $conf->{plugins}) {
+    $conf->{plugin_cf} = $self->_autoload_plugin_confs($conf->{plugins});
   }
 
   return $conf
 }
 
 
-__PACKAGE__->meta->make_immutable;
-no Moose; 1;
+1;
