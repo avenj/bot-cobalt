@@ -239,6 +239,7 @@ sub _start_cobalt {
 
 
 sub _dumpcfg {
+  require Cobalt::Conf;
   my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
   require Data::Dumper;
   no warnings;

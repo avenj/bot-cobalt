@@ -92,9 +92,9 @@ sub _load_module {
 
   eval "require $module";
   if ($@) {
+    ## 'require' failed
     my $err = $@;
     $core->log->warn("Plugin load failure; $err");
-    ## 'require' failed
     my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';
     $core->log->debug("removing from INC: $included");
     delete $INC{$included};
@@ -181,7 +181,6 @@ sub _load {
       );
     }
 
-
     my $pkgname = $pluginscf->{$alias}->{Module};
     unless ($pkgname) {
       return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
@@ -197,8 +196,9 @@ sub _load {
     my $cconf = Cobalt::Conf->new(etc => $etcdir);
     ## use our current plugins.conf (not a rehash)
     my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
+    $thisplugcf = {} unless ref $thisplugcf;
     ## directly fuck with core's cfg hash:
-    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf || {};
+    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
     ## load the plugin:
     return $self->_load_module($alias, $pkgname);
   }
