@@ -10,6 +10,7 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Utils qw/ rplprintf /;
+use Cobalt::Conf;
 
 sub new { bless {}, shift }
 
@@ -178,7 +179,9 @@ sub _load {
       );
     }
 
-    unless ($pluginscf->{$alias}->{Module}) {
+
+    my $pkgname = $pluginscf->{$alias}->{Module};
+    unless ($pkgname) {
       return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
@@ -187,10 +190,15 @@ sub _load {
       );
     }
 
-    my $module = $pluginscf->{$alias}->{Module};
-    # $self->_load_module($alias, $module);
-    ## FIXME
-    ## if found in plugins conf, load plugin + opts + load/rehash cfg
+    ## (re)load this plugin's configuration before loadtime
+    my $etcdir = $core->cfg->{path};
+    my $cconf = Cobalt::Conf->new(etc => $etcdir);
+    ## use our current plugins.conf (not a rehash)
+    my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf) || {};
+    ## directly fuck with core's cfg hash:
+    $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
+    ## load the plugin:
+    $self->_load_module($alias, $pkgname);
   }
 
 }
@@ -267,7 +275,7 @@ sub Bot_public_cmd_plugin {
         }
       }
 
-      ## FIXME reordering via ::Pipeline?
+      ## shouldfix; reordering via ::Pipeline?
 
       default { $resp = "Valid PluginMgr commands: list / load / unload / reload" }
     }
