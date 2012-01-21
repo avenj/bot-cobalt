@@ -24,6 +24,11 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+  my @events = map { 'public_cmd_'.$_ } 
+    qw/dumpcfg dumpstate dumptimers dumpservers/ ;
+  $core->plugin_register( $self, SERVER,
+    [ @events ] 
+  );
   $core->log->info("Loaded DEBUG");
   $core->log->warn(
     "You probably don't want to use this plugin on a live bot."
