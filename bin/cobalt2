@@ -31,28 +31,16 @@ GetOptions(
   'loglevel=s' => \$loglevel,
 
   ## Informational
-  help => \&show_help,
   version => sub {
     require Cobalt::Core;
     print("cobalt $Cobalt::Core::VERSION\n"); 
     exit 0
   },
-  dumpconfig => sub {    ## FIXME needs to check/read cobalt2rc if no basedir specified
-    my $etcdir = $basedir . "/etc";
-    require Cobalt::Conf;
-    my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
-    require Data::Dumper;
-    no warnings;
-    $Data::Dumper::Sortkeys = 1;
-    $Data::Dumper::Useqq = 1;
-    use warnings;
-    print Data::Dumper::Dumper($cfg);
-    exit 0
-  },
 
+  help => \&show_help,
 );
 
-sub show_help {   ## FIXME
+sub show_help {
   print(
     "cobalt2 invocation help \n\n",
     "  Information:\n",
@@ -120,6 +108,7 @@ if ($basedir) {
 
 _check_dirs();
 _check_cfs();
+_dumpcfg() if $ENV{COBALT_DUMP_CONFIG};
 _start_cobalt();
 
 
@@ -246,7 +235,18 @@ sub _start_cobalt {
   )->init;
 
   POE::Kernel->run;
+}
 
+
+sub _dumpcfg {
+  my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
+  require Data::Dumper;
+  no warnings;
+  $Data::Dumper::Sortkeys = 1;
+  $Data::Dumper::Useqq = 1;
+  use warnings;
+  print Data::Dumper::Dumper($cfg);
+  exit 0
 }
 
 
