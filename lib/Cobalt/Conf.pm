@@ -36,7 +36,7 @@ sub _read_conf {
   my ($self, $relative_to_etc) = @_;
 
   unless ($relative_to_etc) {
-    carp "no path specified in _read_conf?"
+    carp "no path specified in _read_conf?";
     return
   }
 
@@ -89,7 +89,7 @@ sub _read_plugin_conf {
 
   return unless exists $plugins_conf->{$plugin};
 
-  $this_plug_cf = { };
+  my $this_plug_cf = { };
   if ( $plugins_conf->{$plugin}->{Config} ) {
     $this_plug_cf = 
       $self->_read_conf( $plugins_conf->{$plugin}->{Config} ) || {};
