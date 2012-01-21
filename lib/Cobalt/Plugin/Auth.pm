@@ -636,9 +636,9 @@ sub _check_for_shared {
 sub _clear_context {
   my ($self, $context) = @_;
   ## $self->_clear_context( $context )
-  ## Clear any $core->{Auth} states for this pkg + context
+  ## Clear any State->{Auth} states for this pkg + context
   return unless $context;
-  for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
+  for my $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
     $self->_do_logout($context, $nick);
   }
 }
@@ -646,9 +646,9 @@ sub _clear_context {
 sub _clear_all {
   my ($self) = @_;
   ## $self->_clear_all()
-  ## Clear any $core->{Auth} states belonging to this pkg
-  for my $context (keys %{ $self->core->{Auth} }) {
-    for my $nick (keys %{ $self->core->{Auth}->{$context} }) {
+  ## Clear any State->{Auth} states belonging to this pkg
+  for my $context (keys %{ $self->core->State->{Auth} }) {
+    for my $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
       $self->core->log->debug("clearing: $nick [$context]");
       $self->_do_logout($context, $nick);
     }
