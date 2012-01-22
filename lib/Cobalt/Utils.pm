@@ -93,8 +93,11 @@ sub glob_to_re_str {
   my $re;
   my @chars = split '', $glob;
   my $first = 1;
+  my $remains = @chars;
+  my $pos = 0;
   for (@chars) {
-    my $last = 1 unless @chars;
+    ++$pos;
+    my $last = 1 if $pos == @chars;
 
     if ($first) {
       if ($_ eq '^') {  ## leading ^ is OK
@@ -103,11 +106,13 @@ sub glob_to_re_str {
       }
       $first = 0;
     } elsif ($last) {
-      $re .= '$' if $_ eq '$';  ## so is trailing $
-      last;
+      if ($_ eq '$') {  ## so is trailing $
+        $re .= '$' ;
+        last;
+      }
     }
     ## iterate characters
-    $re .= "\\$_" when [qw! . ( ) . | + ^ $ @ % { }  !];
+    $re .= "\\$_" when [qw! . ( ) . | + ^ $ @ % { } !];
     $re .= ".*"   when '*';
     $re .= '.'    when '?';
     $re .= $_;
