@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 use 5.12.1;
 use strict;
@@ -86,6 +86,7 @@ sub glob_to_re_str {
   ## Currently allows:
   ##   *  == .*
   ##   ?  == .
+  ##   +  == literal space
   ##   leading ^ (beginning of str) is accepted
   ##   so is trailing $
   ##   char classes are accepted
@@ -93,7 +94,6 @@ sub glob_to_re_str {
   my $re;
   my @chars = split '', $glob;
   my $first = 1;
-  my $remains = @chars;
   my $pos = 0;
   for (@chars) {
     ++$pos;
@@ -112,9 +112,11 @@ sub glob_to_re_str {
       }
     }
     ## iterate characters
-    $re .= "\\$_" when [qw! . ( ) . | + ^ $ @ % { } !];
+    $re .= "\\$_" when [qw! . ( ) . | ^ $ @ % { } !];
     $re .= ".*"   when '*';
     $re .= '.'    when '?';
+    $re .= ' '    when '+';
+    ## FIXME handle escaping?
     $re .= $_;
   }
 
@@ -289,7 +291,7 @@ sub mkpasswd {
 
 =head1 NAME
 
-Cobalt::Utils
+Cobalt::Utils - useful utilities for Cobalt plugins
 
 =head1 DESCRIPTION
 
@@ -412,6 +414,7 @@ For string search functions, it's better to use Cobalt-style globs:
 
   * == match any number of any character
   ? == match any single character
+  + == match any single space
   leading ^  == anchor at start of string
   trailing $ == anchor at end of string
 
