@@ -326,7 +326,7 @@ sub Conf_interactive {
   chomp $cf->{CHAN};
   $cf->{CHAN} ||= '#otw';
 
-  ## FIXME ChanMgr?
+  ## FIXME note about ChanMgr?
   say "You may want to edit channels.conf and add other channels.";
 
   say ">! Configuring auth.conf";
@@ -340,7 +340,6 @@ sub Conf_interactive {
 
   say "By default, passwords are encrypted using bcrypt.";
   say "bcrypt is a pretty secure way to generate password hashes.";
-  ## FIXME bcrypt url
 
   eval "require Term::ReadKey";
   if ($@) {
@@ -356,8 +355,14 @@ sub Conf_interactive {
   chomp $clearpwd;
   $cf->{AUTH_PASS} = mkpasswd($clearpwd || rand);
 
-  ## FIXME  AUTH_MASK
-
+  say "This user needs at least one hostmask to match on.";
+  say "For example: *avenj@*.oppresses.us";
+  say "(You can add others to auth.conf later.)";
+  print "Mask: ";
+  $cf->{AUTH_MASK} = <STDIN>;
+  chomp $cf->{AUTH_MASK};
+  $cf->{AUTH_MASK} ||= '*nobody@nowhere.org';
+  say "\nAdded mask $cf->{AUTH_MASK} for user $cf->{AUTH_USER}";
   say "You may want to edit auth.conf to add/edit superusers and masks.";
   ## FIXME chmod auth.conf ?
 
