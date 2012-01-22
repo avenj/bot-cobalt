@@ -97,9 +97,9 @@ sub Bot_public_msg {
   /;
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
-
-  ## if this is a highlighted message, bot's nickname is first:
-  shift @message if $msg->{highlight};
+  return PLUGIN_EAT_NONE unless $msg->{highlight};
+  ## since this is a highlighted message, bot's nickname is first:
+  shift @message;
   my $cmd = lc(shift @message || '');
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
@@ -205,6 +205,7 @@ sub Bot_rdb_broadcast {
     );
   }
 
+  return PLUGIN_EAT_ALL  ## theoretically no one else cares
 }
 
 
