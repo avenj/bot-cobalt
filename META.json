@@ -21,7 +21,6 @@
       },
       "runtime" : {
          "recommends" : {
-            "DBM::Deep" : "2.00",
             "POE::Component::SSLify" : "1.006",
             "Term::ReadKey" : 0
          },
@@ -58,7 +57,7 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_6"
+         "version" : "2.00_7"
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
@@ -104,12 +103,20 @@
          "file" : "lib/Cobalt/Plugin/Games/Dice.pm",
          "version" : "0.01"
       },
+      "Cobalt::Plugin::Games::Magic8" : {
+         "file" : "lib/Cobalt/Plugin/Games/Magic8.pm",
+         "version" : "0.01"
+      },
+      "Cobalt::Plugin::Games::RockPaperScissors" : {
+         "file" : "lib/Cobalt/Plugin/Games/RockPaperScissors.pm",
+         "version" : "0.01"
+      },
+      "Cobalt::Plugin::Games::Roulette" : {
+         "file" : "lib/Cobalt/Plugin/Games/Roulette.pm",
+         "version" : "0.001"
+      },
       "Cobalt::Plugin::Info3" : {
          "file" : "lib/Cobalt/Plugin/Info3.pm",
-         "version" : "0.10"
-      },
-      "Cobalt::Plugin::OutputFilters::StripColors" : {
-         "file" : "lib/Cobalt/Plugin/OutputFilters/StripColors.pm",
          "version" : "0.10"
       },
       "Cobalt::Plugin::OutputFilters::StripFormat" : {
@@ -122,6 +129,10 @@
       },
       "Cobalt::Plugin::RDB" : {
          "file" : "lib/Cobalt/Plugin/RDB.pm",
+         "version" : "0.10"
+      },
+      "Cobalt::Plugin::Rehash" : {
+         "file" : "lib/Cobalt/Plugin/Rehash.pm",
          "version" : "0.10"
       },
       "Cobalt::Plugin::Version" : {
@@ -143,5 +154,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_6"
+   "version" : "2.00_7"
 }

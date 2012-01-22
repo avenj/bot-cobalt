@@ -58,8 +58,6 @@ my $build = Module::Build->new(
   },
 
   recommends => {
-    ### DBs
-      'DBM::Deep' => '2.00',
     ### POE::
       'POE::Component::SSLify' => '1.006',
     ### Utils / misc

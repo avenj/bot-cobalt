@@ -12,6 +12,7 @@ etc/cobalt.conf
 etc/langs/ebonics.yml
 etc/langs/english.yml
 etc/plugins.conf
+etc/plugins/games.conf
 etc/plugins/info3.conf
 etc/plugins/randstuff.conf
 lib/Cobalt/Conf.pm
@@ -41,7 +42,7 @@ lib/Cobalt/Plugin/Games/RockPaperScissors.pm
 lib/Cobalt/Plugin/Games/Roulette.pm
 lib/Cobalt/Plugin/Games/Trivia.pm
 lib/Cobalt/Plugin/Info3.pm
-lib/Cobalt/Plugin/OutputFilters/StripColors.pm
+lib/Cobalt/Plugin/OutputFilters/StripColor.pm
 lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
 lib/Cobalt/Plugin/PluginMgr.pm
 lib/Cobalt/Plugin/RDB.pm

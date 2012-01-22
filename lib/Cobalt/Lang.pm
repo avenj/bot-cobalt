@@ -113,11 +113,14 @@ out of $etcdir/langs/:
   ## done by cobalt core to (re)load the ->lang hash:
   $core->lang( $core->load_langset('english') );
 
+B<A single-arg call will fail miserably of it's not referenced via $core.>
+
 If passed two arguments, the second argument is considered to be a 
 path prefix.
 
 Plugins can use this to read in a langset file, if they like:
 
+  ## using Cobalt::Lang outside of $core
   require Cobalt::Lang;
   my $lang = Cobalt::Lang->new;
   my $etc = $core->cfg->{path};  ## location of our etc/

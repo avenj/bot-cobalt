@@ -4,7 +4,7 @@ our $VERSION = '0.10';
 ## HANDLES AND EATS:
 ##  !rehash
 ##
-##  Rehash channels.conf & plugins.conf
+##  Rehash langs + channels.conf & plugins.conf
 ##
 ##  Does NOT rehash plugin confs
 ##  Plugins often do some initialization after a conf load
@@ -43,6 +43,7 @@ sub Bot_public_cmd_rehash {
   ## FIXME
   ##  use Cobalt::Conf to grab and reload _core_confs for channels/plugin
   ##  replace $core->cfg->{channels}/{plugins}
+  ##  same for langs?
 
   return PLUGIN_EAT_ALL
 }
