@@ -98,25 +98,33 @@ RPL:
  ## Plugin::Info3:
 
   ## RPL_DONTKNOW, %topic
-  RPL_DONTKNOW: "I don't know anything about %topic"
+  INFO_DONTKNOW: "I don't know anything about %topic"
 
   ## RPL_WHAT, %nick
-  RPL_WHAT: "%nick%, what?"
+  INFO_WHAT: "%nick%, what?"
 
-  RPL_INFO3_ADD:
+  INFO_ADD:
 
-  RPL_INFO3_DEL:
+  INFO_DEL:
 
-  RPL_INFO3_SEARCH:
+  INFO_SEARCH:
 
-  RPL_INFO3_REPLACE:
+  INFO_REPLACE:
 
-  RPL_INFO3_REPLACE_FAILED:
+  INFO_ERR_REPLACE_FAILED:
 
-  RPL_INFO3_ERR_NOSUCH:
+  INFO_ERR_NOSUCH:
 
-  RPL_INFO3_ERR_EXISTS:
+  INFO_ERR_EXISTS:
 
-  RPL_RSTUFF_ADD:
+ ## Plugin::RDB:
 
-  RPL_RSTUFF_DEL:
+  RPL_ERR_NO_SUCH_RDB:
+
+  RPL_RDB_CREATED:
+
+  RPL_RDB_DELETED:
+
+  RPL_RSTUFF_ADDED:
+
+  RPL_RSTUFF_DELETED:
