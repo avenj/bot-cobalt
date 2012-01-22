@@ -21,6 +21,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Serializer;
 
+use Cobalt::Utils qw/ rplprintf timestr_to_secs /;
+
 use constant {
   SUCCESS => 1,
   RDB_EXISTS    => 2,
@@ -33,9 +35,12 @@ sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
-
+  $self->{core} = $core;
   $core->plugin_register($self, 'SERVER',
-    [ 'public_msg' ],
+    [ 
+      'public_msg',
+      'rdb_broadcast',
+    ],
   );  
 
   eval "require Text::Glob";
@@ -52,6 +57,9 @@ sub Cobalt_register {
     $self->{SearchEnabled} = 1;
   }
 
+  ## FIXME kickstart a randstuff timer (named timer for rdb_broadcast)
+  ## delay is in Opts->RandDelay
+
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
@@ -63,6 +71,118 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+
+sub Bot_public_msg {
+  my ($self, $core) = @_;
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
+  my @handled = qw/
+    randstuff
+    randq
+    rdb    
+  /;
+
+  ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
+
+  ## if this is a highlighted message, bot's nickname is first:
+  shift @message if $msg->{highlight};
+  my $cmd = lc(shift @message || '');
+  ## ..if it's not @handled we don't care:
+  return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
+
+  my $resp;
+
+  given ($cmd) {
+
+    $resp = $self->_cmd_randstuff(\@message, $msg)
+      when "randstuff";
+
+    $resp = $self->_cmd_randq(\@message, $msg)
+      when "randq";
+
+    $resp = $self->_cmd_rdb(\@message, $msg)
+      when "rdb";
+
+  }
+
+  ## FIXME darkbotalike except w/ 'rdb add/del/search/info' commands
+  ## support oldschool ~rdb syntax
+  ## prepend index numbers on searched randqs
+  ## turn AddedAt into a date in 'info'
+
+  return PLUGIN_EAT_NONE
+}
+
+
+  ### command handlers ###
+
+sub _cmd_randstuff {
+  ## $parsed_msg_a  == message_array without prefix/cmd
+  ## $msg_h == original message hashref
+  my ($self, $parsed_msg_a, $msg_h) = @_;
+  my @message = @{ $parsed_msg_a };
+  my $src_nick = $msg_h->{src_nick};
+
+  ## FIXME authcheck
+
+  my $rdb = 'main';      # default to 'main'
+
+  ## this may be randstuff ~rdb ... syntax:
+  if (index($message[0], '~') == 0) {
+    $rdb = shift @message;
+    unless (exists $self->{RDB}->{$rdb}) {
+      ## FIXME return rdb doesn't exist RPL
+    }
+  }
+
+  ## should have just the randstuff itself now:
+  my $randstuff_str = join ' ', @message;
+
+  ## FIXME call _add_item
+
+}
+
+sub _cmd_randq {
+  my ($self, $parsed_msg_a, $msg_h) = @_;
+
+  ## FIXME call a search
+
+}
+
+sub _cmd_rdb {
+  my ($self, $parsed_msg_a, $msg_h) = @_;
+  my @message = @{ $parsed_msg_a };
+  my @handled = qw/
+    add
+    del
+    delete
+    info
+    search
+  /;
+
+  my $cmd = lc(shift @message || '');
+
+  unless ($cmd and $cmd ~~ @handled) {
+    return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
+           ."search <rdb> <str>";
+  }
+
+  ## FIXME
+
+}
+
+
+  ### self-events ###
+
+sub Bot_rdb_broadcast {
+  ## FIXME
+  ## grab all channels for all contexts
+  ## throw a randstuff at them unless told not to in channels conf
+  ## reset timer
+}
+
+
+  ### 'worker' methods ###
 
 sub _search {
   my ($self, $string, $rdb) = @_;
@@ -123,6 +243,9 @@ sub _create_rdb {
     return SUCCESS
   }
 }
+
+
+  ### on-disk db ###
 
 sub _read_db {
   my ($self) = @_;
