@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 use 5.12.1;
 use strict;
@@ -20,6 +20,7 @@ our @EXPORT_OK = qw/
 
   color
 
+  glob_to_re_str
   rplprintf
 /;
 
@@ -56,6 +57,41 @@ sub rplprintf {
   $string =~ s/$regex/_repl($1, $2, $vars)/ge;
 
   return $string  
+}
+
+## Glob -> regex:
+sub glob_to_re_str {
+  ## Currently allows:
+  ##   *  == .*
+  ##   ?  == .
+  ##   leading ^ (beginning of str) is accepted
+  ##   so is trailing $
+  ##   char classes are accepted
+  my $glob = shift;
+  my $re;
+  my @chars = split '', $glob;
+  my $first = 1;
+  for (@chars) {
+    my $last = 1 unless @chars;
+
+    if ($first) {
+      if ($_ eq '^') {  ## leading ^ is OK
+        $re .= '^' ;
+        next;
+      }
+      $first = 0;
+    } elsif ($last) {
+      $re .= '$' if $_ eq '$';  ## so is trailing $
+      last;
+    }
+    ## iterate characters
+    $re .= "\\$_" when [qw! . ( ) . | + ^ $ @ % { }  !];
+    $re .= ".*"   when '*';
+    $re .= '.'    when '?';
+    $re .= $_;
+  }
+
+  return $re
 }
 
 
@@ -116,6 +152,7 @@ sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
   my $timestr = shift || return;
   my($hrs,$mins,$secs,$total);
+
   ## FIXME smarter regex, add days ?
   if ($timestr =~ m/(\d+)h/)
     { $hrs = $1; }
@@ -263,17 +300,19 @@ Import all the things:
 
 =over 
 
-=item L</timestr_to_secs>
+=item L</timestr_to_secs> - Convert a string into seconds
 
-=item L</secs_to_timestr>
+=item L</secs_to_timestr> - Convert seconds into a string
 
-=item L</color>
+=item L</color> - Add format/color to IRC messages
 
-=item L</rplprintf>
+=item L</glob_to_re_str> - Convert Cobalt-style globs to regexes
 
-=item L</mkpasswd>
+=item L</rplprintf> - Format portable langset reply strings
 
-=item L</passwdcmp>
+=item L</mkpasswd> - Create crypted passwords
+
+=item L</passwdcmp> - Compare crypted passwords
 
 =back
 
@@ -326,9 +365,30 @@ string, terminated by NORMAL:
   my $formatted = color('red', "red text") . "normal text";
 
 
+=head3 glob_to_re_str
+
+glob_to_re_str() converts Cobalt-style globs to regex strings.
+
+  my $re = glob_to_re_str("th?ngs*stuff");
+  ## or perhaps compile it:
+  my $compiled_re = qr/$re/;
+
+Perl regular expressions are very convenient and powerful. Unfortunately, 
+that also means it's easy to make them eat up all of your CPU and thereby 
+possibly break your system (or at least be annoying!)
+
+For string search functions, it's better to use Cobalt-style globs:
+
+  * == match any number of any character
+  ? == match any single character
+  leading ^  == anchor at start of string
+  trailing $ == anchor at end of string
+
+Standard regex syntax will be escaped and a translated regex returned.
+
 =head3 rplprintf
 
-rplprintf provides string formatting with replacement of arbitrary 
+rplprintf() provides string formatting with replacement of arbitrary 
 variables.
 
   rplprintf( $string, $hash );
