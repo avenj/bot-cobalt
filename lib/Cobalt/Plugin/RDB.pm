@@ -57,8 +57,22 @@ sub Cobalt_register {
     $self->{SearchEnabled} = 1;
   }
 
-  ## FIXME kickstart a randstuff timer (named timer for rdb_broadcast)
-  ## delay is in Opts->RandDelay
+  ## kickstart a randstuff timer (named timer for rdb_broadcast)
+  ## delay is in Opts->RandDelay as a timestr
+  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
+  ## 0 turns off timer
+  $randdelay = timestr_to_secs($randdelay) unless $randdelay == 0;
+  $self->{RandDelay} = $randdelay;
+  if ($randdelay) {
+    $core->timer_set( $randdelay,
+        {
+          Event => 'rdb_broadcast',
+          Args => [ ],
+        },
+      'RANDSTUFF'
+    );
+  }
 
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
@@ -105,7 +119,7 @@ sub Bot_public_msg {
 
   }
 
-  ## FIXME darkbotalike except w/ 'rdb add/del/search/info' commands
+  ## darkbotalike except w/ 'rdb add/del/search/info' commands
   ## support oldschool ~rdb syntax
   ## prepend index numbers on searched randqs
   ## turn AddedAt into a date in 'info'
@@ -175,10 +189,22 @@ sub _cmd_rdb {
   ### self-events ###
 
 sub Bot_rdb_broadcast {
+  my ($self, $core) = splice @_, 0, 2;
   ## FIXME
   ## grab all channels for all contexts
   ## throw a randstuff at them unless told not to in channels conf
-  ## reset timer
+
+  ## reset timer unless randdelay is 0
+  if ($self->{RandDelay}) {
+    $core->timer_set( $self->{RandDelay},
+        {
+          Event => 'rdb_broadcast',
+          Args => [ ],
+        },
+      'RANDSTUFF'
+    );
+  }
+
 }
 
 
