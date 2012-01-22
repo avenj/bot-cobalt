@@ -10,10 +10,13 @@ use Cobalt::Utils qw/color/;
 sub new { bless {}, shift }
 
 sub fire {
-  my ($self, $cyls) = @_;
-  $cyls = 5 unless $cyls;
+  my ($self, $core) = @_;
+  my $cyls = 5;
   my $loaded = int rand($cyls);
-  int rand($cyls) == $loaded ? color('bold', 'BANG!') : 'Click . . .' ;
+
+  return int rand($cyls) == $loaded ? 
+                color('bold', 'BANG!') 
+              : 'Click . . .'  ;
 }
 
 1;
