@@ -25,6 +25,7 @@ use constant {
   SUCCESS => 1,
   RDB_EXISTS    => 2,
   RDB_WRITEFAIL => 3,  
+  RDB_READFAIL  => 4,
 };
 
 

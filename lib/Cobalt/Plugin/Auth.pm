@@ -216,6 +216,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering core IRC plugin");
+  ## FIXME save authdb?
   $self->_clear_all;
   return PLUGIN_EAT_NONE
 }
