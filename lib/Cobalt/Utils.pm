@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 use 5.12.1;
 use strict;
@@ -91,10 +91,9 @@ sub glob_to_re_str {
   ##   so is trailing $
   ##   char classes are accepted
   my $glob = shift || return;
-  my $re;
+  my($re, $in_esc);
+  my ($first, $pos) = (1, 0);
   my @chars = split '', $glob;
-  my $first = 1;
-  my $pos = 0;
   for (@chars) {
     ++$pos;
     my $last = 1 if $pos == @chars;
@@ -111,13 +110,36 @@ sub glob_to_re_str {
         last;
       }
     }
-    ## iterate characters
-    $re .= "\\$_" when [qw! . ( ) . | ^ $ @ % { } !];
-    $re .= ".*"   when '*';
-    $re .= '.'    when '?';
-    $re .= ' '    when '+';
-    ## FIXME handle escaping?
+
+    when ([qw! . ( ) . | ^ $ @ % { } !]) {
+      $re .= "\\$_" ;
+      $in_esc = 0;
+    }
+
+    when ('*') {
+      $re .= $in_esc ? '\*' : '.*' ;
+      $in_esc = 0;
+    }
+
+    when ('?') {
+      $re .= $in_esc ? '\?' : '.' ;
+      $in_esc = 0;
+    }
+
+    when ('+') {
+      $re .= $in_esc ? '\+' : '\s' ;
+      $in_esc = 0;
+    }
+
+    when ("\\") {
+      if ($in_esc) {
+        $re .= "\\\\";
+        $in_esc = 0;
+      } else { $in_esc = 1; }
+    }
+
     $re .= $_;
+    $in_esc = 0;
   }
 
   return $re
