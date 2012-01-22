@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '0.10';
+our $VERSION = '1.0';
 
 ## handles and eats: !plugin
 
@@ -162,7 +162,10 @@ sub _load {
   return "Bad syntax; usage: load <alias> [module]"
     unless $alias;
 
-  ## FIXME check list to see if alias is already loaded
+  ## check list to see if alias is already loaded
+  my $pluglist = $core->plugin_list();
+  return "Plugin already loaded: $alias"
+    if $alias ~~ [ keys %$pluglist ] ;
 
   my $pluginscf = $core->cfg->{plugins};  # plugins.conf
 
