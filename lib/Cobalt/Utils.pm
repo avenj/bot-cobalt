@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use 5.12.1;
 use strict;
@@ -11,7 +11,7 @@ use Crypt::Eksblowfish::Bcrypt;
 require Exporter;
 our @ISA = qw(Exporter);
 
-our @EXPORT_OK = qw/
+our @EXPORT_OK = qw{
   secs_to_timestr
   timestr_to_secs
 
@@ -20,9 +20,12 @@ our @EXPORT_OK = qw/
 
   color
 
+  glob_grep
+  glob_to_re
   glob_to_re_str
   rplprintf
-/;
+
+};
 
 our %EXPORT_TAGS = (
   ALL => [ @EXPORT_OK ],
@@ -60,6 +63,25 @@ sub rplprintf {
 }
 
 ## Glob -> regex:
+
+sub glob_grep {
+  my $glob = shift || return;
+  my @array;
+  if (ref $_[0] eq 'ARRAY') {
+    @array = @{ shift(@_) };
+  } else {
+    @array = @_;
+  }
+  my $re = glob_to_re($glob);
+  grep { m/$re/ } @array;
+}
+
+sub glob_to_re {
+  my $glob = shift || return;
+  my $re = glob_to_re_str($glob);
+  return qr{$re};
+}
+
 sub glob_to_re_str {
   ## Currently allows:
   ##   *  == .*
@@ -67,7 +89,7 @@ sub glob_to_re_str {
   ##   leading ^ (beginning of str) is accepted
   ##   so is trailing $
   ##   char classes are accepted
-  my $glob = shift;
+  my $glob = shift || return;
   my $re;
   my @chars = split '', $glob;
   my $first = 1;
@@ -306,7 +328,11 @@ Import all the things:
 
 =item L</color> - Add format/color to IRC messages
 
-=item L</glob_to_re_str> - Convert Cobalt-style globs to regexes
+=item L</glob_to_re_str> - Convert Cobalt-style globs to regex strings
+
+=item L</glob_to_re> - Convert Cobalt-style globs to compiled regexes
+
+=item L</glob_grep> - Search an array or arrayref by glob
 
 =item L</rplprintf> - Format portable langset reply strings
 
@@ -385,6 +411,29 @@ For string search functions, it's better to use Cobalt-style globs:
   trailing $ == anchor at end of string
 
 Standard regex syntax will be escaped and a translated regex returned.
+
+
+=head3 glob_to_re
+
+glob_to_re() Converts Cobalt-style globs to B<compiled> regexes (qr//)
+
+Using a compiled regex for matching is faster.
+
+See L</glob_to_re_str> for details on globs. This function shares the same 
+syntax.
+
+
+=head3 glob_grep
+
+glob_grep() can be used to search an array or an array reference for strings 
+matching the specified glob:
+
+  my @matches = glob_grep($glob, @array) || 'No matches!';
+  my @matches = glob_grep($glob, $array_ref);
+
+Returns the output of L<grep>, which will be a list in list context or 
+the number of matches in scalar context.
+
 
 =head3 rplprintf
 
