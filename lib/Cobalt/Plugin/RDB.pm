@@ -21,7 +21,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Serializer;
 
-use Cobalt::Utils qw/ rplprintf timestr_to_secs /;
+use Cobalt::Utils qw/ :ALL /;
 
 use constant {
   SUCCESS => 1,
@@ -43,26 +43,15 @@ sub Cobalt_register {
     ],
   );  
 
-  eval "require Text::Glob";
-  if ($@) {
-    $self->{SearchEnabled} = 0;
-    $core->log->warn("You don't seem to have Text::Glob!");
-    $core->log->warn("Searching RDBs will be disabled.");
-  } else {
-    no warnings;
-    $Text::Glob::strict_leading_dot = 0;
-    $Text::Glob::strict_wildcard_slash = 0;
-    use warnings;
-    Text::Glob->import(qw/glob_to_regex glob_to_regex_string/);
-    $self->{SearchEnabled} = 1;
-  }
-
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
+  ## (0 turns off timer)
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
-  ## 0 turns off timer
-  $randdelay = timestr_to_secs($randdelay) unless $randdelay == 0;
+
+  $randdelay = timestr_to_secs($randdelay)
+    unless ($randdelay =~ /^\d+$/);
+
   $self->{RandDelay} = $randdelay;
   if ($randdelay) {
     $core->timer_set( $randdelay,
@@ -213,10 +202,8 @@ sub Bot_rdb_broadcast {
 
 sub _search {
   my ($self, $string, $rdb) = @_;
-  return "Search disabled, no Text::Glob found" 
-    unless $self->{SearchEnabled};
   $string = '<*>' unless $string;
-  my $re = glob_to_regex($string);
+  my $re = qr{ glob_to_re_str($string) };
 
   $rdb = 'main' unless $rdb;
 
