@@ -1,4 +1,4 @@
-package Cobalt::Plugin::OutputFilters::StripColors;
+package Cobalt::Plugin::OutputFilters::StripColor;
 our $VERSION = '0.10';
 
 use 5.12.1;
