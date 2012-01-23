@@ -33,6 +33,8 @@ use constant {
   RDB_NOSUCH_ITEM => 5,
 
   RDB_ALREADY_DELETED => 6,
+
+  RDB_NOTPERMITTED => 7,
 };
 
 
@@ -261,7 +263,7 @@ sub _cmd_rdb {
   given ($cmd) {
 
     when ("add") {
-      ## create a new rdb if it doesn't exist
+      ## _create a new rdb if it doesn't exist
     }
 
     when (/^del(ete)?/) {
@@ -291,16 +293,21 @@ sub _cmd_rdb {
   ### self-events ###
 
 sub Bot_rdb_triggered {
+  ## Bot_rdb_triggered $context, $channel, $nick, $rdb
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
-  my $rdb = ${$_[2]} // 'main';
+  my $nick    = ${$_[2]};
+  my $rdb     = ${$_[3]} // 'main';
 
-  my $random_string = $self->_get_random($rdb);
-    
-  ## FIXME event normally triggered by Info3 when a topic references a ~rdb
-  ## grab a random response and throw it back at the pipeline for info plugin to pick up and do variable replacement on
-  ## send_event('info3_relay_string', context, chan, str) or something similar?
+  ## event normally triggered by Info3 when a topic references a ~rdb
+  ## grab a random response and throw it back at the pipeline
+  ## info3 plugin can pick it up and do variable replacement on it 
+
+  my $random = $self->_get_random($rdb);
+  $self->send_event( 
+    'info3_relay_string', $context, $channel, $nick, $random 
+  );
 
   return PLUGIN_EAT_ALL
 }
@@ -428,6 +435,40 @@ sub _create_rdb {
   } else {
     $self->{RDB}->{$rdb} = { };
     $self->_write_db;
+    return SUCCESS
+  }
+}
+
+sub _delete_rdb {
+  my ($self, $rdb) = @_;
+  return unless $rdb;
+  my $core = $self->{core};
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+
+  my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
+
+  unless ($can_delete) {
+    $core->log->debug("attempted delete but AllowDelete = 0");
+    return RDB_NOTPERMITTED
+  }
+
+  unless (exists $self->{RDB}->{$rdb}) {
+    $core->log->debug("cannot delete nonexistant rdb $rdb");
+    return RDB_NOSUCH
+  } else {
+    if ($rdb eq 'main') {
+      ## check if this is 'main'
+      ##  check core cfg to see if we can delete 'main'
+      ##  default to no
+      my $can_del_main = $pcfg->{Opts}->{AllowDeleteMain} // 0;
+      unless ($can_del_main) {
+        $core->log->debug(
+          "attempted to delete main but AllowDelete Main = 0"
+        );
+        return RDB_NOTPERMITTED
+      }
+    }
+    delete $self->{RDB}->{$rdb};
     return SUCCESS
   }
 }
