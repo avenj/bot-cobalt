@@ -35,9 +35,10 @@ our %EXPORT_TAGS = (
 ## String formatting, usually for langsets:
 sub rplprintf {
   my ($string, $vars) = @_;
-  return unless $string;
+  return '' unless $string;
   $vars = {} unless $vars;
   ## rplprintf( $string, $vars )
+  ## returns empty string if no string is specified.
   ##
   ## variables can be terminated with % or a space:
   ## rplprintf( "Error for %user%: %err")
@@ -62,7 +63,8 @@ sub rplprintf {
   return $string  
 }
 
-## Glob -> regex:
+
+## Glob -> regex functions:
 
 sub glob_grep {
   my $glob = shift || return;
@@ -98,39 +100,42 @@ sub glob_to_re_str {
     ++$pos;
     my $last = 1 if $pos == @chars;
 
+    ## Leading ^ (start) is OK:
     if ($first) {
-      if ($_ eq '^') {  ## leading ^ is OK
+      if ($_ eq '^') {
         $re .= '^' ;
         next;
       }
       $first = 0;
+    ## So is trailing $ (end):
     } elsif ($last) {
-      if ($_ eq '$') {  ## so is trailing $
+      if ($_ eq '$') {
         $re .= '$' ;
         last;
       }
     }
 
+    ## Escape metas:
     when ([qw! . ( ) . | ^ $ @ % { } !]) {
       $re .= "\\$_" ;
       $in_esc = 0;
     }
 
+    ## Handle * ? + wildcards:
     when ('*') {
       $re .= $in_esc ? '\*' : '.*' ;
       $in_esc = 0;
     }
-
     when ('?') {
       $re .= $in_esc ? '\?' : '.' ;
       $in_esc = 0;
     }
-
     when ('+') {
       $re .= $in_esc ? '\+' : '\s' ;
       $in_esc = 0;
     }
 
+    ## Switch on/off escaping:
     when ("\\") {
       if ($in_esc) {
         $re .= "\\\\";
@@ -197,8 +202,8 @@ sub color {
   return $selected || $colors{NORMAL};
 };
 
-## Time/date ops:
 
+## Time/date ops:
 sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
   my $timestr = shift || return;
@@ -345,6 +350,9 @@ Import all the things:
   ...
 
 
+See below for a list of exportable functions.
+
+
 =head1 FUNCTIONS
 
 =head2 Exportable functions
@@ -371,6 +379,7 @@ Import all the things:
 
 =back
 
+
 =head2 Date and Time
 
 =head3 timestr_to_secs
@@ -381,6 +390,7 @@ Convert a string such as "2h10m" into seconds.
 
 Useful for dealing with timers.
 
+
 =head3 secs_to_timestr
 
 Convert a timestamp delta into a string.
@@ -389,6 +399,7 @@ Useful for uptime reporting, for example:
 
   my $delta = time() - $your_start_TS;
   my $uptime_str = secs_to_timestr($delta);
+
 
 
 =head2 String Formatting
@@ -447,7 +458,8 @@ Standard regex syntax will be escaped and a translated regex returned.
 
 glob_to_re() Converts Cobalt-style globs to B<compiled> regexes (qr//)
 
-Using a compiled regex for matching is faster.
+Using a compiled regex for matching is faster. Note that compiled regexes 
+can also be serialized to B<YAML> using Cobalt::Serializer.
 
 See L</glob_to_re_str> for details on globs. This function shares the same 
 syntax.
@@ -494,6 +506,8 @@ Variable names can be terminated with a space or % -- both are demonstrated
 in the example above. You'll need to terminate with a trailing % if there 
 are characters following, as in the above example: I<(%host%)>
 
+
+
 =head2 Password handling
 
 =head3 mkpasswd
@@ -501,7 +515,7 @@ are characters following, as in the above example: I<(%host%)>
 Simple interface for creating hashed passwords.
 
 Defaults to creating a password using L<Crypt::Eksblowfish::Bcrypt> 
-with bcrypt work cost '08'
+with bcrypt work cost '08' -- this is a pretty sane default.
 
 Systems not using B<glibc-2.7+> may not be able to use SHA(256/512) methods.
 

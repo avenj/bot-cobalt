@@ -64,7 +64,7 @@ has 'version' => (
 
 has 'lang' => (
   ## should read $Language.yml out of etc/langs
-  ## fixme; need some kind of schema ..
+  ## shouldfix; need some kind of schema ..
   ## pull hash from Conf->load_langset
   is => 'rw',
   isa => 'HashRef',
@@ -235,7 +235,7 @@ sub ev_plugin_error {
   my ($kernel, $self, $err) = @_[KERNEL, OBJECT, ARG0];
   $self->log->warn("Plugin err: $err");
   ## syndicate a Bot_plugin_error
-  ## FIXME: irc plugin to relay these?
+  ## FIXME: irc plugin to relay these to irc?
   $self->send_event( 'plugin_error', $err );
 }
 

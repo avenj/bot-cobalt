@@ -22,6 +22,9 @@ RPL:
 
  ## Core Cobalt set:
 
+  ## RPL_NO_ACCESS: %nick
+  RPL_NO_ACCESS: "%nick%, you are not authorized!"
+
   ## RPL_PLUGIN_LOAD: %plugin, %module
   RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module%)"
 
@@ -54,9 +57,6 @@ RPL:
 
   ## RPL_OS: %os
   RPL_OS: "I am running %os"
-
-  ## RPL_NO_ACCESS: %nick
-  RPL_NO_ACCESS: "%nick%, you are not authorized!"
 
  ## Plugin::Alarmclock:
 
@@ -119,12 +119,20 @@ RPL:
 
  ## Plugin::RDB:
 
-  RPL_ERR_NO_SUCH_RDB:
+  ## RPL_ERR_NO_SUCH_RDB, %nick, %rdb
+  RDB_ERR_NO_SUCH_RDB: "%nick%, RDB %rdb% doesn't appear to exist."
 
-  RPL_RDB_CREATED:
+  ## RPL_ERR_NO_STRING, %nick, %rdb
+  RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
 
-  RPL_RDB_DELETED:
+  ## 
+  RDB_CREATED: "Added item %index to %rdb for %nick"
 
-  RPL_RSTUFF_ADDED:
+  RDB_DELETED:
 
-  RPL_RSTUFF_DELETED:
+  ## RDB_ITEM_ADDED, %nick, %rdb, %index
+  RDB_ITEM_ADDED: "Added item %index to %rdb for %nick"
+
+  RDB_ITEM_DELETED:
+
+  RDB_ITEM_INFO:

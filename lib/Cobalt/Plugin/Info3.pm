@@ -22,6 +22,13 @@ our $VERSION = '0.10';
 ##
 ## Handles variable replacement
 
+## FIXME build on-disk db indexed by regex (DBM::Deep?)
+##  in-memory; build regexes out of glob syntax (using Cobalt::Utils::glob_to_re_str)
+##  store response & original glob string on-disk indexed by generated regexes
+##  query on-disk db based on matched regex
+## NOTE that glob_to_re_str doesn't start/end anchor on its own
+##  will need to add anchors
+
 use 5.12.1;
 use strict;
 use warnings;

@@ -27,7 +27,6 @@ use constant {
   SUCCESS => 1,
   RDB_EXISTS    => 2,
   RDB_WRITEFAIL => 3,  
-  RDB_READFAIL  => 4,
 };
 
 
@@ -40,8 +39,12 @@ sub Cobalt_register {
     [ 
       'public_msg',
       'rdb_broadcast',
+      'rdb_triggered',
     ],
   );  
+
+  my $db = $self->_read_db || { main => { } };
+  $self->{RDB} = $db;
 
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
@@ -70,7 +73,6 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering core IRC plugin");
-  ## FIXME db sync?
   return PLUGIN_EAT_NONE
 }
 
@@ -96,16 +98,12 @@ sub Bot_public_msg {
   my $resp;
 
   given ($cmd) {
-
     $resp = $self->_cmd_randstuff(\@message, $msg)
       when "randstuff";
-
     $resp = $self->_cmd_randq(\@message, $msg)
       when "randq";
-
     $resp = $self->_cmd_rdb(\@message, $msg)
       when "rdb";
-
   }
 
   ## darkbotalike except w/ 'rdb add/del/search/info' commands
@@ -125,30 +123,67 @@ sub _cmd_randstuff {
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my @message = @{ $parsed_msg_a };
   my $src_nick = $msg_h->{src_nick};
+  my $context  = $msg_h->{context};
 
-  ## FIXME authcheck
+  my $core = $self->{core};
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
+  unless ( $core->auth_level($context, $src_nick) >= $required_level ) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $src_nick }
+    );
+  }
+  
   my $rdb = 'main';      # default to 'main'
 
   ## this may be randstuff ~rdb ... syntax:
   if (index($message[0], '~') == 0) {
     $rdb = shift @message;
-    unless (exists $self->{RDB}->{$rdb}) {
-      ## FIXME return rdb doesn't exist RPL
+    unless ($rdb && exists $self->{RDB}->{$rdb}) {
+      ## ~rdb specified but nonexistant
+      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+        {
+          nick => $src_nick,
+          rdb  => $rdb,
+        }
+      );
     }
   }
 
-  ## should have just the randstuff itself now:
+  ## should have just the randstuff itself now (and maybe a different rdb):
   my $randstuff_str = join ' ', @message;
 
-  ## FIXME call _add_item
+  unless ($randstuff_str) {
+    return rplprintf( $core->lang->{RDB_ERR_NO_STRING},
+      {
+        nick => $src_nick,
+        rdb  => $rdb,
+      }
+    );
+  }
 
+  ## call _add_item
+  my $username = $core->auth_username($context, $src_nick);
+  my $newidx = $self->_add_item($rdb, $randstuff_str, $username);
+
+  ## return success RPL w/ newidx
+  return "Unknown failure, no index returned" unless $newidx;
+  return rplprintf( $core->lang->{RDB_ITEM_ADDED},
+    {
+      nick  => $src_nick,
+      rdb   => $rdb,
+      index => $newidx,
+    }
+  );
 }
 
 sub _cmd_randq {
   my ($self, $parsed_msg_a, $msg_h) = @_;
 
-  ## FIXME call a search
+  ## FIXME call a search against 'main'
+  ## return a random result from @matches
+  ## try to skip dupes if possible?
 
 }
 
@@ -177,9 +212,22 @@ sub _cmd_rdb {
 
   ### self-events ###
 
+sub Bot_rdb_triggered {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+  my $rdb = ${$_[2]} // 'main';
+
+  my $random_string = $self->_get_random($rdb);
+    
+  ## FIXME event normally triggered by Info3 when a topic references a ~rdb
+  ## grab a random response and throw it back at the pipeline for info plugin to pick up and do variable replacement on
+  ## send_event('info3_relay_string', context, chan, str) or something similar?
+}
+
 sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME
+  ## our timer self-event
   ## grab all channels for all contexts
   ## throw a randstuff at them unless told not to in channels conf
 
@@ -200,20 +248,36 @@ sub Bot_rdb_broadcast {
 
   ### 'worker' methods ###
 
+sub _get_random {
+  ## get non-deleted random stuff from specified rdb
+  ## returns the hashref
+  my ($self, $rdb) = @_;
+  $rdb = 'main' unless $rdb;
+  my $rdbref = $self->{RDB}->{$rdb} // {};
+  my $entries_c = scalar keys %$rdbref;
+  my($rand_idx, $pos);
+  do {
+    ++$pos;
+    ## skip deleted
+    $rand_idx = int rand $entries_c;
+  } until (defined $rdbref->{$rand_idx}->{String} || $pos == $entries_c);
+  return $rdbref->{$rand_idx};
+}
+
 sub _search {
   my ($self, $string, $rdb) = @_;
   $string = '<*>' unless $string;
-  my $re = qr{ glob_to_re_str($string) };
+  $rdb   = 'main' unless $rdb;
 
-  $rdb = 'main' unless $rdb;
+  my $re = glob_to_re($string);
 
   my @matches;
   for my $randq_idx (keys $self->{RDB}->{$rdb}) {
     my $content = $self->{RDB}->{$rdb}->{$randq_idx}->{String};
-    push(@matches, $randq_idx) if $content =~ m/$re/;
+    push(@matches, $randq_idx) if $content =~ $re;
   }
 
-  ## returns array of INDEXES for matching randqs in this rdb
+  ## returns array or arrayref of INDEXES for matching randqs
 
   wantarray ? return @matches : return \@matches ;
 }
@@ -234,13 +298,25 @@ sub _add_item {
   };
 
   $self->_write_db;
+  ## Returns new index number
+  return $index
 }
 
 sub _delete_item {
-  my ($self, $rdb, $item_idx) = @_;
+  my ($self, $rdb, $item_idx, $username) = @_;
   return unless $rdb and defined $item_idx;
   my $core = $self->{core};
-  return delete $self->{RDB}->{$rdb}->{$item_idx};
+
+  ## item indexes are permanent
+  ## delete (and later return) the old item
+  ## replace the index with a deletion marker
+  ## FIXME - an optional timed purge mechanism that reshuffles indexes?
+  my $old_item = delete $self->{RDB}->{$rdb}->{$item_idx};
+  $self->{RDB}->{$rdb}->{$item_idx} = {
+    DeletedAt => time,
+    DeletedBy => $username || 'Unknown' ;
+  }  
+  return $old_item
 }
 
 sub _create_rdb {
@@ -272,11 +348,13 @@ sub _read_db {
   my $relative_to_var = $cfg->{Opts}->{RandDB};
   my $db_path = $var ."/". $relative_to_var;
 
-  if ( $serializer->readfile( $db_path ) ) {
-    return SUCCESS
+  my $db = $serializer->readfile( $db_path );
+
+  if ($db && ref $db eq 'HASH') {
+    return $db
   } else {
-    $core->log->warn("Serializer failure, could not read RDB");
-    return RDB_READFAIL
+    $core->log->warn("Could not read RDB, creating an empty one...");
+    return
   }  
 }
 
