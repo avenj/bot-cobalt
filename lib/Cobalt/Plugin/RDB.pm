@@ -25,8 +25,14 @@ use Cobalt::Utils qw/ :ALL /;
 
 use constant {
   SUCCESS => 1,
+
   RDB_EXISTS    => 2,
   RDB_WRITEFAIL => 3,  
+
+  RDB_NOSUCH => 4,
+  RDB_NOSUCH_ITEM => 5,
+
+  RDB_ALREADY_DELETED => 6,
 };
 
 
@@ -43,6 +49,7 @@ sub Cobalt_register {
     ],
   );  
 
+  ## Read in serialized rdb
   my $db = $self->_read_db || { main => { } };
   $self->{RDB} = $db;
 
@@ -72,7 +79,7 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = @_;
-  $core->log->info("Unregistering core IRC plugin");
+  $core->log->info("Unregistering random stuff");
   return PLUGIN_EAT_NONE
 }
 
@@ -84,30 +91,36 @@ sub Bot_public_msg {
   my @handled = qw/
     randstuff
     randq
+    random
     rdb    
   /;
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
   return PLUGIN_EAT_NONE unless $msg->{highlight};
   ## since this is a highlighted message, bot's nickname is first:
+  my @message = @{ $msg->{message_array} };
   shift @message;
   my $cmd = lc(shift @message || '');
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
 
+  ## dispatcher:
   my $resp;
-
   given ($cmd) {
     $resp = $self->_cmd_randstuff(\@message, $msg)
       when "randstuff";
-    $resp = $self->_cmd_randq(\@message, $msg)
+    $resp = $self->_cmd_randq(\@message, $msg, 'randq')
       when "randq";
+    $resp = $self->_cmd_randq(\@message, $msg, 'random')
+      when "random";
     $resp = $self->_cmd_rdb(\@message, $msg)
       when "rdb";
   }
+  my $channel = $msg->{channel};
+  $core->send_event( 'send_message', $context, $channel, $resp )
+    if $resp;
 
-  ## darkbotalike except w/ 'rdb add/del/search/info' commands
-  ## support oldschool ~rdb syntax
+  ## FIXME
   ## prepend index numbers on searched randqs
   ## turn AddedAt into a date in 'info'
 
@@ -179,12 +192,47 @@ sub _cmd_randstuff {
 }
 
 sub _cmd_randq {
-  my ($self, $parsed_msg_a, $msg_h) = @_;
+  my ($self, $parsed_msg_a, $msg_h, $type, $rdbpassed, $strpassed) = @_;
 
-  ## FIXME call a search against 'main'
+  ## also handles 'rdb search rdb str'
+
+  my @message = @{ $parsed_msg_a };
+  my($str, $rdb);
+  if    ($type eq 'random') {
+    $rdb = 'main';
+    $str = '*';
+  } elsif ($type eq 'rdb') {
+    $rdb = $rdbpassed;
+    $str = $strpassed;
+  } else {
+    $str = shift @message || '<*>';
+  }
+
+  ## call a search against 'main'
   ## return a random result from @matches
-  ## try to skip dupes if possible?
+  ## try to skip dupes if possible
 
+  ## get an array of matching indexes for rdb 'main':
+  my @matches = $self->_search($str, $rdb);
+  my $selection = @matches ? 
+                   $matches[rand@matches] 
+                   : return 'No match' ;
+  if ($self->{LastRandq} eq $selection && @matches > 1) {
+    ## we probably just spit this randq out
+    ## give it one more shot
+    $selection = $matches[rand@matches];
+  }
+  $self->{LastRandq} = $selection;
+
+  my $rs_ref = $self->{RDB}->{$rdb}->{$selection};
+  unless (defined $rs_ref->{String}) {
+    return "Undefined String in rdb $rdb item $selection"
+  }
+
+  my $resp = defined $rs_ref->{String} ?
+             $rs_ref->{String}
+             : return "Undefined String in rdb $rdb item $selection" ;
+  return "[${selection}] ${resp}";
 }
 
 sub _cmd_rdb {
@@ -200,13 +248,43 @@ sub _cmd_rdb {
 
   my $cmd = lc(shift @message || '');
 
-  unless ($cmd and $cmd ~~ @handled) {
+  unless ($cmd && $cmd ~~ @handled) {
     return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
            ."search <rdb> <str>";
   }
 
-  ## FIXME
+  ## FIXME access levs
+  ## hash mapping cmds to configured levs w/ defaults
+  ## check auth_level against hash entry for cmd
 
+  my $resp;
+  given ($cmd) {
+
+    when ("add") {
+      ## create a new rdb if it doesn't exist
+    }
+
+    when (/^del(ete)?/) {
+      ## delete a rdb if we're allowed (per conf and requiredlev)
+    }
+
+    when ("info") {
+      ## return metadata about an item by rdb and index number
+    }
+
+    when ("search") {
+      ## search by rdb and string
+      ## parse, call _cmd_randq and just pass off to that
+      my ($rdb, $str) = @message;
+      $str = '*' unless $str;
+      return "Syntax: rdb search <RDB> <string>" unless $rdb;
+
+      $resp = $self->_cmd_randq([], $msg_h, 'rdb', $rdb, $str)
+    }
+
+  }
+
+  return $resp;
 }
 
 
@@ -223,6 +301,8 @@ sub Bot_rdb_triggered {
   ## FIXME event normally triggered by Info3 when a topic references a ~rdb
   ## grab a random response and throw it back at the pipeline for info plugin to pick up and do variable replacement on
   ## send_event('info3_relay_string', context, chan, str) or something similar?
+
+  return PLUGIN_EAT_ALL
 }
 
 sub Bot_rdb_broadcast {
@@ -269,7 +349,9 @@ sub _search {
   $string = '<*>' unless $string;
   $rdb   = 'main' unless $rdb;
 
-  my $re = glob_to_re($string);
+  my $re_str = glob_to_re_str($string);
+  ## case-insensitive:
+  my $re = qr/$re_str/i;
 
   my @matches;
   for my $randq_idx (keys $self->{RDB}->{$rdb}) {
@@ -307,6 +389,21 @@ sub _delete_item {
   return unless $rdb and defined $item_idx;
   my $core = $self->{core};
 
+  unless (exists $self->{RDB}->{$rdb}) {
+    $core->log->debug("cannot delete from nonexistant rdb: $rdb");
+    return RDB_NOSUCH
+  }
+
+  unless (exists $self->{RDB}->{$rdb}->{$item_idx}) {
+    $core->log->debug("cannot delete nonexistant item: $item_idx [$rdb]");
+    return RDB_NOSUCH_ITEM
+  }
+
+  if (defined $self->{RDB}->{$rdb}->{$item_idx}->{DeletedAt}) {
+    $core->log->debug("item $item_idx in rdb $rdb already marked deleted");
+    return RDB_ALREADY_DELETED
+  }
+
   ## item indexes are permanent
   ## delete (and later return) the old item
   ## replace the index with a deletion marker
@@ -314,8 +411,9 @@ sub _delete_item {
   my $old_item = delete $self->{RDB}->{$rdb}->{$item_idx};
   $self->{RDB}->{$rdb}->{$item_idx} = {
     DeletedAt => time,
-    DeletedBy => $username || 'Unknown' ;
-  }  
+    DeletedBy => $username || 'Unknown',
+  };
+  $self->_write_db;
   return $old_item
 }
 
