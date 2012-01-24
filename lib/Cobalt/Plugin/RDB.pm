@@ -27,7 +27,7 @@ use constant {
   SUCCESS => 1,
 
   RDB_EXISTS    => 2,
-  RDB_WRITEFAIL => 3,  
+#  RDB_WRITEFAIL => 3,  
 
   RDB_NOSUCH => 4,
   RDB_NOSUCH_ITEM => 5,
@@ -61,17 +61,12 @@ sub Cobalt_register {
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
 
-  $randdelay = timestr_to_secs($randdelay)
-    unless ($randdelay =~ /^\d+$/);
+  $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
 
   $self->{RandDelay} = $randdelay;
   if ($randdelay) {
-    $core->timer_set( $randdelay,
-        {
-          Event => 'rdb_broadcast',
-          Args => [ ],
-        },
-      'RANDSTUFF'
+    $core->timer_set( $randdelay, 
+      { Event => 'rdb_broadcast' }, 'RANDSTUFF'
     );
   }
 
@@ -122,10 +117,6 @@ sub Bot_public_msg {
   $core->send_event( 'send_message', $context, $channel, $resp )
     if $resp;
 
-  ## FIXME
-  ## prepend index numbers on searched randqs
-  ## turn AddedAt into a date in 'info'
-
   return PLUGIN_EAT_NONE
 }
 
@@ -150,9 +141,8 @@ sub _cmd_randstuff {
     );
   }
   
-  my $rdb = 'main';      # default to 'main'
-
-  ## this may be randstuff ~rdb ... syntax:
+  my $rdb = 'main';      # randstuff is 'main', darkbot legacy
+  ## ...but this may be randstuff ~rdb ... syntax:
   if (index($message[0], '~') == 0) {
     $rdb = shift @message;
     unless ($rdb && exists $self->{RDB}->{$rdb}) {
@@ -196,7 +186,7 @@ sub _cmd_randstuff {
 sub _cmd_randq {
   my ($self, $parsed_msg_a, $msg_h, $type, $rdbpassed, $strpassed) = @_;
 
-  ## also handles 'rdb search rdb str'
+  ## also handler for 'rdb search rdb str'
 
   my @message = @{ $parsed_msg_a };
   my($str, $rdb);
@@ -209,10 +199,6 @@ sub _cmd_randq {
   } else {
     $str = shift @message || '<*>';
   }
-
-  ## call a search against 'main'
-  ## return a random result from @matches
-  ## try to skip dupes if possible
 
   ## get an array of matching indexes for rdb 'main':
   my @matches = $self->_search($str, $rdb);
@@ -239,39 +225,104 @@ sub _cmd_randq {
 
 sub _cmd_rdb {
   my ($self, $parsed_msg_a, $msg_h) = @_;
+  my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
+  ## FIXME 'searchidx' to get a (truncated) list of matching indexes?
   my @handled = qw/
     add
     del
-    delete
+    dbadd
+    dbdel
     info
     search
   /;
 
   my $cmd = lc(shift @message || '');
+  $cmd = 'del' if $cmd eq 'delete';
 
   unless ($cmd && $cmd ~~ @handled) {
     return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
            ."search <rdb> <str>";
   }
-
-  ## FIXME access levs
-  ## hash mapping cmds to configured levs w/ defaults
-  ## check auth_level against hash entry for cmd
+  
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $required_levs = $pcfg->{RequiredLevels} // { };
+  my %access_levs = (
+    info => $pcfg->{RequiredLevels}->{rdb_info} // 0,
+    add  => $pcfg->{RequiredLevels}->{rdb_create} // 9999,
+    del  => $pcfg->{RequiredLevels}->{rdb_delete} // 9999,
+  );
+  
+  my $context  = $msg_h->{context};
+  my $nickname = $msg_h->{src_nick};
+  my $user_lev = $core->auth_level($context, $nickname);
+  unless ($user_lev >= $access_levs{$cmd}) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nickname }
+    );
+  }
 
   my $resp;
   given ($cmd) {
 
-    when ("add") {
+    when ("dbadd") {
       ## _create a new rdb if it doesn't exist
+      my ($rdb) = @message;
+      return 'Syntax: rdb dbadd <RDB>' unless $rdb;
+      my $retval = $self->_create_rdb($rdb);
+      
+      SWITCH: {
+        if ($retval eq RDB_EXISTS) {
+          ## FIXME
+          last
+        }
+        if ($retval eq SUCCESS) {
+          ## FIXME
+          last
+        }
+        $resp = 'Unknown retval from _create_rdb?';
+      }
+
     }
 
-    when (/^del(ete)?/) {
+    when ("dbdel") {
       ## delete a rdb if we're allowed (per conf and requiredlev)
+      my ($rdb) = @message;
+      return 'Syntax: rdb dbdel <RDB>' unless $rdb;
+      my $retval = $self->_delete_rdb($rdb);
+
+      SWITCH: {
+        if ($retval eq RDB_NOTPERMITTED) {
+          ## FIXME
+          last
+        }
+        if ($retval eq RDB_NOSUCH) {
+          ## FIXME
+          last
+        }
+        if ($retval eq SUCCESS) {
+          ## FIXME
+          last
+        }
+        $resp = 'Unknown retval from _delete_rdb?';
+      }
+      
+    }
+    
+    when ("add") {
+      ## FIXME item add
+    }
+    
+    when ("del") {
+      ## FIXME item del
     }
 
     when ("info") {
       ## return metadata about an item by rdb and index number
+      my ($rdb, $idx) = @message;
+      return 'Syntax: rdb info <RDB> <index number>'
+        unless $rdb and $idx;
+      ## FIXME
     }
 
     when ("search") {
@@ -317,17 +368,28 @@ sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
   ## our timer self-event
 
-  ## FIXME grab all channels for all contexts
-  ## throw a randstuff at them unless told not to in channels conf
+  my $random = $self->_get_random;
+  
+  ## iterate channels cfg
+  ## throw randstuffs at configured channels unless told not to
+  my $servers = $core->Servers;
+  for my $context (keys %$servers) {
+    next unless $core->Servers->{$context}->{Connected};
+    my $irc = $core->Servers->{$context}->{Object} // next;
+    my $chcfg = $core->get_channels_cfg($context);
+
+    for my $channel (keys %$chcfg) {
+      $core->send_event( 'send_message', $context, $channel, $random ) 
+        if $chcfg->{$channel}->{rdb_randstuffs}
+        and $irc->is_channel_synced($channel) ;
+    }
+
+  }
 
   ## reset timer unless randdelay is 0
   if ($self->{RandDelay}) {
-    $core->timer_set( $self->{RandDelay},
-        {
-          Event => 'rdb_broadcast',
-          Args => [ ],
-        },
-      'RANDSTUFF'
+    $core->timer_set( $self->{RandDelay}, 
+      { Event => 'rdb_broadcast' }, 'RANDSTUFF'
     );
   }
 
@@ -514,7 +576,7 @@ sub _write_db {
     return SUCCESS
   } else {
     $core->log->warn("Serializer failure, could not write RDB");
-    return RDB_WRITEFAIL
+    return
   }
 }
 

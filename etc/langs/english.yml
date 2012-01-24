@@ -125,10 +125,11 @@ RPL:
   ## RPL_ERR_NO_STRING, %nick, %rdb
   RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
 
-  ## 
-  RDB_CREATED: "Added item %index to %rdb for %nick"
+  ## RDB_CREATED, %nick, %rdb
+  RDB_CREATED: "Created RDB %rdb per request of %nick"
 
-  RDB_DELETED:
+  ## RDB_DELETED, %nick, %rdb
+  RDB_DELETED: "Deleted RDB %rdb%, %nick"
 
   ## RDB_ITEM_ADDED, %nick, %rdb, %index
   RDB_ITEM_ADDED: "Added item %index to %rdb for %nick"
