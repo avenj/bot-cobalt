@@ -39,7 +39,7 @@ use Cobalt::Utils qw/ secs_to_timestr rplprintf /;
 
 ## Minimalist constructor example.
 ## This is all you need to create an object for this plugin:
-sub new { bless( {}, shift ) }
+sub new { bless {}, shift  }
 
 ## Called when the plugin is loaded:
 sub Cobalt_register {

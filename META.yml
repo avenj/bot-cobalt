@@ -15,7 +15,7 @@ name: Cobalt
 provides:
   Cobalt::Conf:
     file: lib/Cobalt/Conf.pm
-    version: 0.10
+    version: 1.00
   Cobalt::Core:
     file: lib/Cobalt/Core.pm
     version: 2.00_7
@@ -40,6 +40,9 @@ provides:
   Cobalt::Plugin::Extras::Ignore:
     file: lib/Cobalt/Plugin/Extras/Ignore.pm
     version: 0.10
+  Cobalt::Plugin::Extras::Karma:
+    file: lib/Cobalt/Plugin/Extras/Karma.pm
+    version: 0.01
   Cobalt::Plugin::Extras::TempConv:
     file: lib/Cobalt/Plugin/Extras/TempConv.pm
     version: 1.0
@@ -64,12 +67,15 @@ provides:
   Cobalt::Plugin::Info3:
     file: lib/Cobalt/Plugin/Info3.pm
     version: 0.10
+  Cobalt::Plugin::OutputFilters::StripColor:
+    file: lib/Cobalt/Plugin/OutputFilters/StripColor.pm
+    version: 0.10
   Cobalt::Plugin::OutputFilters::StripFormat:
     file: lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
     version: 0.10
   Cobalt::Plugin::PluginMgr:
     file: lib/Cobalt/Plugin/PluginMgr.pm
-    version: 0.10
+    version: 1.0
   Cobalt::Plugin::RDB:
     file: lib/Cobalt/Plugin/RDB.pm
     version: 0.10
@@ -84,7 +90,7 @@ provides:
     version: 0.12
   Cobalt::Utils:
     file: lib/Cobalt/Utils.pm
-    version: 0.14
+    version: 0.18
 recommends:
   POE::Component::SSLify: 1.006
   Term::ReadKey: 0

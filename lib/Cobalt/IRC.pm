@@ -132,7 +132,7 @@ sub _start_irc {
     object_states => [
       $self => [
         '_start',
-        ## FIXME _default handler to relay events to Bot_Autoload_$ev or something? configurable, maybe flipped on by plugins via IRCCONF event?
+
         'irc_connected',
         'irc_disconnected',
         'irc_error',
@@ -238,8 +238,9 @@ sub _start {
   ## define ctcp responses
   $self->irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
-      version => "cobalt ".$self->core->version." (perl $^V)",
+      version  => "cobalt ".$self->core->version." (perl $^V)",
       userinfo => __PACKAGE__,
+      source   => 'http://www.cobaltirc.org',
     ),
   );
 
@@ -670,7 +671,7 @@ sub irc_part {
 
   my $me = $self->irc->nick_name();
   my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
-  ## FIXME; we could try an 'eq' here ... but is a part issued by
+  ## shouldfix? we could try an 'eq' here ... but is a part issued by
   ## force methods going to be guaranteed the same case ... ?
   if ( eq_irc($me, $nick, $casemap) ) {
     ## we were the issuer of the part -- possibly via /remove, perhaps?

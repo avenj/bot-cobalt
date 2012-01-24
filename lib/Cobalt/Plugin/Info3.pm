@@ -53,7 +53,10 @@ sub Cobalt_register {
   my ($self, $core) = @_;
   $self->{core} = $core;
   $core->plugin_register($self, 'SERVER',
-    [ 'public_msg' ],
+    [ 
+      'public_msg',
+      'info3_relay_string',
+    ],
   );
 
   $core->log->info("Registered");
@@ -73,9 +76,23 @@ sub Bot_public_msg {
   my $msg = ${$_[1]};
 
 
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_info3_relay_string {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+  my $nick    = ${$_[2]};
+  my $string  = ${$_[3]};
+
+  ## FIXME _info_format and send
+  ##
 
   return PLUGIN_EAT_NONE
 }
+
+
 
 
 sub _handle_cmd {
@@ -104,6 +121,7 @@ sub _info_search {
 
 sub _info_match {
   ## see if text matches
+  ## if topic contains a rdb, send rdb_triggered to talk to RDB.pm
 }
 
 sub _info_format {

@@ -305,6 +305,7 @@ sub Bot_rdb_triggered {
   ## info3 plugin can pick it up and do variable replacement on it 
 
   my $random = $self->_get_random($rdb);
+
   $self->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
   );
@@ -315,7 +316,8 @@ sub Bot_rdb_triggered {
 sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
   ## our timer self-event
-  ## grab all channels for all contexts
+
+  ## FIXME grab all channels for all contexts
   ## throw a randstuff at them unless told not to in channels conf
 
   ## reset timer unless randdelay is 0
