@@ -17,6 +17,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   $self->{Karma} = $self->_read_karma;
+  $self->{karma_regex} = qr/^(\S+)(\+{2}|\-{2})$/;
   $core->plugin_register( $self, 'SERVER',
     [
       'public_msg',
@@ -40,12 +41,11 @@ sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $msg = ${$_[1]};
-
   return PLUGIN_EAT_NONE if $msg->{highlighted};
   return PLUGIN_EAT_NONE if $msg->{cmdprefix};
 
   my $first_word = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
-  if ($first_word =~ /^(\S+)(\+{2}|\-{2})$/) {
+  if ($first_word =~ $self->{karma_regex}) {
     my ($karma_for, $karma) = (lc($1), $2);
     if      ($karma eq '--') {
       $self->{Karma}->{$karma_for}-- ;
