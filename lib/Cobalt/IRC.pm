@@ -67,6 +67,10 @@ sub Cobalt_unregister {
   $core->log->info("Unregistering core IRC plugin");
   $core->log->debug("clearing 'Main' context from Auth");
   delete $core->State->{Auth}->{Main};
+  $core->log->debug("disconnecting");
+  $core->Servers->{Main}->{Connected} = 0;
+  my $irc = $core->Servers->{Main}->{Object};
+  $irc->shutdown if ref $irc and $irc->can('shutdown');
   return PLUGIN_EAT_NONE
 }
 
