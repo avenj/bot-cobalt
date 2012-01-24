@@ -249,13 +249,14 @@ sub _cmd_rdb {
   my $required_levs = $pcfg->{RequiredLevels} // { };
   my %access_levs = (
     info => $pcfg->{RequiredLevels}->{rdb_info} // 0,
-    add  => $pcfg->{RequiredLevels}->{rdb_create} // 9999,
-    del  => $pcfg->{RequiredLevels}->{rdb_delete} // 9999,
+    dbadd  => $pcfg->{RequiredLevels}->{rdb_create} // 9999,
+    dbdel  => $pcfg->{RequiredLevels}->{rdb_delete} // 9999,
   );
   
   my $context  = $msg_h->{context};
   my $nickname = $msg_h->{src_nick};
   my $user_lev = $core->auth_level($context, $nickname);
+  my $username = $core->auth_username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $nickname }
@@ -269,20 +270,25 @@ sub _cmd_rdb {
       ## _create a new rdb if it doesn't exist
       my ($rdb) = @message;
       return 'Syntax: rdb dbadd <RDB>' unless $rdb;
-      my $retval = $self->_create_rdb($rdb);
-      
-      SWITCH: {
-        if ($retval eq RDB_EXISTS) {
-          ## FIXME
-          last
-        }
-        if ($retval eq SUCCESS) {
-          ## FIXME
-          last
-        }
+      my $retval = $self->_create_rdb($rdb);      
+      if      ($retval eq RDB_EXISTS) {
+        $resp = rplprintf( $core->lang->{RDB_ERR_RDB_EXISTS},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            op   => $cmd,
+          }
+        );
+      } elsif ($retval eq SUCCESS) {
+        $resp = rplprintf( $core->lang->{RDB_CREATED},
+          {
+            nick => $nickname,
+            rdb  => $rdb
+          }
+        );
+      } else {
         $resp = 'Unknown retval from _create_rdb?';
       }
-
     }
 
     when ("dbdel") {
@@ -293,24 +299,60 @@ sub _cmd_rdb {
 
       SWITCH: {
         if ($retval eq RDB_NOTPERMITTED) {
-          ## FIXME
-          last
+          $resp = rplprintf( $core->lang->{RDB_ERR_NOTPERMITTED},
+            {
+              nick => $nickname,
+              rdb  => $rdb,
+              op   => $cmd,
+            }
+          );
+          last SWITCH
         }
         if ($retval eq RDB_NOSUCH) {
-          ## FIXME
-          last
+          $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+            {
+              nick => $nickname,
+              rdb  => $rdb,
+            }
+          );
+          last SWITCH
         }
         if ($retval eq SUCCESS) {
-          ## FIXME
-          last
+          $resp = rplprintf( $core->lang->{RDB_DELETED},
+            {
+              nick => $nickname,
+              rdb  => $rdb,
+            }
+          );
+          last SWITCH
         }
         $resp = 'Unknown retval from _delete_rdb?';
       }
       
     }
     
+    ## FIXME access levels for add/del
     when ("add") {
-      ## FIXME item add
+      my ($rdb, $item) = @message;
+      return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
+      my $retval = $self->_add_item($rdb, $item, $username);
+      if ($retval eq RDB_NOSUCH) {
+        $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+          }
+        );
+      } else {
+        ## should've been returned a unique index number
+        $resp = rplprintf( $core->lang->{RDB_ITEM_ADDED},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $retval,
+          }
+        );
+      }
     }
     
     when ("del") {
@@ -439,8 +481,14 @@ sub _add_item {
   my ($self, $rdb, $item, $username) = @_;
   return unless $rdb and defined $item;
   my $core = $self->{core};
+  $username = '-undefined' unless $username;
+  
+  unless (exists $self->{RDB}->{$rdb}) {
+    $core->log->debug("cannot add item to nonexistant rdb: $rdb");
+    return RDB_NOSUCH
+  }
 
-  my @indexes = sort {$a<=>$b} keys %{ $self->{RDB} };
+  my @indexes = sort {$a<=>$b} keys %{ $self->{RDB}->{$rdb} };
   my $index = (pop @indexes) + 1;
 
   $self->{RDB}->{$rdb}->{$index} = {

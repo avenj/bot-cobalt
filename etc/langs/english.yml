@@ -119,11 +119,17 @@ RPL:
 
  ## Plugin::RDB:
 
-  ## RPL_ERR_NO_SUCH_RDB, %nick, %rdb
+  ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb
   RDB_ERR_NO_SUCH_RDB: "%nick%, RDB %rdb% doesn't appear to exist."
 
-  ## RPL_ERR_NO_STRING, %nick, %rdb
+  ## RDB_ERR_NO_STRING, %nick, %rdb
   RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
+  
+  ## RDB_ERR_RDB_EXISTS, %nick, %rdb
+  RDB_ERR_RDB_EXISTS: "RDB %rdb already exists, %nick%!"
+  
+  ## RDB_ERR_NOTPERMITTED, %nick, %rdb, %op
+  RDB_ERR_NOTPERMITTED: "Operation %op appears to be disallowed."
 
   ## RDB_CREATED, %nick, %rdb
   RDB_CREATED: "Created RDB %rdb per request of %nick"
