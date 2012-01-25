@@ -2,7 +2,40 @@
 
 use Module::Build;
 
-my $build = Module::Build->new(
+my $class = Module::Build->subclass(
+  class => 'Cobalt::Builder',
+  code => q{
+    sub ACTION_release {
+      my $self = shift;
+      $self->dispatch('buildinst');
+      $self->dispatch('wikidocs');
+      ## FIXME packaging?
+    }
+    sub ACTION_wikidocs {
+      my $self = shift;
+      my $base = $self->base_dir;
+      my $remote = 'eris.cobaltirc.org';
+      chdir($base."/tools/release/docs");
+      $self->do_system(qw{"./pod2doku"});
+      $self->do_system(
+        'rsync',
+        '-rv',
+        '--stats',
+        '--progress',
+        'wikidoc/',
+        $remote.
+         ':public_html/docs/wiki/data/pages/bots/cobalt/docs',
+      );
+      chdir($base);
+    }
+    sub ACTION_buildinst {
+      my $self = shift;
+      $self->do_system(qw{tools/release/create_installer});
+    }
+  },
+);
+
+my $build = $class->new(
   dist_name => 'Cobalt',
   dist_abstract => 'Pluggable IRC bot (cobalt2)',
   dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
@@ -63,6 +96,8 @@ my $build = Module::Build->new(
     ### Utils / misc
       # terminal interaction
       'Term::ReadKey' => 0,
+    ### Serialization
+      'YAML::XS' => '0.34',
 
     ### Release tools, commented for now
      # templating (cpodconv/release tools)
