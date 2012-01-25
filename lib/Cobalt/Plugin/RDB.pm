@@ -226,6 +226,14 @@ sub _cmd_randq {
 }
 
 sub _cmd_rdb {
+  ## cmd handler for:
+  ##   rdb add
+  ##   rdb del
+  ##   rdb dbadd
+  ##   rdb dbdel
+  ##   rdb info
+  ##   rdb search
+  ##   rdb searchidx
   ## FIXME handle voting here ... ?
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my $core = $self->{core};
@@ -493,7 +501,7 @@ sub Bot_rdb_triggered {
   ## grab a random response and throw it back at the pipeline
   ## info3 plugin can pick it up and do variable replacement on it 
 
-  my $random = $self->_get_random($rdb);
+  my $random = $self->_get_random($rdb) || '';
 
   $self->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
@@ -506,7 +514,7 @@ sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
   ## our timer self-event
 
-  my $random = $self->_get_random;
+  my $random = $self->_get_random || '';
   
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
@@ -539,11 +547,12 @@ sub Bot_rdb_broadcast {
 
 sub _get_random {
   ## get non-deleted random stuff from specified rdb
-  ## returns the hashref
+  ## returns the hashref (or empty list if the rdb is empty)
   my ($self, $rdb) = @_;
   $rdb = 'main' unless $rdb;
   my $rdbref = $self->{RDB}->{$rdb} // {};
   my $entries_c = scalar keys %$rdbref;
+  return unless $entries_c;
   my($rand_idx, $pos);
   do {
     ++$pos;
@@ -563,8 +572,9 @@ sub _search {
   my $re = qr/$re_str/i;
 
   my @matches;
-  for my $randq_idx (keys $self->{RDB}->{$rdb}) {
-    my $content = $self->{RDB}->{$rdb}->{$randq_idx}->{String};
+  for my $randq_idx (keys %{ $self->{RDB}->{$rdb} }) {
+    next if $self->{RDB}->{$rdb}->{DeletedAt};
+    my $content = $self->{RDB}->{$rdb}->{$randq_idx}->{String} // '';
     push(@matches, $randq_idx) if $content =~ $re;
   }
 
