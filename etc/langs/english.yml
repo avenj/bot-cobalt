@@ -149,4 +149,6 @@ RPL:
   ## RDB_ITEM_DELETED, %nick, %rdb, %index
   RDB_ITEM_DELETED: "Deleted item %index from %rdb per request of %nick"
 
-  RDB_ITEM_INFO:
+  ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
+  ##                %votedup, %voteddown
+  RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"

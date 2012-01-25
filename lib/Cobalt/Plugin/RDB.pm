@@ -13,6 +13,8 @@ our $VERSION = '0.10';
 ##   },
 ## }
 
+## FIXME: voting
+
 use 5.12.1;
 use strict;
 use warnings;
@@ -224,6 +226,7 @@ sub _cmd_randq {
 }
 
 sub _cmd_rdb {
+  ## FIXME handle voting here ... ?
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
@@ -253,6 +256,8 @@ sub _cmd_rdb {
     dbdel  => $required_levs->{rdb_delete} // 9999,
     add    => $required_levs->{rdb_add_item} // 2,
     del    => $required_levs->{rdb_del_item} // 3,
+    search    => $required_levs->{rdb_search} // 0,
+    searchidx => $required_levs->{rdb_search} // 0,
   );
   
   my $context  = $msg_h->{context};
@@ -333,7 +338,6 @@ sub _cmd_rdb {
       
     }
     
-    ## FIXME access levels for add/del
     when ("add") {
       my ($rdb, $item) = @message;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
@@ -431,8 +435,23 @@ sub _cmd_rdb {
         );
       }
       
-      ## FIXME grab info and send RPL
+      my $added_dt = DateTime->from_epoch(
+        epoch => $self->{RDB}->{$rdb}->{$idx}->{AddedAt}
+      );
+      my $votes_r = $self->{RDB}->{$rdb}->{$idx}->{Votes};
 
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+        index => $idx,
+        addedby => $self->{RDB}->{$rdb}->{$idx}->{AddedBy},
+        date => $added_dt->date,
+        time => $added_dt->time,
+        votedup => $votes_r->{Up},
+        voteddown => $votes_r->{Down},
+      };
+
+      $resp = rplprintf( $core->lang->{RDB_ITEM_INFO}, $rplvars );
     }
 
     when ("search") {
