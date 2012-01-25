@@ -356,7 +356,43 @@ sub _cmd_rdb {
     }
     
     when ("del") {
-      ## FIXME item del
+      my ($rdb, $item_idx) = @message;
+      return 'Syntax: rdb del <RDB> <index number>'
+        unless $rdb and $item_idx;
+      my $retval = $self->_delete_item($rdb, $item_idx, $username);
+      if      ($retval eq RDB_NOSUCH) {
+        $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+          }
+        );
+      } elsif ($retval eq RDB_NOSUCH_ITEM) {
+        $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $item_idx,
+          }
+        );
+      } elsif ($retval eq RDB_ALREADY_DELETED) {
+        $resp = rplprintf( $core->lang->{RDB_ERR_ITEM_DELETED},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $item_idx,
+          }
+        );
+      } else {
+        ## should've gotten old item hash back
+        $resp = rplprintf( $core->lang->{RDB_ITEM_DELETED},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $item_idx,
+          }
+        );
+      }
     }
 
     when ("info") {

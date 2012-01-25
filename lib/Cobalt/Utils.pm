@@ -104,14 +104,14 @@ sub glob_to_re_str {
     if ($first) {
       if ($_ eq '^') {
         $re .= '^' ;
-        next;
+        next
       }
       $first = 0;
     ## So is trailing $ (end):
     } elsif ($last) {
       if ($_ eq '$') {
         $re .= '$' ;
-        last;
+        last
       }
     }
 
