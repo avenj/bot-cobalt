@@ -227,7 +227,6 @@ sub _cmd_rdb {
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
-  ## FIXME 'searchidx' to get a (truncated) list of matching indexes?
   my @handled = qw/
     add
     del
@@ -235,6 +234,7 @@ sub _cmd_rdb {
     dbdel
     info
     search
+    searchidx
   /;
 
   my $cmd = lc(shift @message || '');
@@ -246,11 +246,13 @@ sub _cmd_rdb {
   }
   
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
-  my $required_levs = $pcfg->{RequiredLevels} // { };
+  my $required_levs = $pcfg->{RequiredLevels} // {};
   my %access_levs = (
-    info => $pcfg->{RequiredLevels}->{rdb_info} // 0,
-    dbadd  => $pcfg->{RequiredLevels}->{rdb_create} // 9999,
-    dbdel  => $pcfg->{RequiredLevels}->{rdb_delete} // 9999,
+    info   => $required_levs->{rdb_info} // 0,
+    dbadd  => $required_levs->{rdb_create} // 9999,
+    dbdel  => $required_levs->{rdb_delete} // 9999,
+    add    => $required_levs->{rdb_add_item} // 2,
+    del    => $required_levs->{rdb_del_item} // 3,
   );
   
   my $context  = $msg_h->{context};
@@ -400,7 +402,37 @@ sub _cmd_rdb {
       my ($rdb, $idx) = @message;
       return 'Syntax: rdb info <RDB> <index number>'
         unless $rdb and $idx;
-      ## FIXME
+      unless (exists $self->{RDB}->{$rdb}) {
+        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+          }
+        );
+      }
+
+      unless (exists $self->{RDB}->{$rdb}->{$idx}) {
+        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $idx,
+          }
+        );
+      }
+        
+      if (defined $self->{RDB}->{$rdb}->{$idx}->{DeletedAt}) {
+        return rplprintf( $core->lang->{RDB_ERR_ITEM_DELETED},
+          {
+            nick => $nickname,
+            rdb  => $rdb,
+            index => $idx,
+          }
+        );
+      }
+      
+      ## FIXME grab info and send RPL
+
     }
 
     when ("search") {
@@ -408,9 +440,18 @@ sub _cmd_rdb {
       ## parse, call _cmd_randq and just pass off to that
       my ($rdb, $str) = @message;
       $str = '*' unless $str;
-      return "Syntax: rdb search <RDB> <string>" unless $rdb;
+      return 'Syntax: rdb search <RDB> <string>' unless $rdb;
 
       $resp = $self->_cmd_randq([], $msg_h, 'rdb', $rdb, $str)
+    }
+    
+    when ("searchidx") {
+      my ($rdb, $str) = @message;
+      return 'Syntax: rdb searchidx <RDB> <string>' 
+        unless $rdb and $str;
+      my @indexes = $self->_search($str, $rdb);
+      $indexes[0] = "NONE" unless @indexes;
+      $resp = "First 20 matches: ".join('  ', @indexes);
     }
 
   }
@@ -525,6 +566,7 @@ sub _add_item {
   }
 
   my @indexes = sort {$a<=>$b} keys %{ $self->{RDB}->{$rdb} };
+  @indexes = ('0') unless @indexes;
   my $index = (pop @indexes) + 1;
 
   $self->{RDB}->{$rdb}->{$index} = {
