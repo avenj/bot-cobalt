@@ -14,13 +14,14 @@ our $VERSION = '0.10';
 ##
 ## Uses YAML for serializing to on-disk storage.
 ##
-## $infodb = {
-##   trigger => $regex
-##   response => $string
-##
+## $infodb->{$glob} = {
+##   Regex => $regex_from_glob
+##   Response => $string
+##   AddedBy => $username,
+##   AddedAt => time,
 ## };
 ##
-## Handles variable replacement
+## Handles darkbot-style variable replacement
 
 ## FIXME build on-disk db indexed by regex (DBM::Deep?)
 ##  in-memory; build regexes out of glob syntax (using Cobalt::Utils::glob_to_re_str)
@@ -29,13 +30,15 @@ our $VERSION = '0.10';
 ## NOTE that glob_to_re_str doesn't start/end anchor on its own
 ##  will need to add anchors
 
+## FIXME support legacy or rplprintf-style vars based on config Opt ...?
+
 use 5.12.1;
 use strict;
 use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-use Cobalt::Utils qw/ color rplprintf /;
+use Cobalt::Utils qw/ :ALL /;
 use Cobalt::Serializer;
 
 ## retval constants
@@ -59,13 +62,18 @@ sub Cobalt_register {
     ],
   );
 
+  ## Compiled maps compiled REs to globs in Info
+  $self->{Compiled} = { };
+  ## it's automatically created when the db is read here:
+  $self->{Info} = $self->_rw_db('read');
+
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = @_;
-  $core->log->info("Unregistering core IRC plugin");
+  $core->log->info("Unregistering Info plugin");
   return PLUGIN_EAT_NONE
 }
 
@@ -78,6 +86,8 @@ sub Bot_public_msg {
   ## if this is a !cmd, discard it:
   return PLUGIN_EAT_NONE if $msg->{cmdprefix};
 
+  ## FIXME check against hash of globs (in _match?)
+  ## format and send response (via info3_relay_string ..?)
 
   return PLUGIN_EAT_NONE
 }
@@ -91,6 +101,12 @@ sub Bot_info3_relay_string {
 
   ## received from RDB when handing off ~rdb topics
   ## FIXME _info_format and send
+  
+  return PLUGIN_EAT_NONE unless $string;
+  
+  my $resp = $self->_info_format($context, $nick, $channel, $string);
+
+  $core->send_event('send_message', $context, $channel, $string);
 
   return PLUGIN_EAT_NONE
 }
@@ -123,16 +139,18 @@ sub _info_search {
 }
 
 sub _info_match {
-  ## FIXME get entire msg .. ?
-  ## see if text matches
-  ## if topic contains a rdb, send rdb_triggered to talk to RDB.pm
+  ## see if text matches a glob in hash
+  ## if so retrieve string from db and return it
+  
 }
 
+
+# Variable replacement / format
 sub _info_format {
   my ($self, $context, $nick, $channel, $str) = @_;
   ## variable replacement for responses
   ## some of these need to pull info from context
-  ## FIXME reference cobalt1 set
+  ## maintains oldschool darkbot6 variable format
   my $core = $self->{core};
   my $website = $core->url;
   
@@ -169,25 +187,55 @@ sub _info_format {
   }
 
   ## var replace kinda like rplprintf
-  ## maintains darkbot legacy syntax
-  sub _info3repl {
-    my ($orig, $match, $vars) = @_;
-    return $orig unless defined $vars->{$match};
-    return $vars->{$match}
-  }
+  ## call _info3repl()
   my $re = qr/((\S)~)/;
-  $str =~ s/$re/_info3repl($1, $2, $vars)/ge;
+  $str =~ s/$re/__info3repl($1, $2, $vars)/ge;
   return $str
 }
-
-
-### Serialization
-
-sub _write_infodb {
-
+sub __info3repl {
+  my ($orig, $match, $vars) = @_;
+  return $orig unless defined $vars->{$match};
+  return $vars->{$match}
 }
 
-sub _read_infodb {
+
+sub _rw_db {
+   ## _rw_db('read')   _rw_db('write')
+  my ($self, $op) = @_;
+  return unless $op and $op ~~ [ qw/read write/ ];
+  my $core = $self->{core};
+  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $serializer = Cobalt::Serializer->new;
+  my $var = $core->var;
+  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 'db/info3.yml';
+  my $dbpath = $var ."/". $relative_to_var;
+  given ($op) {
+  
+    when ("read") {
+      my $db = $serializer->readfile($dbpath);
+      if ($db && ref $db eq 'HASH') {
+        ## compile into case-insensitive regexes
+        for my $glob (keys %$db) {
+          my $re = $db->{$glob}->{Regex} // glob_to_re_str($glob);
+          $re = qr{$re}i;
+          $self->{Compiled}->{$re} = $glob;
+        }
+        return $db
+      } else {
+        $core->log->warn("Could not read info3 DB.");
+        $core->log->warn("Creating new info3 . . . ");
+        return {}
+      }
+    }
+    
+    when ("write") {
+      my $ref = $self->{InfoHash};
+      return 1 if $serializer->writefile($dbpath, $ref);
+      $core->log->warn("Serializer failure, could not write $dbpath");
+      return
+    }
+
+  }
 
 }
 
