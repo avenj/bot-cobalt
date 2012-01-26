@@ -25,6 +25,8 @@ use Cobalt::Serializer;
 
 use Cobalt::Utils qw/ :ALL /;
 
+use IRC::Utils qw/ decode_irc /;
+
 use constant {
   SUCCESS => 1,
 
@@ -53,7 +55,7 @@ sub Cobalt_register {
     ],
   );  
 
-  ## Read in serialized rdb
+  ## Read in serialized rdb (or create one)
   my $db = $self->_read_db || { main => { } };
   $self->{RDB} = $db;
 
@@ -160,6 +162,7 @@ sub _cmd_randstuff {
 
   ## should have just the randstuff itself now (and maybe a different rdb):
   my $randstuff_str = join ' ', @message;
+  $randstuff_str = decode_irc($randstuff_str);
 
   unless ($randstuff_str) {
     return rplprintf( $core->lang->{RDB_ERR_NO_STRING},
@@ -349,7 +352,7 @@ sub _cmd_rdb {
     when ("add") {
       my ($rdb, $item) = @message;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
-      my $retval = $self->_add_item($rdb, $item, $username);
+      my $retval = $self->_add_item($rdb, decode_irc($item), $username);
       if ($retval eq RDB_NOSUCH) {
         $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
           {
