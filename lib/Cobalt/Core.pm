@@ -62,6 +62,12 @@ has 'version' => (
   default => $VERSION,
 );
 
+has 'url' => (
+  is  => 'ro',
+  isa => 'Str',
+  default => "http://www.cobaltirc.org",
+);
+
 has 'lang' => (
   ## should read $Language.yml out of etc/langs
   ## shouldfix; need some kind of schema ..
