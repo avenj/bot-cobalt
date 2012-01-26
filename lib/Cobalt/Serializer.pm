@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use 5.12.1;
 use strict;
@@ -51,7 +51,7 @@ sub new {
     }
   }
 
-  $self->{Format} = $args{Format} ? uc($args{Format}) : 'YAML' ;
+  $self->{Format} = $args{Format} ? uc($args{Format}) : 'YAMLXS' ;
 
   unless ($self->{Format} ~~ [ keys Modules ]) {
     croak "unknown format $self->{Format} specified";
@@ -182,14 +182,12 @@ sub _dump_yamlxs {
   ## turn data into YAML1.1
   require YAML::XS;
   my $yaml = YAML::XS::Dump($data);
-  utf8::decode($yaml);
   return $yaml;
 }
 
 sub _load_yamlxs {
   my ($self, $yaml) = @_;
   require YAML::XS;
-  utf8::encode($yaml);
   my $data = YAML::XS::Load($yaml);
   return $data;
 }
@@ -224,7 +222,7 @@ sub _read_serialized {
 
   open(my $in_fh, '<', $path)
     or ($self->_log("open failed for $path: $!") and return);
-
+  
   if ($lock) {
     flock($in_fh, LOCK_SH)  # blocking call
     or ($self->_log("LOCK_SH failed for $path: $!") and return);
@@ -240,6 +238,8 @@ sub _read_serialized {
   close($in_fh)
     or $self->_log("close failed for $path: $!");
 
+  utf8::encode($data);
+
   return $data;
 }
 
@@ -251,6 +251,8 @@ sub _write_serialized {
   if (defined $opts && ref $opts eq 'HASH') {
     $lock = $opts->{Locking} if defined $opts->{Locking};
   }
+  
+  utf8::decode($data);
 
   open(my $out_fh, '>>', $path)
     or ($self->_log("open failed for $path: $!") and return);
