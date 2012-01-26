@@ -51,7 +51,7 @@ sub rplprintf {
   sub _repl {
     ## _repl($1, $2, $vars)
     my ($orig, $match, $vars) = @_;
-    return $orig unless defined $vars->{$match};
+    return $orig unless ref $vars and defined $vars->{$match};
     my $replace = $vars->{$match};
     return $replace
   }
