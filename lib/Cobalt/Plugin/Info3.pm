@@ -218,6 +218,7 @@ sub _rw_db {
         for my $glob (keys %$db) {
           my $re = $db->{$glob}->{Regex} // glob_to_re_str($glob);
           $re = qr{$re}i;
+          ## FIXME break into eventy loop?
           $self->{Compiled}->{$re} = $glob;
         }
         return $db
@@ -229,7 +230,7 @@ sub _rw_db {
     }
     
     when ("write") {
-      my $ref = $self->{InfoHash};
+      my $ref = $self->{Info};
       return 1 if $serializer->writefile($dbpath, $ref);
       $core->log->warn("Serializer failure, could not write $dbpath");
       return

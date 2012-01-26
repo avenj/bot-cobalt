@@ -1,16 +1,19 @@
 #!/usr/bin/env perl
-
+use strict;
+use warnings;
 use Module::Build;
 
 my $class = Module::Build->subclass(
   class => 'Cobalt::Builder',
   code => q{
+
     sub ACTION_release {
       my $self = shift;
       $self->dispatch('buildinst');
       $self->dispatch('wikidocs');
       ## FIXME packaging?
     }
+
     sub ACTION_wikidocs {
       my $self = shift;
       my $base = $self->base_dir;
@@ -28,10 +31,12 @@ my $class = Module::Build->subclass(
       );
       chdir($base);
     }
+
     sub ACTION_buildinst {
       my $self = shift;
       $self->do_system(qw{tools/release/create_installer});
     }
+
   },
 );
 
