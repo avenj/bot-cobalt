@@ -11,7 +11,7 @@ use 5.12.1;
 use strict;
 use warnings;
 
-use Object::Pluggable::Constants qw/: ALL /;
+use Object::Pluggable::Constants qw/:ALL/;
 
 use POE;
 use POE::Component::Client::HTTP;
@@ -21,17 +21,14 @@ use HTTP::Response;
 
 use URI::Escape;
 
-sub new {
-  my $self = {};
-  my $class = shift;
-  $self->{ActiveReqs} = { };
-  bless $self, $class;
-  return $self
-}
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Creating HTTP client session . . .");
+
+  $self->{ActiveReqs} = { };
+  
   POE::Session->create(
     object_states => [
       $self => [
@@ -40,15 +37,24 @@ sub Cobalt_register {
     ],
   );
 
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+
+  my %htopts = (
+    Alias => 'httpUA',
+    Agent => 'Cobalt2 IRC bot '.$core->version,
+    Timeout => $pcfg->{Opts}->{Timeout} // 60,
+  );
+  
+  ## FIXME should we handle 302s and build a response chain ... ?
+  
+  $htopts{Proxy} = $pcfg->{Opts}->{Proxy} if $pcfg->{Opts}->{Proxy};
+  $htopts{BindAddr} = $pcfg->{Opts}->{BindAddr}
+    if $pcfg->{Opts}->{BindAddr};
+
   ## Client::HTTP exists as an external session
   ## spawn one called 'httpUA'
   POE::Component::Client::HTTP->spawn(
-    Alias => 'httpUA',
-    Agent => 'Cobalt2 IRC bot '.$core->version,
-    ## FIXME configurable bindaddr?
-    ## FIXME followredirects ?
-    ## FIXME proxy?
-    ## FIXME timeout?
+    %htopts
   );
   
   $core->log->info("Registered");
@@ -58,7 +64,8 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   ## FIXME cancel pending requests?
-  ##  post shutdown to httpUA?
+  ## post shutdown to httpUA:
+  $poe_kernel->post( 'httpUA', 'shutdown' );
   $core->log->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
@@ -88,9 +95,9 @@ sub Bot_www_request {
   } ## FIXME cancel existing job if req_id already exists
 
   $uri = uri_escape($uri);
-  
+
   my $request = HTTP::Request->new($method, $uri);
-  
+
   ## FIXME throttle jobs ?
 
   $self->{ActiveReqs}->{$req_id} = {
@@ -101,7 +108,9 @@ sub Bot_www_request {
   };
 
   ## post to httpUA, tagged with our id
-  $poe_kernel->post( 'httpUA', 'request', 'on_response', $request, $req_id );
+  $poe_kernel->post( 'httpUA',
+    'request', 'on_response', $request, $req_id
+  );
 
   return PLUGIN_EAT_NONE
 }
@@ -110,23 +119,39 @@ sub Bot_www_request {
 ## our session's handlers
 
 sub _handle_response {
+  ## Sends event back in the format:
+  ##  $event, $resp_content, $resp_obj, $specified_args
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($req, $resp) = @_[ARG0, ARG1];
   my $req_obj  = $req->[0];
   my $req_tag  = $req->[1];  ## $req_id passed in www_request's httpUA post
-  my $resp_obj = $resp->[0];
+  my $response = $resp->[0];
   
   my $core = $self->{core};
   
   ## this request is done, get its state hash
   my $stored_req = delete $self->{ActiveReqs}->{$req_tag};
-
-  my $plugin_ev   = $stored_req->{Event};
-  my $plugin_args = $stored_req->{EventArgs};
   
-  ## FIXME broadcast response back to plugin pipeline appropriately? 
-  ## use http::request's decoded_content ?
-  ## check X-PCCH-Errmsg for client errors to log ?
+  my $ht_content;
+  
+  if ($response->is_success) {
+    $ht_content = $response->decoded_content;
+  } else {
+    $core->log->warn("HTTP failure; ".$response->status_line);
+  }
+  
+  my $pcch_err = $response->header('X-PCCH-Errmsg');
+  if ($pcch_err) {
+    $core->log->warn("HTTP component reported an error; ".$pcch_err);  
+  }
+  
+  if ($ht_content) { 
+    my $plugin_ev   = $stored_req->{Event};
+    my $plugin_args = $stored_req->{EventArgs};
+    ## throw event back at the plugin pipeline:
+    $core->send_event( $plugin_ev, $ht_content, $response, $plugin_args );
+  }
+  
 
 }
 
