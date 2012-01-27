@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use 5.12.1;
 use strict;
@@ -9,6 +9,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use HTTP::Request;
 use URI::Escape;
+
+use LWP::UserAgent;
 
 sub new { bless {}, shift }
 
@@ -21,6 +23,7 @@ sub Cobalt_register {
       'public_cmd_shorten',
       'public_cmd_long',
       'public_cmd_lengthen',
+      'shorten_response_recv',
     ],
   );
   $core->log->info("Loaded, cmds: !short / !long <url>");
@@ -41,7 +44,22 @@ sub Cobalt_public_cmd_short {
   my @message = @{ $msg->{message_array} };
   my $url = shift @message if @message;
   $url = uri_escape($url); ## FIXME utf8 escapes ?
-  $self->_request_shorturl($url, $context, $channel, $nick);
+
+  ## FIXME
+  ## cheap blocking hack whilest I fuck around with async http approaches
+  my $ua = LWP::UserAgent->new(
+    timeout      => 5,
+    max_redirect => 0,
+    agent => 'cobalt2',
+  );
+  my $shorturl = $ua->post('http://metamark.net/api/rest/simple',
+    [ long_url => $url ] )->content;
+  if ($shorturl) {
+    $shorturl = "shorturl for ${nick}: $shorturl";
+    $core->send_event( 'send_message', $context, $channel, $shorturl );
+  }
+  
+#  $self->_request_shorturl($url, $context, $channel, $nick);
   return PLUGIN_EAT_NONE
 }
 
@@ -79,9 +97,10 @@ sub Bot_shorten_response_recv {
 sub _request_shorturl {
   my ($self, $url, $context, $channel, $nick) = @_;
   my $core = $self->{core};
+  ## FIXME
   my $request = HTTP::Request->new(
   'POST', "http://metamark.net/api/rest/simple",
-    [ 'long_url' => $url ]
+    [ ], "long_url=".$url,
   );
   $core->send_event( 'www_request',
     $request,

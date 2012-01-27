@@ -14,6 +14,7 @@ use Object::Pluggable::Constants qw/:ALL/;
 
 use POE;
 use POE::Session;
+use POE::Component::Client::keepalive;
 use POE::Component::Client::HTTP;
 
 use HTTP::Request;
@@ -45,14 +46,15 @@ sub Cobalt_register {
 }
 
 sub _shutdown {
-  $_[OBJECT]->{core}->log->info("POE Session shutdown.");
+  $_[OBJECT]->{core}->log->info("Session shutdown.");
   $_[KERNEL]->post('httpUA' => 'shutdown');
   $_[KERNEL]->alias_remove('WWW');
+  $_[OBJECT]->{core}->log->debug("cleanup finished");
 }
 
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  $poe_kernel->alias_set('WWW');
+  $kernel->alias_set('WWW');
   my $core = $self->{core};
   $core->log->debug("POE session spawned.");
 
@@ -70,9 +72,14 @@ sub _start {
   $htopts{BindAddr} = $pcfg->{Opts}->{BindAddr}
     if $pcfg->{Opts}->{BindAddr};
 
+  my $pool = POE::Component::Client::Keepalive->new(
+    keep_alive = 1,
+  );
+
   ## Client::HTTP exists as an external session
   ## spawn one called 'httpUA'
   POE::Component::Client::HTTP->spawn(
+    ConnectionManager => $pool,
     %htopts
   );
   
@@ -83,7 +90,7 @@ sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   ## post shutdown to httpUA:
 #  $poe_kernel->post( 'httpUA', 'shutdown' );
-  $poe_kernel->post( 'WWW', 'shutdown' );
+  $poe_kernel->post( 'WWW', '_stop' );
   ## FIXME refcount_decrement our own session ... ?
   ## probably not necessary.
   $core->log->info("Unregistered");
