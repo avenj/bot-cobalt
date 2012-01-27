@@ -23,6 +23,7 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
+  $self->{core} = $core;
   $core->log->info("Creating HTTP client session . . .");
   $self->{ActiveReqs} = { };
   $core->plugin_register( $self, 'SERVER',
@@ -33,20 +34,20 @@ sub Cobalt_register {
     object_states => [
       $self => [
         '_start' => '_init_ua',
-        on_response => '_handle_response',
+        'on_response' => '_handle_response',
       ],
     ],
   );
-
-  $core->log->debug("POE session spawned.");
   
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 
-sub _start {
+sub _init_ua {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $core = $self->{core};
+  $core->log->debug("POE session spawned.");
+
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   my %htopts = (
