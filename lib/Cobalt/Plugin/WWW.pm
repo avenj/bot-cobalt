@@ -1,9 +1,8 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 ## async http with responses pushed to plugin pipeline
-## set event to trigger and some args on spawn?
-## send response to pipeline via that event with args attached?
+## send response to pipeline via that event with args attached
 ##
 ## rather simplistic, could use improvement
 
@@ -155,5 +154,76 @@ sub _handle_response {
 
 }
 
-
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::WWW - asynchronous HTTP plugin
+
+=head1 SYNOPSIS
+
+  ## (inside a command handler, perhaps)
+  ## send off a HTTP request:
+  $core->send_event( 'www_request', $method, $uri, $event, $args );
+  ## f.ex:
+  $core->send_event( 'www_request',
+    'GET', $url, 'myplugin_got_resp',
+    [ $some_arg, $some_other_arg ],
+  );
+  
+  ## handle event myplugin_got_resp:
+  sub Bot_myplugin_got_resp {
+    my ($self, $core) = splice @_, 0, 2;
+    ## First arg is decoded content:
+    my $decoded_content = ${ $_[0] };
+    ## Second arg is the HTTP::Response object:
+    my $response_obj = ${ $_[1] };
+    ## The rest are the args passed in via www_request:
+    my $some_arg = ${ $_[2] };
+    # ..etc...
+    return PLUGIN_EAT_ALL
+  }
+
+=head1 DESCRIPTION
+
+The B<WWW> plugin provides an asynchronous HTTP interface that is 
+automatically connected to the plugin event pipeline.
+
+That is to say, a plugin can fire off a B<www_request> event:
+
+  $core->send_event( 'www_request',
+    'GET', $url, 'myplugin_got_resp',
+    [ $context, $channel, $user ]
+  );
+
+The request will be handled asynchronously via L<POE::Component::Client::HTTP>.
+
+When a response is ready, it'll be relayed to the plugin pipeline so your 
+plugin can register to receive and handle it. See the sample code in the 
+SYNOPSIS for a simple handler. The first argument is the decoded content, 
+the second argument is the L<HTTP::Response> object itself, which you may 
+need for more complicated processing.
+
+An array reference containing arguments can be passed to B<www_request>. 
+The arguments will be relayed as arguments to the "handler" event that is 
+broadcast upon successful completion. This can be convenient for attaching 
+some kind of context information to responses.
+
+Check out the B<Extras::Shorten> plugin to see how this works in action.
+
+As of this writing, this plugin is fairly simplistic and does not fail 
+especially well -- it'll log the failure and broadcast nothing. Look into 
+using the POE component directly for more complicated applications.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+Part of the core Cobalt2 plugin set.
+
+http://www.cobaltirc.org
+
+=cut
