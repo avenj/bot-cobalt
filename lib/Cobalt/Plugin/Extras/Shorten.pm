@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use 5.12.1;
 use strict;
@@ -36,9 +36,10 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-sub Cobalt_public_cmd_short {
+sub Bot_public_cmd_short {
   my ($self, $core) = splice @_, 0, 2;
-  my ($context, $msg) = (${$_[0]}, ${$_[1]});
+  my $context = ${ $_[0] };
+  my $msg = ${ $_[1] };
   my $nick    = $msg->{src_nick};
   my $channel = $msg->{channel};
   my @message = @{ $msg->{message_array} };
@@ -63,18 +64,18 @@ sub Cobalt_public_cmd_short {
   return PLUGIN_EAT_NONE
 }
 
-sub Cobalt_public_cmd_shorten {
- Cobalt_public_cmd_short(@_);
+sub Bot_public_cmd_shorten {
+ Bot_public_cmd_short(@_);
 }
 
-sub Cobalt_public_cmd_long {
+sub Bot_public_cmd_long {
   my ($self, $core) = splice @_, 0, 2;
   ## FIXME
   return PLUGIN_EAT_NONE
 }
 
-sub Cobalt_public_cmd_lengthen {
-  Cobalt_public_cmd_long(@_);
+sub Bot_public_cmd_lengthen {
+  Bot_public_cmd_long(@_);
 }
 
 
