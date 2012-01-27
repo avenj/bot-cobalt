@@ -15,6 +15,7 @@ etc/plugins.conf
 etc/plugins/games.conf
 etc/plugins/info3.conf
 etc/plugins/rdb.conf
+etc/plugins/www.conf
 lib/Cobalt/Conf.pm
 lib/Cobalt/Core.pm
 lib/Cobalt/IRC.pm
@@ -29,11 +30,13 @@ lib/Cobalt/Plugin/ChanMgr.pm
 lib/Cobalt/Plugin/Extras/BanMgr.pm
 lib/Cobalt/Plugin/Extras/Calc.pm
 lib/Cobalt/Plugin/Extras/Debug.pm
+lib/Cobalt/Plugin/Extras/Deparse.pm
 lib/Cobalt/Plugin/Extras/Ignore.pm
 lib/Cobalt/Plugin/Extras/Karma.pm
 lib/Cobalt/Plugin/Extras/MultiServer.pm
 lib/Cobalt/Plugin/Extras/Relay.pm
 lib/Cobalt/Plugin/Extras/Shared.pm
+lib/Cobalt/Plugin/Extras/Shorten.pm
 lib/Cobalt/Plugin/Extras/TempConv.pm
 lib/Cobalt/Plugin/FloodProtect.pm
 lib/Cobalt/Plugin/Games.pm
@@ -50,6 +53,7 @@ lib/Cobalt/Plugin/RDB.pm
 lib/Cobalt/Plugin/Rehash.pm
 lib/Cobalt/Plugin/User/.keep
 lib/Cobalt/Plugin/Version.pm
+lib/Cobalt/Plugin/WWW.pm
 lib/Cobalt/Serializer.pm
 lib/Cobalt/Utils.pm
 Makefile.PL

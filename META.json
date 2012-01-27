@@ -21,8 +21,13 @@
       },
       "runtime" : {
          "recommends" : {
+            "HTTP::Request" : 0,
+            "HTTP::Response" : 0,
+            "POE::Component::Client::HTTP" : "0.84",
             "POE::Component::SSLify" : "1.006",
-            "Term::ReadKey" : 0
+            "Term::ReadKey" : 0,
+            "URI::Escape" : 0,
+            "YAML::XS" : "0.34"
          },
          "requires" : {
             "Carp" : 0,
@@ -83,6 +88,10 @@
          "file" : "lib/Cobalt/Plugin/Extras/Debug.pm",
          "version" : "0.001"
       },
+      "Cobalt::Plugin::Extras::Deparse" : {
+         "file" : "lib/Cobalt/Plugin/Extras/Deparse.pm",
+         "version" : "1.0"
+      },
       "Cobalt::Plugin::Extras::Ignore" : {
          "file" : "lib/Cobalt/Plugin/Extras/Ignore.pm",
          "version" : "0.10"
@@ -90,6 +99,10 @@
       "Cobalt::Plugin::Extras::Karma" : {
          "file" : "lib/Cobalt/Plugin/Extras/Karma.pm",
          "version" : "0.01"
+      },
+      "Cobalt::Plugin::Extras::Shorten" : {
+         "file" : "lib/Cobalt/Plugin/Extras/Shorten.pm",
+         "version" : "0.02"
       },
       "Cobalt::Plugin::Extras::TempConv" : {
          "file" : "lib/Cobalt/Plugin/Extras/TempConv.pm",
@@ -147,9 +160,13 @@
          "file" : "lib/Cobalt/Plugin/Version.pm",
          "version" : "0.10"
       },
+      "Cobalt::Plugin::WWW" : {
+         "file" : "lib/Cobalt/Plugin/WWW.pm",
+         "version" : "0.02"
+      },
       "Cobalt::Serializer" : {
          "file" : "lib/Cobalt/Serializer.pm",
-         "version" : "0.12"
+         "version" : "0.13"
       },
       "Cobalt::Utils" : {
          "file" : "lib/Cobalt/Utils.pm",

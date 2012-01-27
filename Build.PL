@@ -98,9 +98,17 @@ my $build = $class->new(
   recommends => {
     ### POE::
       'POE::Component::SSLify' => '1.006',
+
     ### Utils / misc
       # terminal interaction
       'Term::ReadKey' => 0,
+      
+      # http
+      'HTTP::Request'  => 0,
+      'HTTP::Response' => 0,
+      'URI::Escape'    => 0,
+      'POE::Component::Client::HTTP' => '0.84',
+
     ### Serialization
       'YAML::XS' => '0.34',
 
