@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use 5.12.1;
 use strict;
@@ -15,6 +15,14 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+  $core->plugin_register( $self, 'SERVER',
+    [
+      'public_cmd_short',
+      'public_cmd_shorten',
+      'public_cmd_long',
+      'public_cmd_lengthen',
+    ],
+  );
   $core->log->info("Loaded, cmds: !short / !long <url>");
   return PLUGIN_EAT_NONE
 }
@@ -67,7 +75,6 @@ sub Bot_shorten_response_recv {
   
   return PLUGIN_EAT_ALL
 }
-
 
 sub _request_shorturl {
   my ($self, $url, $context, $channel, $nick) = @_;
