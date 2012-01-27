@@ -355,6 +355,7 @@ sub Conf_interactive {
   chomp $clearpwd;
   $cf->{AUTH_PASS} = mkpasswd($clearpwd || rand);
 
+  print "\n";
   say "This user needs at least one hostmask to match on.";
   say "For example: *avenj@*.oppresses.us";
   say "(You can add others to auth.conf later.)";

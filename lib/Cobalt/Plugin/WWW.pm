@@ -13,6 +13,7 @@ use warnings;
 use Object::Pluggable::Constants qw/:ALL/;
 
 use POE;
+use POE::Session;
 use POE::Component::Client::HTTP;
 
 use HTTP::Request;
@@ -23,8 +24,12 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Creating HTTP client session . . .");
-
   $self->{ActiveReqs} = { };
+  $core->plugin_register( $self, 'SERVER',
+    [
+      'www_request',
+    ],
+  );  
   
   POE::Session->create(
     object_states => [
@@ -34,11 +39,13 @@ sub Cobalt_register {
     ],
   );
 
+  $core->log->debug("POE session spawned.");
+
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   my %htopts = (
     Alias => 'httpUA',
-    Agent => 'Cobalt2 IRC bot '.$core->version,
+    Agent => 'Cobalt2 IRC bot',
     Timeout => $pcfg->{Opts}->{Timeout} // 60,
   );
   
@@ -54,11 +61,6 @@ sub Cobalt_register {
     %htopts
   );
 
-  $core->plugin_register( $self, 'SERVER',
-    [
-      'www_request',
-    ],
-  );  
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
