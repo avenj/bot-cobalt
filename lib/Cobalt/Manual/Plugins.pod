@@ -375,7 +375,7 @@ Retrieves the configuration hash for a specific plugin.
 The package name for the plugin must be specified.
 
 Returns a hashref that is a copy of the plugin's config, as found 
-in I<$core->cfg->{plugin_cf}->{__PACKAGE__}>
+in I<<$core->cfg->{plugin_cf}->{__PACKAGE__}>>
 
 Returns boolean false if there is no plugin configuration stored in 
 memory:

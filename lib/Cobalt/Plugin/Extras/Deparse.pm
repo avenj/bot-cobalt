@@ -2,7 +2,7 @@ package Cobalt::Plugin::Extras::Deparse;
 our $VERSION = '1.0';
 
 ## silly plugin to feed perl code to B::Deparse
-## handles: !deparse
+## handles and eats: !deparse
 
 use 5.12.1;
 use strict;

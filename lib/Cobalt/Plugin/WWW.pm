@@ -18,8 +18,6 @@ use POE::Component::Client::HTTP;
 use HTTP::Request;
 use HTTP::Response;
 
-use URI::Escape;
-
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -62,7 +60,6 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME cancel pending requests?
   ## post shutdown to httpUA:
   $poe_kernel->post( 'httpUA', 'shutdown' );
   $core->log->info("Unregistered");
@@ -73,16 +70,23 @@ sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
 
   ## SERVER event:
-  ##  'www_request', $method, $uri, $event, $args
-  ## build HTTP::Request obj and post to httpUA
+  ##  'www_request', $request, $event, $args
+  ## $request should be a HTTP::Request
+  ## bridges async http and our plugin pipeline
 
-  my $method = ${ $_[0] };  ## POST, GET, ...
-  my $uri    = ${ $_[1] };  ## URI, will be uri_escape'd
-  my $event  = ${ $_[2] };  ## pipeline event to send
-  my $ev_arg = ${ $_[3] };  ## arrayref to attach as args, optional
-  my $req_id = ${ $_[4] };  ## ID for this job, optional
+  my $request = ${ $_[0] };  ## HTTP::Request obj
+  my $event  = ${ $_[1] };  ## pipeline event to send
+  my $ev_arg = ${ $_[2] };  ## arrayref to attach as args, optional
+  my $req_id = ${ $_[3] };  ## ID for this job, optional
   
-  return PLUGIN_EAT_NONE unless $method and $uri;
+  return PLUGIN_EAT_NONE unless $request;
+  
+  unless (ref $request) {
+    ## passed a string request?
+    ## try to create a request, no promises:
+    $request = HTTP::Request->parse($request);
+    ## FIXME catch errors?
+  }
   
   $ev_arg = [ ] unless $ev_arg;
   
@@ -91,13 +95,8 @@ sub Bot_www_request {
     do {
       $req_id = join '', map { $p[rand@p] } 1 .. 5;
     } while exists $self->{ActiveReqs}->{$req_id};
-  } ## FIXME cancel existing job if req_id already exists
+  } ## FIXME cancel existing job if req_id already exists?
 
-  $uri = uri_escape($uri);
-
-  my $request = HTTP::Request->new($method, $uri);
-
-  ## FIXME throttle jobs ?
 
   $self->{ActiveReqs}->{$req_id} = {
     String => $request->as_string,
@@ -150,7 +149,6 @@ sub _handle_response {
     ## throw event back at the plugin pipeline:
     $core->send_event( $plugin_ev, $ht_content, $response, $plugin_args );
   }
-  
 
 }
 
@@ -167,11 +165,16 @@ Cobalt::Plugin::WWW - asynchronous HTTP plugin
 
   ## (inside a command handler, perhaps)
   ## send off a HTTP request:
-  $core->send_event( 'www_request', $method, $uri, $event, $args );
+  $core->send_event( 'www_request', $request, $event, $args );
   ## f.ex:
-  $core->send_event( 'www_request',
-    'GET', $url, 'myplugin_got_resp',
-    [ $some_arg, $some_other_arg ],
+  my $request = HTTP::Request->new('POST', $url);
+  ## Note that content() should be BYTES
+  ## (see perldoc Encode)
+  $request->content("key => value");
+  $core->send_event( 'www_request', 
+    $request,
+    'myplugin_resp',
+    [ $some_arg, $some_other_arg ] 
   );
   
   ## handle event myplugin_got_resp:
@@ -181,9 +184,9 @@ Cobalt::Plugin::WWW - asynchronous HTTP plugin
     my $decoded_content = ${ $_[0] };
     ## Second arg is the HTTP::Response object:
     my $response_obj = ${ $_[1] };
-    ## The rest are the args passed in via www_request:
-    my $some_arg = ${ $_[2] };
-    # ..etc...
+    ## Third arg is usually arguments in an arrayref:
+    my $argref = ${ $_[2] };
+
     return PLUGIN_EAT_ALL
   }
 
@@ -194,8 +197,9 @@ automatically connected to the plugin event pipeline.
 
 That is to say, a plugin can fire off a B<www_request> event:
 
+  my $request = HTTP::Request->new('GET', $url);
   $core->send_event( 'www_request',
-    'GET', $url, 'myplugin_got_resp',
+    $request, 'myplugin_got_resp',
     [ $context, $channel, $user ]
   );
 
@@ -203,14 +207,15 @@ The request will be handled asynchronously via L<POE::Component::Client::HTTP>.
 
 When a response is ready, it'll be relayed to the plugin pipeline so your 
 plugin can register to receive and handle it. See the sample code in the 
-SYNOPSIS for a simple handler. The first argument is the decoded content, 
+SYNOPSIS for a simple handler. The first argument is the decoded content; 
 the second argument is the L<HTTP::Response> object itself, which you may 
 need for more complicated processing.
 
-An array reference containing arguments can be passed to B<www_request>. 
+An reference containing arguments can be passed to B<www_request>. 
 The arguments will be relayed as arguments to the "handler" event that is 
 broadcast upon successful completion. This can be convenient for attaching 
-some kind of context information to responses.
+some kind of context information to responses, so you can relay them back to 
+IRC or similar..
 
 Check out the B<Extras::Shorten> plugin to see how this works in action.
 

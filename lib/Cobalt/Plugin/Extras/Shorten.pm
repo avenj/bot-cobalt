@@ -1,15 +1,20 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-use LWP::Simple qw/$ua get/;
-use URI::Escape qw/uri_escape/;
+use 5.12.1;
+use strict;
+use warnings;
+
+use Object::Pluggable::Constants qw/ :ALL /;
+
+use HTTP::Request;
+use URI::Escape;
 
 sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
-  $ua->agent("cobalt2 shorten plugin");
   $core->log->info("Loaded, cmds: !short / !long <url>");
   return PLUGIN_EAT_NONE
 }
@@ -23,12 +28,12 @@ sub Cobalt_unregister {
 sub Cobalt_public_cmd_short {
   my ($self, $core) = splice @_, 0, 2;
   my ($context, $msg) = (${$_[0]}, ${$_[1]});
+  my $nick    = $msg->{src_nick};
   my $channel = $msg->{channel};
   my @message = @{ $msg->{message_array} };
   my $url = shift @message if @message;
-  my $short = $self->_shorturl($url) if $url;
-  $core->send_event('send_message', $context, $channel,
-    "- short url: $url") if $short;
+  $url = uri_escape($url); ## FIXME utf8 escapes ?
+  $self->_request_shorturl($url, $context, $channel, $nick);
   return PLUGIN_EAT_NONE
 }
 
@@ -38,13 +43,7 @@ sub Cobalt_public_cmd_shorten {
 
 sub Cobalt_public_cmd_long {
   my ($self, $core) = splice @_, 0, 2;
-  my ($context, $msg) = (${$_[0]}, ${$_[1]});
-  my $channel = $msg->{channel};
-  my @message = @{ $msg->{message_array} };
-  my $url = shift @message if @message;
-  my $long = $self->_longurl($url) if $url;
-  $core->send_event('send_message', $context, $channel,
-    "- long url: $url") if $long;
+  ## FIXME
   return PLUGIN_EAT_NONE
 }
 
@@ -53,18 +52,33 @@ sub Cobalt_public_cmd_lengthen {
 }
 
 
-sub _shorturl {
-  my ($self, $url) = @_;
-  $url = uri_escape($url);
-  my $short = $ua->post("http://metamark.net/api/rest/simple",
-    { long_url => $url })->content;
-  return $short
+sub Bot_shorten_response_recv {
+  my ($self, $core) = splice @_, 0, 2;
+  ## handler for received shorturls
+  my $shorturl = ${ $_[0] }; 
+  my $args = ${ $_[2] };
+  my ($context, $channel, $nick) = @$args;
+
+  $core->send_event( 'send_message', $context, $channel,
+    "shorturl for ${nick}: ${shorturl}",
+  );
+  
+  return PLUGIN_EAT_ALL
 }
 
-sub _longurl {
-  my ($self, $url) = @_;
-  my $long = get("http://metamark.net/api/rest/simple?short_url=$url"), "\n";
-  return $long
+
+sub _request_shorturl {
+  my ($self, $url, $context, $channel, $nick) = @_;
+  my $core = $self->{core};
+  my $request = HTTP::Request->new(
+  'POST', "http://metamark.net/api/rest/simple",
+    [ 'long_url' => $url ]
+  );
+  $core->send_event( 'www_request',
+    $request,
+    'shorten_response_recv',
+    [ $context, $channel, $nick ],
+  );
 }
 
 1;
