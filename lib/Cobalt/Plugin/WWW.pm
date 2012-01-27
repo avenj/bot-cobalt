@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 ## async http with responses pushed to plugin pipeline
 ## send response to pipeline via that event with args attached
@@ -32,10 +32,11 @@ sub Cobalt_register {
 
   POE::Session->create(
     object_states => [
-      $self => [
-        '_start' => '_init_ua',
+      $self => {
+        '_start' => '_start',
+        '_stop'  => '_shutdown',
         'on_response' => '_handle_response',
-      ],
+      },
     ],
   );
   
@@ -43,8 +44,15 @@ sub Cobalt_register {
   return PLUGIN_EAT_NONE
 }
 
-sub _init_ua {
+sub _shutdown {
+  $_[OBJECT]->{core}->log->info("POE Session shutdown.");
+  $_[KERNEL]->post('httpUA' => 'shutdown');
+  $_[KERNEL]->alias_remove('WWW');
+}
+
+sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  $poe_kernel->alias_set('WWW');
   my $core = $self->{core};
   $core->log->debug("POE session spawned.");
 
@@ -74,7 +82,8 @@ sub _init_ua {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   ## post shutdown to httpUA:
-  $poe_kernel->post( 'httpUA', 'shutdown' );
+#  $poe_kernel->post( 'httpUA', 'shutdown' );
+  $poe_kernel->post( 'WWW', 'shutdown' );
   ## FIXME refcount_decrement our own session ... ?
   ## probably not necessary.
   $core->log->info("Unregistered");
@@ -112,6 +121,7 @@ sub Bot_www_request {
     } while exists $self->{ActiveReqs}->{$req_id};
   } ## FIXME cancel existing job if req_id already exists?
 
+  $core->log->debug("httpUA req; $req_id -> $event");
 
   $self->{ActiveReqs}->{$req_id} = {
     String => $request->as_string,
@@ -121,7 +131,7 @@ sub Bot_www_request {
   };
 
   ## post to httpUA, tagged with our id
-  $poe_kernel->post( 'httpUA',
+  $poe_kernel->post( 'httpUA' =>
     'request', 'on_response', $request, $req_id
   );
 
@@ -141,6 +151,8 @@ sub _handle_response {
   my $response = $resp->[0];
   
   my $core = $self->{core};
+
+  $core->log->debug("handling httpUA response for $req_tag");
   
   ## this request is done, get its state hash
   my $stored_req = delete $self->{ActiveReqs}->{$req_tag};
@@ -148,6 +160,7 @@ sub _handle_response {
   my $ht_content;
   
   if ($response->is_success) {
+    $core->log->debug("successful httpUA request");
     $ht_content = $response->decoded_content;
   } else {
     $core->log->warn("HTTP failure; ".$response->status_line);
@@ -163,6 +176,8 @@ sub _handle_response {
     my $plugin_args = $stored_req->{EventArgs};
     ## throw event back at the plugin pipeline:
     $core->send_event( $plugin_ev, $ht_content, $response, $plugin_args );
+  } else {
+    $core->log->debug("handled response for $req_tag but no content");
   }
 
 }
