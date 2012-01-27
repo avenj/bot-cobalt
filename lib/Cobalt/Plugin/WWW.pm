@@ -53,7 +53,12 @@ sub Cobalt_register {
   POE::Component::Client::HTTP->spawn(
     %htopts
   );
-  
+
+  $core->plugin_register( $self, 'SERVER',
+    [
+      'www_request',
+    ],
+  );  
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
