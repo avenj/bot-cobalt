@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 ## async http with responses pushed to plugin pipeline
 ## send response to pipeline via that event with args attached
@@ -26,21 +26,27 @@ sub Cobalt_register {
   $core->log->info("Creating HTTP client session . . .");
   $self->{ActiveReqs} = { };
   $core->plugin_register( $self, 'SERVER',
-    [
-      'www_request',
-    ],
+    [ 'www_request' ],
   );  
-  
+
   POE::Session->create(
     object_states => [
       $self => [
+        '_start' => '_init_ua',
         on_response => '_handle_response',
       ],
     ],
   );
 
   $core->log->debug("POE session spawned.");
+  
+  $core->log->info("Registered");
+  return PLUGIN_EAT_NONE
+}
 
+sub _start {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my $core = $self->{core};
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   my %htopts = (
@@ -60,15 +66,16 @@ sub Cobalt_register {
   POE::Component::Client::HTTP->spawn(
     %htopts
   );
-
-  $core->log->info("Registered");
-  return PLUGIN_EAT_NONE
+  
+  $core->log->info("Asynchronous HTTP user agent spawned.");
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   ## post shutdown to httpUA:
   $poe_kernel->post( 'httpUA', 'shutdown' );
+  ## FIXME refcount_decrement our own session ... ?
+  ## probably not necessary.
   $core->log->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
