@@ -4,7 +4,6 @@ our $VERSION = '1.0';
 ## silly plugin to feed perl code to B::Deparse
 ## handles and eats: !deparse
 
-use 5.12.1;
 use strict;
 use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;

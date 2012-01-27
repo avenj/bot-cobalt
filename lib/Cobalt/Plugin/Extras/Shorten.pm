@@ -59,6 +59,8 @@ sub Bot_shorten_response_recv {
   my $args = ${ $_[2] };
   my ($context, $channel, $nick) = @$args;
 
+  $core->log->debug("shorturl; $shorturl");
+
   $core->send_event( 'send_message', $context, $channel,
     "shorturl for ${nick}: ${shorturl}",
   );
