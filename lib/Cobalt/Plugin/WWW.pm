@@ -14,7 +14,6 @@ use Object::Pluggable::Constants qw/:ALL/;
 
 use POE;
 use POE::Session;
-use POE::Component::Client::keepalive;
 use POE::Component::Client::HTTP;
 
 use HTTP::Request;
@@ -41,6 +40,7 @@ sub Cobalt_register {
     ],
   );
   
+  $core->Provided->{www_request} = 1;
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
@@ -63,7 +63,7 @@ sub _start {
   my %htopts = (
     Alias => 'httpUA',
     Agent => 'Cobalt2 IRC bot',
-    Timeout => $pcfg->{Opts}->{Timeout} // 60,
+#    Timeout => $pcfg->{Opts}->{Timeout} // 60,
   );
   
   ## FIXME should we handle 302s and build a response chain ... ?
@@ -72,14 +72,14 @@ sub _start {
   $htopts{BindAddr} = $pcfg->{Opts}->{BindAddr}
     if $pcfg->{Opts}->{BindAddr};
 
-  my $pool = POE::Component::Client::Keepalive->new(
-    keep_alive = 1,
-  );
+#  my $pool = POE::Component::Client::Keepalive->new(
+#    keep_alive = 1,
+#  );
 
   ## Client::HTTP exists as an external session
   ## spawn one called 'httpUA'
   POE::Component::Client::HTTP->spawn(
-    ConnectionManager => $pool,
+#    ConnectionManager => $pool,
     %htopts
   );
   
@@ -88,6 +88,7 @@ sub _start {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  $core->Provided->{www_request} = 0;
   ## post shutdown to httpUA:
 #  $poe_kernel->post( 'httpUA', 'shutdown' );
   $poe_kernel->post( 'WWW', '_stop' );

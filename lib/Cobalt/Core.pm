@@ -114,11 +114,18 @@ has 'TimerPool' => (
 ##   Connected => BOOL,
 ##   ConnectedAt => time(),
 ## }
-
 has 'Servers' => (
   is => 'rw',
   isa => 'HashRef',
   default => sub { {} },
+);
+
+## Some plugins provide optional functionality.
+## The 'Provided' hash lets other plugins see if an event is available.
+has 'Provided' => (
+  is => 'rw',
+  isa => 'HashRef',
+  default => 'sub { {} },
 );
 
 sub init {

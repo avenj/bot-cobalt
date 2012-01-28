@@ -46,21 +46,27 @@ sub Bot_public_cmd_short {
   my $url = shift @message if @message;
   $url = uri_escape($url); ## FIXME utf8 escapes ?
 
-  ## FIXME
-  ## cheap blocking hack whilest I fuck around with async http approaches
-  my $ua = LWP::UserAgent->new(
-    timeout      => 5,
-    max_redirect => 0,
-    agent => 'cobalt2',
-  );
-  my $shorturl = $ua->post('http://metamark.net/api/rest/simple',
-    [ long_url => $url ] )->content;
-  if ($shorturl) {
-    $shorturl = "shorturl for ${nick}: $shorturl";
+  my $shorturl;
+
+  if ($core->Provided->{www_request}) {
+    $self->_request_shorturl($url, $context, $channel, $nick);
+  } else {
+    ## no async http, use LWP
+    my $ua = LWP::UserAgent->new(
+      timeout      => 5,
+      max_redirect => 0,
+      agent => 'cobalt2',
+    );
+    my $shorturl = $ua->post('http://metamark.net/api/rest/simple',
+      [ long_url => $url ] )->content;
+    if ($shorturl) {
+      $shorturl = "shorturl for ${nick}: $shorturl";
+    } else {
+      $shorturl = "${nick}: shortener timed out";
+    }
     $core->send_event( 'send_message', $context, $channel, $shorturl );
   }
-  
-#  $self->_request_shorturl($url, $context, $channel, $nick);
+    
   return PLUGIN_EAT_NONE
 }
 
@@ -98,11 +104,12 @@ sub Bot_shorten_response_recv {
 sub _request_shorturl {
   my ($self, $url, $context, $channel, $nick) = @_;
   my $core = $self->{core};
-  ## FIXME
+
   my $request = HTTP::Request->new(
-  'POST', "http://metamark.net/api/rest/simple",
-    [ ], "long_url=".$url,
+    'GET',
+    "http://metamark.net/api/rest/simple?long_url=".$url,
   );
+
   $core->send_event( 'www_request',
     $request,
     'shorten_response_recv',

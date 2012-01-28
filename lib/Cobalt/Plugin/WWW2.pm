@@ -55,6 +55,9 @@ sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
 
   ## post this to the 'WWW' session?  
+  ## check if a worker is available
+  ## if it is and doesn't have $MAX_QUEUED jobs pending spawn new worker up to MAX_WORKERS?
+  
 
   return PLUGIN_EAT_ALL
 }
