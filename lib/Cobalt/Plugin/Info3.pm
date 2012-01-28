@@ -58,6 +58,7 @@ sub Cobalt_register {
   $core->plugin_register($self, 'SERVER',
     [ 
       'public_msg',
+      'public_cmd_info3',
       'info3_relay_string',
     ],
   );
@@ -77,6 +78,47 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_public_cmd_info3 {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
+
+  my $nick = $msg->{src_nick};
+  my $channel = $msg->{channel};
+  
+  my @message = @{ $msg->{message_array} };
+  unless (@message) {  
+    ## FIXME bad syntax rpl on empty @message
+    
+    return PLUGIN_EAT_ALL
+  }
+  
+  my $cmd = lc $message[0];
+  my $resp;
+  given ($cmd) {
+    when ("add") {
+    }
+    when (/^del(ete)?$/) {
+    }
+    when ("replace") {
+    }
+    when ("info") {
+    }
+    when ("search") {
+    }
+    when ("dsearch") {
+    }
+    default {
+     ## FIXME unknown cmd/bad syntax rpl
+    }
+   
+  }
+  
+  $core->send_event( 'send_message', $context, $channel, $resp )
+    if $resp;
+  
+  return PLUGIN_EAT_ALL
+}
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
@@ -85,9 +127,37 @@ sub Bot_public_msg {
   
   ## if this is a !cmd, discard it:
   return PLUGIN_EAT_NONE if $msg->{cmdprefix};
+  
+  ## also discard if we have no useful text:
+  my @message = @{ $msg->{message_array} };
+  return PLUGIN_EAT_NONE unless @message;
 
-  ## FIXME check against hash of globs (in _match?)
-  ## format and send response (via info3_relay_string ..?)
+  ## if the bot was highlighted, shift highlight off
+  if ($msg->{highlight}) {
+    shift @message;
+    
+    ## then see if it's an add/del
+    ## (darkbot legacy syntax)
+    if ($message[0] =~ /^add$/i || $message[0] =~ /^del(ete)?/i) {
+      ## FIXME hand off to cmd handler
+      ##  support !info3 commands also
+      
+      return PLUGIN_EAT_NONE
+    }
+  }
+
+  ## rejoin message
+  my $str = join ' ', @message;
+
+  ## check for matches
+  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
+
+  my $nick = $msg->{src_nick};
+  my $channel = $msg->{channel};
+  $core->send_event( 'info3_relay_string', 
+    $context, $channel, $nick, $match
+  );
+  
 
   return PLUGIN_EAT_NONE
 }
@@ -100,7 +170,6 @@ sub Bot_info3_relay_string {
   my $string  = ${$_[3]};
 
   ## received from RDB when handing off ~rdb topics
-  ## FIXME _info_format and send
   
   return PLUGIN_EAT_NONE unless $string;
   
@@ -139,9 +208,17 @@ sub _info_search {
 }
 
 sub _info_match {
+  my ($self, $txt) = @_;
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
-  
+  for my $re (keys %{ $self->{Compiled} }) {
+    if ($txt =~ $re) {
+      my $glob = $self->{Compiled}->{$re};
+      my $str = $self->{Info}->{$glob}->{Response};
+      return $str // 'Error retrieving info topic';
+    }
+  }
+  return
 }
 
 
@@ -217,7 +294,9 @@ sub _rw_db {
         ## compile into case-insensitive regexes
         for my $glob (keys %$db) {
           my $re = $db->{$glob}->{Regex} // glob_to_re_str($glob);
-          $re = qr{$re}i;
+          ## compiled regex needs anchors
+          ## (darkbot legacy)
+          $re = qr/^${re}$/i;
           ## FIXME break into eventy loop?
           $self->{Compiled}->{$re} = $glob;
         }
