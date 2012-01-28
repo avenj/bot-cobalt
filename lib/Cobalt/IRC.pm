@@ -722,6 +722,8 @@ sub Bot_send_message {
   ) { 
     return PLUGIN_EAT_NONE 
   }
+  
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
 
   ## Issue USER event Outgoing_message for output filters
   my @msg = ( 'Main', $target, $txt );
@@ -752,6 +754,8 @@ sub Bot_send_notice {
     return PLUGIN_EAT_NONE 
   }
 
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
+
   ## USER event Outgoing_notice
   my @notice = ( 'Main', $target, $txt );
   my $eat = $core->send_user_event( 'notice', \@notice );
@@ -777,6 +781,8 @@ sub Bot_topic {
     return PLUGIN_EAT_NONE 
   }
 
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
+
   $self->irc->yield( 'topic', $channel, $topic );
 
   return PLUGIN_EAT_NONE
@@ -795,6 +801,8 @@ sub Bot_mode {
   ) { 
     return PLUGIN_EAT_NONE 
   }
+
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
 
   my ($mode, @args) = split ' ', $modestr;
 
@@ -818,6 +826,8 @@ sub Bot_kick {
     return PLUGIN_EAT_NONE 
   }      
 
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
+
   $self->irc->yield( 'kick', $channel, $target, $reason );
 
   return PLUGIN_EAT_NONE
@@ -834,6 +844,8 @@ sub Bot_join {
   ) { 
     return PLUGIN_EAT_NONE 
   }
+
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
 
   $self->irc->yield( 'join', $channel );
 
@@ -852,6 +864,8 @@ sub Bot_part {
   ) { 
     return PLUGIN_EAT_NONE 
   }      
+
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
 
   $self->irc->yield( 'part', $channel, $reason );
 
