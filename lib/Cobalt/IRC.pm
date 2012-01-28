@@ -137,6 +137,7 @@ sub _start_irc {
       $self => [
         '_start',
 
+        'irc_001',
         'irc_connected',
         'irc_disconnected',
         'irc_error',
