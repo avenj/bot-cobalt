@@ -125,7 +125,7 @@ has 'Servers' => (
 has 'Provided' => (
   is => 'rw',
   isa => 'HashRef',
-  default => 'sub { {} },
+  default => sub { {} },
 );
 
 sub init {
