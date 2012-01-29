@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 use 5.12.1;
 use strict;
@@ -8,7 +8,7 @@ use Carp;
 
 use Fcntl qw/:flock/;
 
-use constant Modules => {
+my $Modules = {
   YAML   => 'YAML::Syck',
   YAMLXS => 'YAML::XS',
 
@@ -53,7 +53,7 @@ sub new {
 
   $self->{Format} = $args{Format} ? uc($args{Format}) : 'YAMLXS' ;
 
-  unless ($self->{Format} ~~ [ keys Modules ]) {
+  unless ($self->{Format} ~~ [ keys %$Modules ]) {
     croak "unknown format $self->{Format} specified";
   }
 
@@ -120,7 +120,7 @@ sub readfile {
 
 sub version {
   my ($self) = @_;
-  my $module = Modules->{ $self->{Format} };
+  my $module = $Modules->{ $self->{Format} };
   eval "require $module";
   return($module, $module->VERSION);
 }
@@ -141,8 +141,8 @@ sub _log {
 sub _check_if_avail {
   my ($self, $type) = @_;
   ## see if we have this serialization method available to us
-  return unless exists Modules->{$type};
-  my $module = Modules->{$type};
+  return unless exists $Modules->{$type};
+  my $module = $Modules->{$type};
   eval "require $module";
   if ($@) {
     $self->_log("$type specified but $module not available");
