@@ -1,8 +1,6 @@
 package Cobalt::Plugin::WWW;
 our $VERSION = '0.002';
 
-sub POE::Kernel::ASSERT_DEFAULT () { 1 }
-
 use 5.12.1;
 use strict;
 use warnings;
@@ -82,8 +80,8 @@ sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->debug("www_request received");
   my $request = ${ $_[0] };
-  my $event   = ${ $_[1] };
-  my $ev_arg  = ${ $_[2] };
+  my $event   = ${ $_[1] // \undef };
+  my $ev_arg  = ${ $_[2] // \undef };
  
   unless ($request) {
     $core->log->debug("www_request received but no request");
