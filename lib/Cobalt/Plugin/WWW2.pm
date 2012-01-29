@@ -1,6 +1,8 @@
 package Cobalt::Plugin::WWW2;
 our $VERSION = '0.001';
 
+sub POE::Kernel::ASSERT_DEFAULT () { 1 }
+
 use 5.12.1;
 use strict;
 use warnings;
@@ -9,7 +11,6 @@ use POE;
 use POE::Session;
 use POE::Filter::Reference;
 
-use POE::Wheel::ReadWrite;
 use POE::Wheel::Run;
 
 use Object::Pluggable::Constants qw/:ALL/;
