@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 use 5.12.1;
 use strict;
@@ -29,6 +29,9 @@ sub Cobalt_register {
 
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   $self->{MAX_WORKERS} = $pcfg->{Opts}->{MaxWorkers} || 5;
+  $self->{PROXY_ADDR}  = $pcfg->{Opts}->{Proxy} || undef;
+  $self->{LWP_TIMEOUT} = $pcfg->{Opts}->{Timeout} || 60;
+  $self->{LOCAL_ADDR}  = $pcfg->{Opts}->{BindAddr} || undef;
   
   ## Hashref mapping tags to pipeline events/args
   $self->{EventMap} = { };
@@ -204,10 +207,16 @@ sub _worker_spawn {
   $core->log->debug("created new worker: pid $pid");
   
   ## feed this worker the top of the pending req stack
-  ## FIXME: add mechanism to push LWP opts
   my $pending = shift @{ $self->{PendingReqs} };
-  my ($request, $req_tag) = @{ $pending };
-  $wheel->put([ $request, $req_tag ]);
+  my ($request, $req_tag) = @$pending;
+  my %opts = (
+    Timeout => $self->{LWP_TIMEOUT},
+    Request => $request,
+    Tag => $req_tag,
+  );
+  $opts{Proxy}    = $self->{PROXY_ADDR} if $self->{PROXY_ADDR};
+  $opts{BindAddr} = $self->{LOCAL_ADDR} if $self->{LOCAL_ADDR};
+  $wheel->put([ %opts ]);
 }
 
 sub _worker_closed {
@@ -279,7 +288,7 @@ sub _worker_error {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $core = $self->{core};
   my $op = $_[ARG0];
-#  $core->log->warn("HTTP worker error in $op");
+#  $core->log->debug("HTTP worker reports error in $op");
 }
 
 1;

@@ -107,10 +107,11 @@ my $build = $class->new(
       'HTTP::Request'  => 0,
       'HTTP::Response' => 0,
       'URI::Escape'    => 0,
-      'POE::Component::Client::HTTP' => '0.84',
+      'LWP::UserAgent' => 0,
 
     ### Serialization
       'YAML::XS' => '0.34',
+      'JSON::XS' => 0,
 
     ### Release tools, commented for now
      # templating (cpodconv/release tools)

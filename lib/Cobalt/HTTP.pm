@@ -1,5 +1,5 @@
 package Cobalt::HTTP;
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 use strict;
 use warnings;
@@ -31,20 +31,34 @@ sub worker {
         ## pull it out of the buffer:
         my $request = thaw( substr($buf, 0, $read_bytes, "") );
         $read_bytes = undef;
-        ## $request should be [ $str, $tag ]
-        ## FIXME ability to send opts in request
-        my ($http_req_str, $tag) = @{ $request } ;
+
+        ## expects named args:        
+        my %req = @$request;
+        
+        my $http_req_str = $req{Request} || die "no HTTP::Request";
+        my $tag = $req{Tag} || die "no request tag";
+        $req{Timeout} ||= 60;
+
+        my %lwp_opts = (
+          agent => __PACKAGE__."/".$VERSION,
+          timeout => $req{Timeout},
+        );
+
         ## reconstitute request obj:
         my $http_req_obj = HTTP::Request->parse($http_req_str);
+
         ## spawn a UA:
-        my $ua = LWP::UserAgent->new();  ## FIXME opts
-        ## send blocking request, parse response:
+        my $ua = LWP::UserAgent->new( %lwp_opts );
+        $ua->proxy('http', $req{Proxy}) if $req{Proxy};
+        $ua->local_address($req{BindAddr}) if $req{BindAddr};
+
+        ## send blocking request, parse and freeze response:
         my $resp = $ua->request($http_req_obj);
         my $http_response_str = $resp->as_string;
         my $frozen = nfreeze( [ $http_response_str, $tag ] );
+
         ## prepend length to cooperate with ::Filter::Reference
         my $stream = length($frozen) . chr(0) . $frozen ;
-        
         my $written = syswrite(STDOUT, $stream);
         die $! unless $written == length $stream;
         exit 0
