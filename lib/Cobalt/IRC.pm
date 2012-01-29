@@ -294,7 +294,7 @@ sub irc_public {
   my $channel = $where->[0];
 
   my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
-  for my $mask (keys $self->core->State->{Ignored}) {
+  for my $mask (keys %{ $self->core->State->{Ignored} }) {
     ## Check against ignore list
     ## (Ignore list should be keyed by hostmask)
     return if matches_mask( $mask, $src, $map );
@@ -383,7 +383,7 @@ sub irc_msg {
   ## similar to irc_public
 
   my $map = $self->core->get_irc_casemap("Main");
-  for my $mask (keys $self->core->State->{Ignored}) {
+  for my $mask (keys %{ $self->core->State->{Ignored} }) {
     return if matches_mask( $mask, $src, $map );
   }
 
@@ -415,7 +415,7 @@ sub irc_notice {
   my ($nick, $user, $host) = parse_user($src);
 
   my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
-  for my $mask (keys $self->core->State->{Ignored}) {
+  for my $mask (keys %{ $self->core->State->{Ignored} }) {
     return if matches_mask( $mask, $src, $map );
   }
 
@@ -444,7 +444,7 @@ sub irc_ctcp_action {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
-  for my $mask (keys $self->core->State->{Ignored}) {
+  for my $mask (keys %{ $self->core->State->{Ignored} }) {
     return if matches_mask( $mask, $src );
   }
 

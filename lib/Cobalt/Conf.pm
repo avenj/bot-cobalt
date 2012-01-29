@@ -155,7 +155,7 @@ sub read_cfg {
     $conf->{plugins} = { } ;
   }
 
-  if (scalar keys $conf->{plugins}) {
+  if (scalar keys %{ $conf->{plugins} }) {
     $conf->{plugin_cf} = $self->_autoload_plugin_confs($conf->{plugins});
   }
 

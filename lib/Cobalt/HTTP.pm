@@ -1,7 +1,6 @@
 package Cobalt::HTTP;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-use 5.12.1;
 use strict;
 use warnings;
 
@@ -62,6 +61,4 @@ sub worker {
   exit 0
 }
 
-
 1;
-__END__

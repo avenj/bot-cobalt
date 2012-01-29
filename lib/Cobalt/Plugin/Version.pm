@@ -94,7 +94,7 @@ sub Bot_public_msg {
       $resp = rplprintf( $core->lang->{RPL_INFO},
         {
           version => 'cobalt '.$core->version,
-          plugins => scalar keys $core->plugin_list,
+          plugins => scalar keys %{ $core->plugin_list },
           uptime => secs_to_timestr($delta),
           sent => $core->State->{Counters}->{Sent},
         }

@@ -264,7 +264,7 @@ sub timer_check_pool {
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
 
-  for my $id (keys $self->TimerPool->{TIMERS}) {
+  for my $id (keys %{ $self->TimerPool->{TIMERS} }) {
     my $timer = $self->TimerPool->{TIMERS}->{$id};
     my $execute_ts = $timer->{ExecuteAt};
     if ( $execute_ts <= time ) {
@@ -399,7 +399,7 @@ sub timer_del_pkg {
   ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
-  for my $timer (keys $self->TimerPool->{TIMERS}) {
+  for my $timer (keys %{ $self->TimerPool->{TIMERS} }) {
     my $ev = $self->TimerPool->{TIMERS}->{$timer};
     delete $self->TimerPool->{TIMERS}->{$timer}
       if $ev->{AddedBy} eq $pkg;
