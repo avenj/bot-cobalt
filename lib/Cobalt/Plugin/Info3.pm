@@ -41,15 +41,6 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use Cobalt::Utils qw/ :ALL /;
 use Cobalt::Serializer;
 
-## retval constants
-use constant {
-  SUCCESS  => 1,
-  E_NOAUTH => 2,  # user not authorized
-  E_EXISTS => 3,  # topic exists
-  E_NOSUCH => 4,  # topic can't be found
-  
-};
-
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
@@ -95,24 +86,8 @@ sub Bot_public_cmd_info3 {
   
   my $cmd = lc $message[0];
   my $resp;
-  given ($cmd) {
-    when ("add") {
-    }
-    when (/^del(ete)?$/) {
-    }
-    when ("replace") {
-    }
-    when ("info") {
-    }
-    when ("search") {
-    }
-    when ("dsearch") {
-    }
-    default {
-     ## FIXME unknown cmd/bad syntax rpl
-    }
-   
-  }
+
+  ## FIXME handler like public_msg
   
   $core->send_event( 'send_message', $context, $channel, $resp )
     if $resp;
@@ -132,17 +107,48 @@ sub Bot_public_msg {
   my @message = @{ $msg->{message_array} };
   return PLUGIN_EAT_NONE unless @message;
 
+  ## FIXME
+  ## add/del(ete)/replace/search/dsearch handlers similar to !info3
   ## if the bot was highlighted, shift highlight off
+
   if ($msg->{highlight}) {
-    shift @message;
+    ## return if it's just the botnick
+    return PLUGIN_EAT_NONE unless $message[1];
+  
+    ## we were highlighted -- might be an info3 cmd
+    my %handlers = (
+      'add' => '_info2_add',
+      'del' => '_info2_del',
+      'delete' => '_info2_del',
+      'search' => '_info2_search',
+      'dsearch' => '_info2_dsearch',      
+    );
     
-    ## then see if it's an add/del
-    ## (darkbot legacy syntax)
-    if ($message[0] =~ /^add$/i || $message[0] =~ /^del(ete)?/i) {
-      ## FIXME hand off to cmd handler
-      ##  support !info3 commands also
+    given (lc $message[1]) {
+      when ([ keys %handlers ]) {
+        ## this is apparently a valid command
+        my @args = $message[2 .. $#message];
+        my $method = $handlers{ $message[1] };
+        if ( $self->can($method) ) {
+          ## pass handlers $msg ref as first arg
+          ## the rest is the remainder of the string
+          ## (without highlight or command)
+          ## ...which may be nothing, up to the handler to send syntax RPL
+          $resp = $self->$method($msg, @args);
+          $core->send_event( 'send_message', 
+            $context, $msg->{channel}, $resp) if $resp;
+          return PLUGIN_EAT_NONE          
+        } else {
+          $core->log->warn($message[1]." is a valid cmd but method missing");
+          return PLUGIN_EAT_NONE
+        }
+      }
       
-      return PLUGIN_EAT_NONE
+      default {
+        ## not an info3 cmd
+        ## shift the highlight off and see if it's a match, below
+        shift @message;
+      }
     }
   }
 
@@ -154,10 +160,10 @@ sub Bot_public_msg {
 
   my $nick = $msg->{src_nick};
   my $channel = $msg->{channel};
+  
   $core->send_event( 'info3_relay_string', 
     $context, $channel, $nick, $match
   );
-  
 
   return PLUGIN_EAT_NONE
 }
@@ -181,30 +187,97 @@ sub Bot_info3_relay_string {
 }
 
 
-
-
-sub _handle_cmd {
-  ## handle add/del/replace/search/dsearch
-  ## convert retvals into RPLs as-necessary
-}
-
-
 ### Internal methods
 
 sub _info_add {
+  my ($msg, @args) = @_;
+  my ($topic, $string) = @args;
+  my $core = $self->{core};
 
+  unless ($topic && $string) {
+    ## FIXME return syntax rpl
+  }
+
+  my $context = $msg->{context};
+  my $nick = $msg->{src_nick};
+
+  my $auth_user  = $core->auth_username($context, $nick);
+  my $auth_level = $core->auth_level($context, $nick);
+  ## FIXME auth check
+
+  if (exists $self->{Info}->{$topic}) {
+    ## FIXME return topic exists rpl
+  }
+
+  ## FIXME add to {Info} hash
+  ## call write-out
+  ## return RPL
 }
 
 sub _info_del {
+  my ($msg, @args) = @_;
+  my ($topic) = @args;
+  my $core = $self->{core};
+  
+  unless ($topic) {
+    ## FIXME syntax rpl
+  }
+  
+  my $context = $msg->{context};
+  my $nick = $msg->{src_nick};
 
+  my $auth_user  = $core->auth_username($context, $nick);
+  my $auth_level = $core->auth_level($context, $nick);
+  
+  ## FIXME auth check
+  
+  unless (exists $self->{Info}->{$topic}) {
+    ## FIXME return topic doesn't exist rpl
+  }
+  
+  ## FIXME delete from {Info} hash
+  ## call write-out
+  ## return RPL
 }
 
 sub _info_replace {
+  my ($msg, @args) = @_;
+  my ($topic, $string) = @args;
+  my $core = $self->{core};
 
+  unless ($topic && $string) {
+    ## FIXME syntax rpl
+  }
+  
+  my $context = $msg->{context};
+  my $nick = $msg->{src_nick};
+  my $auth_user = $core->auth_username($context, $nick);
+  my $auth_level = $core->auth_level($context, $nick);
+  
+  ## FIXME auth check
+  
+  unless (exists $self->{Info}->{$topic}) {
+    ## FIXME return topic doesn't exist rpl
+  }
+  
+  ## FIXME delete and readd
+  ## call writeout
+  ## return RPL
 }
 
 sub _info_search {
-  ## search/dsearch handler
+  my ($msg, @args) = @_;
+
+
+  ## FIXME simple topic string search in {Info}
+  ## return matching topic globs
+}
+
+sub _info_dsearch {
+  my ($msg, @args) = @_;
+
+  ## FIXME search by response strings
+  ## return matching topic globs
 }
 
 sub _info_match {
