@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use POE;
-
+use POE::Session;
 use POE::Filter::Reference;
 
 use POE::Wheel::ReadWrite;
@@ -28,6 +28,7 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+  $core->Provided->{www_request} = 1;
   $self->{WorkersByPID} = {};
   $self->{WorkersByWID} = {};
   
@@ -43,27 +44,33 @@ sub Cobalt_register {
     ],
   );
   
+  $core->log->info("Registered");
+
+  $core->log->debug("Spawning POE session");
+  
   POE::Session->create(
     object_states => [
-      '_start',
-      '_stop',
-      '_master_shutdown',
-
-      '_worker_spawn',      
-      '_worker_input',
-      '_worker_stderr',
-      '_worker_error',
-      '_worker_closed',
-      '_worker_signal',
+      $self => [
+        '_start',
+        '_stop',
+        '_master_shutdown',
+  
+        '_worker_spawn',      
+        '_worker_input',
+        '_worker_stderr',
+        '_worker_error',
+        '_worker_closed',
+        '_worker_signal',
+      ],
     ],
   );
  
-  $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  $core->Provided->{www_request} = 0;
   $poe_kernel->call('WWW' => '_master_shutdown');
   $core->log->info("Unregistered");
   return PLUGIN_EAT_NONE
@@ -144,7 +151,7 @@ sub _worker_spawn {
   
   ## do nothing if we have too many workers already
   ## when one falls off a new one will pull pending
-  my $workers = scalar keys $self->{WorkersByPID};
+  my $workers = scalar keys %{ $self->{WorkersByPID} };
   return unless $workers < MAX_WORKERS;
 
   ## path to perl + suffix if applicable
@@ -166,6 +173,8 @@ sub _worker_spawn {
   } else {
     $forkable = \&Cobalt::HTTP::worker;
   }
+
+  $core->log->debug("spawning new wheel");
 
   my $wheel = POE::Wheel::Run->new(
     Program => $forkable,
@@ -265,6 +274,5 @@ sub _worker_error {
   my $op = $_[ARG0];
   $core->log->warn("HTTP worker error in $op");
 }
-
 
 1;
