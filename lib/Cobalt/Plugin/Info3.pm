@@ -23,15 +23,6 @@ our $VERSION = '0.10';
 ##
 ## Handles darkbot-style variable replacement
 
-## FIXME build on-disk db indexed by regex (DBM::Deep?)
-##  in-memory; build regexes out of glob syntax (using Cobalt::Utils::glob_to_re_str)
-##  store response & original glob string on-disk indexed by generated regexes
-##  query on-disk db based on matched regex
-## NOTE that glob_to_re_str doesn't start/end anchor on its own
-##  will need to add anchors
-
-## FIXME support legacy or rplprintf-style vars based on config Opt ...?
-
 use 5.12.1;
 use strict;
 use warnings;
@@ -107,10 +98,6 @@ sub Bot_public_msg {
   my @message = @{ $msg->{message_array} };
   return PLUGIN_EAT_NONE unless @message;
 
-  ## FIXME
-  ## add/del(ete)/replace/search/dsearch handlers similar to !info3
-  ## if the bot was highlighted, shift highlight off
-
   if ($msg->{highlight}) {
     ## return if it's just the botnick
     return PLUGIN_EAT_NONE unless $message[1];
@@ -119,8 +106,8 @@ sub Bot_public_msg {
     my %handlers = (
       'add' => '_info2_add',
       'del' => '_info2_del',
-      'delete' => '_info2_del',
-      'search' => '_info2_search',
+      'delete'  => '_info2_del',
+      'search'  => '_info2_search',
       'dsearch' => '_info2_dsearch',      
     );
     
@@ -267,17 +254,24 @@ sub _info_replace {
 
 sub _info_search {
   my ($msg, @args) = @_;
-
-
-  ## FIXME simple topic string search in {Info}
-  ## return matching topic globs
+  my ($str) = @args;
+  my @matches;  
+  for my $glob (keys %{ $self->{Info} }) {
+    push(@matches, $glob) unless index($glob, $str) == -1;
+  }
+  return @matches || 'No matches';
 }
 
 sub _info_dsearch {
   my ($msg, @args) = @_;
-
-  ## FIXME search by response strings
-  ## return matching topic globs
+  ## dsearches w/ spaces are legit:
+  my $str = join ' ', @args;
+  my @matches;
+  for my $glob (keys %{ $self->{Info} }) {
+    my $resp_str = $self->{Info}->{$glob}->{Response};
+    push(@matches, $glob) unless index($resp_str, $str) == -1;
+  }
+  return @matches || 'No matches';
 }
 
 sub _info_match {
