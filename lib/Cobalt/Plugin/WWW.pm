@@ -105,6 +105,8 @@ sub Bot_www_request {
   ##  'www_request', $request, $event, $args
   ## $request should be a HTTP::Request
   ## bridges async http and our plugin pipeline
+  
+  $core->log->debug("www_request triggered");
 
   my $request = ${ $_[0] };  ## HTTP::Request obj
   my $event  = ${ $_[1] };  ## pipeline event to send
