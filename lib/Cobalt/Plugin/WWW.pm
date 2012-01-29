@@ -1,14 +1,12 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 use 5.12.1;
 use strict;
 use warnings;
 
 use POE;
-use POE::Session;
 use POE::Filter::Reference;
-
 use POE::Wheel::Run;
 
 use Object::Pluggable::Constants qw/:ALL/;
@@ -20,8 +18,6 @@ use Cobalt::HTTP;
 
 use Config;
 
-use constant MAX_WORKERS => 3;  ## FIXME configurable?
-
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -30,6 +26,9 @@ sub Cobalt_register {
   $core->Provided->{www_request} = 1;
   $self->{WorkersByPID} = {};
   $self->{WorkersByWID} = {};
+
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  $self->{MAX_WORKERS} = $pcfg->{Opts}->{MaxWorkers} || 5;
   
   ## Hashref mapping tags to pipeline events/args
   $self->{EventMap} = { };
@@ -162,7 +161,7 @@ sub _worker_spawn {
   ## do nothing if we have too many workers already
   ## when one falls off a new one will pull pending
   my $workers = scalar keys %{ $self->{WorkersByPID} };
-  return unless $workers < MAX_WORKERS;
+  return unless $workers < $self->{MAX_WORKERS};
 
   ## path to perl + suffix if applicable
   ## (see perldoc perlvar w.r.t $^X)
@@ -205,6 +204,7 @@ sub _worker_spawn {
   $core->log->debug("created new worker: pid $pid");
   
   ## feed this worker the top of the pending req stack
+  ## FIXME: add mechanism to push LWP opts
   my $pending = shift @{ $self->{PendingReqs} };
   my ($request, $req_tag) = @{ $pending };
   $wheel->put([ $request, $req_tag ]);
