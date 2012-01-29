@@ -337,7 +337,8 @@ sub irc_public {
   ## flag messages seemingly directed at the bot
   ## makes life easier for plugins
   $msg->{highlight} = 1 if $txt =~ /^${me}.?\s+/i;
-
+  ## both forms valid, because if I do it all the time everyone else will:
+  $msg->{highlighted} = $msg->{highlight};
   ## flag messages prefixed by cmdchar
   my $cf_core = $self->core->get_core_cfg();
   my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!';
