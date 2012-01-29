@@ -84,7 +84,6 @@ sub Bot_www_request {
   my $request = ${ $_[0] };
   my $event   = ${ $_[1] };
   my $ev_arg  = ${ $_[2] };
-  my $req_tag = ${ $_[3] };
  
   unless ($request) {
     $core->log->debug("www_request received but no request");
@@ -94,14 +93,16 @@ sub Bot_www_request {
   unless ($event) {
     ## no event at all is fairly legitimate
     ## (if you don't care if the request succeeds)
+    $core->log->debug("HTTP req without event handler");
     $event = 'www_handled';
   }
   
   $ev_arg = [] unless $ev_arg;
-  unless ($req_tag) {
-    my @p = ( 'a' .. 'z', 'A' .. 'Z' );
+  my @p = ( 'a' .. 'z', 'A' .. 'Z' );
+  my $req_tag;
+  do {
     $req_tag = join '', map { $p[rand@p] } 1 .. 8;
-  }
+  } while exists $self->{EventMap}->{$req_tag};
   
   $self->{EventMap}->{$req_tag} = {
     Event => $event,
@@ -127,6 +128,7 @@ sub _start {
   my $core = $self->{core};
   $kernel->alias_set('WWW');
   $core->log->debug("Session started");
+
 }
 
 sub _stop {
@@ -197,7 +199,7 @@ sub _worker_spawn {
   
   my $wheel_id = $wheel->ID();
   my $pid = $wheel->PID();
-  $kernel->sig_chld($pid, "_worker_signal");
+  $kernel->sig_child($pid, "_worker_signal");
   
   $self->{WorkersByPID}->{$pid} = $wheel;
   $self->{WorkersByWID}->{$wheel_id} = $wheel;
