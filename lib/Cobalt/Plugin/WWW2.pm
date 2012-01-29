@@ -113,7 +113,7 @@ sub Bot_www_request {
 
   ## add to pending request pool:
   push(@{ $self->{PendingReqs} },
-    [ $request, $req_tag ]
+    [ $request->as_string, $req_tag ]
   );
 
   $poe_kernel->post('WWW', '_worker_spawn');
