@@ -48,7 +48,7 @@ sub worker {
         
         my $written = syswrite(STDOUT, $stream);
         die $! unless $written == length $stream;
-        next
+        exit 0
       }
     } elsif ($buf =~ s/^(\d+)\0//) {  ## Filter::Reference gives us a length
       $read_bytes = $1;
