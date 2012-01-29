@@ -67,14 +67,20 @@ RPL:
 
   ## Broken syntax RPLs, no args:
   AUTH_BADSYN_LOGIN: "Bad syntax. Usage: LOGIN <username> <passwd>"
+  AUTH_BADSYN_CHPASS: "Bad syntax. Usage: CHPASS <oldpass> <newpass>"
 
   ## AUTH_SUCCESS: %context, %src, %nick, %user, %lev
   AUTH_SUCCESS: "Successful auth [%nick%] (%user - %lev%)"
 
-  ## AUTH_FAIL_*: $context, %src, %nick, %user
+  ## AUTH_FAIL_*: %context, %src, %nick, %user
   AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src%]"
   AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user%)"
   AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user%)"
+  
+  ## AUTH_CHPASS_*: %context, %src, %nick, %user 
+  AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"
+  AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
+
 
   ## AUTH_STATUS, $nick, $level
   AUTH_STATUS: ~
