@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 ## "Standard" Auth module
 ##
@@ -303,6 +303,7 @@ sub Bot_nick_changed {
   if (exists $core->State->{Auth}->{$context}->{$old}) {
     my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};
     if ($pkg eq __PACKAGE__) {  ## only adjust auths that're ours
+      $core->log->debug("adjusting authnicks; $old -> $new");
       $core->State->{Auth}->{$context}->{$new} =
         delete $core->State->{Auth}->{$context}->{$old};
     }
@@ -396,10 +397,45 @@ sub _cmd_login {
 
 sub _cmd_chpass {
   my ($self, $context, $msg) = @_;
-
-  ## FIXME self chpass for logged in users
-  ## (_cmd_user has a chpass for administrative use)
-
+  ## 'self' chpass for logged-in users
+  ##    chpass OLD NEW
+  my $nick = $msg->{src_nick};
+  my $auth_for_nick = $self->core->auth_username($context, $nick);
+  unless ($auth_for_nick) {
+    return rplprintf( $self->core->lang->{RPL_NO_ACCESS},
+      { nick => $nick },
+    );
+  }
+  
+  my $passwd_old = $msg->{message_array}->[1];
+  my $passwd_new = $msg->{message_array}->[2];
+  unless ($passwd_old && $passwd_new) {
+    return rplprintf( $self->core->lang->{AUTH_BADSYN_CHPASS} );
+  }
+  
+  my $user_rec = $self->AccessList->{$context}->{$auth_for_nick};
+  my $stored_pass = $user_rec->{Password};
+  unless ( passwdcmp($passwd_old, $stored_pass) ) {
+    return rplprintf( $self->core->lang->{AUTH_CHPASS_BADPASS},
+      {
+        context => $context,
+        nick => $nick,
+        user => $auth_for_nick,
+        src => $msg->{src},
+      }
+    );
+  }
+  
+  my $new_hashed = $self->_mkpasswd($passwd_new);
+  $user_rec->{Password} = $new_hashed;
+  return rplprintf( $self->core->lang->{AUTH_CHPASS_SUCCESS},
+    {
+      context => $context,
+      nick => $nick,
+      user => $auth_for_nick,
+      src => $msg->{src},
+    }
+  );
 }
 
 sub _cmd_user {
@@ -414,14 +450,17 @@ sub _cmd_user {
   my $resp;
 
   unless ($cmd) {
-    ## FIXME
+    ## FIXME bad syntax rpl
   }
 
   ## FIXME method dispatch like the _cmd_ dispatcher above
   ##   pass args unmolested?
-  ##   
+  ##
   my $method = "_user_".$cmd;
-
+  if ( $self->can($method) ) {
+    $self->core->log->debug("dispatching $method for ".$msg->{src_nick});
+    $resp = $self->$method($context, $msg);
+  }
   return $resp;
 }
 
@@ -554,14 +593,6 @@ sub _user_chpass {
   ## return a formatted response to _cmd_user handler
 }
 
-sub _do_chpass {
-  my ($self, $context, $username, $passwd) = @_;
-  return unless exists $self->AccessList->{$context} &&
-                exists $self->AccessList->{$context}->{$username};
-  my $hashed = $self->_mkpasswd($passwd);
-  $self->AccessList->{$context}->{$username}->{Password} = $hashed;
-  return $hashed;
-}
 
 
 ### Utility methods:
