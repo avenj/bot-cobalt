@@ -1369,19 +1369,44 @@ $quit_h would be a hash with the following keys:
 It's possible to write plugins that register for B<USER> events to catch 
 messages before they are dispatched to IRC.
 
-Using this mechanism, you can write output filters:
+These events are prefixed with B<Outgoing_>.
 
-FIXME -- short example, link to docs
+Using this mechanism, you can write output filters by registering for a 
+USER event:
+
+  ## in your Cobalt_register, perhaps:
+  $core->plugin_register( $self, 'USER',
+    [ 'message' ],
+  );
+  
+  ## handler:
+  sub Outgoing_message {
+    my ($self, $core) = splice @_, 0, 2;
+    my $context = ${ $_[0] };
+    my $target  = ${ $_[1] };
+    
+    ## You can modify these references directly.
+    ## This is the same as Plugin::OutputFilters::StripFormat:
+    ${ $_[2] } = strip_formatting( ${ $_[2] } );
+    
+    ## If you EAT_ALL, the message won't be sent:
+    return PLUGIN_EAT_NONE
+  }
+
 
 The following B<USER> events are emitted:
 
 =head3 Outgoing_message
 
-FIXME
+Syndicated when a send_message event has been received.
+
+Event arguments are references to the context, target, and message 
+string, respectively.
 
 =head3 Outgoing_notice
 
-FIXME
+Syndicated when a send_notice event has been received; arguments are the 
+same as L</Outgoing_message>.
 
 
 

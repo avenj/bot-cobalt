@@ -592,3 +592,54 @@ sub get_plugin_cfg {
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Core - Cobalt2 IRC bot core
+
+=head1 DESCRIPTION
+
+This module is the core of B<Cobalt2>, tying an event syndicator (via 
+L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
+L<Log::Handler> instance and other useful tools.
+
+You probably want to consult the following documentation:
+
+=over
+
+=item *
+
+L<cobalt2> - Invoking cobalt2
+
+=item *
+
+L<cobalt2-installer> - Create/configure new cobalt2 instances
+
+=item *
+
+L<cobalt2-mkpasswd> - bcrypt-enabled password hashing
+
+=item *
+
+L<Cobalt::Manual::Plugins> - Writing Cobalt plugins
+
+=item *
+
+L<Cobalt::Manual::PluginDist> - Distributing Cobalt plugins
+
+=back
+
+=head1 Custom frontends
+
+FIXME
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

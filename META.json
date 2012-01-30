@@ -23,7 +23,8 @@
          "recommends" : {
             "HTTP::Request" : 0,
             "HTTP::Response" : 0,
-            "POE::Component::Client::HTTP" : "0.84",
+            "JSON::XS" : 0,
+            "LWP::UserAgent" : 0,
             "POE::Component::SSLify" : "1.006",
             "Term::ReadKey" : 0,
             "URI::Escape" : 0,
@@ -62,7 +63,11 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_7"
+         "version" : "2.00_9"
+      },
+      "Cobalt::HTTP" : {
+         "file" : "lib/Cobalt/HTTP.pm",
+         "version" : "0.04"
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
@@ -74,11 +79,11 @@
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
-         "version" : "0.10"
+         "version" : "0.11"
       },
       "Cobalt::Plugin::Auth" : {
          "file" : "lib/Cobalt/Plugin/Auth.pm",
-         "version" : "0.10"
+         "version" : "0.11"
       },
       "Cobalt::Plugin::Calc" : {
          "file" : "lib/Cobalt/Plugin/Extras/Calc.pm",
@@ -102,7 +107,7 @@
       },
       "Cobalt::Plugin::Extras::Shorten" : {
          "file" : "lib/Cobalt/Plugin/Extras/Shorten.pm",
-         "version" : "0.02"
+         "version" : "0.05"
       },
       "Cobalt::Plugin::Extras::TempConv" : {
          "file" : "lib/Cobalt/Plugin/Extras/TempConv.pm",
@@ -162,11 +167,11 @@
       },
       "Cobalt::Plugin::WWW" : {
          "file" : "lib/Cobalt/Plugin/WWW.pm",
-         "version" : "0.02"
+         "version" : "0.004"
       },
       "Cobalt::Serializer" : {
          "file" : "lib/Cobalt/Serializer.pm",
-         "version" : "0.13"
+         "version" : "0.14"
       },
       "Cobalt::Utils" : {
          "file" : "lib/Cobalt/Utils.pm",
@@ -179,5 +184,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_7"
+   "version" : "2.00_9"
 }
