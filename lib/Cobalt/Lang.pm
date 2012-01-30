@@ -4,6 +4,9 @@ our $VERSION = "0.12";
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
 
+## FIXME use english as spec and default to english for missing
+##  responses in other langsets?
+
 use 5.12.1;
 use strict;
 use warnings;

@@ -900,9 +900,8 @@ Cobalt::IRC -- core (context "Main") IRC plugin
 Plugin authors will almost definitely want to read this reference.
 
 The core IRC plugin provides a single-server IRC interface via
-L<POE::Component::IRC>.
-
-B<The server context is always "Main">
+L<POE::Component::IRC>. All other IRC plugins should follow this pattern 
+and provide a compatible event interface.
 
 It does various work on incoming events we consider important enough
 to re-broadcast from the IRC component. This makes life easier on 
@@ -1188,7 +1187,7 @@ You can walk each individual mode and handle known types:
 
 Theoretically, you can find out which types should have args via ISUPPORT:
 
-  my $irc = $self->Servers->{Main}->{Object};
+  my $irc = $self->Servers->{$context}->{Object};
   my $is_chanmodes = $irc->isupport('CHANMODES')
                      || 'b,k,l,imnpst';  ## oldschool set
   ## $m_list modes add/delete modes from a list (bans for example)
@@ -1438,7 +1437,7 @@ A C<mode> event for our context attempts a mode change.
 Typically the target will be either a channel or the bot's own nickname.
 
   $core->send_event( 'mode', $context, $target, $modestr );
-  ## example:
+  ## example for Main context:
   $core->send_event( 'mode', 'Main', '#mychan', '+ik some_key' );
 
 This being IRC, there is no guarantee that the bot has privileges to 

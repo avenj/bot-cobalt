@@ -441,6 +441,7 @@ sub auth_level {
   return $level
 }
 
+sub auth_user { auth_username(@_) }
 sub auth_username {
   ## retrieve an auth username by context -> IRC nick
   ## retval is boolean untrue if user can't be found
@@ -612,19 +613,11 @@ You probably want to consult the following documentation:
 
 =item *
 
-L<cobalt2> - Invoking cobalt2
-
-=item *
-
-L<cobalt2-installer> - Create/configure new cobalt2 instances
-
-=item *
-
-L<cobalt2-mkpasswd> - bcrypt-enabled password hashing
-
-=item *
-
 L<Cobalt::Manual::Plugins> - Writing Cobalt plugins
+
+=item *
+
+L<Cobalt::IRC> - IRC bridge / events
 
 =item *
 

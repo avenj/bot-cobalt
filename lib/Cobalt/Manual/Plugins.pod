@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0004
+Plugins guide revision: 0006
 
-Last updated for cobalt 2.00
+Last updated for cobalt 2.00_09
 
 =head1 DESCRIPTION
 
@@ -17,7 +17,7 @@ B<Cobalt2> plugins.
 
 Refer to L</SEE ALSO> for other relevant documentation.
 
-B<Plugin authors should at least read the L<Cobalt::IRC> POD!>
+B<Plugin authors should at least read the L<Cobalt::IRC> POD>
 
 
 =head1 PLUGIN FUNDAMENTALS
@@ -180,7 +180,7 @@ words, inside C<Cobalt_register>:
 
 =head3 Event handlers
 
-Syndicated events become prefixed with Bot_ when handed off to plugins:
+Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
 
   sub Bot_some_event {
     my ($self, $core) = splice @_, 0, 2;
@@ -188,7 +188,7 @@ Syndicated events become prefixed with Bot_ when handed off to plugins:
     ...
   }
 
-B<IMPORTANT: the arguments passed to event handlers are ALWAYS references!>
+B<IMPORTANT: the arguments passed to event handlers are ALWAYS references>
 
 (Sometimes, they're references to references, such as a hashref.
 If you don't know what that means, it's time to read L<perlreftut> and 
@@ -212,7 +212,8 @@ Unless manipulated manually, Cobalt's pipeline starts with the core
 any plugins specified in plugins.conf.
 
 That being the case, events will be handed on down the pipeline, 
-B<unless> a handler for a syndicated event returns an incorrect value.
+B<unless> a handler for a syndicated event returns an B<EAT_ALL> or 
+B<EAT_PLUGIN> value.
 
 Your Bot_* event handlers should B<always> return an 
 L<Object::Pluggable::Constants> value. The two commonly used values are:
@@ -264,7 +265,7 @@ For example, when receiving a public message:
     );
   }
 
-See L<Cobalt::Plugin::IRC> for a list of IRC events and their event syntax.
+See L<Cobalt::IRC> for a list of IRC events and their event syntax.
 
 
 =head3 Messages
@@ -422,6 +423,10 @@ $self is generally fairly convenient:
 
 
 =head3 Accessors
+
+=head4 Provided
+
+FIXME
 
 =head4 get_core_cfg
 
@@ -715,7 +720,72 @@ FIXME
 
 =head3 Cobalt::Plugin::WWW
 
-FIXME discussion of using www_request with Cobalt::HTTPo
+It's fairly common to want to make some kind of HTTP request from an 
+IRC bot. Unfortunately, the most common Perl method of speaking HTTP is 
+L<LWP::UserAgent> -- which will block the plugin pipeline until the 
+request is complete.
+
+L<Cobalt::Plugin::WWW>, if loaded, provides an easy method of forking 
+HTTP requests and reading responses back asynchronously via the 
+B<www_request> event:
+
+  ## build a request object via HTTP::Request
+  use HTTP::Request;
+  ## a simple GET, see HTTP::Request docs for more info:
+  my $request = HTTP::Request->new( 'GET', $url );
+  ## push it to www_request with a response event:
+  $core->send_event( 'www_request',
+    $request,
+    'myplugin_resp_recv',
+     ## you can include a reference containing args
+     ## (or a scalar, if you like)
+     ##
+     ## here's an example args arrayref telling our handler 
+     ## where to send responses:
+     [ $context, $channel, $nickname ],
+  );
+  
+  ## handle a response when one is received:
+  sub Bot_myplugin_resp_recv {
+    my ($self, $core) = splice @_, 0, 2;
+    ## if the request was successful, $_[0] is a ref to the 
+    ## undecoded content from HTTP::Response
+    my $content  = ${ $_[0] };
+    ## $_[1] is the HTTP::Response object, see perldoc HTTP::Response
+    my $response = ${ $_[1] };
+    ## $_[2] is whatever argument ref was provided in www_request
+    my $argref   = ${ $_[2] };
+    ## in our example above, it was some contextual info:
+    my ($context, $channel, $nickname) = @$argref;
+
+    ## . . . do something with the response . . .
+  
+    ## eat this event, we're the only handler:
+    return PLUGIN_EAT_ALL
+  }
+
+When a response is received, it will be pushed to the plugin pipeline 
+as the specified SERVER event.
+
+If the plugin is available, B<<$core->Provided->{www_request}>> will be 
+boolean true; you can fall back to LWP with a short timeout, perhaps:
+
+  ## build request like above:
+  my $request = HTTP::Request->new( . . . );
+  if ($core->Provided->{www_request}) {
+    ## send www_request event like above  
+  } else {
+    ## no async available, use LWP
+    my $ua = LWP::UserAgent->new(
+      timeout => 5,
+      max_redirect => 0,
+    );
+    my $response = $ua->request($request);
+    ## now $response is a HTTP::Response object
+    my $content = $response->content;
+  }
+
+
 
 =head3 Cobalt::Utils
 
