@@ -333,11 +333,25 @@ L<Cobalt::IRC> receives the following commonly-used events:
 
 =head4 send_message
 
-FIXME
+The B<send_message> event triggers an IRC PRIVMSG to either a channel 
+or user.
+
+The arguments specify the server context, target (user or channel), and 
+string, respectively:
+
+  $core->send_event( 'send_message',
+    $context, $target, $string
+  );
+
+The message will be sent after being processed by any L</Outgoing_message> 
+handlers in the pipeline.
 
 =head4 send_notice
 
-FIXME
+B<send_notice> operates essentially the same as L</send_message>, except 
+a NOTICE is sent (rather than PRIVMSG).
+
+Event arguments are the same.
 
 =head3 Channel-related commands
 
@@ -518,11 +532,33 @@ B<MaxModes>: The server's announced MAXMODES (or 4)
 
 =head4 auth_level
 
-FIXME
+Retrieves the user's authorized level (or '0' for unauthorized users).
+
+Requires a context and a nickname:
+
+  ## inside a msg or command handler, f.ex:
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $msg   = ${ $_[1] };
+  my $nick  = $msg->{src_nick};
+  my $level = $core->auth_level($context, $nick);
+
+Auth levels are fairly flexible; it is generally a good idea for your 
+plugin to provide some method of configuring required access levels.
+
+FIXME link to info on plugin conf / PluginOpts
 
 =head4 auth_username
 
-FIXME
+Retrieves the "username" for an authorized user (or empty list if the user 
+is not currently authorized).
+
+Requires a context and a nickname, similar to L</auth_level>:
+
+  my $username = $core->auth_username($context, $nick);
+  unless ($username) {
+    ## this user isn't authorized
+  }
 
 =head4 auth_flags
 
@@ -535,13 +571,27 @@ FIXME
 
 =head3 Logging
 
-FIXME
+The Cobalt core provides a B<log> method that writes to the LogFile 
+specified in cobalt.conf (and possibly STDOUT, if running with --nodetach).
 
+This is actually a L<Log::Handler> instance, so all methods found there 
+apply. Typically, plugins should log to B<info>, B<warn>, or B<debug>:
+
+  $core->log->info("An informational message");
+  
+  $core->log->warn("Some error occured");
+
+  $core->log->debug("some verbose debug output for --debug");
+
+A plugin should at least log to B<info> when it is registered or 
+unregistered; that is to say, inside B<Cobalt_register> and 
+B<Cobalt_unregister> handlers.
 
 =head3 Timers
 
 Core timers live in $core->TimerPool ; if need be, you can access 
-the timer pool directly via $core->TimerPool->{TIMERS}.
+the timer pool directly via $core->TimerPool->{TIMERS}, which is a 
+hash keyed on timer ID.
 
 Typically most plugins will only need the following functionality:
 
@@ -663,6 +713,10 @@ FIXME
 
 FIXME
 
+=head3 Cobalt::Plugin::WWW
+
+FIXME discussion of using www_request with Cobalt::HTTPo
+
 =head3 Cobalt::Utils
 
 FIXME brief primer on useful Cobalt::Utils funcs
@@ -756,6 +810,7 @@ available online:>
 
 L<http://www.cobaltirc.org/docs/wiki/doku.php?id=bots:cobalt:docs:>
 
+FIXME Cobalt-related links
 
 =head2 Relevant CPAN documentation
 
