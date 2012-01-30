@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_7';
+our $VERSION = '2.00_8';
 
 use 5.12.1;
 use Carp;
@@ -235,7 +235,7 @@ sub syndicator_started {
 
 sub shutdown {
   my $self = $_[OBJECT];
-
+  $self->log->warn("Shutdown called, destroying syndicator");
   $self->_syndicator_destroy();
 }
 
@@ -377,7 +377,7 @@ sub timer_set {
       Args => [ @event_args ],
       AddedBy => scalar caller(),
     };
-
+    $self->log->debug("timer_set; $id $delay $event_name");
     return $id
   } else {
     $self->log->debug("timer_set called but no timer added; bad type?");
@@ -390,12 +390,14 @@ sub timer_del {
   ## delete a timer by its ID
   my $self = shift;
   my $id = shift || return;
+  $core->log->debug("timer del; $id");
   return delete $self->TimerPool->{TIMERS}->{$id};
 }
 
 sub timer_del_pkg {
   my $self = shift;
   my $pkg = shift || return;
+  ## $core->timer_del_pkg( __PACKAGE__ )
   ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
