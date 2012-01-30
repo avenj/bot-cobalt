@@ -134,8 +134,8 @@ sub _start {
 sub _stop {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $core = $self->{core};
+  $self->_master_shutdown;
   $core->log->debug("Session stopped");
-  $kernel->alias_remove('WWW');
 }
 
 sub _master_shutdown {
