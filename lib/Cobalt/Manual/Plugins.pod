@@ -243,7 +243,29 @@ some criteria.
 
 =head3 Understanding server context
 
-FIXME
+IRC-driven events typically come with a server context attached, mapping 
+the server's configured "name" to server state information and allowing a 
+plugin to make sure responses get to the right place.
+
+For example, when receiving a public message:
+
+  sub Bot_public_msg {
+    my ($self, $core) = splice @_, 0, 2;
+    ## Get this message's server context
+    ## Passed to most IRC events as the first argument:
+    my $context = ${ $_[0] };
+    
+    ## ... later, when sending a response ...
+    my $channel = $msg->{channel};
+    $core->send_event( 'send_message',
+      $context,    ## make sure it goes to the right server
+      $channel,    ## destination channel on specified context
+      $response,   ## some response string
+    );
+  }
+
+See L<Cobalt::Plugin::IRC> for a list of IRC events and their event syntax.
+
 
 =head3 Messages
 
@@ -251,7 +273,45 @@ FIXME
 
 =head3 Commands
 
-FIXME
+A B<Cobalt> instance has a B<CmdChar>, usually defined in I<etc/cobalt.conf>.
+When any user issues a command prefixed with the bot's CmdChar, the event 
+B<public_cmd_$CMD> is issued in addition to the normal B<public_msg> event.
+
+  <JoeUser> !shorten http://www.cobaltirc.org/dev/bots
+  ## -> event 'Bot_public_cmd_shorten'
+
+The command is automatically lowercased before being transformed into an event.
+
+A plugin can register to receive commands in this format:
+
+  ## in Cobalt_register, usually:
+  $core->plugin_register( $self, 'SERVER',
+    ## register to receive the 'shorten' command:
+    [ 'public_cmd_shorten' ],
+  );
+  
+  ## handler for same:
+  sub Bot_public_cmd_shorten {
+    my ($self, $core) = splice @_, 0, 2;
+    my $context = ${ $_[0] };
+    my $msg = ${ $_[1] };
+    
+    ## since this is a command, our message_array is shifted
+    ## the command will be stripped
+    my @args = @{ $msg->{message_array} };
+    
+    . . . 
+    
+    ## if this command is "ours" we might want to eat it:
+    return PLUGIN_EAT_ALL
+  }
+
+
+It's important to note that B<<$msg->{message_array}>> is shifted leftwards 
+in B<public_cmd_> handlers; it won't contain the CmdChar-prefixed command.
+
+Additionally, a B<Bot_public_msg> will be broadcast as normal (with the 
+B<<$msg->{cmdprefix}>> element set to boolean true).
 
 =head3 Other events
 
