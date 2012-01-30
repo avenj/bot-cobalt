@@ -2,7 +2,109 @@
 
 =head1 NAME
 
-Cobalt::Manual::PluginDist
+Cobalt::Manual::PluginDist - packaging Cobalt plugins
+
+=head1 DESCRIPTION
+
+Packaging Cobalt plugins is just like packaging any other Perl module, 
+except that you can (if you like) install them to the Cobalt::Plugin::User 
+namespace.
+
+Typically, the easiest way to do so is via L<Module::Build>.
+
+
+=head2 Layout
+
+Create a dist dir for your module:
+
+  $ mkdir Cobalt-Plugin-User-MyPlugin
+  $ cd Cobalt-Plugin-User-MyPlugin
+   # create this dist's libdir:
+  $ mkdir -p lib/Cobalt/Plugin/User/
+  $ cd lib/Cobalt/Plugin/User/
+   # create your plugin:
+  $ $EDITOR MyPlugin.pm
+
+=head2 Plugin
+
+  package Cobalt::Plugin::User::MyPlugin;
+  our $VERSION = '1.00';
+  
+  use strict;
+  use warnings;
+  
+  sub new { bless {}, shift }
+  
+  sub Cobalt_register {
+    my ($self, $core) = splice @_, 0, 2;
+    ## ... register for events, log our load, etc
+    return PLUGIN_EAT_NONE
+  }
+  
+  sub Cobalt_unregister {
+    my ($self, $core) = splice @_, 0, 2;
+    $core->log->info("Unloaded");
+    return PLUGIN_EAT_NONE
+  }
+  
+  . . .
+  
+  1;
+
+See L<Cobalt::Manual::Plugins> for more on writing plugins.
+
+=head2 Build.PL
+
+L<Module::Build> requires a C<Build.PL> file:
+
+  #!/usr/bin/perl
+  ## Simple example Build.PL
+  my $build = Module::Build->new(
+    module_name => "Cobalt::Plugin::User::MyPlugin",
+    dist_abstract => "My Cobalt2 plugin",
+    dist_author => "Me <myself@example.ext>",
+    license => 'perl',
+    create_makefile_pl => 'small',
+    requires => {
+      'Cobalt::Core' => '2.00',
+    },
+  );
+  $build->create_build_script;
+
+You'll want to create B<META> files and a B<MANIFEST> for your 
+distribution. L<Module::Build> can do this for you:
+
+  $ perl Build.PL
+   # build a MANIFEST.SKIP for your dist:
+  $ ./Build manifest_skip
+   # build MANIFEST:
+  $ ./Build manifest
+   # build META files:
+  $ ./Build distmeta
+
+Users of your plugin can install the distribution like so:
+
+  $ perl Build.PL
+  $ ./Build
+   # may need root access (or perhaps L<local::lib>):
+  $ ./Build install
+
+L<App::cpanminus> makes this even easier:
+
+   # Ereate a dist tarball:
+  $ ./Build dist
+   # Easy install via cpanm:
+  $ cpanm ./Cobalt-Plugin-User-MyPlugin-1.00.tar.gz
+
+=head2 Language sets
+
+FIXME
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
 
