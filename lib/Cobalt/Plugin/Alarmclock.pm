@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use 5.12.1;
 use strict;
@@ -10,14 +10,13 @@ use Cobalt::Utils qw/ timestr_to_secs rplprintf /;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Commands:
-##  Bot_cmd_alarmclock
+##  !alarmclock
 
 sub new { bless ( {}, shift ); }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
 
-  ## register for public_cmd_alarmclock:
   $core->plugin_register($self, 'SERVER', 
     [ 'public_cmd_alarmclock' ] 
   );
@@ -28,6 +27,7 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = @_;
+  $core->timer_del_pkg( __PACKAGE__ );
   $core->log->info("Unregistering core IRC plugin");
   return PLUGIN_EAT_NONE
 }
@@ -46,9 +46,9 @@ sub Bot_public_cmd_alarmclock {
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
 
-  ## Quietly do nothing for unauthorized users
+  ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE 
-    unless ( $core->auth_level($context, $setter) >= $minlevel);
+    unless $core->auth_level($context, $setter) >= $minlevel;
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my @args = @{ $msg->{message_array} };  
@@ -90,7 +90,7 @@ sub Bot_public_cmd_alarmclock {
     $core->send_event( 'send_message', $context, $target, $resp );
   }
 
-  return PLUGIN_EAT_NONE
+  return PLUGIN_EAT_ALL
 }
 
 1;
