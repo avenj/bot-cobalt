@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::TempConv;
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 ## RECEIVES AND EATS:
 ##  _public_cmd_tempconv  ( !tempconv )
@@ -39,15 +39,8 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_tempconv { Bot_public_cmd_temp(@_) }
 sub Bot_public_cmd_temp {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };  my $msg = ${ $_[1] };
-  $self->respond($context, $msg);
-  return PLUGIN_EAT_ALL
-}
-
-## Command handler:
-sub respond {
-  my ($self, $context, $msg) = @_;
-  my $core = $self->{core};
+  my $context = ${ $_[0] };
+  my $msg = ${ $_[1] };
 
   my $str = shift @{ $msg->{message_array} } || '';
   my ($temp, $type) = $str =~ /(-?\d+\.?\d*)?(\w)?/;
@@ -68,6 +61,8 @@ sub respond {
              color( 'bold', "(${k}K)" );
   my $channel = $msg->{channel};
   $core->send_event( 'send_message', $context, $channel, $resp );
+
+  return PLUGIN_EAT_NONE
 }
 
 ## Conversion functions:
