@@ -7,26 +7,78 @@ This POD used to generate 'INSTALL' in dist root
 
 INSTALL - Varied approaches to installing Cobalt
 
-=head1 Perl and perl library paths
+=head1 Install paths
 
 
 =head2 Using local::lib
 
+FIXME
 
 =head2 Using perlbrew
+
+FIXME
+
+=head1 Install methods
+
+B<Cobalt> requires a fairly hefty set of modules, some of which might not 
+be already available on your system.
+
+There are multiple methods of easily installing B<Cobalt> and its dependency 
+tree; L</cpan> and L</cpanp> are available as part of the core set of any 
+Perl version capable of running B<Cobalt>.
+
+Any of these options will attempt to install all prerequisites from 
+the L<CPAN> module repository.
+
+=head2 cpan
+
+L<cpan> is the most common Perl install utility.
+
+CPAN doesn't know how what to do with a tarball; you'll need to untar:
+
+  $ tar xvzf Cobalt-2.00.tgz
+  $ cd Cobalt-2.00
+   ## install from this directory
+  $ cpan .
+
+You'll need a properly configured cpan; you may need to enter the shell:
+
+  $ cpan
+
+CPAN will prompt for configuration information the first time it is run.
+(You can also use 'o conf' from the CPAN shell.)
+
+CPAN integrates nicely with L<local::lib> -- if it's available, 'o conf' 
+will ask you if you'd like to use it for module installs.
+
+=head2 cpanm
+
+FIXME
+
+=head2 cpanp
+
+Some people prefer the CPANPLUS interface, accessible via C<cpanp>.
+
+There is no need to unpack the tarball to use CPANPLUS.
+
+CPANPLUS understands file:// URIs:
+
+  $ cpanp -i file://./Cobalt-2.00.tar.gz
+
+See L<CPANPLUS> for more.
 
 
 =head1 SEE ALSO
 
-=over 
+=over
+
+=item *
+
+L<local::lib>
 
 =item *
 
 B<CPAN>> -- L<cpan>, L<CPAN>
-
-=item *
-
-L<Module::Build>
 
 =item * 
 
@@ -35,6 +87,10 @@ B<cpanm> -- L<http://cpanmin.us> & L<App::cpanminus>
 =item *
 
 B<perlbrew> -- L<http://perlbrew.pl> & L<App::perlbrew>
+
+=item *
+
+L<Module::Build>
 
 =back
 

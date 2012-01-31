@@ -9,9 +9,9 @@ README - Getting started with Cobalt
 
 =head1 VERSION
 
-README revision B<0003>
+README revision B<0004>
 
-Last updated for Cobalt B<2.00_6>
+Last updated for Cobalt B<2.00_8>
 
 L<http://www.cobaltirc.org/dev/bots/cobalt>
 
@@ -19,7 +19,9 @@ L<http://www.cobaltirc.org/dev/bots/cobalt>
 
 =head2 Installing the distribution
 
-Installing B<cobalt2> is just like installing any other Perl distribution:
+Installing B<cobalt2> is just like installing any other Perl distribution.
+
+If you have the prerequisites or would like to obtain them yourself:
 
   ## A simple install using Build.PL:
   ~/cobalt-2.00 $ perl Build.PL
@@ -34,12 +36,24 @@ instructions on various approaches to installing B<Cobalt>.
 The saying goes that perl5 is a VM and CPAN is the language ;-)
 
 That being the case, B<Cobalt> requires a goodly handful of modules.
-The C<Build> script will attempt to use L<CPAN> to pull in any necessary 
-dependencies.
+
+B<The easiest way to install Cobalt AND all dependencies is via cpan>:
+
+  ## Installing Cobalt and dependencies using CPAN
+  ## This assumes your CPAN is properly configured.
+  ## Try entering the cpan shell (`cpan`) if not.
+  $ tar xvzf Cobalt2-2.00.tar.gz
+  $ cd Cobalt2-2.00
+  $ cpan .
 
 It is highly recommended that you allow L<CPAN> to pull in 
 'recommended' dependencies; these are typically modules used by plugins in 
 the core set.
+
+Of course, it's both easier and cleaner to use L<local::lib> and install 
+everything to a local module library.
+
+See B<INSTALL> for more information.
 
 
 =head2 Initializing a new instance
