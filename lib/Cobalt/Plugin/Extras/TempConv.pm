@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::TempConv;
-our $VERSION = '1.0';
+our $VERSION = '1.01';
 
 ## RECEIVES AND EATS:
 ##  _public_cmd_tempconv  ( !tempconv )
@@ -50,7 +50,7 @@ sub respond {
   my $core = $self->{core};
 
   my $str = shift @{ $msg->{message_array} } || '';
-  my ($temp, $type) = $str =~ /(-?\d+)?(\w)?/;
+  my ($temp, $type) = $str =~ /(-?\d+\.?\d*)?(\w)?/;
   $temp = 0   unless $temp;
   $temp = MAX_TEMP if $temp > MAX_TEMP;
   $type = 'F' unless $type;
