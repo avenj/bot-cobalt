@@ -110,7 +110,8 @@ my $build = $class->new(
       'URI::Escape'    => 0,
       'LWP::UserAgent' => 0,
 
-    ### Serialization
+    ### Storage / serialization
+      'DB_File'  => 0,
       'YAML::XS' => '0.34',
       'JSON::XS' => 0,
 
