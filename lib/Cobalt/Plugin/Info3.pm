@@ -200,7 +200,8 @@ sub Bot_info3_relay_string {
 
 sub _info_add {
   my ($self, $msg, @args) = @_;
-  my ($glob, $string) = @args;
+  my $glob = shift @args;
+  my $string = join ' ', @args;
   my $core = $self->{core};
 
   my $context = $msg->{context};
@@ -363,6 +364,7 @@ sub _info_replace {
   }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
+  
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
 
