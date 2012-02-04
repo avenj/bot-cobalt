@@ -424,17 +424,17 @@ sub _info_match {
   $core->log->debug("_info_match on $txt");
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
-  $self->{DB}->dbopen || return 'DB open failure';
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ /$re/) {
       my $glob = $self->{Regexes}->{$re};
+      $self->{DB}->dbopen || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
+      $self->{DB}->dbclose;
       my $str = $ref->{Response};
       $core->log->debug("triggered response for $glob");
       return $str // 'Error retrieving info topic';
     }
   }
-  $self->{DB}->dbclose;
   return
 }
 
