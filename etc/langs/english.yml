@@ -118,7 +118,7 @@ RPL:
   INFO_SEARCH:
 
   ## INFO_REPLACE, %nick, %topic
-  INFO_REPLACE: "Alright, %nick, I just replaced %topic"
+  INFO_REPLACE: "Alright, %nick%, I just replaced %topic"
 
   # INFO_ERR_NOSUCH, %nick, %topic
   INFO_ERR_NOSUCH: "Could not find topic %topic%, %nick%."

@@ -179,7 +179,8 @@ sub Bot_info3_relay_string {
   my $nick    = ${$_[2]};
   my $string  = ${$_[3]};
 
-  ## received from RDB when handing off ~rdb topics
+  ## format and send info3 response
+  ## alsoreceived from RDB when handing off ~rdb topics
   
   return PLUGIN_EAT_NONE unless $string;
   
@@ -253,6 +254,8 @@ sub _info_add {
   $self->{Regexes}->{$re} = $glob;
   $self->{Globs}->{$glob} = $re;
 
+  $core->log->debug("topic add: $glob ($re)");
+
   ## return RPL
   return rplprintf( $core->lang->{INFO_ADD},
     {
@@ -306,6 +309,8 @@ sub _info_del {
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
+
+  $core->log->debug("topic del: $glob ($regex)");
   
   return rplprintf( $core->lang->{INFO_DEL},
     {
@@ -384,7 +389,7 @@ sub _info_dsearch {
   my $core = $self->{core};
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
-  my $usr_lev = $core->auth_level($msg->{src_nick});
+  my $usr_lev = $core->auth_level($msg->{context}, $msg->{src_nick});
   unless ($usr_lev >= $req_lev) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $msg->{src_nick} }
@@ -413,7 +418,7 @@ sub _info_match {
   ## if so retrieve string from db and return it
   $self->dbopen || return 'DB open failure';
   for my $re (keys %{ $self->{Regexes} }) {
-    if ($txt =~ $re) {
+    if ($txt =~ /$re/) {
       my $glob = $self->{Regexes}->{$re};
       my $ref = $self->{DB}->get($glob) || { };
       my $str = $ref->{Response};
@@ -432,16 +437,17 @@ sub _info_format {
   ## some of these need to pull info from context
   ## maintains oldschool darkbot6 variable format
   my $core = $self->{core};
-  my $website = $core->url;
+
+  $core->log->debug("formatting text response ($context)");
   
-  my $context_ref = $core->Servers->{$context} // return 'context failure';
-  my $irc_obj = $context_ref->{Object};
+  my $irc_obj = $core->get_irc_obj($context);
   return $str unless ref $irc_obj;
 
   my $ccfg = $core->get_core_cfg;
   my $cmdchar = $ccfg->{Opts}->{CmdChar};
   my @users = $irc_obj->channel_list($channel) if $channel;
   my $random = $users[ rand @users ] if @users;
+  my $website = $core->url;
 
   my $vars = {
     '!' => $cmdchar,          ## CmdChar
