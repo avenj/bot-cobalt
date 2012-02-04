@@ -103,25 +103,32 @@ RPL:
 
  ## Plugin::Info3:
 
-  ## RPL_DONTKNOW, %topic
-  INFO_DONTKNOW: "I don't know anything about %topic"
+  ## INFO_DONTKNOW, %nick, %topic
+  INFO_DONTKNOW: "%nick%, I don't know anything about %topic"
 
-  ## RPL_WHAT, %nick
+  ## INFO_WHAT, %nick
   INFO_WHAT: "%nick%, what?"
 
-  INFO_ADD:
+  ## INFO_ADD, %nick, %topic
+  INFO_ADD: "%nick%, %topic has been added."
 
-  INFO_DEL:
+  ## INFO_DEL, %nick, %topic
+  INFO_DEL: "%nick%, %topic has been removed."
 
   INFO_SEARCH:
 
-  INFO_REPLACE:
+  ## INFO_REPLACE, %nick, %topic
+  INFO_REPLACE: "Alright, %nick, I just replaced %topic"
 
-  INFO_ERR_REPLACE_FAILED:
+  # INFO_ERR_NOSUCH, %nick, %topic
+  INFO_ERR_NOSUCH: "Could not find topic %topic%, %nick%."
 
-  INFO_ERR_NOSUCH:
-
-  INFO_ERR_EXISTS:
+  # INFO_ERR_EXISTS, %nick, %topic
+  INFO_ERR_EXISTS: "%nick%, %topic already exists; perhaps you meant replace?"
+  
+  INFO_BADSYNTAX_ADD: "Usage: <bot> ADD <topic> <response>"
+  INFO_BADSYNTAX_DEL: "Usage: <bot> DEL <topic>"
+  INFO_BADSYNTAX_REPL: "Usage: <bot> REPLACE <topic> <new response>"
 
  ## Plugin::RDB:
 

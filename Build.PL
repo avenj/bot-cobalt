@@ -11,7 +11,8 @@ my $class = Module::Build->subclass(
       my $self = shift;
       $self->dispatch('buildinst');
       $self->dispatch('wikidocs');
-      ## FIXME packaging?
+      ## FIXME target to pod2textify doc/ ?
+      ## FIXME dispatch dist ?
     }
 
     sub ACTION_wikidocs {

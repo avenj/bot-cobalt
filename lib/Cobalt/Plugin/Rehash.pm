@@ -41,9 +41,11 @@ sub Bot_public_cmd_rehash {
   my ($self, $core) = splice @_, 0, 2;
 
   ## FIXME
-  ##  use Cobalt::Conf to grab and reload _core_confs for channels/plugin
+  ##  use Cobalt::Conf to grab and reload _core_confs for channels/plugin.conf
   ##  replace $core->cfg->{channels}/{plugins}
   ##  same for langs?
+
+  ## issue event to indicate we've rehashed
 
   return PLUGIN_EAT_ALL
 }

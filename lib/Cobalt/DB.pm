@@ -28,7 +28,7 @@ sub new {
     croak "Constructor requires a specified File";
   }
 
-  my $path = $args{File};
+  my $path = File::Spec->rel2abs($args{File});
   my ($vol, $dir, $dbfile) = File::Spec->splitpath($path);
   croak "no file specified" unless $dbfile;
   ## FIXME volume ... ?
@@ -100,15 +100,6 @@ sub dbclose {
   close $lockfh;
   delete $self->{LockFH};
   unlink $self->{LockFile};
-}
-
-sub dblock {
-  my $self = shift;
-}
-
-sub dbunlock {
-  my $self = shift;
-  
 }
 
 sub keys {

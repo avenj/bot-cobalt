@@ -18,6 +18,7 @@ etc/plugins/rdb.conf
 etc/plugins/www.conf
 lib/Cobalt/Conf.pm
 lib/Cobalt/Core.pm
+lib/Cobalt/DB.pm
 lib/Cobalt/HTTP.pm
 lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm

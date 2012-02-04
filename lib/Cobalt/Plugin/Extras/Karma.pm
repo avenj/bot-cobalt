@@ -40,7 +40,7 @@ sub Cobalt_unregister {
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg     = ${$_[1]};
   return PLUGIN_EAT_NONE if $msg->{highlighted};
   return PLUGIN_EAT_NONE if $msg->{cmdprefix};
 
@@ -60,7 +60,7 @@ sub Bot_public_msg {
 sub Bot_public_cmd_karma {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg     = ${$_[1]};
 
   my @message = @{ $msg->{message_array} };
   my $karma_for = lc(shift @message || '');
