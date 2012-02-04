@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -50,11 +50,24 @@ sub dbopen {
 
   my $path = $self->{DatabasePath};
 
-  open my $lockfile, '>', $self->{LockFile}
-    or croak "could not create lockfile $self->{LockFile}: $!";
-  flock($lockfile, LOCK_EX) or croak "lock failed: $lockfile: $!";
-  print $lockfile $$;
-  $self->{LockFH} = $lockfile;
+  if (-f $self->{LockFile}) {
+    ## lockfile exists, is a regular file
+    ## it should've been ours (stale perhaps) with a pid
+    open my $lockf_fh, '<', $self->{LockFile}
+      or croak "could not open lockfile $self->{LockFile}: $!";
+    my $pid = <$lockf_fh>;
+    close $lockf_fh;
+    unless (kill 0, $pid) {   ## stale ?
+      warn "warning; clearing stale lockfile for $pid\n";
+      unlink($self->{LockFile});
+    }
+  }
+
+  open my $lockf_fh, '>', $self->{LockFile}
+    or croak "could not open lockfile $self->{LockFile}: $!";
+  flock($lockf_fh, LOCK_EX) or croak "lock failed: $lockf_fh: $!";
+  print $lockf_fh $$;
+  $self->{LockFH} = $lockf_fh;
 
   $self->{DB} = tie %{ $self->{Tied} }, "DB_File", $path,
       O_CREAT|O_RDWR, $self->{Perms}, $DB_HASH
