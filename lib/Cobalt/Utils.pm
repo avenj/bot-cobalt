@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use 5.12.1;
 use strict;
@@ -25,10 +25,42 @@ our @EXPORT_OK = qw{
   glob_to_re_str
   rplprintf
 
+  %colors
 };
 
 our %EXPORT_TAGS = (
   ALL => [ @EXPORT_OK ],
+);
+
+
+## mostly borrowed from IRC::Utils
+my %colors = (
+    NORMAL      => "\x0f",
+
+    BOLD        => "\x02",
+    UNDERLINE   => "\x1f",
+    REVERSE     => "\x16",
+    ITALIC      => "\x1d",
+
+    WHITE       => "\x0300",
+    BLACK       => "\x0301",
+    BLUE        => "\x0302",
+    GREEN       => "\x0303",
+    RED         => "\x0304",
+    BROWN       => "\x0305",
+    PURPLE      => "\x0306",
+    ORANGE      => "\x0307",
+    YELLOW      => "\x0308",
+    TEAL        => "\x0310",
+    PINK        => "\x0313",
+    GREY        => "\x0314",
+    GRAY        => "\x0314",
+
+    LIGHT_BLUE  => "\x0312",
+    LIGHT_CYAN  => "\x0311",
+    LIGHT_GREEN => "\x0309",
+    LIGHT_GRAY  => "\x0315",
+    LIGHT_GREY  => "\x0315",
 );
 
 
@@ -47,6 +79,12 @@ sub rplprintf {
   ## $vars should be a hash keyed by variable, f.ex:
   ##   'user' => $username,
   ##   'err'  => $error,
+
+  ## %C_* colors / formats :
+  for my $color (keys %colors) {
+    my $fmtvar = 'C_'.$color;
+    $vars->{$fmtvar} = $colors{$color};
+  }
 
   sub _repl {
     ## _repl($1, $2, $vars)
@@ -163,38 +201,8 @@ sub color {
   ## format specified strings, resetting NORMAL after:
   ## $str = color('bold', "Some text"); # bold text ending in normal
 
-  ## mostly borrowed from IRC::Utils
-
   my $format = uc(shift || 'normal');
   my $str = shift;
-  my %colors = (
-    NORMAL      => "\x0f",
-
-    BOLD        => "\x02",
-    UNDERLINE   => "\x1f",
-    REVERSE     => "\x16",
-    ITALIC      => "\x1d",
-
-    WHITE       => "\x0300",
-    BLACK       => "\x0301",
-    BLUE        => "\x0302",
-    GREEN       => "\x0303",
-    RED         => "\x0304",
-    BROWN       => "\x0305",
-    PURPLE      => "\x0306",
-    ORANGE      => "\x0307",
-    YELLOW      => "\x0308",
-    TEAL        => "\x0310",
-    PINK        => "\x0313",
-    GREY        => "\x0314",
-    GRAY        => "\x0314",
-
-    LIGHT_BLUE  => "\x0312",
-    LIGHT_CYAN  => "\x0311",
-    LIGHT_GREEN => "\x0309",
-    LIGHT_GRAY  => "\x0315",
-    LIGHT_GREY  => "\x0315",
-  );
   my $selected = $colors{$format};
 
   return $selected . $str . $colors{NORMAL} if $str;
@@ -506,7 +514,10 @@ Variable names can be terminated with a space or % -- both are demonstrated
 in the example above. You'll need to terminate with a trailing % if there 
 are characters following, as in the above example: I<(%host%)>
 
+The same color/format strings as L</color> can be applied via %C_* vars:
 
+  $string = "Access %C_BOLD%denied%C_NORMAL";
+  $response = rplprintf( $string );
 
 =head2 Password handling
 
