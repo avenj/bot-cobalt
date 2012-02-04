@@ -400,7 +400,7 @@ sub _info_dsearch {
     );
   }
 
-  $self->dbopen || return 'DB open failure';  
+  $self->{DB}->dbopen || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
     unless (ref $ref eq 'HASH') {
@@ -411,26 +411,28 @@ sub _info_dsearch {
     my $resp_str = $ref->{Response};
     push(@matches, $glob) unless index($resp_str, $str) == -1;
   }
-  $self->dbclose;
+  $self->{DB}->dbclose;
 
   return @matches || 'No matches';
 }
 
 sub _info_match {
   my ($self, $txt) = @_;
+  my $core = $self->{core};
+  $core->log->debug("_info_match on $txt");
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
-  $self->dbopen || return 'DB open failure';
+  $self->{DB}->dbopen || return 'DB open failure';
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ /$re/) {
       my $glob = $self->{Regexes}->{$re};
       my $ref = $self->{DB}->get($glob) || { };
       my $str = $ref->{Response};
-      $self->{core}->log->debug("triggered response for $glob");
+      $core->log->debug("triggered response for $glob");
       return $str // 'Error retrieving info topic';
     }
   }
-  $self->dbclose;
+  $self->{DB}->dbclose;
   return
 }
 
