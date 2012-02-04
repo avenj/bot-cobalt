@@ -421,7 +421,6 @@ sub _info_dsearch {
 sub _info_match {
   my ($self, $txt) = @_;
   my $core = $self->{core};
-  $core->log->debug("_info_match on $txt");
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
   for my $re (keys %{ $self->{Regexes} }) {
@@ -431,7 +430,6 @@ sub _info_match {
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;
       my $str = $ref->{Response};
-      $core->log->debug("triggered response for $glob");
       return $str // 'Error retrieving info topic';
     }
   }
