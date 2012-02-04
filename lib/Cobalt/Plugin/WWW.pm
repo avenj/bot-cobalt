@@ -140,7 +140,7 @@ sub _stop {
 
 sub _master_shutdown {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  $kernel->alias_remove('WWW');
+  $kernel->alias_remove('WWW') if defined $kernel;
   for my $wheelid (keys %{ $self->{WorkersByPID} }) {
     my $wheel = $self->{WorkersByPID}->{$wheelid};
     $wheel->kill(9);
