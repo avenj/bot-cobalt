@@ -1,13 +1,9 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.06';
+our $VERSION = '0.12';
 
 
-### FIXME
-
-##  (optionally?) use Cobalt::DB
-##  map compiled regex -> glob for matching
-##  key db on glob for retrieval
-##  store reversed hash for easier exists / delete ops etc?
+## FIXME db open err checks
+## FIXME serializer dump cmd?
 
 
 ## Handles glob-style "info" response topics
@@ -23,6 +19,7 @@ our $VERSION = '0.06';
 use 5.12.1;
 use strict;
 use warnings;
+use Carp;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
@@ -58,7 +55,7 @@ sub Cobalt_register {
   $self->{Regexes} = { };
   
   ## build our initial hashes:
-  $self->{DB}->dbopen;
+  $self->{DB}->dbopen || croak 'DB open failure';
   for my $glob ($self->{DB}->keys) {
     my $ref = $self->{DB}->get($glob);
     my $regex = $ref->{Regex};
@@ -126,8 +123,9 @@ sub Bot_public_msg {
       'delete'  => '_info2_del',
       'search'  => '_info2_search',
       'dsearch' => '_info2_dsearch',
-      ## FIXME 'tell X about Y' syntax
-      ## FIXME 'info' or 'about' cmd?      
+      ## FIXME 'display'
+      ## FIXME 'about'
+      ## FIXME 'tell X about Y'
     );
     
     given (lc $message[1]) {
@@ -140,7 +138,7 @@ sub Bot_public_msg {
           ## the rest is the remainder of the string
           ## (without highlight or command)
           ## ...which may be nothing, up to the handler to send syntax RPL
-          $resp = $self->$method($msg, @args);
+          my $resp = $self->$method($msg, @args);
           $core->send_event( 'send_message', 
             $context, $msg->{channel}, $resp) if $resp;
           return PLUGIN_EAT_NONE
@@ -196,7 +194,7 @@ sub Bot_info3_relay_string {
 ### Internal methods
 
 sub _info_add {
-  my ($msg, @args) = @_;
+  my ($self, $msg, @args) = @_;
   my ($glob, $string) = @args;
   my $core = $self->{core};
 
@@ -206,7 +204,13 @@ sub _info_add {
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
 
-  ## FIXME auth check
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $required = $pcfg->{RequiredLevels}->{AddTopic} // 2;
+  unless ($auth_level >= $required) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nick },
+    );
+  }    
 
   unless ($glob && $string) {
     return rplprintf( $core->lang->{INFO_BADSYNTAX_ADD} );
@@ -216,7 +220,7 @@ sub _info_add {
   $glob = lc $glob;
 
   if (exists $self->{Globs}->{$glob}) {
-    ## topic already exists, use replace
+    ## topic already exists, use replace instead!
     return rplprintf( $core->lang->{INFO_ERR_EXISTS},
       {
         topic => $glob,
@@ -225,14 +229,16 @@ sub _info_add {
     );
   }
 
-
   ## set up a re:
   my $re = glob_to_re_str($glob);
   ## anchored:
   $re = '^'.$re.'$' ;  
   
   ## add to db, keyed on glob:
-  $self->{DB}->dbopen;
+  unless ($self->{DB}->dbopen) {
+    $core->log->warn("DB open failure");
+    return 'DB open failure'
+  }
   $self->{DB}->put( $glob,
     {
       AddedAt => time(),
@@ -257,7 +263,7 @@ sub _info_add {
 }
 
 sub _info_del {
-  my ($msg, @args) = @_;
+  my ($self, $msg, @args) = @_;
   my ($glob) = @args;
   my $core = $self->{core};
   
@@ -267,19 +273,33 @@ sub _info_del {
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
   
-  ## FIXME auth check
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $required = $pcfg->{RequiredLevels}->{DelTopic} // 2;
+  unless ($auth_level >= $required) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nick },
+    );
+  }    
 
-  unless (glob) {
+  unless ($glob) {
     return rplprintf( $core->lang->{INFO_BADSYNTAX_DEL} );
   }
   
   
   unless (exists $self->{Globs}->{$glob}) {
-    ## FIXME return topic doesn't exist rpl
+    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+      {
+        topic => $glob,
+        nick  => $nick,
+      }
+    );
   }
 
   ## delete from db
-  $self->{DB}->dbopen;
+  unless ($self->{DB}->dbopen) {
+    $core->log->warn("DB open failure");
+    return 'DB open failure'
+  }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
   
@@ -287,14 +307,16 @@ sub _info_del {
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
   
-  
-  ## fixme RPL
-  
-
+  return rplprintf( $core->lang->{INFO_DEL},
+    {
+      topic => $glob,
+      nick  => $nick,
+    },
+  );  
 }
 
 sub _info_replace {
-  my ($msg, @args) = @_;
+  my ($self, $msg, @args) = @_;
   my ($glob, $string) = @args;
   my $core = $self->{core};
 
@@ -303,22 +325,48 @@ sub _info_replace {
   my $auth_user = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
   
-  ## FIXME auth check
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $req_del = $pcfg->{RequiredLevels}->{DelTopic} // 2;
+  my $req_add = $pcfg->{RequiredLevels}->{AddTopic} // 2;
+  ## auth check for BOTH add and del reqlevels:
+  unless ($auth_level >= $req_add && $auth_level >= $req_del) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nick },
+    );
+  }
 
   unless ($glob && $string) {
-    ## FIXME syntax rpl
+    return rplprintf( $core->lang->{INFO_BADSYNTAX_REPL} );
   }
   
   unless (exists $self->{Globs}->{$glob}) {
-    ## FIXME return topic doesn't exist rpl
+    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+      {
+        topic => $glob,
+        nick  => $nick,
+      },
+    );
   }
   
-  ## FIXME delete and readd
-  ## return RPL
+  unless ($self->{DB}->dbopen) {
+    $core->log->warn("DB open failure");
+    return 'DB open failure'
+  }
+  $self->{DB}->del($glob);
+  $self->{DB}->dbclose;
+  my $regex = delete $self->{Globs}->{$glob};
+  delete $self->{Regexes}->{$regex};
+
+  return rplprintf( $core->lang->{INFO_REPLACE},
+    {
+      topic => $glob,
+      nick  => $nick,
+    }
+  );
 }
 
 sub _info_search {
-  my ($msg, @args) = @_;
+  my ($self, $msg, @args) = @_;
   my ($str) = @args;
   my @matches;  
   for my $glob (keys %{ $self->{Globs} }) {
@@ -328,14 +376,22 @@ sub _info_search {
 }
 
 sub _info_dsearch {
-  my ($msg, @args) = @_;
+  my ($self, $msg, @args) = @_;
   ## dsearches w/ spaces are legit:
   my $str = join ' ', @args;
   my @matches;
-  
-  my $core = $self->{core};
 
-  $self->dbopen;  
+  my $core = $self->{core};
+  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
+  my $usr_lev = $core->auth_level($msg->{src_nick});
+  unless ($usr_lev >= $req_lev) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $msg->{src_nick} }
+    );
+  }
+
+  $self->dbopen || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
     unless (ref $ref eq 'HASH') {
@@ -355,7 +411,7 @@ sub _info_match {
   my ($self, $txt) = @_;
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
-  $self->dbopen;
+  $self->dbopen || return 'DB open failure';
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ $re) {
       my $glob = $self->{Regexes}->{$re};
