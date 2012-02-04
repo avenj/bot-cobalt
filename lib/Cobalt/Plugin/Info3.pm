@@ -1,5 +1,14 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.10';
+our $VERSION = '0.06';
+
+
+### FIXME
+
+##  (optionally?) use Cobalt::DB
+##  map compiled regex -> glob for matching
+##  key db on glob for retrieval
+##  store reversed hash for easier exists / delete ops etc?
+
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -9,19 +18,7 @@ our $VERSION = '0.10';
 ##  <bot> replace
 ##  <bot> (d)search
 ##
-## infodb is stored in memory to try to keep up with the 
-## potentially rapid pace of IRC conversation.
-##
-## Uses YAML for serializing to on-disk storage.
-##
-## $infodb->{$glob} = {
-##   Regex => $regex_from_glob
-##   Response => $string
-##   AddedBy => $username,
-##   AddedAt => time,
-## };
-##
-## Handles darkbot-style variable replacement
+## Also handles darkbot-style variable replacement
 
 use 5.12.1;
 use strict;
@@ -30,7 +27,8 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Utils qw/ :ALL /;
-use Cobalt::Serializer;
+
+use Cobalt::DB;
 
 sub new { bless( {}, shift ) }
 
@@ -45,10 +43,29 @@ sub Cobalt_register {
     ],
   );
 
-  ## Compiled maps compiled REs to globs in Info
-  $self->{Compiled} = { };
-  ## it's automatically created when the db is read here:
-  $self->{Info} = $self->_rw_db('read');
+  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $var = $core->var;
+  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 'db/info3.db';
+  my $dbpath = $var ."/". $relative_to_var;
+  $self->{DB_PATH} = $dbpath;
+  $self->{DB} = Cobalt::DB->new(
+    File => $dbpath,
+  );
+
+  ## glob-to-re mapping:
+  $self->{Globs} = { };
+  ## reverse of above:
+  $self->{Regexes} = { };
+  
+  ## build our initial hashes:
+  $self->{DB}->dbopen;
+  for my $glob ($self->{DB}->keys) {
+    my $ref = $self->{DB}->get($glob);
+    my $regex = $ref->{Regex};
+    $self->{Globs}->{$glob} = $regex;
+    $self->{Regexes}->{$regex} = $glob;
+  }
+  $self->{DB}->dbclose;
 
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
@@ -63,9 +80,9 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_info3 {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg     = ${$_[1]};
 
-  my $nick = $msg->{src_nick};
+  my $nick    = $msg->{src_nick};
   my $channel = $msg->{channel};
   
   my @message = @{ $msg->{message_array} };
@@ -108,7 +125,9 @@ sub Bot_public_msg {
       'del' => '_info2_del',
       'delete'  => '_info2_del',
       'search'  => '_info2_search',
-      'dsearch' => '_info2_dsearch',      
+      'dsearch' => '_info2_dsearch',
+      ## FIXME 'tell X about Y' syntax
+      ## FIXME 'info' or 'about' cmd?      
     );
     
     given (lc $message[1]) {
@@ -124,7 +143,7 @@ sub Bot_public_msg {
           $resp = $self->$method($msg, @args);
           $core->send_event( 'send_message', 
             $context, $msg->{channel}, $resp) if $resp;
-          return PLUGIN_EAT_NONE          
+          return PLUGIN_EAT_NONE
         } else {
           $core->log->warn($message[1]." is a valid cmd but method missing");
           return PLUGIN_EAT_NONE
@@ -178,37 +197,69 @@ sub Bot_info3_relay_string {
 
 sub _info_add {
   my ($msg, @args) = @_;
-  my ($topic, $string) = @args;
+  my ($glob, $string) = @args;
   my $core = $self->{core};
-
-  unless ($topic && $string) {
-    ## FIXME return syntax rpl
-  }
 
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
 
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
+
   ## FIXME auth check
 
-  if (exists $self->{Info}->{$topic}) {
-    ## FIXME return topic exists rpl
+  unless ($glob && $string) {
+    return rplprintf( $core->lang->{INFO_BADSYNTAX_ADD} );
+  }
+  
+  ## lowercase
+  $glob = lc $glob;
+
+  if (exists $self->{Globs}->{$glob}) {
+    ## topic already exists, use replace
+    return rplprintf( $core->lang->{INFO_ERR_EXISTS},
+      {
+        topic => $glob,
+        nick => $nick,
+      },
+    );
   }
 
-  ## FIXME add to {Info} hash
-  ## call write-out
+
+  ## set up a re:
+  my $re = glob_to_re_str($glob);
+  ## anchored:
+  $re = '^'.$re.'$' ;  
+  
+  ## add to db, keyed on glob:
+  $self->{DB}->dbopen;
+  $self->{DB}->put( $glob,
+    {
+      AddedAt => time(),
+      AddedBy => $auth_user,
+      Regex => $re,
+      Response => $string,
+    }
+  );
+  $self->{DB}->dbclose;
+  
+  ## add to internal hashes:
+  $self->{Regexes}->{$re} = $glob;
+  $self->{Globs}->{$glob} = $re;
+
   ## return RPL
+  return rplprintf( $core->lang->{INFO_ADD},
+    {
+      topic => $glob,
+      nick => $nick,
+    },
+  );
 }
 
 sub _info_del {
   my ($msg, @args) = @_;
-  my ($topic) = @args;
+  my ($glob) = @args;
   my $core = $self->{core};
-  
-  unless ($topic) {
-    ## FIXME syntax rpl
-  }
   
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
@@ -217,38 +268,52 @@ sub _info_del {
   my $auth_level = $core->auth_level($context, $nick);
   
   ## FIXME auth check
-  
-  unless (exists $self->{Info}->{$topic}) {
-    ## FIXME return topic doesn't exist rpl
+
+  unless (glob) {
+    return rplprintf( $core->lang->{INFO_BADSYNTAX_DEL} );
   }
   
-  ## FIXME delete from {Info} hash
-  ## call write-out
-  ## return RPL
+  
+  unless (exists $self->{Globs}->{$glob}) {
+    ## FIXME return topic doesn't exist rpl
+  }
+
+  ## delete from db
+  $self->{DB}->dbopen;
+  $self->{DB}->del($glob);
+  $self->{DB}->dbclose;
+  
+  ## delete from internal hashes
+  my $regex = delete $self->{Globs}->{$glob};
+  delete $self->{Regexes}->{$regex};
+  
+  
+  ## fixme RPL
+  
+
 }
 
 sub _info_replace {
   my ($msg, @args) = @_;
-  my ($topic, $string) = @args;
+  my ($glob, $string) = @args;
   my $core = $self->{core};
 
-  unless ($topic && $string) {
-    ## FIXME syntax rpl
-  }
-  
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
   my $auth_user = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
   
   ## FIXME auth check
+
+  unless ($glob && $string) {
+    ## FIXME syntax rpl
+  }
   
-  unless (exists $self->{Info}->{$topic}) {
+  unless (exists $self->{Globs}->{$glob}) {
     ## FIXME return topic doesn't exist rpl
   }
   
   ## FIXME delete and readd
-  ## call writeout
   ## return RPL
 }
 
@@ -256,7 +321,7 @@ sub _info_search {
   my ($msg, @args) = @_;
   my ($str) = @args;
   my @matches;  
-  for my $glob (keys %{ $self->{Info} }) {
+  for my $glob (keys %{ $self->{Globs} }) {
     push(@matches, $glob) unless index($glob, $str) == -1;
   }
   return @matches || 'No matches';
@@ -267,10 +332,22 @@ sub _info_dsearch {
   ## dsearches w/ spaces are legit:
   my $str = join ' ', @args;
   my @matches;
-  for my $glob (keys %{ $self->{Info} }) {
-    my $resp_str = $self->{Info}->{$glob}->{Response};
+  
+  my $core = $self->{core};
+
+  $self->dbopen;  
+  for my $glob (keys %{ $self->{Globs} }) {
+    my $ref = $self->{DB}->get($glob);
+    unless (ref $ref eq 'HASH') {
+      $core->log->warn("Inconsistent Info3? $glob appears to have no value");
+      $core->log->warn("This could indicate database corruption!");
+      next
+    }
+    my $resp_str = $ref->{Response};
     push(@matches, $glob) unless index($resp_str, $str) == -1;
   }
+  $self->dbclose;
+
   return @matches || 'No matches';
 }
 
@@ -278,13 +355,16 @@ sub _info_match {
   my ($self, $txt) = @_;
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
-  for my $re (keys %{ $self->{Compiled} }) {
+  $self->dbopen;
+  for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ $re) {
-      my $glob = $self->{Compiled}->{$re};
-      my $str = $self->{Info}->{$glob}->{Response};
+      my $glob = $self->{Regexes}->{$re};
+      my $ref = $self->{DB}->get($glob) || { };
+      my $str = $ref->{Response};
       return $str // 'Error retrieving info topic';
     }
   }
+  $self->dbclose;
   return
 }
 
@@ -322,6 +402,8 @@ sub _info_format {
     V => 'cobalt-'.$core->version,  ## version
     W => $core->url,          ## website
   };
+
+  ## FIXME -- some color code syntax ?
   
   ##  1~ 2~ .. etc
   my $x = 0;
@@ -340,50 +422,6 @@ sub __info3repl {
   my ($orig, $match, $vars) = @_;
   return $orig unless defined $vars->{$match};
   return $vars->{$match}
-}
-
-
-sub _rw_db {
-   ## _rw_db('read')   _rw_db('write')
-  my ($self, $op) = @_;
-  return unless $op and $op ~~ [ qw/read write/ ];
-  my $core = $self->{core};
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
-  my $serializer = Cobalt::Serializer->new;
-  my $var = $core->var;
-  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 'db/info3.yml';
-  my $dbpath = $var ."/". $relative_to_var;
-  given ($op) {
-  
-    when ("read") {
-      my $db = $serializer->readfile($dbpath);
-      if ($db && ref $db eq 'HASH') {
-        ## compile into case-insensitive regexes
-        for my $glob (keys %$db) {
-          my $re = $db->{$glob}->{Regex} // glob_to_re_str($glob);
-          ## compiled regex needs anchors
-          ## (darkbot legacy)
-          $re = qr/^${re}$/i;
-          ## FIXME break into eventy loop?
-          $self->{Compiled}->{$re} = $glob;
-        }
-        return $db
-      } else {
-        $core->log->warn("Could not read info3 DB.");
-        $core->log->warn("Creating new info3 . . . ");
-        return {}
-      }
-    }
-    
-    when ("write") {
-      my $ref = $self->{Info};
-      return 1 if $serializer->writefile($dbpath, $ref);
-      $core->log->warn("Serializer failure, could not write $dbpath");
-      return
-    }
-
-  }
-
 }
 
 
