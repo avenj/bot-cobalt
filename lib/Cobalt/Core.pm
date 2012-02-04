@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_9';
+our $VERSION = '2.00_10';
 
 use 5.12.1;
 use Carp;
@@ -390,7 +390,7 @@ sub timer_del {
   ## delete a timer by its ID
   my $self = shift;
   my $id = shift || return;
-  $core->log->debug("timer del; $id");
+  $self->log->debug("timer del; $id");
   return delete $self->TimerPool->{TIMERS}->{$id};
 }
 
