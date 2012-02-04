@@ -164,6 +164,8 @@ sub Bot_public_msg {
 
   my $nick = $msg->{src_nick};
   my $channel = $msg->{channel};
+
+  $core->log->debug("issuing info3_relay_string");
   
   $core->send_event( 'info3_relay_string', 
     $context, $channel, $nick, $match
@@ -183,6 +185,8 @@ sub Bot_info3_relay_string {
   ## alsoreceived from RDB when handing off ~rdb topics
   
   return PLUGIN_EAT_NONE unless $string;
+
+  $core->log->debug("info3_relay_string received; calling _info_format");
   
   my $resp = $self->_info_format($context, $nick, $channel, $string);
 
@@ -422,6 +426,7 @@ sub _info_match {
       my $glob = $self->{Regexes}->{$re};
       my $ref = $self->{DB}->get($glob) || { };
       my $str = $ref->{Response};
+      $core->log->debug("triggered response for $glob");
       return $str // 'Error retrieving info topic';
     }
   }
