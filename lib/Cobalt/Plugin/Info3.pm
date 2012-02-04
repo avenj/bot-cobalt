@@ -190,7 +190,7 @@ sub Bot_info3_relay_string {
   
   my $resp = $self->_info_format($context, $nick, $channel, $string);
 
-  $core->send_event('send_message', $context, $channel, $string);
+  $core->send_event('send_message', $context, $channel, $resp);
 
   return PLUGIN_EAT_NONE
 }
