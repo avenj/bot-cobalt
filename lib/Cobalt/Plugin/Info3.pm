@@ -426,7 +426,7 @@ sub _info_match {
       my $glob = $self->{Regexes}->{$re};
       my $ref = $self->{DB}->get($glob) || { };
       my $str = $ref->{Response};
-      $core->log->debug("triggered response for $glob");
+      $self->{core}->log->debug("triggered response for $glob");
       return $str // 'Error retrieving info topic';
     }
   }
