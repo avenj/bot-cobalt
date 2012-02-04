@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.06';
+our $VERSION = '0.08';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -47,14 +47,14 @@ sub new {
 
 sub dbopen {
   my $self = shift;
-
   my $path = $self->{DatabasePath};
 
   if (-f $self->{LockFile}) {
     ## lockfile exists, is a regular file
     ## it should've been ours (stale perhaps) with a pid
     open my $lockf_fh, '<', $self->{LockFile}
-      or croak "could not open lockfile $self->{LockFile}: $!";
+      or warn "could not open lockfile $self->{LockFile}: $!\n"
+      and return;
     my $pid = <$lockf_fh>;
     close $lockf_fh;
     unless (kill 0, $pid) {   ## stale ?
@@ -64,8 +64,19 @@ sub dbopen {
   }
 
   open my $lockf_fh, '>', $self->{LockFile}
-    or croak "could not open lockfile $self->{LockFile}: $!";
-  flock($lockf_fh, LOCK_EX) or croak "lock failed: $lockf_fh: $!";
+    or warn "could not open lockfile $self->{LockFile}: $!\n"
+    and return;
+
+  my $timer;
+  until ( flock $lockf_fh, LOCK_EX | LOCK_NB ) {
+    if ($timer > 10) {   ## 10s lock timeout
+      warn "failed lock for db $path, timeout (10s)\n";
+      return
+    }
+    select undef, undef, undef, 0.25;
+    $timer += 0.25;
+  }
+  
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
 
@@ -225,12 +236,12 @@ Berkeley DB:
 Database operations should be contained within a dbopen/dbclose:
 
   ## open, put, close:
-  $db->dbopen;
+  $db->dbopen || croak "dbopen failure";
   $db->put($key, $data);
   $db->dbclose;
   
   ## open, read, close:
-  $db->dbopen;
+  $db->dbopen || croak "dbopen failure";
   my $data = $db->get($key);
   $db->dbclose;
 
@@ -240,6 +251,9 @@ Methods will fail if the DB is not open.
 
 By default, a lock file will be created in the same directory as 
 the database file itself.
+
+The attempt to gain a lock will time out after ten seconds; this is 
+one reason it is important to check dbopen exit status.
 
 B<The lock file is cleared on dbclose. Be sure to always dbclose!>
 

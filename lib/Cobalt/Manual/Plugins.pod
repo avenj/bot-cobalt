@@ -718,6 +718,22 @@ FIXME
 
 FIXME
 
+=head3 Cobalt::DB
+
+FIXME
+
+=head3 Cobalt::Serializer
+
+FIXME
+
+=head3 Cobalt::Utils
+
+FIXME brief primer on useful Cobalt::Utils funcs
+
+=head3 IRC::Utils
+
+FIXME brief primer on IRC::Utils funcs
+
 =head3 Cobalt::Plugin::WWW
 
 It's fairly common to want to make some kind of HTTP request from an 
@@ -786,14 +802,6 @@ boolean true; you can fall back to LWP with a short timeout, perhaps:
   }
 
 
-
-=head3 Cobalt::Utils
-
-FIXME brief primer on useful Cobalt::Utils funcs
-
-=head3 IRC::Utils
-
-FIXME brief primer on IRC::Utils funcs
 
 =head2 Keeping track of $core
 
