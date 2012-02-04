@@ -118,11 +118,11 @@ sub Bot_public_msg {
   
     ## we were highlighted -- might be an info3 cmd
     my %handlers = (
-      'add' => '_info2_add',
-      'del' => '_info2_del',
-      'delete'  => '_info2_del',
-      'search'  => '_info2_search',
-      'dsearch' => '_info2_dsearch',
+      'add' => '_info_add',
+      'del' => '_info_del',
+      'delete'  => '_info_del',
+      'search'  => '_info_search',
+      'dsearch' => '_info_dsearch',
       ## FIXME 'display'
       ## FIXME 'about'
       ## FIXME 'tell X about Y'
@@ -131,7 +131,7 @@ sub Bot_public_msg {
     given (lc $message[1]) {
       when ([ keys %handlers ]) {
         ## this is apparently a valid command
-        my @args = $message[2 .. $#message];
+        my @args = @message[2 .. $#message];
         my $method = $handlers{ $message[1] };
         if ( $self->can($method) ) {
           ## pass handlers $msg ref as first arg
