@@ -1,5 +1,5 @@
 package Cobalt::Plugin::OutputFilters::StripFormat;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use 5.12.1;
 use strict;
@@ -15,7 +15,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   $core->plugin_register( $self, 'USER',
-    [ 'message', 'notice' ],
+    [ 'message', 'notice', 'ctcp' ],
   );
 
   $core->log->info("Registered, filtering FORMATTING");
@@ -38,6 +38,14 @@ sub Outgoing_message {
 sub Outgoing_notice {
   my ($self, $core) = splice @_, 0, 2;
   ${$_[2]} = strip_formatting(${$_[2]});
+  return PLUGIN_EAT_NONE
+}
+
+sub Outgoing_ctcp {
+  my ($self, $core) = splice @_, 0, 2;
+  my $type = ${$_[1]};
+  return PLUGIN_EAT_NONE unless uc($type) eq 'ACTION';
+  ${$_[3]} = strip_formatting(${$_[3]});
   return PLUGIN_EAT_NONE
 }
 
