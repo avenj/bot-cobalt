@@ -70,6 +70,7 @@ my $build = $class->new(
       'File::Slurp' => '9999',
 
      # Utils
+      'DateTime'    => 0,
       'IRC::Utils'  => '0.12',
 
      # Serialization

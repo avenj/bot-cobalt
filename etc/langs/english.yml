@@ -15,7 +15,7 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 4   ## bump +1 on significant revisions please
+REV: 6   ## bump +1 on significant revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
@@ -108,6 +108,12 @@ RPL:
 
   ## INFO_WHAT, %nick
   INFO_WHAT: "%nick%, what?"
+  
+  ## INFO_TELL_WHO, %nick
+  INFO_TELL_WHO: "Tell who what, %nick%?"
+  
+  ## INFO_TELL_WHAT, %nick, %target
+  INFO_TELL_WHAT: "Tell %target% about what, %nick%?"
 
   ## INFO_ADD, %nick, %topic
   INFO_ADD: "%nick%, %topic has been added."
@@ -115,7 +121,8 @@ RPL:
   ## INFO_DEL, %nick, %topic
   INFO_DEL: "%nick%, %topic has been removed."
 
-  INFO_SEARCH:
+  ## INFO_ABOUT, %nick, %topic, %author, %date, %length
+  INFO_ABOUT: "(%topic%) added by %author% at %date%. Response is %length% characters"
 
   ## INFO_REPLACE, %nick, %topic
   INFO_REPLACE: "Alright, %nick%, I just replaced %topic"

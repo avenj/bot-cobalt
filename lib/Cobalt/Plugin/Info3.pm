@@ -20,6 +20,8 @@ use strict;
 use warnings;
 use Carp;
 
+use DateTime;
+
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Utils qw/ :ALL /;
@@ -95,9 +97,9 @@ sub Bot_public_msg {
       'delete'  => '_info_del',
       'search'  => '_info_search',
       'dsearch' => '_info_dsearch',
-      ## FIXME 'display'
-      ## FIXME 'about'
-      ## FIXME 'tell X about Y'
+      'display' => '_info_display',
+      'about'   => '_info_about',
+      'tell'    => '_info_tell',
     );
     
     given (lc $message[1]) {
@@ -300,11 +302,13 @@ sub _info_del {
 sub _info_replace {
   my ($self, $msg, @args) = @_;
   my ($glob, $string) = @args;
+  $glob = lc $glob;
   my $core = $self->{core};
 
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
-  my $auth_user = $core->auth_username($context, $nick);
+
+  my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
   
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
@@ -329,6 +333,8 @@ sub _info_replace {
       },
     );
   }
+
+  $core->log->debug("replace called for $glob by $nick ($auth_user)");
   
   unless ($self->{DB}->dbopen) {
     $core->log->warn("DB open failure");
@@ -336,9 +342,33 @@ sub _info_replace {
   }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
+
+  $core->log->debug("topic del (replace): $glob");
   
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
+
+  my $re = glob_to_re_str($glob);
+  $re = '^'.$re.'$' ;  
+
+  unless ($self->{DB}->dbopen) {
+    $core->log->warn("DB open failure");
+    return 'DB open failure'
+  }
+  $self->{DB}->put( $glob,
+    { 
+      AddedAt => time(),
+      AddedBy => $auth_user,
+      Regex => $re,
+      Response => $string,
+    }
+  );
+  $self->{DB}->dbclose;
+
+  $self->{Regexes}->{$re} = $glob;
+  $self->{Globs}->{$glob} = $re;
+
+  $core->log->debug("topic add (replace): $glob ($re)");
 
   return rplprintf( $core->lang->{INFO_REPLACE},
     {
@@ -346,6 +376,116 @@ sub _info_replace {
       nick  => $nick,
     }
   );
+}
+
+sub _info_tell {
+  ## 'tell X about Y' syntax
+  my ($self, $msg, @args) = @_;
+  my $target = shift @args;
+  my $core = $self->{core};
+
+  unless ($target) {
+    return rplprintf( $core->lang->{INFO_TELL_WHO} // "Tell who what?",
+      { nick => $msg->{src_nick} }
+    );
+  }
+
+  unless (@args) {
+    return rplprintf( $core->lang->{INFO_TELL_WHAT}
+      // "What should I tell $target about?" ,
+        { nick => $msg->{src_nick}, target => $target }
+    );
+  }
+
+  my $str_to_match;
+  ## might be 'tell X Y':
+  if (lc $args[0] eq 'about') {
+    ## 'tell X about Y' syntax
+    $str_to_match = join ' ', @args[1 .. $#args];
+  } else {
+    ## 'tell X Y' syntax
+    $str_to_match = join ' ', @args;
+  }
+
+  ## find info match
+  my $match = $self->_info_match($str_to_match);
+  unless ($match) {
+    return rplprintf( $core->lang->{INFO_DONTKNOW},
+      { nick => $msg->{src_nick}, topic => $str_to_match }
+    );
+  }
+    
+  my $channel = $msg->{channel};
+  
+  $core->log->debug("issuing info3_relay_string for tell");
+
+  $core->send_event( 'info3_relay_string', 
+    $msg->{context}, $channel, $target, $match
+  );
+
+  return
+}
+
+sub _info_about {
+  my ($self, $msg, @args) = @_;
+  my ($glob) = @args;
+  my $core = $self->{core};
+  return unless $glob; # FIXME syntax RPL
+
+  unless (exists $self->{Globs}->{$glob}) {
+    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+      {
+        topic => $glob,
+        nick  => $msg->{src_nick},
+      },
+    );
+  }
+
+  ## parse and display addedat/addedby info
+  $self->{DB}->dbopen || return 'DB open failure';
+  my $ref = $self->{DB}->get($glob);
+  $self->{DB}->dbclose;
+
+  my $addedby = $ref->{AddedBy} || '(undef)';
+  my $dt_addedat = DateTime->from_epoch( $ref->{AddedAt} );
+  my $addedat = join ' ', $dt_addedat->date, $dt_addedat->time;
+  my $str_len = length( $ref->{Response} );
+  
+  return rplprintf( $core->lang->{INFO_ABOUT},
+    {
+      nick  => $msg->{src_nick},
+      topic => $glob,
+      author => $addedby,
+      date => $addedat,
+      length => $str_len,
+    }
+  );
+}
+
+sub _info_display {
+  ## return raw topic
+  my ($self, $msg, @args) = @_;
+  my ($glob) = @args;
+  return unless $glob; # FIXME rpl?
+
+  my $core = $self->{core};
+
+  ## check if glob exists
+  unless (exists $self->{Globs}->{$glob}) {
+    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+      {
+        topic => $glob,
+        nick  => $msg->{src_nick},
+      },
+    );
+  }
+  
+  ##  if so, show unparsed Response
+  $self->{DB}->dbopen || return 'DB open failure';  
+  my $ref = $self->{DB}->get($glob);
+  $self->{DB}->dbclose;    
+  my $response = $ref->{Response};
+  return $response
 }
 
 sub _info_search {
@@ -450,15 +590,15 @@ sub _info_format {
 
   my $ccfg = $core->get_core_cfg;
   my $cmdchar = $ccfg->{Opts}->{CmdChar};
-  my @users = $irc_obj->channel_list($channel) if $channel;
-  my $random = $users[ rand @users ] if @users;
+  my @users   = $irc_obj->channel_list($channel) if $channel;
+  my $random  = $users[ rand @users ] if @users;
   my $website = $core->url;
 
   my $vars = {
     '!' => $cmdchar,          ## CmdChar
     B => $irc_obj->nick_name, ## bot's nick for this context
     C => $channel,            ## channel
-    H => $irc_obj->nick_long_form($nick), # n!u@h
+    H => $irc_obj->nick_long_form($nick) || '', # n!u@h
     N => $nick,               ## nickname
     P => $irc_obj->port,      ## remote port
     Q => $str,                ## question string
@@ -493,3 +633,4 @@ sub __info3repl {
 
 
 1;
+__END__
