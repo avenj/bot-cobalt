@@ -1,9 +1,8 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
-
-## FIXME db open err checks
-## FIXME serializer dump cmd?
+## FIXME match on ?actions
+## FIXME +action responses (send_action event?)
 
 
 ## Handles glob-style "info" response topics
@@ -35,7 +34,6 @@ sub Cobalt_register {
   $core->plugin_register($self, 'SERVER',
     [ 
       'public_msg',
-      'public_cmd_info3',
       'info3_relay_string',
     ],
   );
@@ -72,32 +70,6 @@ sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering Info plugin");
   return PLUGIN_EAT_NONE
-}
-
-sub Bot_public_cmd_info3 {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
-
-  my $nick    = $msg->{src_nick};
-  my $channel = $msg->{channel};
-  
-  my @message = @{ $msg->{message_array} };
-  unless (@message) {  
-    ## FIXME bad syntax rpl on empty @message
-    
-    return PLUGIN_EAT_ALL
-  }
-  
-  my $cmd = lc $message[0];
-  my $resp;
-
-  ## FIXME handler like public_msg
-  
-  $core->send_event( 'send_message', $context, $channel, $resp )
-    if $resp;
-  
-  return PLUGIN_EAT_ALL
 }
 
 sub Bot_public_msg {
@@ -140,7 +112,7 @@ sub Bot_public_msg {
           ## ...which may be nothing, up to the handler to send syntax RPL
           my $resp = $self->$method($msg, @args);
           $core->send_event( 'send_message', 
-            $context, $msg->{channel}, $resp) if $resp;
+            $context, $msg->{channel}, $resp ) if $resp;
           return PLUGIN_EAT_NONE
         } else {
           $core->log->warn($message[1]." is a valid cmd but method missing");
@@ -182,7 +154,7 @@ sub Bot_info3_relay_string {
   my $string  = ${$_[3]};
 
   ## format and send info3 response
-  ## alsoreceived from RDB when handing off ~rdb topics
+  ## also received from RDB when handing off ~rdb topics
   
   return PLUGIN_EAT_NONE unless $string;
 
@@ -379,20 +351,31 @@ sub _info_replace {
 sub _info_search {
   my ($self, $msg, @args) = @_;
   my ($str) = @args;
+  
+  my @matches = $self->_info_exec_search($str);
+  return 'No matches' unless @matches;
+  my $resp = "Matches: ";
+  while ( length($resp) < 350 && @matches) {
+    $resp .= ' '.shift(@matches);
+  }
+  return $resp;  
+}
+
+sub _info_exec_search {
+  my ($self, $str) = @_;
   my @matches;  
   for my $glob (keys %{ $self->{Globs} }) {
     push(@matches, $glob) unless index($glob, $str) == -1;
   }
-  return @matches || 'No matches';
+  return @matches;
 }
 
 sub _info_dsearch {
   my ($self, $msg, @args) = @_;
-  ## dsearches w/ spaces are legit:
   my $str = join ' ', @args;
-  my @matches;
 
   my $core = $self->{core};
+
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
   my $usr_lev = $core->auth_level($msg->{context}, $msg->{src_nick});
@@ -401,6 +384,21 @@ sub _info_dsearch {
       { nick => $msg->{src_nick} }
     );
   }
+
+  my @matches = $self->_info_exec_dsearch($str);
+  return 'No matches' unless @matches;
+  my $resp = "Matches: ";
+  while ( length($resp) < 350 && @matches) {
+    $resp .= ' '.shift(@matches);
+  }
+  return $resp
+}
+
+sub _info_exec_dsearch {
+  my ($self, $str) = @_;
+  my @matches;
+
+  my $core = $self->{core};
 
   $self->{DB}->dbopen || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
@@ -415,7 +413,7 @@ sub _info_dsearch {
   }
   $self->{DB}->dbclose;
 
-  return @matches || 'No matches';
+  return @matches;
 }
 
 sub _info_match {
