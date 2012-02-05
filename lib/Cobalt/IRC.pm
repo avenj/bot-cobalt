@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.10';
+our $VERSION = '0.12';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -770,6 +770,36 @@ sub Bot_send_notice {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_send_action {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $target  = ${$_[1]};
+  my $txt     = ${$_[2]};
+
+  ## core->send_event( 'send_action', $context, $target, $string );
+
+  unless ( $context
+           && $context eq 'Main'
+           && $target
+           && $txt
+  ) { 
+    return PLUGIN_EAT_NONE 
+  }
+
+  return PLUGIN_EAT_NONE unless $core->Servers->{Main}->{Connected};
+  
+  ## USER event Outgoing_ctcp (CONTEXT, TYPE, TARGET, TEXT)
+  my @ctcp = ( 'Main', 'ACTION', $target, $txt );
+  my $eat = $core->send_user_event( 'ctcp', \@ctcp );
+  unless ($eat == PLUGIN_EAT_ALL) {
+    my ($target, $txt) = @ctcp[2,3];
+    $self->irc->yield(ctcp => $target => 'ACTION '.$txt );
+    $core->send_event( 'ctcp_sent', 'Main', 'ACTION', $target, $txt );
+  }
+
+  return PLUGIN_EAT_NONE
+}
+
 sub Bot_topic {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
@@ -1097,6 +1127,17 @@ Broadcast when a NOTICE has been sent out via a send_notice event.
 
 Same syntax as L</Bot_message_sent>.
 
+=head3 Bot_ctcp_sent
+
+Broadcast when a CTCP has been sent via a CTCP handler such as 
+L</send_action>.
+
+  my $context   = ${$_[0]};
+  my $ctcp_type = ${$_[1]};  ## 'ACTION' for example
+  my $target  = ${$_[2]};
+  my $content = ${$_[3]};
+
+
 
 =head2 Channel state events
 
@@ -1408,6 +1449,17 @@ Syndicated when a send_notice event has been received; arguments are the
 same as L</Outgoing_message>.
 
 
+=head3 Outgoing_ctcp
+
+Syndicated when a CTCP is about to be sent via L</send_action> or a 
+similar CTCP handler.
+
+  my $context   = ${ $_[0] };
+  my $ctcp_type = ${ $_[1] };
+  my $target  = ${ $_[2] };
+  my $content = ${ $_[3] };
+
+
 
 =head1 ACCEPTED EVENTS
 
@@ -1419,12 +1471,30 @@ A C<send_message> event for our context triggers a PRIVMSG send.
 
   $core->send_event( 'send_message', $context, $target, $string );
 
+An L</Outgoing_message> USER event will be issued prior to sending.
+
+Upon completion a L</Bot_message_sent> event will be broadcast.
+
 =head3 send_notice
 
 A C<send_notice> event for our context triggers a NOTICE.
 
   $core->send_event( 'send_notice', $context, $target, $string );
 
+An L</Outgoing_notice> USER event will be issued prior to sending.
+
+Upon completion a L</Bot_notice_sent> event will be broadcast.
+
+=head3 send_action
+
+A C<send_action> event sends a CTCP ACTION (also known as '/me') to a 
+channel or nickname.
+
+  $core->send_event( 'send_action', $context, $target, $string );
+
+An L</Outgoing_ctcp> USER event will be issued prior to sending.
+
+Upon completion a L</Bot_ctcp_sent> event will be broadcast.
 
 =head3 send_raw
 
