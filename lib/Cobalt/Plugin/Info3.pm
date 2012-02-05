@@ -1,10 +1,6 @@
 package Cobalt::Plugin::Info3;
 our $VERSION = '0.13';
 
-## FIXME match on ?actions
-## FIXME +action responses (send_action event?)
-
-
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
 ## Commands:
@@ -36,6 +32,7 @@ sub Cobalt_register {
   $core->plugin_register($self, 'SERVER',
     [ 
       'public_msg',
+      'ctcp_action',
       'info3_relay_string',
     ],
   );
@@ -71,6 +68,44 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering Info plugin");
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_ctcp_action {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $msg = ${$_[1]};
+  ## similar to _public_msg handler
+  ## pre-pend ~action+ and run a match
+
+  my @message = @{ $msg->{message_array} };
+  return PLUGIN_EAT_NONE unless @message;
+
+  my $str = join ' ', '~action', @message;
+  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
+
+  my $nick = $msg->{src_nick};
+  my $channel = $msg->{channel};
+
+  if ( index($match, '~') == 0) {
+    my $rdb = (split ' ', $match)[0];
+    $rdb = substr($rdb, 1);
+    if ($rdb) {
+      $core->send_event( 'rdb_triggered',
+        $context,
+        $channel,
+        $nick,
+        lc($rdb),
+        $match
+      );
+      return PLUGIN_EAT_NONE
+    }
+  }
+
+  $core->log->debug("issuing info3_relay_string in response to action");
+  $core->send_event( 'info3_relay_string', 
+    $context, $channel, $nick, $match
+  );
   return PLUGIN_EAT_NONE
 }
 
@@ -139,6 +174,22 @@ sub Bot_public_msg {
   my $nick = $msg->{src_nick};
   my $channel = $msg->{channel};
 
+  ## ~rdb, maybe? hand off to RDB.pm
+  if ( index($match, '~') == 0) {
+    my $rdb = (split ' ', $match)[0];
+    $rdb = substr($rdb, 1);
+    if ($rdb) {
+      $core->send_event( 'rdb_triggered',
+        $context,
+        $channel,
+        $nick,
+        lc($rdb),
+        $match
+      );
+      return PLUGIN_EAT_NONE
+    }
+  }
+
   $core->log->debug("issuing info3_relay_string");
   
   $core->send_event( 'info3_relay_string', 
@@ -156,7 +207,7 @@ sub Bot_info3_relay_string {
   my $string  = ${$_[3]};
 
   ## format and send info3 response
-  ## also received from RDB when handing off ~rdb topics
+  ## also received from RDB when handing off ~rdb responses
   
   return PLUGIN_EAT_NONE unless $string;
 
@@ -164,7 +215,12 @@ sub Bot_info3_relay_string {
   
   my $resp = $self->_info_format($context, $nick, $channel, $string);
 
-  $core->send_event('send_message', $context, $channel, $resp);
+  ## if $resp is a +action, send ctcp action
+  if ( index($resp, '+') == 0 ) {
+    $core->send_event('send_action', $context, $channel, $resp);
+  } else {
+    $core->send_event('send_message', $context, $channel, $resp);
+  }
 
   return PLUGIN_EAT_NONE
 }
@@ -209,7 +265,7 @@ sub _info_add {
     );
   }
 
-  ## set up a re:
+  ## set up a re
   my $re = glob_to_re_str($glob);
   ## anchored:
   $re = '^'.$re.'$' ;  
@@ -413,6 +469,23 @@ sub _info_tell {
     return rplprintf( $core->lang->{INFO_DONTKNOW},
       { nick => $msg->{src_nick}, topic => $str_to_match }
     );
+  }
+
+  ## if $match is a RDB, send rdb_triggered and bail
+  if ( index($match, '~') == 0) {
+    my $rdb = (split ' ', $match)[0];
+    $rdb = substr($rdb, 1);
+    if ($rdb) {
+      ## rdb_triggered will take it from here
+      $core->send_event( 'rdb_triggered',
+        $msg->{context},
+        $msg->{channel},
+        $target,
+        lc($rdb),
+        $match
+      );
+      return
+    }
   }
     
   my $channel = $msg->{channel};

@@ -498,19 +498,21 @@ sub Bot_rdb_triggered {
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $nick    = ${$_[2]};
-  my $rdb     = ${$_[3]} // 'main';
+  my $rdb     = ${$_[3] // \'main'};
+  my $orig    = ${$_[4] // \$rdb };
 
   ## event normally triggered by Info3 when a topic references a ~rdb
   ## grab a random response and throw it back at the pipeline
   ## info3 plugin can pick it up and do variable replacement on it 
 
-  my $random = $self->_get_random($rdb) || '';
+  ## if referenced rdb doesn't exist, send orig string
+  my $random = $self->_get_random($rdb) || $orig;
 
   $self->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
-  );
+  ) if $random;
 
-  return PLUGIN_EAT_ALL
+  return PLUGIN_EAT_NONE
 }
 
 sub Bot_rdb_broadcast {
