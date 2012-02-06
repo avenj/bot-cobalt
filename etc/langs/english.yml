@@ -15,7 +15,7 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 6   ## bump +1 on significant revisions please
+REV: 7   ## bump +1 on significant revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
@@ -58,10 +58,12 @@ RPL:
   ## RPL_OS: %os
   RPL_OS: "I am running %os"
 
+
  ## Plugin::Alarmclock:
 
   ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
   ALARMCLOCK_SET: "Alarm set to trigger in %secs%s (%nick%) [timerID: %timerid%]"
+
 
  ## Plugin::Auth:
 
@@ -81,24 +83,29 @@ RPL:
   AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"
   AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
 
-
-  ## AUTH_STATUS, $nick, $username, $lev
+  ## AUTH_STATUS, %nick, %username, %lev
   AUTH_STATUS: "%nick% (%username%) is level %lev%"
 
-  ## AUTH_USER_ADDED, $nick, $username, $mask, $lev
+  ## AUTH_USER_ADDED, %nick, %username, %mask, %lev
   AUTH_USER_ADDED: "Added username %username% (%mask%) at level %lev%"
 
-  ## AUTH_MASK_ADDED, $mask, $username
-  AUTH_MASK_ADDED: ~
+  ## AUTH_MASK_ADDED, %nick, %mask, %username
+  AUTH_MASK_ADDED: "Added new mask (%mask%) to %username%"
 
-  ## AUTH_MASK_DELETED, $mask, $username
-  AUTH_MASK_DELETED: ~
+  ## AUTH_MASK_EXISTS, %nick, %mask, %username
+  AUTH_MASK_EXISTS: "User %username% appears to have mask %mask% already"
 
-  ## AUTH_USER_DELETED, $username, $level
-  AUTH_USER_DELETED: ~
+  ## AUTH_MASK_DELETED, %nick, %mask, %username
+  AUTH_MASK_DELETED: "Deleted mask %mask% from user %username%"
 
-  ## AUTH_USER_EXISTS, $username
-  AUTH_USER_EXISTS: ~
+  ## AUTH_USER_DELETED, %nick, %username
+  AUTH_USER_DELETED: "Deleted user %username%"
+
+  ## AUTH_USER_NOSUCH, %nick, %username
+  AUTH_USER_NOSUCH: "Could not find user %username%"
+
+  ## AUTH_USER_EXISTS, %nick, %username
+  AUTH_USER_EXISTS: "User %username% already exists"
 
 
  ## Plugin::Info3:
@@ -136,6 +143,7 @@ RPL:
   INFO_BADSYNTAX_ADD: "Usage: <bot> ADD <topic> <response>"
   INFO_BADSYNTAX_DEL: "Usage: <bot> DEL <topic>"
   INFO_BADSYNTAX_REPL: "Usage: <bot> REPLACE <topic> <new response>"
+
 
  ## Plugin::RDB:
 
