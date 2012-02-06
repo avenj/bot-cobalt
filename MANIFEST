@@ -23,6 +23,7 @@ lib/Cobalt/HTTP.pm
 lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm.in
 lib/Cobalt/Lang.pm.PL
+lib/Cobalt/Lang.pod
 lib/Cobalt/Manual/Examples.pod
 lib/Cobalt/Manual/PluginConf.pod
 lib/Cobalt/Manual/PluginDist.pod
