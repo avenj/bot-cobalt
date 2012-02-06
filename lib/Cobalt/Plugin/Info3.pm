@@ -521,7 +521,7 @@ sub _info_about {
   $self->{DB}->dbclose;
 
   my $addedby = $ref->{AddedBy} || '(undef)';
-  my $dt_addedat = DateTime->from_epoch( $ref->{AddedAt} );
+  my $dt_addedat = DateTime->from_epoch( epoch => $ref->{AddedAt} );
   my $addedat = join ' ', $dt_addedat->date, $dt_addedat->time;
   my $str_len = length( $ref->{Response} );
   
@@ -577,6 +577,7 @@ sub _info_search {
 
 sub _info_exec_search {
   my ($self, $str) = @_;
+  return 'Nothing to search' unless $str;
   my @matches;  
   for my $glob (keys %{ $self->{Globs} }) {
     push(@matches, $glob) unless index($glob, $str) == -1;
