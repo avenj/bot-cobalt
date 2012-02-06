@@ -1,10 +1,12 @@
 package Cobalt::Plugin::Games::Dice;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use 5.12.1;
 use strict;
 use warnings;
+
+use Cobalt::Utils qw/ color /;
 
 sub new { bless( {}, shift ) }
 
@@ -41,9 +43,16 @@ sub execute {
       
       my $potential = $n_dice * $sides;
       
-      my $resp = "Rolled $n_dice dice of $sides sides: ";
+      my $resp = "Rolled "
+                 .color('bold', $n_dice)
+                 ." dice of "
+                 .color('bold', $sides)
+                 ." sides: " ;
+
       $resp .= join ' ', @rolls;
-      $resp .= " [total: $total / $potential]";
+
+      $resp .= " [total: ".color('bold', $total)." / $potential]";
+
       return $resp
     }
     
@@ -57,7 +66,11 @@ sub execute {
           $rolled -= $modify_by;
         }
       }
-      return "Rolled single die of $dice sides: $rolled"
+      my $resp =  "Rolled single die of "
+                  .color('bold', $dice)
+                  ." sides: "
+                  .color('bold', $rolled) ;
+      return $resp
     }
     
     default {

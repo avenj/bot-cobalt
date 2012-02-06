@@ -7,7 +7,7 @@ use warnings;
 
 sub new { bless {}, shift }
 
-sub rps {
+sub execute {
   my ($self, $rps) = @_;
 
   if      (! $rps) {

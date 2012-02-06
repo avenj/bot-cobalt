@@ -9,7 +9,7 @@ use Cobalt::Utils qw/color/;
 
 sub new { bless {}, shift }
 
-sub fire {
+sub execute {
   my ($self, $core) = @_;
   my $cyls = 5;
   my $loaded = int rand($cyls);

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Magic8;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use 5.12.1;
 use strict;
@@ -13,7 +13,7 @@ sub new {
   return $self
 }
 
-sub magic8 {
+sub execute {
   my $self = shift;
   my @responses = @{ $self->{Responses} };
   return $responses[rand @responses];
