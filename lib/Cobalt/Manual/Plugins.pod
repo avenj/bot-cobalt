@@ -53,7 +53,7 @@ you can specify a B<Opts:> directive. It should be a hash (or a list,
 in very odd cases).
 
 If an Opts: directive is supplied, it will be loaded into 
-'cfg->{plugin_cf}->{$pkg}->{PluginOpts}'. See below.
+'cfg->{plugin_cf}->{$pkg}->{PluginOpts}' -- see L</PluginOpts>.
 
 
 =head3 Accessing plugin configuration
@@ -107,6 +107,7 @@ B<Opts:> directive to retain your users' sanity.
 =head4 Examples
 
 FIXME
+FIXME examples of required levels hash, etc
 
 =head4 Directly accessing cfg hash
 
@@ -773,7 +774,30 @@ FIXME
 
 =head3 Cobalt::DB
 
-FIXME
+L<Cobalt::DB> provides an easy object-oriented interface to storing 
+and retrieving Perl data structures to/from BerkeleyDB via L<DB_File>.
+
+This is useful when a plugin has some persistent data it needs to 
+keep track of, but storing it in memory and serializing to/from disk is 
+too expensive.
+
+  use Cobalt::DB;
+   # new object for this db, creating it if it doesn't exist:
+  $db = Cobalt::DB->new(
+    File => $some_db_path,
+  );
+   # open and lock the db
+   # be sure to error-check dbopen somehow:
+  $db->dbopen || return "database open failed!";
+   # 'put' some data structure in the db:
+  my $ref = { Some => [ 'Data', 'Structure' ] };
+  $db->put('MyKey', $ref);
+   # 'get' some other data structure:
+  my $other_data = $db->get('OtherKey');
+   # close/unlock db:
+  $db->dbclose;
+
+See L<Cobalt::DB> for complete usage information.
 
 =head3 Cobalt::Serializer
 
@@ -793,7 +817,7 @@ and "thawing" data to/from files on disk:
   my $ref = { Some => { Deep => [ 'Structure' ] } };
   my $json = $jsify->freeze($ref);
 
-See L<Cobalt::Serializer> for complete usage information.
+See L<Cobalt::Serializer>.
 
 
 =head3 Cobalt::Utils
@@ -808,7 +832,7 @@ Cobalt-style glob syntax tools, color/format interpolation, and others.
   ## Import all Cobalt::Utils funcs:
   use Cobalt::Utils qw/ :ALL /;
 
-See L<Cobalt::Utils> for documentation.
+See L<Cobalt::Utils>
 
 
 =head3 IRC::Utils
