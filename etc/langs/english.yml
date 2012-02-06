@@ -82,11 +82,11 @@ RPL:
   AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
 
 
-  ## AUTH_STATUS, $nick, $level
-  AUTH_STATUS: ~
+  ## AUTH_STATUS, $nick, $username, $lev
+  AUTH_STATUS: "%nick% (%username%) is level %lev%"
 
-  ## AUTH_USER_ADDED, $username, $mask, $level
-  AUTH_USER_ADDED: ~
+  ## AUTH_USER_ADDED, $nick, $username, $mask, $lev
+  AUTH_USER_ADDED: "Added username %username% (%mask%) at level %lev%"
 
   ## AUTH_MASK_ADDED, $mask, $username
   AUTH_MASK_ADDED: ~
