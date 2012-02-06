@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 ## Act a bit like darkbot/cobalt1 randstuff & RDBs
 ##
@@ -562,15 +562,14 @@ sub _get_random {
   my ($self, $rdb) = @_;
   $rdb = 'main' unless $rdb;
   my $rdbref = $self->{RDB}->{$rdb} // {};
-  my $entries_c = scalar keys %$rdbref;
-  return unless $entries_c;
-  my($rand_idx, $pos);
-  do {
-    ++$pos;
-    ## skip deleted
-    $rand_idx = int rand $entries_c;
-  } until (defined $rdbref->{$rand_idx}->{String} || $pos == $entries_c);
-  return $rdbref->{$rand_idx}->{String};
+  
+  my @nodelete;
+  for my $ridx (keys %$rdbref) {
+    push(@nodelete, $ridx) if defined $rdbref->{$ridx}->{String};
+  }
+  
+  my $rand_index = $nodelete[rand@nodelete];
+  return $rdbref->{$rand_index}->{String}
 }
 
 sub _search {
