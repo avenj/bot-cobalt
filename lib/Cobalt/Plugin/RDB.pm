@@ -148,7 +148,7 @@ sub _cmd_randstuff {
   my $rdb = 'main';      # randstuff is 'main', darkbot legacy
   ## ...but this may be randstuff ~rdb ... syntax:
   if (index($message[0], '~') == 0) {
-    $rdb = shift @message;
+    $rdb = substr(shift @message, 1);
     unless ($rdb && exists $self->{RDB}->{$rdb}) {
       ## ~rdb specified but nonexistant
       return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
@@ -256,7 +256,7 @@ sub _cmd_rdb {
 
   unless ($cmd && $cmd ~~ @handled) {
     return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
-           ."search <rdb> <str>";
+           ."search <rdb> <str>, dbadd <rdb>, dbdel <rdb>";
   }
   
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
