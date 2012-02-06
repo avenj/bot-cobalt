@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use 5.12.1;
 use strict;
@@ -67,21 +67,25 @@ sub _load_games {
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $games = $pcfg->{Games} // {};
 
+  $core->log->debug(scalar keys %$games." games found");
+
   for my $game (keys %$games) {
-    my $module = $game->{Module} // next;
-    next unless ref $game->{Cmds} eq 'ARRAY';
+    my $module = $games->{$game}->{Module} // next;
+    next unless ref $games->{$game}->{Cmds} eq 'ARRAY';
 
     ## attempt to load module
     eval "require $module";
     if ($@) {
       $core->log->warn("Failed to load $module - $@");
       next
+    } else {
+      $core->log->debug("Found: $module");
     }
 
     my $obj = $module->new(core => $core);
     $self->{Objects}->{$game} = $obj;
     ## build a hash of commands we should handle
-    for my $cmd (@{ $game->{Cmds} }) {
+    for my $cmd (@{ $games->{$game}->{Cmds} }) {
       $self->{Dispatch}->{$cmd} = $game;
     }
     
