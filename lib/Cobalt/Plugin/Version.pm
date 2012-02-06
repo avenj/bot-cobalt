@@ -44,7 +44,7 @@ sub new { bless {}, shift  }
 ## Called when the plugin is loaded:
 sub Cobalt_register {
   ## We can grab $self (this plugin) and $core here:
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   ## $core gives us access to the core Cobalt instance
   ## $self can be used like you would in any other Perl module, clearly
 
@@ -63,7 +63,7 @@ sub Cobalt_register {
 
 ## Called when the plugin is unloaded:
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   ## You could do some kind of clean-up here . . .
   $core->log->info("Unregistering core IRC plugin");
   return PLUGIN_EAT_NONE

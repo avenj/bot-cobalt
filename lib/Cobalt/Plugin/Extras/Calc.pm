@@ -12,7 +12,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->plugin_register($self, 'SERVER',
     [ 'public_msg' ],
   );
@@ -21,14 +21,14 @@ sub Cobalt_register {
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering");
   return PLUGIN_EAT_NONE
 }
 
 
 sub Bot_public_msg {
-
+  my ($self, $core) = splice @_, 0, 2;
   return PLUGIN_EAT_NONE
 }
 

@@ -27,7 +27,7 @@ use Cobalt::DB;
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   $core->plugin_register($self, 'SERVER',
     [ 
@@ -66,7 +66,7 @@ sub Cobalt_register {
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering Info plugin");
   return PLUGIN_EAT_NONE
 }

@@ -112,7 +112,7 @@ has 'DB_Path' => (
 
 ### Load/unload:
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   ## Set $self->core to make life easier on our internals:
   $self->core($core);
 
@@ -214,7 +214,7 @@ sub Cobalt_register {
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering core IRC plugin");
   ## FIXME save authdb?
   $self->_clear_all;

@@ -45,7 +45,7 @@ use constant {
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   $core->plugin_register($self, 'SERVER',
     [ 
@@ -79,14 +79,14 @@ sub Cobalt_register {
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering random stuff");
   return PLUGIN_EAT_NONE
 }
 
 
 sub Bot_public_msg {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $msg = ${$_[1]};
   my @handled = qw/
