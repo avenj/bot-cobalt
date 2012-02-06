@@ -570,7 +570,7 @@ sub _get_random {
     ## skip deleted
     $rand_idx = int rand $entries_c;
   } until (defined $rdbref->{$rand_idx}->{String} || $pos == $entries_c);
-  return $rdbref->{$rand_idx};
+  return $rdbref->{$rand_idx}->{String};
 }
 
 sub _search {
