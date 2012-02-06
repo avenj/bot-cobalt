@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use 5.12.1;
 use strict;
@@ -36,9 +36,7 @@ sub Bot_public_msg {
 
   return PLUGIN_EAT_NONE unless $msg->{cmdprefix};
   
-  my $prefixedcmd = $msg->{message_array}->[0];
-  my $cmd = substr($prefixedcmd, 1);
-  $cmd = lc($cmd||'');
+  my $cmd = $msg->{cmd};
   
   return PLUGIN_EAT_NONE
     unless $cmd and defined $self->{Dispatch}->{$cmd};
