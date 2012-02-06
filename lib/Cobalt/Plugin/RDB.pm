@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 ## Act a bit like darkbot/cobalt1 randstuff & RDBs
 ##
@@ -211,7 +211,10 @@ sub _cmd_randq {
   my $selection = @matches ? 
                    $matches[rand@matches] 
                    : return 'No match' ;
-  if ($self->{LastRandq} eq $selection && @matches > 1) {
+  if ($self->{LastRandq} 
+      && $self->{LastRandq} eq $selection 
+      && @matches > 1) 
+  {
     ## we probably just spit this randq out
     ## give it one more shot
     $selection = $matches[rand@matches];
@@ -506,14 +509,16 @@ sub Bot_rdb_triggered {
   ## grab a random response and throw it back at the pipeline
   ## info3 plugin can pick it up and do variable replacement on it 
 
+  $core->log->debug("received rdb_triggered");
+
   ## if referenced rdb doesn't exist, send orig string
   my $random = $self->_get_random($rdb) || $orig;
 
-  $self->send_event( 
+  $core->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
   );
 
-  return PLUGIN_EAT_NONE
+  return PLUGIN_EAT_ALL
 }
 
 sub Bot_rdb_broadcast {

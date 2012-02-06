@@ -180,6 +180,7 @@ sub Bot_public_msg {
     my $rdb = (split ' ', $match)[0];
     $rdb = substr($rdb, 1);
     if ($rdb) {
+      $core->log->debug("issuing rdb_triggered");
       $core->send_event( 'rdb_triggered',
         $context,
         $channel,
