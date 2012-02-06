@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.10';
+our $VERSION = '0.12';
 
 ## Act a bit like darkbot/cobalt1 randstuff & RDBs
 ##
@@ -202,6 +202,7 @@ sub _cmd_randq {
     $rdb = $rdbpassed;
     $str = $strpassed;
   } else {
+    $rdb = 'main';
     $str = shift @message || '<*>';
   }
 
@@ -510,7 +511,7 @@ sub Bot_rdb_triggered {
 
   $self->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
-  ) if $random;
+  );
 
   return PLUGIN_EAT_NONE
 }
