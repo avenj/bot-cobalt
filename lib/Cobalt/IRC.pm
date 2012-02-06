@@ -1067,7 +1067,7 @@ CMD is the public command triggered; ie the first "word" of something
 like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
 
 Syntax is precisely the same as L</Bot_public_msg>, with one major 
-caveat: B<<$msg->{message_array} will not contain the command.>>
+caveat: B<< $msg->{message_array} will not contain the command. >>
 
 This event is pushed to the pipeline before _public_msg.
 

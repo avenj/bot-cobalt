@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0006
+Plugins guide revision: 0008
 
 Last updated for cobalt 2.00_09
 
@@ -70,14 +70,60 @@ core method B<get_plugin_cfg>:
     ## No configuration found for our plugin ...
   }
 
-FIXME examples
+Note that B<get_plugin_cfg> returns a COPY of the plugin's 
+configuration structure.
 
-FIXME discussion about PluginOpts
-
-FIXME discussion about direct access
+If the plugin needs to modify its own configuration hash for some 
+reason, it needs to access B<< $core->cfg->{plugin_cf} >> directly. 
+See L</"Directly accessing cfg hash">, below.
 
 See also: L</"Core methods">
 
+=head4 PluginOpts
+
+A plugin with a fairly involved configuration set should have its own 
+configuration file.
+
+If the plugin only has a small number of configuration directives, it is 
+possible to specify options in C<plugins.conf> directly via B<Opts>:
+
+  ## plugins.conf:
+  MyPlugin:
+    Module: Cobalt::Plugin::User::MyPlugin
+    Opts:
+      Some_Option: value
+      ## ..etc
+
+Any B<Opts> specified in C<plugins.conf> directly will be available to the 
+plugin via the B<PluginOpts> key:
+
+  my $plug_cf  = $core->get_plugin_cfg( __PACKAGE__ );
+  my $some_opt = $plug_cf->{PluginOpts}->{Some_Option} // 
+
+a B<Config:> directive can be specified as normal, although this is 
+typically counterproductive; use either an external config file or a 
+B<Opts:> directive to retain your users' sanity.
+
+=head4 Examples
+
+FIXME
+
+=head4 Directly accessing cfg hash
+
+If your plugin needs to modify its configuration values directly 
+(which is often unwise!), it will need to access the B<< $core->cfg >> 
+hash directly.
+
+Loaded configuration values for plugins are available via 
+B<< $core->cfg->{plugin_cf} >>, keyed on package name:
+
+  my $pkg = __PACKAGE__;
+  my $plug_cf = $core->cfg->{plugin_cf}->{$pkg};
+  ## modify this plugin's conf hash directly:
+  $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
+
+There is no built-in facility for writing these changes back out as of 
+this writing.
 
 
 =head2 A basic plugin outline
@@ -308,11 +354,11 @@ A plugin can register to receive commands in this format:
   }
 
 
-It's important to note that B<<$msg->{message_array}>> is shifted leftwards 
+It's important to note that B<< $msg->{message_array} >> is shifted leftwards 
 in B<public_cmd_> handlers; it won't contain the CmdChar-prefixed command.
 
 Additionally, a B<Bot_public_msg> will be broadcast as normal (with the 
-B<<$msg->{cmdprefix}>> element set to boolean true).
+B<< $msg->{cmdprefix} >> element set to boolean true).
 
 =head3 Other events
 
@@ -344,8 +390,9 @@ string, respectively:
     $context, $target, $string
   );
 
-The message will be sent after being processed by any L</Outgoing_message> 
-handlers in the pipeline.
+The message will be sent after being processed by any B<Outgoing_message> 
+handlers in the pipeline. See L<Cobalt::IRC> for more about Outgoing_* 
+handlers.
 
 =head4 send_notice
 
@@ -353,6 +400,14 @@ B<send_notice> operates essentially the same as L</send_message>, except
 a NOTICE is sent (rather than PRIVMSG).
 
 Event arguments are the same.
+
+=head4 send_action
+
+B<send_action> sends a CTCP ACTION rather than a normal PRIVMSG or 
+NOTICE string.
+
+Event arguments are the same as L</send_message> and L</send_notice>.
+
 
 =head3 Channel-related commands
 
@@ -716,23 +771,57 @@ FIXME
 
 =head2 Useful tools
 
-FIXME
-
 =head3 Cobalt::DB
 
 FIXME
 
 =head3 Cobalt::Serializer
 
-FIXME
+It is often useful to serialize arbitrary data structures to some 
+standardized format. Serialization formats such as B<JSON> and B<YAML> 
+are convenient for "speaking" to other networked applications, sharing 
+data, or saving persistent data to disk in an easily-retrievable format.
+
+B<Cobalt> comes with a simple object oriented frontend to some common 
+serialization formats, as well as built-in file operations for "freezing" 
+and "thawing" data to/from files on disk:
+
+  use Cobalt::Serializer;
+  ## create a JSON serializer:
+  my $jsify = Cobalt::Serializer->new( Format => 'JSON' );
+  ## serialize a perl hash:
+  my $ref = { Some => { Deep => [ 'Structure' ] } };
+  my $json = $jsify->freeze($ref);
+
+See L<Cobalt::Serializer> for complete usage information.
+
 
 =head3 Cobalt::Utils
 
-FIXME brief primer on useful Cobalt::Utils funcs
+L<Cobalt::Utils> provides a functional-style interface to various tools 
+useful in effective plugin authoring.
+
+Tools include flexible (bcrypt-enabled) password hashing and comparison 
+functions, string formatting with arbitrary variable replacement rules, 
+Cobalt-style glob syntax tools, color/format interpolation, and others.
+
+  ## Import all Cobalt::Utils funcs:
+  use Cobalt::Utils qw/ :ALL /;
+
+See L<Cobalt::Utils> for documentation.
+
 
 =head3 IRC::Utils
 
-FIXME brief primer on IRC::Utils funcs
+L<IRC::Utils> is a great little module covering many basic IRC-related 
+tasks, such as host normalization and matching and casemapping-aware 
+uppercase/lowercase tools.
+
+It is used extensively by both B<Cobalt> and L<POE::Component::IRC>; 
+in other words, it is guaranteed to be available if B<Cobalt> is.
+
+See L<IRC::Utils> for upstream documentation.
+
 
 =head3 Cobalt::Plugin::WWW
 
@@ -783,7 +872,7 @@ B<www_request> event:
 When a response is received, it will be pushed to the plugin pipeline 
 as the specified SERVER event.
 
-If the plugin is available, B<<$core->Provided->{www_request}>> will be 
+If the plugin is available, B<< $core->Provided->{www_request} >> will be 
 boolean true; you can fall back to LWP with a short timeout, perhaps:
 
   ## build request like above:
