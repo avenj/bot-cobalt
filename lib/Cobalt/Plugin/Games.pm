@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use 5.12.1;
 use strict;
@@ -10,10 +10,10 @@ use Object::Pluggable::Constants qw/ :ALL /;
 sub new { bless {}, shift }
 
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
 
-  $self->_load_games;
+  $self->_load_games();
 
   $core->plugin_register($self, 'SERVER',
     [ 'public_msg' ],
@@ -24,7 +24,7 @@ sub Cobalt_register {
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering core IRC plugin");
   return PLUGIN_EAT_NONE
 }
@@ -49,13 +49,14 @@ sub Bot_public_msg {
   my @message = @{ $msg->{message_array} };
   my $str  = join ' ', @message[1 .. $#message];
   
-  my $resp = $obj->execute($msg, $str);
+  my $resp = '';
+  $resp = $obj->execute($msg, $str) if $obj->can('execute');
 
   $core->send_event( 'send_message',
     $context,
     $msg->{target},
     $resp
-  );
+  ) if $resp;
 
   return PLUGIN_EAT_NONE
 }
@@ -67,7 +68,7 @@ sub _load_games {
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $games = $pcfg->{Games} // {};
 
-  $core->log->debug(scalar keys %$games." games found");
+  $core->log->debug("Loading games");
 
   for my $game (keys %$games) {
     my $module = $games->{$game}->{Module} // next;
