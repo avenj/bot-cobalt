@@ -4,8 +4,10 @@ our $VERSION = "0.12";
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
 
-## FIXME use english as spec and default to english for missing
-##  responses in other langsets?
+## FIXME need a .PL to concatenate this file and english langset
+##  that way we can load from __DATA__ first and overwrite
+##  (so langset updates aren't lost if there's no on-disk update)
+##  also provides convenient defaults for partial langsets
 
 use 5.12.1;
 use strict;
@@ -64,11 +66,10 @@ sub load_langset {  ## load_langset(language)
   return $langset->{RPL}
 }
 
+### THIS MODULE WILL HAVE A LANGSET APPENDED AT BUILD-TIME ###
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
-__END__
-
 
 =pod
 
@@ -163,6 +164,5 @@ the 'debug' loglevel.
 Jon Portnoy <avenj@cobaltirc.org>
 
 L<http://www.cobaltirc.org>
-
 
 =cut
