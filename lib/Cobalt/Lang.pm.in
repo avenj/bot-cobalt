@@ -49,7 +49,7 @@ sub load_langset {  ## load_langset(language)
   my $langset = $serializer->readfile($path);
 
   ## Load __DATA__'s english langset first:
-  my $default_langset_yaml = __DATA__;
+  my $default_langset_yaml = <DATA> ;
   my $default_langset = $serializer->thaw($default_langset_yaml);
   
   ## Push anything missing in $langset
@@ -190,3 +190,4 @@ Jon Portnoy <avenj@cobaltirc.org>
 L<http://www.cobaltirc.org>
 
 =cut
+__DATA__

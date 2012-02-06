@@ -20,9 +20,7 @@ open my $langf_fh, '<', $langset
 my @lang = <$langf_fh>;
 close $langf_fh;
 
-push(@lang_pm, "\n", "__DATA__", "\n", @lang);
-
 open my $liboutf_fh, '>', $libfile
   or die "could not open $libfile: $!\n";
-print $liboutf_fh @lang_pm;
+print $liboutf_fh @lang_pm, @lang;
 close $libf_fh;
