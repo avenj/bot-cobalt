@@ -8,12 +8,12 @@ use warnings;
 sub new { bless {}, shift }
 
 sub execute {
-  my ($self, $rps) = @_;
-
+  my ($self, $msg, $rps) = @_;
+  my $nick = $msg->{src_nick}//'';
   if      (! $rps) {
-    return "What did you want to throw?"
+    return "What did you want to throw, ${nick}?"
   } elsif ( !(lc($rps) ~~ [ qw/rock paper scissors/ ]) ) {
-    return "You gotta throw rock, paper, or scissors!"
+    return "${nick}: You gotta throw rock, paper, or scissors!"
   }
 
   my $beats = {
@@ -25,11 +25,11 @@ sub execute {
   my $throw = (keys %$beats)[rand(scalar keys %$beats)];
 
   if      ($throw eq $rps) {
-    return "You threw $rps, I threw $throw -- it's a tie!";
+    return "$nick threw $rps, I threw $throw -- it's a tie!";
   } elsif ($beats->{$throw} eq $rps) {
-    return "You threw $rps, I threw $throw -- I win!";
+    return "$nick threw $rps, I threw $throw -- I win!";
   } else {
-    return "You threw $rps, I threw $throw -- you win :(";
+    return "$nick threw $rps, I threw $throw -- you win :(";
   }
 }
 

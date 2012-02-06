@@ -11,7 +11,7 @@ use Cobalt::Utils qw/ color /;
 sub new { bless( {}, shift ) }
 
 sub execute {
-  my ($self, $str) = @_;
+  my ($self, $orig_msg, $str) = @_;
   return "Syntax: roll XdY  [ +/- <modifier> ]" unless $str;
   my ($dice, $modifier, $modify_by) = split ' ', $str;
 

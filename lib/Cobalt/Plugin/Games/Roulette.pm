@@ -7,10 +7,17 @@ use warnings;
 
 use Cobalt::Utils qw/color/;
 
-sub new { bless {}, shift }
+sub new {
+  my $class = shift;
+  my $self = {};
+  bless $self, $class;
+  my %args = @_;
+  $self->{core} = $args{core} if ref $args{core};
+  return $self
+}
 
 sub execute {
-  my ($self, $core) = @_;
+  my ($self, $msg) = @_;
   my $cyls = 5;
   my $loaded = int rand($cyls);
 

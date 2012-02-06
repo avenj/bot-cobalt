@@ -8,15 +8,18 @@ use warnings;
 sub new {
   my $class = shift;
   my $self = {};
-  @{ $self->{Responses} } = <DATA>;
   bless($self, $class);
+  my %args = @_;
+  $self->{core} = $args{core} if $args{core};
+  @{ $self->{Responses} } = <DATA>;
   return $self
 }
 
 sub execute {
-  my $self = shift;
+  my ($self, $msg) = @_;
+  my $nick = $msg->{src_nick}//'' if ref $msg;
   my @responses = @{ $self->{Responses} };
-  return $responses[rand @responses];
+  return $nick.': '.$responses[rand @responses]
 }
 
 1;

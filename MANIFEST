@@ -47,7 +47,6 @@ lib/Cobalt/Plugin/Games/Dice.pm
 lib/Cobalt/Plugin/Games/Magic8.pm
 lib/Cobalt/Plugin/Games/RockPaperScissors.pm
 lib/Cobalt/Plugin/Games/Roulette.pm
-lib/Cobalt/Plugin/Games/Trivia.pm
 lib/Cobalt/Plugin/Info3.pm
 lib/Cobalt/Plugin/Master.pm
 lib/Cobalt/Plugin/OutputFilters/StripColor.pm
