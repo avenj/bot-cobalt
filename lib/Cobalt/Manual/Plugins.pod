@@ -915,6 +915,22 @@ boolean true; you can fall back to LWP with a short timeout, perhaps:
   }
 
 
+=head2 Non-reloadable plugins
+
+By default, a plugin can be unloaded/reloaded at any time, typically via 
+the L<Cobalt::Plugin::PluginMgr> !plugin administrative interface.
+
+If a plugin is marked as being unreloadable, plugin managers such as the 
+included L<Cobalt::Plugin::PluginMgr> will recognize it as such and 
+refuse to unload or reload the plugin once it is loaded.
+
+To declare itself as not being reloadable, a plugin simply needs to 
+return a boolean true value to a NON_RELOADABLE method call:
+
+  ## Plugin managers (should) refuse to reload this plugin.
+  sub NON_RELOADABLE { 1 }
+
+It's rare to need such functionality, but it is there.
 
 =head2 Keeping track of $core
 

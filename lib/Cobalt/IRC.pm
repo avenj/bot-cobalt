@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -44,6 +44,8 @@ has 'irc' => (
   isa => 'Object',
 );
 
+
+sub NON_RELOADABLE { 1 }
 
 sub Cobalt_register {
   my ($self, $core) = @_;
