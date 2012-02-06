@@ -78,6 +78,7 @@ sub _unload {
 
       ## also cleanup our config if there is one:
       delete $core->cfg->{plugin_cf}->{$plugisa};
+      $core->timer_del_pkg($plugisa);
       
       $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
         { plugin => $alias } 
