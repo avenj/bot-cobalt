@@ -127,5 +127,5 @@ my $build = $class->new(
   },
 );
 
-
+$build->add_to_cleanup("lib/Cobalt/Lang.pm");
 $build->create_build_script;
