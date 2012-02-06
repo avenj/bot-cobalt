@@ -22,11 +22,10 @@ use POE::Component::IRC::Plugin::NickServID;
 use POE::Component::IRC::Plugin::NickReclaim;
 
 use IRC::Utils qw/
-  parse_user
+  parse_user parse_mode_line
   lc_irc uc_irc eq_irc
   strip_color strip_formatting
   matches_mask normalize_mask
-  parse_mode_line
 /;
 
 use Cobalt::Utils qw/

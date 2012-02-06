@@ -1,0 +1,81 @@
+#!perl
+
+use 5.12.1;
+use strict;
+use warnings;
+
+use Cobalt::DB;
+
+use Cobalt::Utils qw/
+  glob_to_re_str
+  glob_to_re
+/;
+
+my $info2_path;
+my $output_path;
+my $verbose = 0;
+
+use Getopt::Long;
+GetOptions(
+  'info2=s' => \$info2_path,
+  'dest=s'  => \$output_path,
+  'verbose!' => \$verbose,
+  help => \&help,
+);
+
+sub help {
+  print(
+    "Usage:\n $0 --info2=info2.db --dest=newinfo3.db\n"
+  );
+  exit 0
+}
+
+help() unless $info2_path and $output_path;
+
+die "Could not find $info2_path" unless -e $info2_path;
+
+open my $info2_fh, '<', $info2_path
+  or die "Could not open $info2_path: $!\n";
+my @info2db = <$info2_fh>;
+close $info2_fh;
+
+die "Empty info2db at $info2_path?\n" unless @info2db;
+
+my $info3ref;
+
+for my $line (@info2db) {
+  my @split = split ' ', $line;
+  my $glob  = lc ( shift @split );
+  
+  ## Convert ?action -> ~action
+  $glob =~ s/^\?action/~action/;
+  
+  my $str   = join ' ', @split;
+  my $re = glob_to_re_str($glob);
+  $re = '^'.$re.'$';
+
+  say "$glob -> $re" if $verbose;
+
+  $info3ref->{$glob} = {
+    Regex => $re,
+    Response => $str,
+    AddedBy  => '-Imported',
+    AddedAt  => time,
+  };
+}
+
+my $count = scalar keys %$info3ref;
+say "Output path: $output_path";
+say "Pushing $count topics to Info3 DB";
+
+my $cdb = Cobalt::DB->new(
+  File => $output_path,
+);
+
+$cdb->dbopen;
+for my $glob (keys %$info3ref) {
+  $cdb->put($glob, $info3ref->{$glob});
+}
+$cdb->dbclose;
+
+say "Done.";
