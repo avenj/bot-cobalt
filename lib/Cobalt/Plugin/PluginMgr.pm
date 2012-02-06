@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.0';
+our $VERSION = '1.02';
 
 ## handles and eats: !plugin
 
@@ -13,6 +13,8 @@ use Cobalt::Utils qw/ rplprintf /;
 use Cobalt::Conf;
 
 sub new { bless {}, shift }
+
+sub NON_RELOADABLE { 1 }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -46,6 +48,13 @@ sub _unload {
               err => 'No such plugin found, is it loaded?' 
             }
     );
+  } elsif ($core->State->{NonReloadable}->{$alias}) {
+    $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
+            {
+              plugin => $alias,
+              err => "Plugin $alias is marked as non-reloadable",
+            }
+   );
   } else {
     $core->log->info("Attempting to unload $alias ($plugisa) per request");
     if ( $core->plugin_del($alias) ) {
@@ -269,14 +278,22 @@ sub Bot_public_cmd_plugin {
               err => 'No such plugin found, is it loaded?' 
             }
           );
-         } else {
-           ## call _unload and send any response from there
-           my $unload_resp = $self->_unload($alias);
-           $core->send_event( 'send_message', $context, $chan, $unload_resp );
-           ## call _load on our alias and plug_obj, send that in $resp
-           my $pkgisa = ref $plug_obj;
-           $resp = $self->_load($alias, $pkgisa);
-         }
+        } elsif ($core->State->{NonReloadable}->{$alias}) {
+          ## not a reloadable plugin
+          $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
+            {
+              plugin => $alias,
+              err => "Plugin $alias is marked as non-reloadable",
+            }
+          );
+        } else {
+          ## call _unload and send any response from there
+          my $unload_resp = $self->_unload($alias);
+          $core->send_event( 'send_message', $context, $chan, $unload_resp );
+          ## call _load on our alias and plug_obj, send that in $resp
+          my $pkgisa = ref $plug_obj;
+          $resp = $self->_load($alias, $pkgisa);
+        }
       }
 
       when ('list') {

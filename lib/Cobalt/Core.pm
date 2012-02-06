@@ -89,6 +89,9 @@ has 'State' => (
      # each server context should set up its own Auth->{$context} hash:
       Auth => { },   ## ->{$context}->{$nickname} = {}
       Ignored => { },
+      
+     # nonreloadable plugin list keyed on alias for plugin mgrs
+      NonReloadable => { },
     } 
   },
 );
@@ -219,6 +222,10 @@ sub syndicator_started {
     if ($@)
       { $self->log->warn("Could not load $module: $@"); next; }
     my $obj = $module->new();
+    if ( $obj->can('NON_RELOADABLE') && $obj->NON_RELOADABLE ) {
+      ## mark plugin as 'static'
+      $self->State->{NonReloadable}->{$plugin} = $module;
+    }
     $self->plugin_add($plugin, $obj);
     $i++;
   }
