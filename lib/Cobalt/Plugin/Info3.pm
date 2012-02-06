@@ -130,6 +130,7 @@ sub Bot_public_msg {
       'add' => '_info_add',
       'del' => '_info_del',
       'delete'  => '_info_del',
+      'replace' => '_info_replace',
       'search'  => '_info_search',
       'dsearch' => '_info_dsearch',
       'display' => '_info_display',
