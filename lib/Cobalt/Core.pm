@@ -206,6 +206,7 @@ sub syndicator_started {
 
   $kernel->sig('INT'  => 'shutdown');
   $kernel->sig('TERM' => 'shutdown');
+  $kernel->sig('HUP'  => 'shutdown');
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
