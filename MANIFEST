@@ -1,5 +1,5 @@
 bin/cobalt2
-bin/cobalt2-installer
+bin/cobalt2-installer.PL
 bin/cobalt2-mkpasswd
 Build.PL
 Changes
@@ -64,5 +64,6 @@ Makefile.PL
 MANIFEST			This list of files
 META.json
 META.yml
+tools/cobalt2-installer.in
 var/.keep
 var/db/.keep

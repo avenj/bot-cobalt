@@ -9,7 +9,6 @@ my $class = Module::Build->subclass(
 
     sub ACTION_release {
       my $self = shift;
-      $self->dispatch('buildinst');
       $self->dispatch('wikidocs');
       ## FIXME target to pod2textify doc/ ?
       ## FIXME dispatch dist ?
@@ -33,11 +32,6 @@ my $class = Module::Build->subclass(
       chdir($base);
     }
 
-    sub ACTION_buildinst {
-      my $self = shift;
-      $self->do_system(qw{tools/release/create_installer});
-    }
-
   },
 );
 
@@ -50,6 +44,11 @@ my $build = $class->new(
 
   ## A passthru-to-build makefile:
   create_makefile_pl => 'small',
+  
+  PL_files => {
+    'lib/Cobalt/Lang.pm.PL' => 'lib/Cobalt/Lang.pm',
+    'bin/cobalt2-installer.PL' => 'bin/cobalt2-installer',
+  },
 
   requires => {
    ### Core set ###
@@ -128,4 +127,5 @@ my $build = $class->new(
 );
 
 $build->add_to_cleanup("lib/Cobalt/Lang.pm");
+$build->add_to_cleanup("bin/cobalt2-installer");
 $build->create_build_script;

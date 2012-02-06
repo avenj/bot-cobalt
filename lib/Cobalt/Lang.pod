@@ -29,12 +29,10 @@ L<Cobalt::Utils>.
 
 Inspect C<etc/langs/english.yml> for an example.
 
-B<
-The English langset is built in to this module at install time.
+B<The English langset is built in to this module at install time.>
 
 Missing values in the loaded language set will be automatically filled 
 by the compiled-in English set, unless this is a prefixed plugin set.
->
 
 Be sure to read the L<Cobalt::Utils> documentation for more on variable 
 replacement with C<rplprintf>

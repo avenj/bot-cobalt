@@ -6,8 +6,8 @@ use warnings;
 my $langset = 'etc/langs/english.yml';
 die "langset $langset not found\n" unless -f $langset;
 
-my $libfile = 'lib/Cobalt/Lang.pm';
-my $libfile_in = $libfile.'.in';
+my $libfile = shift;
+my $libfile_in = 'lib/Cobalt/Lang.pm.in';
 die "lib $libfile_in not found\n" unless -f $libfile_in;
 
 open my $libf_fh, '<', $libfile.'.in'
