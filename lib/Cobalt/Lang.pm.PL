@@ -7,7 +7,8 @@ my $langset = 'etc/langs/english.yml';
 die "langset $langset not found\n" unless -f $langset;
 
 my $libfile = 'lib/Cobalt/Lang.pm';
-die "lib $libfile not found\n" unless -f $libfile;
+my $libfile_in = $libfile.'.in';
+die "lib $libfile_in not found\n" unless -f $libfile_in;
 
 open my $libf_fh, '<', $libfile.'.in'
   or die "could not open $libfile: $!\n";
@@ -21,7 +22,7 @@ close $langf_fh;
 
 push(@lang_pm, "\n", "__DATA__", "\n", @lang);
 
-open $liboutf_fh, '>', $libfile
+open my $liboutf_fh, '>', $libfile
   or die "could not open $libfile: $!\n";
 print $liboutf_fh @lang_pm;
 close $libf_fh;
