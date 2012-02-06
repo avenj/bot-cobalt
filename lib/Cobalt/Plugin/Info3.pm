@@ -136,6 +136,7 @@ sub Bot_public_msg {
       'display' => '_info_display',
       'about'   => '_info_about',
       'tell'    => '_info_tell',
+      'infovars' => '_info_varhelp',
     );
     
     given (lc $message[1]) {
@@ -651,6 +652,25 @@ sub _info_match {
 }
 
 
+sub _info_varhelp {
+  my ($self, $msg) = @_;
+  my $core = $self->{core};
+  
+  my $help =
+     ' !~ = CmdChar, B~ = BotNick, C = Channel, H = UserHost, N = Nick,'
+    .' P~ = Port, Q =~ Question, R~ = RandomNick, S~ = Server'
+    .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
+  ;
+  
+  $core->send_event( 'send_notice',
+    $msg->{context},
+    $msg->{src_nick},
+    $help
+  );
+  
+  return ''
+}
+
 # Variable replacement / format
 sub _info_format {
   my ($self, $context, $nick, $channel, $str) = @_;
@@ -710,3 +730,8 @@ sub __info3repl {
 
 1;
 __END__
+
+=pod
+
+
+=cut
