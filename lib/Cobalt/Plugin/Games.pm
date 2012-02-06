@@ -45,7 +45,8 @@ sub Bot_public_msg {
   my $obj  = $self->{Objects}->{$game};
   
   my @message = @{ $msg->{message_array} };
-  my $str  = join ' ', @message[1 .. $#message];
+  shift @message;
+  my $str  = join ' ', @message;
   
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -360,7 +360,8 @@ sub _info_del {
 
 sub _info_replace {
   my ($self, $msg, @args) = @_;
-  my ($glob, $string) = @args;
+  my ($glob, @splstring) = @args;
+  my $string = join ' ', @splstring;
   $glob = lc $glob;
   my $core = $self->{core};
 
