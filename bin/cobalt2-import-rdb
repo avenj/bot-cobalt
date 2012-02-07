@@ -72,9 +72,8 @@ if ($rdb_dir_path) {
         Votes => { Up => 0, Down => 0 },
       };
       
-      say "RDB $rdb_name : ".scalar @current_rdb." items added";
     }
-  
+    say "RDB $rdb_name : ".scalar @current_rdb." items added";
   }
   
   chdir $oldcwd;
