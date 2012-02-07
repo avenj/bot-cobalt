@@ -6,7 +6,9 @@ use warnings;
 
 use Cwd;
 
-use Cobalt::Serializer;
+use File::Path;
+
+use Cobalt::DB;
 
 STDOUT->autoflush(1);
 
@@ -29,6 +31,7 @@ $rdbref->{main} = { };
 my $idx = 0;
 for my $item (@randstuff_ini) {
   ++$idx;
+  $item =~ s/\s+$//;
   $rdbref->{main}->{$idx} = {
     AddedBy => '-Imported',
     AddedAt => time,
@@ -54,17 +57,26 @@ if ($rdb_dir_path) {
   my @rdb_files = glob("*.rdb");
   
   for my $rdb_file (@rdb_files) {
-    open my $rdb_fh, '<', $rdb_file
-      or die "could not open $rdb_file: $!\n";
-    my @current_rdb = <$rdb_fh>;
-    close $rdb_fh;
 
     my $rdb_name = $rdb_file;
     $rdb_name =~ s/\.rdb$//;
 
+    unless ($rdb_name =~ /^[A-Za-z0-9]+$/) {
+      warn "Skipping $rdb_name - not a valid RDB name\n";
+      warn "Must be in the A-Z a-z 0-9 set";
+      next
+    }
+
+    open my $rdb_fh, '<', $rdb_file
+      or print "could not open $rdb_file: $!\n"
+      and next;
+    my @current_rdb = <$rdb_fh>;
+    close $rdb_fh;
+
     $idx = 0;
     for my $item (@current_rdb) {
       ++$idx;
+      $item =~ s/\s+$//;
       $rdbref->{$rdb_name}->{$idx} = {
         AddedBy => '-Imported',
         AddedAt => time,
@@ -82,12 +94,41 @@ if ($rdb_dir_path) {
 
 
 say "Finished reading RDBs.";
-say "Where should I write the imported DB?";
+say "I need a place to dump these RDBs.. it must be a directory.";
+say "(A default Cobalt install places them in cobalt2/var/db/rdb/)";
+say "If the specified dir doesn't exist, it will be created.";
 print "Path: ";
-my $output_path = <STDIN>;
-chomp($output_path);
-$output_path ||= "imported-rdb.yml";
-say "Writing $output_path";
+my $output_dir = <STDIN>;
+chomp($output_dir);
+die "No output directory specified" unless $output_dir;
 
-my $ser = Cobalt::Serializer->new;
-$ser->writefile($output_path, $rdbref);
+mkpath($output_dir) unless -e $output_dir;
+
+die "Output dir $output_dir not a directory\n"
+  unless -d $output_dir;
+
+
+for my $rdb (keys %$rdbref) {
+
+  my $dbfile = $output_dir ."/". $rdb .".rdb";
+
+  say "Creating $dbfile";
+
+  my $cdb = Cobalt::DB->new(
+    File => $dbfile,
+  );
+
+  unless ( $cdb->dbopen ) {
+    warn "dbopen failure for $rdb, skipping\n";
+    next
+  }
+  
+  for my $rdbidx (keys %{ $rdbref->{$rdb} }) {
+    $cdb->put($rdbidx, $rdbref->{$rdb}->{$rdbidx});
+  }
+  
+  $cdb->dbclose;
+
+}
+
+say "Done.";
