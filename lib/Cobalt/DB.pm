@@ -29,7 +29,9 @@ sub new {
   }
 
   my $path = File::Spec->rel2abs($args{File});
-  my ($vol, $dir, $dbfile) = File::Spec->splitpath($path);
+  my ($vol, $dir, $dbfile) = File::Spec->splitpath( 
+    File::Spec->rel2abs($path)
+  );
   croak "no file specified" unless $dbfile;
   ## FIXME volume ... ?
   $self->{LockFile}     = $args{LockFile} ? 
