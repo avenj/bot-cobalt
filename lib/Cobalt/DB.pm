@@ -12,13 +12,14 @@ use warnings;
 use Carp;
 
 use File::Path qw/mkpath/;
+use File::Spec;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock :seek/;
 
 use Cobalt::Serializer;
 
-use File::Spec;
+use Digest::SHA1 qw/sha1_hex/;
 
 sub new {
   my $self = {};
@@ -33,9 +34,13 @@ sub new {
   $self->{LockDir} = $args{LockDir}."/" || "/tmp/.c2locks/" ;
   mkpath($self->{LockDir}) unless -e $self->{LockDir};
 
-  $self->{LockFile} = $self->{LockDir} ."/.lock.".$dbfile ;
+  my $path = File::Spec->rel2abs($args{File});
 
   $self->{DatabasePath} = $path;
+
+  my $dblockfile = sha1_hex($path.time.rand);
+
+  $self->{LockFile} = $self->{LockDir} ."/.lock.".$dblockfile ;
 
   $self->{Serializer} = Cobalt::Serializer->new(Format => 'JSON');
   
