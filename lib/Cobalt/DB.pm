@@ -1,15 +1,17 @@
 package Cobalt::DB;
-our $VERSION = '0.08';
+our $VERSION = '0.10';
 
 ## ->new(File => $path)
-##  To use a different lockfile:
-## ->new(File => $path, LockFile => $lockpath)
+##  To use a different lockfile dir:
+## ->new(File => $path, LockDir => $lockpath)
 ## Represents a BerkDB
 
 use 5.12.1;
 use strict;
 use warnings;
 use Carp;
+
+use File::Path qw/mkpath/;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock :seek/;
@@ -28,15 +30,10 @@ sub new {
     croak "Constructor requires a specified File";
   }
 
-  my $path = File::Spec->rel2abs($args{File});
-  my ($vol, $dir, $dbfile) = File::Spec->splitpath( 
-    File::Spec->rel2abs($path)
-  );
-  croak "no file specified" unless $dbfile;
-  ## FIXME volume ... ?
-  $self->{LockFile}     = $args{LockFile} ? 
-                          $args{LockFile} 
-                        : $dir . "/.lock.".$dbfile ;
+  $self->{LockDir} = $args{LockDir}."/" || "/tmp/.c2locks/" ;
+  mkpath($self->{LockDir}) unless -e $self->{LockDir};
+
+  $self->{LockFile} = $self->{LockDir} ."/.lock.".$dbfile ;
 
   $self->{DatabasePath} = $path;
 
@@ -224,7 +221,7 @@ Berkeley DB:
     Perms => $octal_mode,
     # Locking is enabled regardless
     # but you can change the location:
-    LockFile => $path_to_lockfile,
+    LockDir => "/tmp",
   );
 
 =head2 Opening and closing

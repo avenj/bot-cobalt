@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 ## Cobalt2 RDB manager
 
@@ -67,14 +67,13 @@ sub BUILD {
   my @paths = glob($rdbdir."/*.rdb");
   
   for my $path (@paths) {
-    my $abs_path = File::Spec->rel2abs($path);
     my $rdb_name = fileparse($path, '.rdb');
     ## attempt to open this RDB to see if it's busted:
     unless ( $self->_dbopen($rdb_name) ) {
       $core->log->error("dbopen failure for $rdb_name");
       next
     }
-    $self->RDBPaths->{$rdb_name} = $abs_path;
+    $self->RDBPaths->{$rdb_name} = $path;
   }
   
   ## see if we have 'main'
