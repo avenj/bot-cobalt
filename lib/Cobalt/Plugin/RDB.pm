@@ -45,6 +45,7 @@ sub Cobalt_register {
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = Cobalt::Plugin::RDB::Database->new(
     RDBDir => $rdbdir,
+    core => $core,
   );
   $self->{CDBM} = $dbmgr;
 
