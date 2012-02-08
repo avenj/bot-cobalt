@@ -1,6 +1,13 @@
 package Cobalt::Plugin::RDB;
 our $VERSION = '0.20';
 
+## 'Random' DBs, often used for quotebots or random chatter
+##
+## This plugin mostly ties together the Plugin::RDB::* modules 
+## and translates Plugin::RDB::Constant return values back to 
+## rplprintf()-formatted IRC replies
+
+## Hash for a RDB item:
 ##   String => "string",
 ##   AddedAt => time(),
 ##   AddedBy => $username,
@@ -730,3 +737,84 @@ sub _delete_rdb {
 
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::RDB - "random stuff" plugin
+
+=head1 DESCRIPTION
+
+Jason Hamilton's B<darkbot> came with the concept of "randstuffs," 
+randomized responses broadcast to channels via a timer.
+
+Later versions included a search interface and "RDBs" -- discrete 
+'randstuff' databases that could be accessed via 'info' topic triggers 
+to return a random response.
+
+B<cobalt1> used essentially the same interface.
+
+This B<RDB> plugin attempts to expand on that functionality.
+
+This functionality is often useful to simulate humanoid responses to 
+conversation (by writing 'conversational' RDB replies triggered by 
+L<Cobalt::Plugin::Info3> topics), to implement IRC quotebots, or just 
+to fill your channel with random chatter.
+
+The "randstuff" db is labelled "main" -- all other RDB names must be 
+in the [A-Za-z0-9] set.
+
+=head1 COMMANDS
+
+Commands are prefixed with the bot's nickname, rather than CmdChar.
+
+This is a holdover from darkbot legacy syntax.
+
+  <JoeUser> botnick: randq some*glob
+
+=head2 random
+
+Retrieves a single random response ('randstuff') from the "main" RDB.
+
+
+=head2 randq
+
+Search for a specified glob in RDB 'main' (randstuffs):
+
+  <JoeUser> bot: randq some+string*
+
+See L<Cobalt::Utils/glob_to_re_str> for details regarding glob syntax.
+
+
+=head2 randstuff
+
+Add a new "randstuff" to the 'main' RDB
+
+  <JoeUser> bot: randstuff new randstuff string
+
+
+=head2 rdb
+
+=head3 rdb info
+
+=head3 rdb add
+
+=head3 rdb del
+
+=head3 rdb dbadd
+
+=head3 rdb dbdel
+
+=head3 rdb search
+
+=head3 rdb searchidx
+
+=head1 EVENTS
+
+=head2 Received events
+
+=head2 Emitted events
+
+=cut

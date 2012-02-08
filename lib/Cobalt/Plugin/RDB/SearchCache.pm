@@ -1,6 +1,18 @@
 package Cobalt::Plugin::RDB::SearchCache;
 our $VERSION = '0.20';
 
+## This is a fairly generic in-memory cache object.
+##
+## It's intended for use with Plugin::RDB, but will likely work for 
+## just about situation where you want to store a set number of keys 
+## mapping an identifier to an array reference.
+##
+## This can be useful for caching the results of deep searches against 
+## Cobalt::DB instances, for example.
+##
+## This may get moved out to the core lib directory, in which case this 
+## module will become a placeholder.
+
 use 5.12.1;
 use Moose;
 use namespace::autoclean;

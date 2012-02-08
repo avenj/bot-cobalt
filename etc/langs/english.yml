@@ -156,9 +156,6 @@ RPL:
   ## RDB_ERR_NO_SUCH_ITEM, %nick, %rdb, %index
   RDB_ERR_NO_SUCH_ITEM: "%nick%, RDB %rdb doesn't appear to have item %index"
   
-  ## RDB_ERR_ITEM_DELETED, %nick, %rdb, %index
-  RDB_ERR_ITEM_DELETED: "%nick%, item %index in RDB %rdb is already deleted."
-
   ## RDB_ERR_NO_STRING, %nick, %rdb
   RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
   
