@@ -1,9 +1,11 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 ## Cobalt2 RDB manager
 
+use namespace::autoclean;
 use Moose;
+use Carp;
 
 use Cobalt::DB;
 
@@ -14,6 +16,8 @@ use Digest::SHA1 qw/sha1_hex/;
 
 use File::Basename;
 use File::Spec;
+
+use File::Path qw/mkpath/;
 
 use Time::HiRes;
 
@@ -50,11 +54,14 @@ sub BUILD {
     ),
   );
 
-  my $rdbdir = $self->RDBDir;
+  my $rdbdir = $self->RDBDir || $core->var ."/db/rdb" ;
+  unless (-e $rdbdir) {
+    $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
+    mkpath($rdbdir);
+  }
 
   unless (-d $rdbdir) {
-    $core->log->error("Could not find RDBDir: $rdbdir");
-    return RDB_NOSUCH
+    croak "RDBDir not a directory: $rdbdir";
   }
 
   my @paths = glob($rdbdir."/*.rdb");
@@ -69,6 +76,20 @@ sub BUILD {
     }
     $self->RDBPaths->{$rdb_name} = $abs_path;
   }
+  
+  ## see if we have 'main'
+  unless ( $self->RDBPaths->{'main'} ) {
+    $core->log->debug("No main RDB found, creating one");
+    $core->log->warn("Could not create 'main' RDB")
+      unless $self->createdb('main') eq SUCCESS;
+  }
+
+}
+
+sub dbexists {
+  my ($self, $rdb) = @_;
+  return 1 if $self->RDBPaths->{$rdb};
+  return
 }
 
 sub createdb {
@@ -81,7 +102,9 @@ sub createdb {
   return RDB_EXISTS if $self->RDBPaths->{$rdb};
   
   my $path = $self->RDBDir ."/". $rdb .".rdb";
+   # add to RDBPaths first so _dbopen can grab the path:
   $self->RDBPaths->{$rdb} = $path;
+   # then try to open a Cobalt::DB:
   my $cdb = $self->_dbopen($rdb);
   unless ($cdb) {
     delete $self->RDBPaths->{$rdb};
@@ -197,13 +220,16 @@ sub random {
   my $ref = $cdb->get($randkey);
   return RDB_NOSUCH_ITEM unless ref $ref;
   
+  ## add the key 'DBKEY' to this hash:
+  $ref->{DBKEY} = $randkey;
   return $ref
 }
 
 sub search {
   my ($self, $rdb, $glob) = @_;
   ## Search RDB entries, get an array(ref) of matching keys
-
+  $glob = '*' unless $glob;
+  
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
 
   ## hit the search cache first
@@ -217,7 +243,7 @@ sub search {
   $re = qr/$re/i;
 
   my $cdb = $self->_dbopen($rdb);
-  return DB_DBFAIL unless $cdb;
+  return RDB_DBFAIL unless $cdb;
 
   my @matches;  
   for my $dbkey ($cdb->keys) {
@@ -270,7 +296,7 @@ sub _gen_unique_key {
     warn "_gen_unique_key cannot find Cobalt::DB tied hash";
   }
 
-  my $stringified = $ref->{String} . Time::HiRes::time ;
+  my $stringified = $ref->{String} .rand. Time::HiRes::time();
   my $digest = sha1_hex($stringified);
   
   ## start at 4, add back chars if it's not unique:
