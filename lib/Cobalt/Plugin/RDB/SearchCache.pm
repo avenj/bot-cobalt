@@ -3,6 +3,7 @@ our $VERSION = '0.20';
 
 use 5.12.1;
 use Moose;
+use namespace::autoclean;
 
 use Time::HiRes;
 

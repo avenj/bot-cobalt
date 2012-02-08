@@ -24,6 +24,9 @@ sub new {
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
+  ## FIXME push myself towards the top of the pipeline
+  
+
   $self->{core} = $core;
 
   ## FIXME grab a cfg file to determine flood rates and ignore expiries
@@ -36,7 +39,12 @@ sub Cobalt_register {
       'private_msg',
       'notice',
       'ctcp_action',
-# FIXME autoload for irc events so we can grab irc_ctcp etc 
+# FIXME autoload for irc events so we can grab irc_ctcp etc
+
+# FIXME catch Outgoing_*
+# if we've sent the same string too many times sequentially in a short span
+#  then eat it
+
     ],
 
   );
@@ -67,6 +75,15 @@ sub Bot_ctcp_action {
 
 }
 
-1;
+sub Bot_floodprot_ignore_expire {
+  ## FIXME event called by timer to clear a floodprot ignore
+}
 
+
+sub _clear_all_ignores {
+
+}
+
+
+1;
 __END__

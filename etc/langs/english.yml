@@ -15,7 +15,7 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 7   ## bump +1 on significant revisions please
+REV: 8   ## bump +1 on significant revisions please
 SPEC: 0  ## someday there'll be a langspec.
 
 RPL:
@@ -24,6 +24,9 @@ RPL:
 
   ## RPL_NO_ACCESS: %nick
   RPL_NO_ACCESS: "%nick%, you are not authorized!"
+  
+  ## RPL_DB_ERR
+  RPL_DB_ERR: "Unknown database operation failure!"
 
   ## RPL_PLUGIN_LOAD: %plugin, %module
   RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module%)"
@@ -180,3 +183,6 @@ RPL:
   ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
   ##                %votedup, %voteddown
   RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"
+
+  ## RDB_UNLINK_FAILED, %nick, %rdb
+  RDB_UNLINK_FAILED: "Failed to unlink RDB for %rdb"

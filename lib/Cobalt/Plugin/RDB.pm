@@ -1,9 +1,6 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.14';
+our $VERSION = '0.20';
 
-## Act a bit like darkbot/cobalt1 randstuff & RDBs
-##
-## $self->{RDB}->{$rdb} = {
 ##   String => "string",
 ##   AddedAt => time(),
 ##   AddedBy => $username,
@@ -11,7 +8,6 @@ our $VERSION = '0.14';
 ##     Up   => 0,
 ##     Down => 0,
 ##   },
-## }
 
 ## FIXME: voting
 
@@ -21,25 +17,12 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-use Cobalt::Serializer;
+use Cobalt::Plugin::RDB::Constants;
+use Cobalt::Plugin::RDB::Database;
 
 use Cobalt::Utils qw/ :ALL /;
 
 use IRC::Utils qw/ decode_irc /;
-
-use constant {
-  SUCCESS => 1,
-
-  RDB_EXISTS    => 2,
-#  RDB_WRITEFAIL => 3,  
-
-  RDB_NOSUCH => 4,
-  RDB_NOSUCH_ITEM => 5,
-
-  RDB_ALREADY_DELETED => 6,
-
-  RDB_NOTPERMITTED => 7,
-};
 
 
 sub new { bless( {}, shift ) }
@@ -47,6 +30,17 @@ sub new { bless( {}, shift ) }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+
+  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+
+  my $rdbdir = $cfg->{Opts}->{RDBDir} || $core->var ."/db/rdb" ;
+  ## if the rdbdir doesn't exist, ::Database will try to create it
+  ## (it'll also handle creating 'main' for us)
+  my $dbmgr = Cobalt::Plugin::RDB::Database->new(
+    RDBDir => $rdbdir,
+  );
+  $self->{CDBM} = $dbmgr;
+
   $core->plugin_register($self, 'SERVER',
     [ 
       'public_msg',
@@ -55,22 +49,16 @@ sub Cobalt_register {
     ],
   );  
 
-  ## Read in serialized rdb (or create one)
-  my $db = $self->_read_db || { main => { } };
-  $self->{RDB} = $db;
-
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
   ## (0 turns off timer)
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
-
   $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
-
   $self->{RandDelay} = $randdelay;
   if ($randdelay) {
     $core->timer_set( $randdelay, 
-      { Event => 'rdb_broadcast' }, 'RANDSTUFF'
+      { Event => 'rdb_broadcast' }, 
+      'RANDSTUFF'
     );
   }
 
@@ -88,7 +76,8 @@ sub Cobalt_unregister {
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg     = ${$_[1]};
+
   my @handled = qw/
     randstuff
     randq
@@ -166,10 +155,7 @@ sub _cmd_randstuff {
 
   unless ($randstuff_str) {
     return rplprintf( $core->lang->{RDB_ERR_NO_STRING},
-      {
-        nick => $src_nick,
-        rdb  => $rdb,
-      }
+      { nick => $src_nick, rdb  => $rdb }
     );
   }
 
@@ -177,60 +163,139 @@ sub _cmd_randstuff {
   my $username = $core->auth_username($context, $src_nick);
   my $newidx = $self->_add_item($rdb, $randstuff_str, $username);
 
-  ## return success RPL w/ newidx
-  return "Unknown failure, no index returned" unless $newidx;
-  return rplprintf( $core->lang->{RDB_ITEM_ADDED},
-    {
-      nick  => $src_nick,
-      rdb   => $rdb,
-      index => $newidx,
+  ## _add_item returns either a status from ::Database->put
+  ## or a new item key:
+  given ($newidx) {
+    when (RDB_DBFAIL) {
+      return rplprintf( $core->lang->{RPL_DB_ERR} );
     }
-  );
+    
+    when (RDB_NOSUCH) {
+      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+        { nick => $src_nick, rdb => $rdb }
+      );
+    }
+    
+    default {
+      return rplprintf( $core->lang->{RDB_ITEM_ADDED},
+        { nick => $src_nick, rdb => $rdb, index => $newidx }
+      );
+    }
+  }
+
 }
+
+sub _select_random {
+  my ($self, $msg_h, $rdb, $quietfail) = @_;
+  my $core   = $self->{core};
+  my $dbmgr  = $self->{CDBM};
+  my $retval = $dbmgr->random($rdb);
+  ## we'll get either an item as hashref or err status:
+  if (ref $retval eq 'HASH') {
+    my $content = $retval->{String};
+    #my $index   = $retval->{DBKEY};
+    return $content
+  } else {
+    ## do nothing if we're supposed to fail quietly
+    ## (e.g. in a rdb_triggered for a bustedass rdb)
+    return if $quietfail;
+    my $rpl;
+    given ($retval) {
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when RDB_NOSUCH;
+      $rpl = "RPL_DB_ERR"          when RDB_DBFAIL;
+      ## send nothing if this rdb has no keys:
+      return                       when RDB_NOSUCH_ITEM;
+      ## unknown error status?
+      default { $rpl = "RPL_DB_ERR" }
+    }
+    return rplprintf( $core->lang->{$rpl},
+      {
+        nick => $msg_h->{src_nick},
+        rdb  => $rdb,
+      },
+    );
+  }
+}
+
 
 sub _cmd_randq {
   my ($self, $parsed_msg_a, $msg_h, $type, $rdbpassed, $strpassed) = @_;
+  my @message = @{ $parsed_msg_a };
 
   ## also handler for 'rdb search rdb str'
+  my $dbmgr = $self->{CDBM};
+  my $core  = $self->{core};
 
-  my @message = @{ $parsed_msg_a };
   my($str, $rdb);
   if    ($type eq 'random') {
-    $rdb = 'main';
-    $str = '*';
+    ## FIXME allow random <rdb> syntax
+    ## dispatch out to _cmd_random
+    ## shouldfix; holdovers from 0.10
+    return $self->_select_random($msg_h, 'main');
   } elsif ($type eq 'rdb') {
     $rdb = $rdbpassed;
     $str = $strpassed;
   } else {
     $rdb = 'main';
-    $str = shift @message || '<*>';
+    ## search what looks like irc quotes by default:
+    $str = shift @message // '<*>';
   }
 
-  ## get an array of matching indexes for rdb 'main':
-  my @matches = $self->_search($str, $rdb);
-  my $selection = @matches ? 
-                   $matches[rand@matches] 
+  my $matches = $dbmgr->search($rdb, $str);
+
+  unless (ref $matches eq 'ARRAY') {
+    $core->log->debug("Error status from search(): $matches");
+    my $rpl;
+    given ($matches) {
+      $rpl = "RPL_DB_ERR"          when RDB_DBFAIL;
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when RDB_NOSUCH;
+      ## not an arrayref and not a known error status, wtf?
+      default { $rpl = "RPL_DB_ERR" }
+    }
+    return rplprintf( $core->lang->{$rpl},
+      { nick => $msg_h->{src_nick}, rdb => $rdb }
+    );
+  }
+
+  ## pick one at random:
+  my $selection = @$matches ? 
+                   @$matches[rand @$matches]
                    : return 'No match' ;
+  
   if ($self->{LastRandq} 
       && $self->{LastRandq} eq $selection 
-      && @matches > 1) 
+      && @$matches > 1) 
   {
     ## we probably just spit this randq out
     ## give it one more shot
-    $selection = $matches[rand@matches];
+    $selection = @$matches[rand@$matches];
   }
   $self->{LastRandq} = $selection;
 
-  my $rs_ref = $self->{RDB}->{$rdb}->{$selection};
-  unless (defined $rs_ref->{String}) {
-    return "Undefined String in rdb $rdb item $selection"
+  my $item = $dbmgr->get($rdb, $selection);
+  unless (ref $item eq 'HASH') {
+    $core->log->debug("Error status from get(): $item");
+    my $rpl;
+    given ($item) {
+      $rpl = "RDB_ERR_NO_SUCH_ITEM" when RDB_NOSUCH_ITEM;
+      ## an unknown non-hashref $item is also a DB_ERR:
+      default { "RPL_DB_ERR" }
+    }
+    return rplprintf( $core->lang->{$rpl},
+      { 
+        nick  => $msg_h->{src_nick}, 
+        rdb   => $rdb, 
+        index => $selection 
+      }
+    );
   }
 
-  my $resp = defined $rs_ref->{String} ?
-             $rs_ref->{String}
-             : return "Undefined String in rdb $rdb item $selection" ;
-  return "[${selection}] ${resp}";
+  my $content = $item->{String} // '(undef - broken db!)';
+  my $itemkey = $item->{DBKEY}  // '(undef - broken db!)';
+  
+  return "[${itemkey}] $content";
 }
+
 
 sub _cmd_rdb {
   ## cmd handler for:
@@ -266,11 +331,11 @@ sub _cmd_rdb {
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $required_levs = $pcfg->{RequiredLevels} // {};
   my %access_levs = (
-    info   => $required_levs->{rdb_info} // 0,
-    dbadd  => $required_levs->{rdb_create} // 9999,
-    dbdel  => $required_levs->{rdb_delete} // 9999,
-    add    => $required_levs->{rdb_add_item} // 2,
-    del    => $required_levs->{rdb_del_item} // 3,
+    info   => $required_levs->{rdb_info}      // 0,
+    dbadd  => $required_levs->{rdb_create}    // 9999,
+    dbdel  => $required_levs->{rdb_delete}    // 9999,
+    add    => $required_levs->{rdb_add_item}  // 2,
+    del    => $required_levs->{rdb_del_item}  // 3,
     search    => $required_levs->{rdb_search} // 0,
     searchidx => $required_levs->{rdb_search} // 0,
   );
@@ -285,6 +350,8 @@ sub _cmd_rdb {
     );
   }
 
+  my $dbmgr = $self->{CDBM};
+
   my $resp;
   given ($cmd) {
 
@@ -292,21 +359,20 @@ sub _cmd_rdb {
       ## _create a new rdb if it doesn't exist
       my ($rdb) = @message;
       return 'Syntax: rdb dbadd <RDB>' unless $rdb;
-      my $retval = $self->_create_rdb($rdb);      
+      
+      return 'RDB name must be in the A-Za-z0-9 set'
+        unless $rdb =~ /^[A-Za-z0-9]+$/;
+
+      my $retval = $dbmgr->createdb($rdb);
       if      ($retval eq RDB_EXISTS) {
         $resp = rplprintf( $core->lang->{RDB_ERR_RDB_EXISTS},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            op   => $cmd,
-          }
+          { nick => $nickname, rdb => $rdb, op => $cmd }
         );
+      } elsif ($retval eq RDB_DBFAIL) {
+        $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
       } elsif ($retval eq SUCCESS) {
         $resp = rplprintf( $core->lang->{RDB_CREATED},
-          {
-            nick => $nickname,
-            rdb  => $rdb
-          }
+          { nick => $nickname, rdb  => $rdb }
         );
       } else {
         $resp = 'Unknown retval from _create_rdb?';
@@ -322,32 +388,37 @@ sub _cmd_rdb {
       SWITCH: {
         if ($retval eq RDB_NOTPERMITTED) {
           $resp = rplprintf( $core->lang->{RDB_ERR_NOTPERMITTED},
-            {
-              nick => $nickname,
-              rdb  => $rdb,
-              op   => $cmd,
-            }
+            { nick => $nickname, rdb => $rdb, op => $cmd }
           );
           last SWITCH
         }
+
         if ($retval eq RDB_NOSUCH) {
           $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-            {
-              nick => $nickname,
-              rdb  => $rdb,
-            }
+            { nick => $nickname, rdb => $rdb }
           );
           last SWITCH
         }
+        
+        if ($retval eq RDB_DBFAIL) {
+          $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
+          last SWITCH
+        }
+        
+        if ($retval eq RDB_FILEFAILURE) {
+          $resp = rplprintf( $core->lang->{RDB_UNLINK_FAILED},
+            { nick => $nickname, rdb => $rdb }
+          );
+          last SWITCH
+        }
+
         if ($retval eq SUCCESS) {
           $resp = rplprintf( $core->lang->{RDB_DELETED},
-            {
-              nick => $nickname,
-              rdb  => $rdb,
-            }
+            { nick => $nickname, rdb => $rdb }
           );
           last SWITCH
         }
+
         $resp = 'Unknown retval from _delete_rdb?';
       }
       
@@ -357,21 +428,16 @@ sub _cmd_rdb {
       my ($rdb, $item) = @message;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
       my $retval = $self->_add_item($rdb, decode_irc($item), $username);
-      if ($retval eq RDB_NOSUCH) {
+      if      ($retval eq RDB_NOSUCH) {
         $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-          }
+          { nick => $nickname, rdb => $rdb }
         );
+      } elsif ($retval eq RDB_DBFAIL) {
+        $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
       } else {
         ## should've been returned a unique index number
         $resp = rplprintf( $core->lang->{RDB_ITEM_ADDED},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $retval,
-          }
+          { nick => $nickname, rdb => $rdb, index => $retval }
         );
       }
     }
@@ -381,39 +447,30 @@ sub _cmd_rdb {
       return 'Syntax: rdb del <RDB> <index number>'
         unless $rdb and $item_idx;
       my $retval = $self->_delete_item($rdb, $item_idx, $username);
-      if      ($retval eq RDB_NOSUCH) {
-        $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-          }
-        );
-      } elsif ($retval eq RDB_NOSUCH_ITEM) {
-        $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $item_idx,
-          }
-        );
-      } elsif ($retval eq RDB_ALREADY_DELETED) {
-        $resp = rplprintf( $core->lang->{RDB_ERR_ITEM_DELETED},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $item_idx,
-          }
-        );
-      } else {
-        ## should've gotten old item hash back
+      SWITCH: {
+        if ($retval eq RDB_NOSUCH) {
+          $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+            { nick => $nickname, rdb  => $rdb }
+          );
+          last SWITCH
+        }
+        
+        if ($retval eq RDB_DBFAIL) {
+          $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
+          last SWITCH
+        }
+        
+        if ($retval eq RDB_NOSUCH_ITEM) {
+          $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
+            { nick => $nickname, rdb => $rdb, index => $item_idx }
+          );
+          last SWITCH
+        }
+        
         $resp = rplprintf( $core->lang->{RDB_ITEM_DELETED},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $item_idx,
-          }
+            { nick => $nickname, rdb => $rdb, index => $item_idx }
         );
-      }
+      }  ## SWITCH
     }
 
     when ("info") {
@@ -421,49 +478,48 @@ sub _cmd_rdb {
       my ($rdb, $idx) = @message;
       return 'Syntax: rdb info <RDB> <index number>'
         unless $rdb and $idx;
-      unless (exists $self->{RDB}->{$rdb}) {
-        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-          }
-        );
-      }
-
-      unless (exists $self->{RDB}->{$rdb}->{$idx}) {
-        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $idx,
-          }
-        );
-      }
-        
-      if (defined $self->{RDB}->{$rdb}->{$idx}->{DeletedAt}) {
-        return rplprintf( $core->lang->{RDB_ERR_ITEM_DELETED},
-          {
-            nick => $nickname,
-            rdb  => $rdb,
-            index => $idx,
-          }
-        );
-      }
       
-      my $added_dt = DateTime->from_epoch(
-        epoch => $self->{RDB}->{$rdb}->{$idx}->{AddedAt}
-      );
-      my $votes_r = $self->{RDB}->{$rdb}->{$idx}->{Votes};
+      my $dbmgr = $self->{CDBM};
+      unless ( $dbmgr->dbexists($rdb) ) {
+        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+          { nick => $nickname, rdb  => $rdb  }
+        );
+      }
 
+      my $item = $dbmgr->get($rdb, $idx);
+      unless (ref $item eq 'HASH') {
+      
+        if    ($item eq RDB_NOSUCH_ITEM) {
+          return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
+            { nick => $nickname, rdb  => $rdb, index => $idx }
+          );
+        }
+        elsif ($item eq RDB_DBFAIL) {
+          return rplprintf( $core->lang->{RPL_DB_ERR} );
+        }
+        elsif ($item eq RDB_NOSUCH) {
+          return rplprintf( $core->lang->{RPL_ERR_NO_SUCH_RDB},
+            { nick => $nickname, rdb => $rdb }
+          );
+        }
+        return "Unknown exit status $item"
+      }
+
+      my $added_dt = DateTime->from_epoch(
+        epoch => $item->{AddedAt} // 0
+      );
+      my $votes_r = $item->{Votes} // {};
+      my $added_by = $item->{AddedBy} // '(undef)';
+  
       my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
+        nick  => $nickname,
+        rdb   => $rdb,
         index => $idx,
-        addedby => $self->{RDB}->{$rdb}->{$idx}->{AddedBy},
-        date => $added_dt->date,
-        time => $added_dt->time,
-        votedup => $votes_r->{Up},
-        voteddown => $votes_r->{Down},
+        date  => $added_dt->date,
+        time  => $added_dt->time,
+        addedby => $added_by,
+        votedup   => $votes_r->{Up} // 0,
+        voteddown => $votes_r->{Down} // 0,
       };
 
       $resp = rplprintf( $core->lang->{RDB_ITEM_INFO}, $rplvars );
@@ -483,9 +539,9 @@ sub _cmd_rdb {
       my ($rdb, $str) = @message;
       return 'Syntax: rdb searchidx <RDB> <string>' 
         unless $rdb and $str;
-      my @indexes = $self->_search($str, $rdb);
-      $indexes[0] = "NONE" unless @indexes;
-      $resp = "First 20 matches: ".join('  ', @indexes);
+      my @indices = $self->_searchidx($rdb, $str);
+      $indices[0] = "NONE" unless @indices;
+      $resp = "First 20 matches: ".join('  ', @indices);
     }
 
   }
@@ -512,7 +568,15 @@ sub Bot_rdb_triggered {
   $core->log->debug("received rdb_triggered");
 
   ## if referenced rdb doesn't exist, send orig string
-  my $random = $self->_get_random($rdb) || $orig;
+  my $dbmgr = $self->{CDBM};
+  return $orig unless $dbmgr->dbexists($rdb);
+  
+  ## construct fake msg hash for _select_random
+  my $msg_h = { };
+  $msg_h->{src_nick} = $nick;
+  $msg_h->{channel}  = $channel;
+  
+  my $random = $self->_select_random($msg_h, $rdb, 'quietfail') || $orig;
 
   $core->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
@@ -525,7 +589,8 @@ sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
   ## our timer self-event
 
-  my $random = $self->_get_random || '';
+  my $random = $self->_select_random({}, 'main', 'quietfail')
+               || return PLUGIN_EAT_ALL;
   
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
@@ -556,41 +621,19 @@ sub Bot_rdb_broadcast {
 
   ### 'worker' methods ###
 
-sub _get_random {
-  ## get non-deleted random stuff from specified rdb
-  ## returns the hashref (or empty list if the rdb is empty)
-  my ($self, $rdb) = @_;
-  $rdb = 'main' unless $rdb;
-  my $rdbref = $self->{RDB}->{$rdb} // {};
-  
-  my @nodelete;
-  for my $ridx (keys %$rdbref) {
-    push(@nodelete, $ridx) if defined $rdbref->{$ridx}->{String};
-  }
-  
-  my $rand_index = $nodelete[rand@nodelete];
-  return $rdbref->{$rand_index}->{String}
-}
-
-sub _search {
-  my ($self, $string, $rdb) = @_;
-  $string = '<*>' unless $string;
+sub _searchidx {
+  my ($self, $rdb, $string) = @_;
   $rdb   = 'main' unless $rdb;
+  $string = '<*>' unless $string;
 
-  my $re_str = glob_to_re_str($string);
-  ## case-insensitive:
-  my $re = qr/$re_str/i;
-
-  my @matches;
-  for my $randq_idx (keys %{ $self->{RDB}->{$rdb} }) {
-    next if $self->{RDB}->{$rdb}->{DeletedAt};
-    my $content = $self->{RDB}->{$rdb}->{$randq_idx}->{String} // '';
-    push(@matches, $randq_idx) if $content =~ $re;
+  my $dbmgr = $self->{CDBM};
+  my $ret = $dbmgr->search($rdb, $string);
+  
+  unless (ref $ret eq 'ARRAY') {
+    $self->{core}->log->warn("searchidx failure: retval: $ret");
+    return wantarray ? () : $ret ;
   }
-
-  ## returns array or arrayref of INDEXES for matching randqs
-
-  wantarray ? return @matches : return \@matches ;
+  return wantarray ? @$ret : $ret ;
 }
 
 sub _add_item {
@@ -599,25 +642,28 @@ sub _add_item {
   my $core = $self->{core};
   $username = '-undefined' unless $username;
   
-  unless (exists $self->{RDB}->{$rdb}) {
+  my $dbmgr = $self->{CDBM};
+  unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot add item to nonexistant rdb: $rdb");
     return RDB_NOSUCH
   }
-
-  my @indexes = sort {$a<=>$b} keys %{ $self->{RDB}->{$rdb} };
-  @indexes = ('0') unless @indexes;
-  my $index = (pop @indexes) + 1;
-
-  $self->{RDB}->{$rdb}->{$index} = {
+  
+  my $itemref = {
     AddedBy => $username,
     AddedAt => time,
     String => $item,
     Votes => { Up => 0, Down => 0 },
   };
 
-  $self->_write_db;
-  ## Returns new index number
-  return $index
+  ## on failure put() will return one of:
+  ##   RDB_NOSUCH
+  ##   RDB_DBFAIL
+  my $status = $dbmgr->put($rdb, $itemref);
+  return $status if $status eq RDB_DBFAIL 
+                 or $status eq RDB_NOSUCH;
+
+  ## otherwise we should've gotten the new key back:
+  return $status
 }
 
 sub _delete_item {
@@ -625,48 +671,26 @@ sub _delete_item {
   return unless $rdb and defined $item_idx;
   my $core = $self->{core};
 
-  unless (exists $self->{RDB}->{$rdb}) {
+  my $dbmgr = $self->{CDBM};
+  
+  unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete from nonexistant rdb: $rdb");
     return RDB_NOSUCH
   }
 
-  unless (exists $self->{RDB}->{$rdb}->{$item_idx}) {
-    $core->log->debug("cannot delete nonexistant item: $item_idx [$rdb]");
-    return RDB_NOSUCH_ITEM
+  my $retval = $dbmgr->del($rdb, $item_idx);
+  if ( $retval 
+       ~~ [ RDB_DBFAIL, RDB_NOSUCH, RDB_NOSUCH_ITEM ] ) 
+  {
+    $core->log->debug(
+      "cannot delete item: $item_idx [$rdb] (err: $retval)"
+    );
+    return $retval
   }
 
-  if (defined $self->{RDB}->{$rdb}->{$item_idx}->{DeletedAt}) {
-    $core->log->debug("item $item_idx in rdb $rdb already marked deleted");
-    return RDB_ALREADY_DELETED
-  }
-
-  ## item indexes are permanent
-  ## delete (and later return) the old item
-  ## replace the index with a deletion marker
-  ## FIXME - an optional timed purge mechanism that reshuffles indexes?
-  my $old_item = delete $self->{RDB}->{$rdb}->{$item_idx};
-  $self->{RDB}->{$rdb}->{$item_idx} = {
-    DeletedAt => time,
-    DeletedBy => $username || 'Unknown',
-  };
-  $self->_write_db;
-  return $old_item
+  return $item_idx
 }
 
-sub _create_rdb {
-  my ($self, $rdb) = @_;
-  return unless $rdb;
-  my $core = $self->{core};
-
-  if (exists $self->{RDB}->{$rdb}) {
-    $core->log->debug("cannot create preexisting rdb: $rdb");
-    return RDB_EXISTS
-  } else {
-    $self->{RDB}->{$rdb} = { };
-    $self->_write_db;
-    return SUCCESS
-  }
-}
 
 sub _delete_rdb {
   my ($self, $rdb) = @_;
@@ -681,7 +705,9 @@ sub _delete_rdb {
     return RDB_NOTPERMITTED
   }
 
-  unless (exists $self->{RDB}->{$rdb}) {
+  my $dbmgr = $self->{CDBM};
+
+  unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete nonexistant rdb $rdb");
     return RDB_NOSUCH
   } else {
@@ -697,51 +723,8 @@ sub _delete_rdb {
         return RDB_NOTPERMITTED
       }
     }
-    delete $self->{RDB}->{$rdb};
-    return SUCCESS
-  }
-}
-
-
-  ### on-disk db ###
-
-sub _read_db {
-  my ($self) = @_;
-  my $core = $self->{core};
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
-
-  my $serializer = Cobalt::Serializer->new;
-
-  my $var = $core->var;
-  my $relative_to_var = $cfg->{Opts}->{RandDB};
-  my $db_path = $var ."/". $relative_to_var;
-
-  my $db = $serializer->readfile( $db_path );
-
-  if ($db && ref $db eq 'HASH') {
-    return $db
-  } else {
-    $core->log->warn("Could not read RDB, creating an empty one...");
-    return
-  }  
-}
-
-sub _write_db {
-  my ($self) = @_;
-  my $core = $self->{core};
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
-
-  my $serializer = Cobalt::Serializer->new;
-
-  my $var = $core->var;
-  my $relative_to_var = $cfg->{Opts}->{RandDB};
-  my $db_path = $var ."/". $relative_to_var;
-  my $ref = $self->{RDB};
-  if ( $serializer->writefile( $db_path, $ref ) ) {
-    return SUCCESS
-  } else {
-    $core->log->warn("Serializer failure, could not write RDB");
-    return
+    
+    return $dbmgr->deldb($rdb);
   }
 }
 

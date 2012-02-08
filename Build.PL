@@ -54,7 +54,10 @@ my $build = $class->new(
    ### Core set ###
       'perl' => '5.12.1',
       'Carp' => 0,
+      'Cwd'  => 0,
       'Data::Dumper' => 0,
+      'DB_File'      => 0,
+      'Digest::SHA1'   => 0,
       'File::Basename' => 0,
       'File::Find' => 0,
       'File::Path' => '2.00',
@@ -111,7 +114,6 @@ my $build = $class->new(
       'LWP::UserAgent' => 0,
 
     ### Storage / serialization
-      'DB_File'  => 0,
       'YAML::XS' => '0.34',
       'JSON::XS' => 0,
 
