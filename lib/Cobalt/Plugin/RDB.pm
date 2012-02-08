@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -578,16 +578,21 @@ sub Bot_rdb_triggered {
 
   $core->log->debug("received rdb_triggered");
 
-  ## if referenced rdb doesn't exist, send orig string
   my $dbmgr = $self->{CDBM};
-  return $orig unless $dbmgr->dbexists($rdb);
+  
+  ## if referenced rdb doesn't exist, send orig string
+  my $send_orig;
+  unless ( $dbmgr->dbexists($rdb) ) {
+    ++$send_orig;
+  }
   
   ## construct fake msg hash for _select_random
   my $msg_h = { };
   $msg_h->{src_nick} = $nick;
   $msg_h->{channel}  = $channel;
   
-  my $random = $self->_select_random($msg_h, $rdb, 'quietfail') || $orig;
+  my $random = $send_orig ? $orig 
+               : $self->_select_random($msg_h, $rdb, 'quietfail') ;
 
   $core->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random 
