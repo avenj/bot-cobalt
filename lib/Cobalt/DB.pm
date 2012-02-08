@@ -31,7 +31,7 @@ sub new {
     croak "Constructor requires a specified File";
   }
 
-  $self->{LockDir} = $args{LockDir}."/" || "/tmp/.c2locks/" ;
+  $self->{LockDir} = $args{LockDir} || "/tmp/.c2locks" ;
   mkpath($self->{LockDir}) unless -e $self->{LockDir};
 
   my $path = File::Spec->rel2abs($args{File});
