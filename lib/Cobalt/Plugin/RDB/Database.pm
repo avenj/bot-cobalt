@@ -54,7 +54,7 @@ sub BUILD {
     ),
   );
 
-  my $rdbdir = $self->RDBDir || $core->var ."/db/rdb" ;
+  my $rdbdir = $core->var ."/". $self->RDBDir || $core->var."/db/rdb" ;
   unless (-e $rdbdir) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
     mkpath($rdbdir);
