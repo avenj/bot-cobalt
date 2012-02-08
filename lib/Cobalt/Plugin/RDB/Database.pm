@@ -269,11 +269,6 @@ sub _dbopen {
     return
   }
 
-  unless (-e $path) {
-    $core->log->error("_dbopen failed; $path nonexistant");
-    return
-  }
-  
   my $cdb = Cobalt::DB->new(
     File => $path
   );
