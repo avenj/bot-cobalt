@@ -1,0 +1,236 @@
+package Cobalt::Plugin::RDB::Database;
+our $VERSION = '0.20';
+
+use Moose;
+
+use Cobalt::DB;
+use Cobalt::Plugin::RDB::Constants;
+
+use Digest::MD5 qw/md5_hex/;
+
+use File::Basename;
+use File::Spec;
+
+use Time::HiRes;
+
+has 'RDBDir' => (
+  is  => 'ro',
+  isa => 'Str',
+  required => 1,
+);
+
+has 'core' => (
+  is  => 'ro',
+  isa => 'Object',
+  required => 1,
+);
+
+has 'RDBPaths' => (
+  is => 'rw',
+  isa => 'HashRef',
+  default => sub { {} },
+);
+
+
+sub BUILD {
+  ## Initialization -- Find our RDBs
+  my ($self) = @_;
+  my $core = $self->core;
+
+  my $rdbdir = $self->RDBDir;
+
+  unless (-d $rdbdir) {
+    $core->log->error("Could not find RDBDir: $rdbdir");
+    return RDB_NOSUCH
+  }
+
+  my @paths = glob($rdbdir."/*.rdb");
+  
+  for my $path (@paths) {
+    my $abs_path = File::Spec->rel2abs($path);
+    my $rdb_name = fileparse($path, '.rdb');
+    ## attempt to open this RDB to see if it's busted:
+    unless ( $self->_dbopen($rdb_name) ) {
+      $core->log->error("dbopen failure for $rdb_name");
+      next
+    }
+    $self->RDBPaths->{$rdb_name} = $abs_path;
+  }
+}
+
+sub createdb {
+  ## Initialize an empty RDB
+  ## return RDB_EXISTS, RDB_DBFAIL, SUCCESS
+  my ($self, $rdb) = @_;
+
+  return RDB_INVALID_NAME unless $rdb =~ /^[A-Za-z0-9]+$/;
+
+  return RDB_EXISTS if $self->RDBPaths->{$rdb};
+  
+  my $path = $self->RDBDir ."/". $rdb .".rdb";
+  $self->RDBPaths->{$rdb} = $path;
+  my $cdb = $self->_dbopen($rdb);
+  unless ($cdb) {
+    delete $self->RDBPaths->{$rdb};
+    return RDB_DBFAIL
+  }
+
+  ## these dbcloses are optional, but good practice
+  ## Cobalt::DB will dbclose at DESTROY time
+  $cdb->dbclose;
+
+  return SUCCESS  
+}
+
+sub deldb {
+  my ($self, $rdb) = @_;
+  my $core = $self->core;
+
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  
+  my $path = $self->RDBPaths->{$rdb};
+  
+  unless (-e $path) {
+    $core->log->error("Cannot delete RDB $rdb - $path not found");
+    return RDB_NOSUCH
+  }
+
+  my $cdb = $self->_dbopen($rdb);  
+  unless ($cdb) {
+    $core->log->error("Cannot delete RDB $rdb - might not be a valid DB");
+    return RDB_DBFAIL
+  }
+  $cdb->dbclose;
+  
+  unless ( unlink($path) ) {
+    $core->log->error("Cannot delete RDB $rdb - unlink: ${path}: $!");
+    return RDB_FILEFAILURE
+  }
+
+  delete $self->RDBPaths->{$rdb};
+  return SUCCESS
+}
+
+sub del {
+  my ($self, $rdb, $key) = @_;
+
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+
+  my $cdb = $self->_dbopen($rdb);
+  
+  return RDB_DBFAIL unless $cdb;
+  
+  return RDB_NOSUCH_ITEM unless $cdb->get($key);
+  
+  return RDB_DBFAIL unless $cdb->del($key);
+  
+  $cdb->dbclose;
+  
+  return SUCCESS
+}
+
+sub get {
+  ## Grab a specific key from RDB
+  my ($self, $rdb, $key) = @_; 
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  
+  my $cdb = $self->_dbopen($rdb);
+  return RDB_DBFAIL unless $cdb;
+  
+  my $key = $cdb->get($key);
+  return RDB_NOSUCH_ITEM unless defined $key;
+
+  $cdb->dbclose;
+
+  return $key
+}
+
+sub get_keys {
+  my ($self, $rdb) = @_;
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  my $cdb = $self->_dbopen($rdb);
+  return RDB_DBFAIL unless $cdb;
+  my @keys = $cdb->keys() || ();
+  $cdb->dbclose;
+  return @keys
+}
+
+sub put {
+  my ($self, $rdb, $ref) = @_;
+  ## Add new entry to RDB
+  ## Return the item's key
+  
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  
+  my $cdb = $self->_dbopen($rdb);
+  return RDB_DBFAIL unless $cdb;
+
+  my $key = $self->_gen_unique_key($cdb, $rdb, $ref);
+
+  return RDB_DBFAIL unless $cdb->put($key, $ref);
+
+  $cdb->dbclose;
+  return $key
+}
+
+sub random {
+  my ($self, $rdb) = @_;
+  ## Grab a random entry from specified rdb
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  
+  my $cdb = $self->_dbopen($rdb);
+  
+  return RDB_DBFAIL unless $cdb;
+  
+  my @dbkeys = $cdb->keys();
+  return RDB_NOSUCH_ITEM unless @keys;
+  
+  my $randkey = $dbkeys[rand @dbkeys];
+  my $ref = $cdb->get($randkey);
+  return RDB_NOSUCH_ITEM unless ref $ref;
+  
+  return $ref
+}
+
+sub _dbopen {
+  my ($self, $rdb) = @_;
+  my $core = $self->core;
+  my $path = $self->RDBPaths->{$rdb};
+  unless ($path) {
+    $core->log->error("_dbopen failed; no path for $rdb?");
+    return
+  }
+  
+  my $cdb = Cobalt::DB->new(
+    File => $self->RDBDir ."/". $rdb .".rdb";
+  );
+  
+  unless ( $cdb->dbopen ) {
+    $core->log->error("Cobalt::DB dbopen failure for $rdb");
+    return
+  }
+  
+  ## Return the $cdb obj for this rdb
+  return $cdb
+}
+
+sub _gen_unique_key {
+  ## _gen_unique_key($cdb, $rdb, $ref)
+  ##  Create unique key for this rdb item
+  my ($self, $cdb, $rdb, $ref) = @_;
+  
+  unless (ref $cdb and $cdb->{Tied}) {
+    warn "_gen_unique_key cannot find Cobalt::DB tied hash";
+  }
+
+  my $stringified = $ref->{String} . Time::HiRes::time ;
+  my $digest = md5_hex($stringified);
+  
+  ## start at 4, add back chars if it's not unique:
+  my @splitd = split //, $digest;
+  my $newkey = join '', splice(@splitd, -4);
+  $newkey .= pop @splitd while exists $cdb->{Tied}{$newkey} and @splitd;
+  return $newkey  
+}
+
+no Moose; 1;
