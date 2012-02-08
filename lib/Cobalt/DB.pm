@@ -12,7 +12,7 @@ use warnings;
 use Carp;
 
 use DB_File;
-use Fcntl qw/:flock/;
+use Fcntl qw/:DEFAULT :flock :seek/;
 
 use Cobalt::Serializer;
 
@@ -49,21 +49,7 @@ sub dbopen {
   my $self = shift;
   my $path = $self->{DatabasePath};
 
-  if (-f $self->{LockFile}) {
-    ## lockfile exists, is a regular file
-    ## it should've been ours (stale perhaps) with a pid
-    open my $lockf_fh, '<', $self->{LockFile}
-      or warn "could not open lockfile $self->{LockFile}: $!\n"
-      and return;
-    my $pid = <$lockf_fh>;
-    close $lockf_fh;
-    unless (kill 0, $pid) {   ## stale ?
-      warn "warning; clearing stale lockfile for $pid\n";
-      unlink($self->{LockFile});
-    }
-  }
-
-  open my $lockf_fh, '>', $self->{LockFile}
+  open my $lockf_fh, '<+', $self->{LockFile}
     or warn "could not open lockfile $self->{LockFile}: $!\n"
     and return;
 
@@ -76,7 +62,8 @@ sub dbopen {
     select undef, undef, undef, 0.25;
     $timer += 0.25;
   }
-  
+  truncate $lockf_fh, 0;
+  seek $lockf_fh, 0, SEEK_SET;
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
 
@@ -109,6 +96,13 @@ sub dbopen {
   );
   $self->{DBOPEN} = 1;
   return 1
+}
+
+sub get_tied {
+  my $self = shift;
+  croak "attempted to get_tied on unopened db"
+    unless $self->{DBOPEN};
+  return $self->{Tied}
 }
 
 sub get_db {
@@ -246,6 +240,9 @@ Database operations should be contained within a dbopen/dbclose:
   $db->dbclose;
 
 Methods will fail if the DB is not open.
+
+If the DB for this object is open when the object is DESTROY'd, Cobalt::DB 
+will attempt to close it safely.
 
 =head2 Locking
 
