@@ -6,7 +6,7 @@ use Moose;
 use Cobalt::DB;
 use Cobalt::Plugin::RDB::Constants;
 
-use Digest::MD5 qw/md5_hex/;
+use Digest::SHA1 qw/sha1_hex/;
 
 use File::Basename;
 use File::Spec;
@@ -137,12 +137,10 @@ sub get {
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
   
-  my $key = $cdb->get($key);
-  return RDB_NOSUCH_ITEM unless defined $key;
-
+  my $value = $cdb->get($key);
+  return RDB_NOSUCH_ITEM unless defined $value;
   $cdb->dbclose;
-
-  return $key
+  return $value
 }
 
 sub get_keys {
@@ -183,7 +181,7 @@ sub random {
   return RDB_DBFAIL unless $cdb;
   
   my @dbkeys = $cdb->keys();
-  return RDB_NOSUCH_ITEM unless @keys;
+  return RDB_NOSUCH_ITEM unless @dbkeys;
   
   my $randkey = $dbkeys[rand @dbkeys];
   my $ref = $cdb->get($randkey);
@@ -200,9 +198,14 @@ sub _dbopen {
     $core->log->error("_dbopen failed; no path for $rdb?");
     return
   }
+
+  unless (-e $path) {
+    $core->log->error("_dbopen failed; $path nonexistant");
+    return
+  }
   
   my $cdb = Cobalt::DB->new(
-    File => $self->RDBDir ."/". $rdb .".rdb";
+    File => $path
   );
   
   unless ( $cdb->dbopen ) {
@@ -224,7 +227,7 @@ sub _gen_unique_key {
   }
 
   my $stringified = $ref->{String} . Time::HiRes::time ;
-  my $digest = md5_hex($stringified);
+  my $digest = sha1_hex($stringified);
   
   ## start at 4, add back chars if it's not unique:
   my @splitd = split //, $digest;
