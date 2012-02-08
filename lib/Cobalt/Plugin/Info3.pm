@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -54,6 +54,7 @@ sub Cobalt_register {
   ## build our initial hashes:
   $self->{DB}->dbopen || croak 'DB open failure';
   for my $glob ($self->{DB}->keys) {
+    ++$core->Provided->{info_topics};
     my $ref = $self->{DB}->get($glob);
     my $regex = $ref->{Regex};
     $self->{Globs}->{$glob} = $regex;
@@ -75,6 +76,7 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  delete $core->Provided->{info_topics};
   $core->log->info("Unregistering Info plugin");
   return PLUGIN_EAT_NONE
 }
@@ -303,6 +305,8 @@ sub _info_add {
   $self->{Regexes}->{$re} = $glob;
   $self->{Globs}->{$glob} = $re;
 
+  ++$core->Provided->{info_topics};
+
   $core->log->debug("topic add: $glob ($re)");
 
   ## return RPL
@@ -360,6 +364,7 @@ sub _info_del {
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
+  --$core->Provided->{info_topics};
 
   $core->log->debug("topic del: $glob ($regex)");
   
@@ -417,6 +422,7 @@ sub _info_replace {
   }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
+  --$core->Provided->{info_topics};
 
   $core->log->debug("topic del (replace): $glob");
   
@@ -442,14 +448,12 @@ sub _info_replace {
 
   $self->{Regexes}->{$re} = $glob;
   $self->{Globs}->{$glob} = $re;
+  ++$core->Provided->{info_topics};
 
   $core->log->debug("topic add (replace): $glob ($re)");
 
   return rplprintf( $core->lang->{INFO_REPLACE},
-    {
-      topic => $glob,
-      nick  => $nick,
-    }
+    { topic => $glob, nick  => $nick }
   );
 }
 
@@ -522,14 +526,15 @@ sub _info_about {
   my ($self, $msg, @args) = @_;
   my ($glob) = @args;
   my $core = $self->{core};
-  return unless $glob; # FIXME syntax RPL
+
+  unless ($glob) {
+    my $count = $core->Provided->{info_topics};
+    return "$count info topics in database."
+  }
 
   unless (exists $self->{Globs}->{$glob}) {
     return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
-      {
-        topic => $glob,
-        nick  => $msg->{src_nick},
-      },
+      { topic => $glob, nick  => $msg->{src_nick} },
     );
   }
 

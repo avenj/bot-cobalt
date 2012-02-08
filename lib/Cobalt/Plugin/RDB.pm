@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -48,6 +48,9 @@ sub Cobalt_register {
     core => $core,
   );
   $self->{CDBM} = $dbmgr;
+
+  my @keys = $dbmgr->get_keys('main');
+  $core->Provided->{randstuff_items} = scalar @keys; 
 
   $core->plugin_register($self, 'SERVER',
     [ 
@@ -671,6 +674,7 @@ sub _add_item {
                  or $status eq RDB_NOSUCH;
 
   ## otherwise we should've gotten the new key back:
+  ++$core->Provided->{randstuff_items} if $rdb eq 'main';
   return $status
 }
 
@@ -696,6 +700,7 @@ sub _delete_item {
     return $retval
   }
 
+  --$core->Provided->{randstuff_items} if $rdb eq 'main';
   return $item_idx
 }
 

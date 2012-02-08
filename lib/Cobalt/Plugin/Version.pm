@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Version;
-our $VERSION = '1.0';
+our $VERSION = '1.01';
 ## Always declare a package name as the first line.
 ## For example, if your module lives in:
 ##   lib/Cobalt/Plugin/User/MyPlugin.pm
@@ -91,12 +91,17 @@ sub Bot_public_msg {
       my $startedts = $core->State->{StartedTS} // 0;
       my $delta = time() - $startedts;
 
+      my $randstuffs = $core->Provided->{randstuff_items} // 0;
+      my $infoglobs  = $core->Provided->{info_topics}    // 0;
+
       $resp = rplprintf( $core->lang->{RPL_INFO},
         {
           version => 'cobalt '.$core->version,
           plugins => scalar keys %{ $core->plugin_list },
           uptime => secs_to_timestr($delta),
-          sent => $core->State->{Counters}->{Sent},
+          sent   => $core->State->{Counters}->{Sent},
+          topics     => $infoglobs,
+          randstuffs => $randstuffs,
         }
       );
     }
