@@ -49,7 +49,7 @@ sub dbopen {
   my $self = shift;
   my $path = $self->{DatabasePath};
 
-  open my $lockf_fh, '<+', $self->{LockFile}
+  open my $lockf_fh, '+<', $self->{LockFile}
     or warn "could not open lockfile $self->{LockFile}: $!\n"
     and return;
 
