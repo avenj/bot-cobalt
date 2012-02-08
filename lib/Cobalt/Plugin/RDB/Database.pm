@@ -1,10 +1,14 @@
 package Cobalt::Plugin::RDB::Database;
 our $VERSION = '0.20';
 
+## Cobalt2 RDB manager
+
 use Moose;
 
 use Cobalt::DB;
+
 use Cobalt::Plugin::RDB::Constants;
+use Cobalt::Plugin::RDB::SearchCache;
 
 use Digest::SHA1 qw/sha1_hex/;
 
@@ -31,11 +35,20 @@ has 'RDBPaths' => (
   default => sub { {} },
 );
 
+has 'SearchCache' => (
+  is => 'rw',
+  isa => 'Object',
+);
 
 sub BUILD {
   ## Initialization -- Find our RDBs
   my ($self) = @_;
   my $core = $self->core;
+
+  $self->SearchCache( Cobalt::Plugin::RDB::SearchCache->new(
+      MaxKeys => 30,
+    ),
+  );
 
   my $rdbdir = $self->RDBDir;
 
@@ -118,14 +131,13 @@ sub del {
 
   my $cdb = $self->_dbopen($rdb);
   
-  return RDB_DBFAIL unless $cdb;
+  return RDB_DBFAIL      unless $cdb;
+  return RDB_NOSUCH_ITEM unless $cdb->get($key);  
+  return RDB_DBFAIL      unless $cdb->del($key);
   
-  return RDB_NOSUCH_ITEM unless $cdb->get($key);
-  
-  return RDB_DBFAIL unless $cdb->del($key);
-  
-  $cdb->dbclose;
-  
+  $cdb->dbclose;  
+  $self->SearchCache->invalidate($rdb);
+
   return SUCCESS
 }
 
@@ -157,7 +169,6 @@ sub put {
   my ($self, $rdb, $ref) = @_;
   ## Add new entry to RDB
   ## Return the item's key
-  
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
   
   my $cdb = $self->_dbopen($rdb);
@@ -166,7 +177,7 @@ sub put {
   my $key = $self->_gen_unique_key($cdb, $rdb, $ref);
 
   return RDB_DBFAIL unless $cdb->put($key, $ref);
-
+  $self->SearchCache->invalidate($rdb);
   $cdb->dbclose;
   return $key
 }
@@ -177,7 +188,6 @@ sub random {
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
   
   my $cdb = $self->_dbopen($rdb);
-  
   return RDB_DBFAIL unless $cdb;
   
   my @dbkeys = $cdb->keys();
@@ -188,6 +198,40 @@ sub random {
   return RDB_NOSUCH_ITEM unless ref $ref;
   
   return $ref
+}
+
+sub search {
+  my ($self, $rdb, $glob) = @_;
+  ## Search RDB entries, get an array(ref) of matching keys
+
+  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+
+  ## hit the search cache first
+  my @cached_result = $self->SearchCache->fetch($rdb, $glob);
+  
+  if (@cached_result) { 
+    return wantarray ? @cached_result : [ @cached_result ]
+  }
+
+  my $re = glob_to_re_str($glob);
+  $re = qr/$re/i;
+
+  my $cdb = $self->_dbopen($rdb);
+  return DB_DBFAIL unless $cdb;
+
+  my @matches;  
+  for my $dbkey ($cdb->keys) {
+    my $ref = $cdb->get($dbkey) // next;
+    my $str = $ref->{String} // '';
+    push(@matches, $dbkey) if $str =~ $re;
+  }
+  
+  $cdb->dbclose;
+  
+  ## Push resultset to the SearchCache
+  $self->SearchCache->cache($rdb, $glob, [ @matches ]);
+  
+  return wantarray ? @matches : [ @matches ] ;
 }
 
 sub _dbopen {
