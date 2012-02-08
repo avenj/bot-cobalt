@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.14';
+our $VERSION = '0.16';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -24,17 +24,17 @@ use Cobalt::Utils qw/ :ALL /;
 
 use Cobalt::DB;
 
+## borrow RDB's SearchCache
+use Cobalt::Plugin::RDB::SearchCache;
+
 sub new { bless( {}, shift ) }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
-  $core->plugin_register($self, 'SERVER',
-    [ 
-      'public_msg',
-      'ctcp_action',
-      'info3_relay_string',
-    ],
+
+  $self->{Cache} = Cobalt::Plugin::RDB::SearchCache->new(
+    MaxKeys => 20,
   );
 
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
@@ -60,6 +60,14 @@ sub Cobalt_register {
     $self->{Regexes}->{$regex} = $glob;
   }
   $self->{DB}->dbclose;
+
+  $core->plugin_register($self, 'SERVER',
+    [ 
+      'public_msg',
+      'ctcp_action',
+      'info3_relay_string',
+    ],
+  );
 
   $core->log->info("Registered");
   return PLUGIN_EAT_NONE
@@ -287,6 +295,9 @@ sub _info_add {
     }
   );
   $self->{DB}->dbclose;
+
+  ## invalidate info3 cache:
+  $self->{Cache}->invalidate('info3');
   
   ## add to internal hashes:
   $self->{Regexes}->{$re} = $glob;
@@ -344,6 +355,8 @@ sub _info_del {
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
   
+  $self->{Cache}->invalidate('info3');
+
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
@@ -396,6 +409,8 @@ sub _info_replace {
 
   $core->log->debug("replace called for $glob by $nick ($auth_user)");
   
+  $self->{Cache}->invalidate('info3');
+
   unless ($self->{DB}->dbopen) {
     $core->log->warn("DB open failure");
     return 'DB open failure'
@@ -614,9 +629,14 @@ sub _info_dsearch {
 
 sub _info_exec_dsearch {
   my ($self, $str) = @_;
-  my @matches;
 
   my $core = $self->{core};
+
+  my $cache = $self->{Cache};
+  my @matches = $cache->fetch('info3', $str) || ();
+
+  ## matches found in searchcache
+  return @matches if @matches;
 
   $self->{DB}->dbopen || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
@@ -630,6 +650,8 @@ sub _info_exec_dsearch {
     push(@matches, $glob) unless index($resp_str, $str) == -1;
   }
   $self->{DB}->dbclose;
+
+  $cache->cache('info3', $str, [ @matches ]);
 
   return @matches;
 }
