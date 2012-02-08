@@ -56,6 +56,10 @@ lib/Cobalt/Plugin/OutputFilters/StripColor.pm
 lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
 lib/Cobalt/Plugin/PluginMgr.pm
 lib/Cobalt/Plugin/RDB.pm
+lib/Cobalt/Plugin/RDB/Constants.pm
+lib/Cobalt/Plugin/RDB/Database.pm
+lib/Cobalt/Plugin/RDB/SearchCache.pm
+lib/Cobalt/Plugin/RDB/RPL.pm
 lib/Cobalt/Plugin/Rehash.pm
 lib/Cobalt/Plugin/User/.keep
 lib/Cobalt/Plugin/Version.pm
