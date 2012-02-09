@@ -57,13 +57,14 @@ sub new {
   }
   
   unless (-d $rdbdir) {
-    croak "RDBDir is not a directory ($rdbdir)"
+    $core->log->error("$rdbdir not a directory");
+    return
   }
   
   my @paths;
   find(sub {
-      return if $File::Find::fullname ~~ @paths;
-      push(@paths, $File::Find::fullname) if $_ =~ /\.rdb$/;
+      return if $File::Find::name ~~ @paths;
+      push(@paths, $File::Find::name) if $_ =~ /\.rdb$/;
     },
     $rdbdir
   );
