@@ -60,9 +60,9 @@ sub Cobalt_register {
   $core->log->debug("Created RDB manager instance");
   $self->{CDBM} = $dbmgr;
 
-  my @keys = $dbmgr->get_keys('main') || ();
-  $core->Provided->{randstuff_items} = scalar @keys; 
-  $core->log->debug("initialized: ".scalar @keys." main RDB keys");
+  my $keys_c = $dbmgr->get_keys('main');
+  $core->Provided->{randstuff_items} = $keys_c;
+  $core->log->debug("initialized: $keys_c main RDB keys");
 
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
