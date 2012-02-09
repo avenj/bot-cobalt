@@ -409,7 +409,7 @@ B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
 
 =item *
 
-B<XML> - XML via L<XML::Dumper>
+B<XML> - XML via L<XML::Dumper> (glacially slow)
 
 =back
 
@@ -418,7 +418,9 @@ The default is B<YAML> I<(YAML Ain't Markup Language)>
 YAML is very powerful, and the appearance of the output makes it easy for 
 humans to read and edit.
 
-JSON is a more simplistic format, often more suited for network transmission.
+JSON is a more simplistic format, often more suited for network transmission 
+and talking to other networked apps. JSON is B<a lot faster> than YAML
+(assuming L<JSON::XS> is available).
 It also has the benefit of being included in the Perl core as of perl-5.14.
 
 =head3 Logger
