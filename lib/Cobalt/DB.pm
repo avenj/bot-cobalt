@@ -252,9 +252,25 @@ one reason it is important to check dbopen exit status.
 B<The lock file is cleared on dbclose. Be sure to always dbclose!>
 
 If the Cobalt::DB object is destroyed, it will attempt to dbclose 
-for you.
+for you, but it is good practice to keep track of your open/close 
+calls and attempt to close as quickly as possible.
+
 
 =head2 Methods
+
+=head3 dbopen
+
+B<dbopen> opens and locks the database (via an external lockfile, 
+see the B<LockFile> constructor argument).
+
+Try to call a B<dbclose> as quickly as possible to reduce lock-related 
+contention.
+
+
+=head3 dbclose
+
+B<dbclose> closes and unlocks the database.
+
 
 =head3 put
 
@@ -267,6 +283,7 @@ say, any shallow or deep data structure NOT including blessed references.
 
 (Yes, Storable is probably faster. JSON is used because it is trivially 
 portable to any language that can interface with BerkDB.)
+
 
 =head3 get
 
@@ -282,6 +299,12 @@ The B<get> method retrieves a (deserialized) key.
 The B<del> method removes a key from the database.
 
   $db->del($key);
+
+
+=head3 dbkeys 
+
+B<dbkeys> will return a list of keys in list context, or the number 
+of keys in the database in scalar context.
 
 
 =head1 AUTHOR

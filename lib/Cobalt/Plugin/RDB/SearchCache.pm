@@ -109,7 +109,36 @@ Cobalt::Plugin::RDB::SearchCache - generic limited-key memory caching
 
 =head1 SYNOPSIS
 
+  ## Add a SearchCache that allows 30 max keys:
+  $self->{CacheObj} = Cobalt::Plugin::RDB::SearchCache->new(
+    MaxKeys => 30,
+  );
+  
+  ## Push some array of results/indexes to the cache obj:
+  my $cache = $self->{CacheObj};
+  $cache->cache('MyCache', $key, [ @results ] );
+  
+  ## Get it back later:
+  my @results = $cache->fetch('MyCache', $key);
+  
+  ## Data changed, invalidate this cache:
+  $cache->invalidate('MyCache');
+  
+
 =head1 DESCRIPTION
+
+B<SearchCache> is a very simplistic mechanism for storing some arrays of data 
+in a hash with a set ceiling limit of keys.
+
+If the number of keys in the specified cache grows above B<MaxKeys>, 
+older entries will be removed from the hash to make room for the new 
+set.
+
+This can be useful for caching the result of deep searches against 
+large L<Cobalt::DB> databases, for example.
+
+This interface is used by L<Cobalt::Plugin::RDB> and 
+L<Cobalt::Plugin::Info3>.
 
 =head1 AUTHOR
 

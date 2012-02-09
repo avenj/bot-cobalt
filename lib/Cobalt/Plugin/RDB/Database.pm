@@ -1,6 +1,20 @@
 package Cobalt::Plugin::RDB::Database;
 our $VERSION = '0.29';
 
+## Frontend to managing RDB-style Cobalt::DB instances
+##
+## We may have a lot of these.
+## This plugin tries to make it easy to operate on them discretely
+## with a minimum of angst in the frontend app.
+## The frontend interfaces take RDB names; we map them to paths and 
+## attempt to switch our ->{CURRENT} Cobalt::DB object appropriately.
+##
+## Error status is expressed via RDB::Constants constant values.
+##
+## If you're trying to program against this interface, I apologize.
+## Go read the Cobalt::DB POD and write something better instead.
+##   (  then send it to me! :)  )
+
 use 5.12.1;
 use strict;
 use warnings;
