@@ -931,9 +931,10 @@ time:
   ## Plugin managers (should) refuse to reload this plugin.
   sub new { bless { NON_RELOADABLE => 1 }, shift }
 
-Alternately, a method that returns a boolean true value will do:
+Alternately, a method named NON_RELOADABLE will do:
 
   ## Like above but outside your constructor.
+  ## Note that B<Cobalt::Core> doesn't care what the method returns.
   sub NON_RELOADABLE { 1 }
 
 It's rare to need such functionality, but it is there.

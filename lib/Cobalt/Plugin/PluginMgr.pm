@@ -327,3 +327,8 @@ sub Bot_public_cmd_plugin {
 }
 
 1;
+__END__
+
+=pod
+
+=cut

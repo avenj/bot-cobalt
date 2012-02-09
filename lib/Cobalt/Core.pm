@@ -201,6 +201,7 @@ sub init {
 
 }
 
+
 sub syndicator_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
@@ -210,7 +211,11 @@ sub syndicator_started {
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
-  $self->plugin_add('IRC', Cobalt::IRC->new);
+  my $irc_obj = Cobalt::IRC->new();
+  $self->plugin_add('IRC', $irc_obj);
+  $self->State->{NonReloadable}->{'IRC'} = 'Cobalt::IRC' 
+    if $irc_obj->can("NON_RELOADABLE")
+    or $irc_obj->{NON_RELOADABLE} ;
 
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");
@@ -223,12 +228,12 @@ sub syndicator_started {
     if ($@)
       { $self->log->warn("Could not load $module: $@"); next; }
     my $obj = $module->new();
+    $self->plugin_add($plugin, $obj);
     if ( $obj->{NON_RELOADABLE} || $obj->can("NON_RELOADABLE") ) {
       ## mark plugin as 'static'
       $self->log->debug("Marked plugin $plugin non-reloadable");
       $self->State->{NonReloadable}->{$plugin} = $module;
     }
-    $self->plugin_add($plugin, $obj);
     $i++;
   }
 
