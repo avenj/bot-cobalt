@@ -237,7 +237,7 @@ sub get {
 
 sub get_keys {
   my ($self, $rdb) = @_;
-  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
+  return unless $self->{RDBPaths}->{$rdb};
   my $core = $self->{core};
   
   $self->_rdb_switch($rdb);
@@ -245,15 +245,15 @@ sub get_keys {
   my $path = $self->{RDBPaths}->{$rdb};
   unless ( ref $db && $db->get_path eq $path ) {
     $core->log->error("get_keys failure; cannot switch to $rdb");
-    return RDB_DBFAIL
+    return
   }
   
   unless ( $db->dbopen ) {
     $core->log->error("dbopen failure for $rdb in get_keys");
-    return RDB_DBFAIL
+    return
   }
   
-  my @dbkeys = $db->keys;
+  my @dbkeys = $db->dbkeys;
   $db->dbclose;
   return @dbkeys
 }
@@ -307,7 +307,7 @@ sub random {
     return RDB_DBFAIL
   }
   
-  my @dbkeys = $db->keys;
+  my @dbkeys = $db->dbkeys;
   unless (@dbkeys) {
     $db->dbclose;
     return RDB_NOSUCH_ITEM
@@ -357,7 +357,7 @@ sub search {
   }
   
   my @matches;
-  for my $dbkey ($db->keys) {
+  for my $dbkey ($db->dbkeys) {
     my $ref = $db->get($dbkey) // next;
     my $str = $ref->{String} // '';
     push(@matches, $dbkey) if $str =~ $re;

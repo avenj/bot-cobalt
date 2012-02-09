@@ -53,7 +53,7 @@ sub Cobalt_register {
   
   ## build our initial hashes:
   $self->{DB}->dbopen || croak 'DB open failure';
-  for my $glob ($self->{DB}->keys) {
+  for my $glob ($self->{DB}->dbkeys) {
     ++$core->Provided->{info_topics};
     my $ref = $self->{DB}->get($glob);
     my $regex = $ref->{Regex};

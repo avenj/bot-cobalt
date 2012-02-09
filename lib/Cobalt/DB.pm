@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -129,9 +129,9 @@ sub get_path {
   return shift->{DatabasePath};
 }
 
-sub keys {
+sub dbkeys {
   my $self = shift;
-  croak "attempted 'keys' on unopened db"
+  croak "attempted 'dbkeys' on unopened db"
     unless $self->{DBOPEN};
   return keys %{ $self->{Tied} }
 }
@@ -190,7 +190,7 @@ Cobalt::DB - Locking Berkeley DBs with serialization
     }, },
   );
   
-  for my $key ($self->{DB}->keys) {
+  for my $key ($self->{DB}->dbkeys) {
     my $this_hash = $self->{DB}->get($key);
   }
   
