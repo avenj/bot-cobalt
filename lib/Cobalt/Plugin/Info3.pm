@@ -722,7 +722,7 @@ sub _info_format {
     '!' => $cmdchar,          ## CmdChar
     B => $irc_obj->nick_name, ## bot's nick for this context
     C => $channel,            ## channel
-    H => $irc_obj->nick_long_form($nick) || '', # n!u@h
+    H => $irc_obj->nick_long_form($irc_obj->nick_name) || '',
     N => $nick,               ## nickname
     P => $irc_obj->port,      ## remote port
     Q => $str,                ## question string
