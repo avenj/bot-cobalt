@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -185,11 +185,11 @@ sub _cmd_randstuff {
   ## _add_item returns either a status from ::Database->put
   ## or a new item key:
   given ($newidx) {
-    when (RDB_DBFAIL) {
+    when ([RDB_DBFAIL]) {
       return rplprintf( $core->lang->{RPL_DB_ERR} );
     }
     
-    when (RDB_NOSUCH) {
+    when ([RDB_NOSUCH]) {
       return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
         { nick => $src_nick, rdb => $rdb }
       );
@@ -220,10 +220,10 @@ sub _select_random {
     return if $quietfail;
     my $rpl;
     given ($retval) {
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when RDB_NOSUCH;
-      $rpl = "RPL_DB_ERR"          when RDB_DBFAIL;
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when [RDB_NOSUCH];
+      $rpl = "RPL_DB_ERR"          when [RDB_DBFAIL];
       ## send nothing if this rdb has no keys:
-      return                       when RDB_NOSUCH_ITEM;
+      return                       when [RDB_NOSUCH_ITEM];
       ## unknown error status?
       default { $rpl = "RPL_DB_ERR" }
     }
@@ -268,8 +268,8 @@ sub _cmd_randq {
     $core->log->debug("Error status from search(): $matches");
     my $rpl;
     given ($matches) {
-      $rpl = "RPL_DB_ERR"          when RDB_DBFAIL;
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when RDB_NOSUCH;
+      $rpl = "RPL_DB_ERR"          when [RDB_DBFAIL];
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when [RDB_NOSUCH];
       ## not an arrayref and not a known error status, wtf?
       default { $rpl = "RPL_DB_ERR" }
     }
@@ -300,7 +300,7 @@ sub _cmd_randq {
     $core->log->debug("Error status from get(): $item");
     my $rpl;
     given ($item) {
-      $rpl = "RDB_ERR_NO_SUCH_ITEM" when RDB_NOSUCH_ITEM;
+      $rpl = "RDB_ERR_NO_SUCH_ITEM" when [RDB_NOSUCH_ITEM];
       ## an unknown non-hashref $item is also a DB_ERR:
       default { "RPL_DB_ERR" }
     }

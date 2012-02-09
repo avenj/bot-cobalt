@@ -226,6 +226,8 @@ sub get {
   $value = RDB_NOSUCH_ITEM unless defined $value;
   
   $db->dbclose;
+  
+  $value->{DBKEY} = $key if ref $value eq 'HASH';
   return $value
 }
 
