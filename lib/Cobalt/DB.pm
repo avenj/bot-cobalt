@@ -123,7 +123,6 @@ sub dbclose {
 sub DESTROY {
   my $self = shift;
   $self->dbclose if $self->{DBOPEN};
-  $self->SUPER::DESTROY(@_);
 }
 
 sub keys {
