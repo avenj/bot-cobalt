@@ -1,10 +1,13 @@
 package Cobalt::DB;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
 ## ->new(File => $path, LockFile => $lockpath)
-## Represents a BerkDB
+##
+## Represents a DB_File (berkdb1.x interface)
+## Very simplistic, no readonly locking etc.
+## a 'DB2' interface using BerkeleyDB.pm is planned
 
 use 5.12.1;
 use strict;
@@ -163,6 +166,23 @@ sub del {
   return 1
 }
 
+sub dbdump {
+  my ($self, $format) = @_;
+  croak "attempted dbdump on unopened db"
+    unless $self->{DBOPEN};
+  $format = 'YAML' unless $format;
+  ## 'cross-serialize' to some other format and dump it
+  
+  my $copy = { };
+  while (my ($key, $value) = each %{ $self->{Tied} }) {
+    $copy->{$key} = $value;
+  }
+  
+  my $dumper = Cobalt::Serializer->new( Format => $format );
+  my $serial = $dumper->freeze($copy);
+  return $serial;
+}
+
 1;
 __END__
 
@@ -306,6 +326,19 @@ The B<del> method removes a key from the database.
 B<dbkeys> will return a list of keys in list context, or the number 
 of keys in the database in scalar context.
 
+
+=head3 dbdump
+
+You can serialize/export the entirety of the DB via B<dbdump>.
+
+  ## YAML::Syck
+  my $yamlified = $db->dbdump('YAML');
+  ## YAML::XS
+  my $yamlified = $db->dbdump('YAMLXS');
+  ## JSON (::XS or ::PP)
+  my $jsonified = $db->dbdump('JSON');
+
+See L<Cobalt::Serializer> for more on C<freeze()> and valid formats.
 
 =head1 AUTHOR
 
