@@ -85,6 +85,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering random stuff");
+  delete $core->Provided->{randstuff_items};
   return PLUGIN_EAT_NONE
 }
 
@@ -210,9 +211,17 @@ sub _select_random {
   my $dbmgr  = $self->{CDBM};
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
+  
   if (ref $retval eq 'HASH') {
     my $content = $retval->{String} // '';
-    #my $index   = $retval->{DBKEY};
+    if ($self->{LastRandom}
+        && $self->{LastRandom} eq $content
+    ) {
+      $retval  = $dbmgr->random($rdb);
+      $content = $retval->{String}//''
+        if ref $retval eq 'HASH';
+    }
+    $self->{LastRandom} = $content;
     return $content
   } else {
     ## do nothing if we're supposed to fail quietly
