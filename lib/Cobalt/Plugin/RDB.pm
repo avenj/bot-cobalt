@@ -445,11 +445,11 @@ sub _cmd_rdb {
       my ($rdb, $item) = @message;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
       my $retval = $self->_add_item($rdb, decode_irc($item), $username);
-      if      ($retval == RDB_NOSUCH) {
+      if      ($retval ~~ RDB_NOSUCH) {
         $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
           { nick => $nickname, rdb => $rdb }
         );
-      } elsif ($retval == RDB_DBFAIL) {
+      } elsif ($retval ~~ RDB_DBFAIL) {
         $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
       } else {
         ## should've been returned a unique index number
@@ -465,19 +465,19 @@ sub _cmd_rdb {
         unless $rdb and $item_idx;
       my $retval = $self->_delete_item($rdb, $item_idx, $username);
       SWITCH: {
-        if ($retval == RDB_NOSUCH) {
+        if ($retval ~~ RDB_NOSUCH) {
           $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
             { nick => $nickname, rdb  => $rdb }
           );
           last SWITCH
         }
         
-        if ($retval == RDB_DBFAIL) {
+        if ($retval ~~ RDB_DBFAIL) {
           $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
           last SWITCH
         }
         
-        if ($retval == RDB_NOSUCH_ITEM) {
+        if ($retval ~~ RDB_NOSUCH_ITEM) {
           $resp = rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
             { nick => $nickname, rdb => $rdb, index => $item_idx }
           );
@@ -506,15 +506,15 @@ sub _cmd_rdb {
       my $item = $dbmgr->get($rdb, $idx);
       unless (ref $item eq 'HASH') {
       
-        if    ($item == RDB_NOSUCH_ITEM) {
+        if    ($item ~~ RDB_NOSUCH_ITEM) {
           return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
             { nick => $nickname, rdb  => $rdb, index => $idx }
           );
         }
-        elsif ($item == RDB_DBFAIL) {
+        elsif ($item ~~ RDB_DBFAIL) {
           return rplprintf( $core->lang->{RPL_DB_ERR} );
         }
-        elsif ($item == RDB_NOSUCH) {
+        elsif ($item ~~ RDB_NOSUCH) {
           return rplprintf( $core->lang->{RPL_ERR_NO_SUCH_RDB},
             { nick => $nickname, rdb => $rdb }
           );
@@ -681,8 +681,11 @@ sub _add_item {
   ##   RDB_NOSUCH
   ##   RDB_DBFAIL
   my $status = $dbmgr->put($rdb, $itemref);
-  return $status if $status == RDB_DBFAIL 
-                 or $status == RDB_NOSUCH;
+  
+  if ($status =~ /^\d+$/) {
+    return $status if $status == RDB_DBFAIL 
+                   or $status == RDB_NOSUCH;
+  }
 
   ## otherwise we should've gotten the new key back:
   ++$core->Provided->{randstuff_items} if $rdb eq 'main';
