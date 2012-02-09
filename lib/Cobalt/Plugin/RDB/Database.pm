@@ -84,6 +84,12 @@ sub new {
   return $self
 }
 
+sub dbexists {
+  my ($self, $rdb) = @_;
+  return 1 if $self->{RDBPaths}->{$rdb};
+  return
+}
+
 sub createdb {
   my ($self, $rdb) = @_;
   return RDB_INVALID_NAME unless $rdb
