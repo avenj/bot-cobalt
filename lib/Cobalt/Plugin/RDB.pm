@@ -123,10 +123,22 @@ sub Bot_public_msg {
     $resp = $self->_cmd_rdb(\@message, $msg)
       when "rdb";
   }
-  my $channel = $msg->{channel};
-  $core->send_event( 'send_message', $context, $channel, $resp )
-    if $resp;
+  
+  $resp = "No output for $cmd - BUG!" unless $resp;
 
+  my $channel = $msg->{channel};
+  if (
+      $cmd ~~ [ 'randq', 'random' ]
+      && index($resp, '+') == 0
+  ) {
+    $resp = substr($resp, 1);
+    $core->log->debug("dispatching action -> $channel");
+    $core->send_event( 'send_action', $context, $channel, $resp );
+  } else {
+    $core->log->debug("dispatching msg -> $channel");
+    $core->send_event( 'send_message', $context, $channel, $resp );
+  }
+  
   return PLUGIN_EAT_NONE
 }
 
@@ -674,18 +686,34 @@ sub Bot_rdb_broadcast {
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
   my $servers = $core->Servers;
-  for my $context (keys %$servers) {
-    next unless $core->Servers->{$context}->{Connected};
-    my $irc = $core->Servers->{$context}->{Object} // next;
+  SERVER: for my $context (keys %$servers) {
+    next SERVER unless $core->Servers->{$context}->{Connected};
+    my $irc = $core->Servers->{$context}->{Object} || next SERVER;
     my $chcfg = $core->get_channels_cfg($context);
 
-    for my $channel (keys %$chcfg) {
-      $core->send_event( 'send_message', $context, $channel, $random ) 
-        if $chcfg->{$channel}->{rdb_randstuffs}
-        and $irc->is_channel_synced($channel) ;
-    }
+    $core->log->debug("rdb_broadcast to $context");
 
-  }
+    my $on_channels = $irc->channels || {};
+    my $casemap = $core->Servers->{$context}->{CaseMap} // 'rfc1459';
+    my @channels = map { lc_irc($_, $casemap) } keys %$on_channels;
+
+    CHAN: for my $channel (@channels) {
+      next CHAN if $chcfg->{$channel}->{rdb_randstuffs} == 0;
+ 
+      ## action/msg check    
+      if ( index($random, '+') == 0 ) {
+        $random = substr($random, 1);
+        $core->log->debug(
+          "rdb_broadcast (action) -> $context -> $channel"
+        );
+        $core->send_event( 'send_action', $context, $channel, $random );
+      } else {
+        $core->log->debug("rdb_broadcast -> $context -> $channel");
+        $core->send_event( 'send_message', $context, $channel, $random );
+      }
+ 
+    } # CHAN
+  } # SERVER
 
   ## reset timer unless randdelay is 0
   if ($self->{RandDelay}) {
