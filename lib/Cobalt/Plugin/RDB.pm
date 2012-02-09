@@ -48,7 +48,8 @@ sub Cobalt_register {
 
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
 
-  my $rdbdir = $core->var ."/". $cfg->{Opts}->{RDBDir} || $core->var ."/db/rdb" ;
+  my $rdbdir =    $core->var ."/". $cfg->{Opts}->{RDBDir} 
+               || $core->var ."/db/rdb" ;
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = Cobalt::Plugin::RDB::Database->new(
@@ -252,11 +253,13 @@ sub _cmd_randq {
   } elsif ($type eq 'rdb') {
     $rdb = $rdbpassed;
     $str = $strpassed;
-  } else {
+  } else {    ## 'randq'
     $rdb = 'main';
     ## search what looks like irc quotes by default:
     $str = shift @message // '<*>';
   }
+
+  $core->log->debug("dispatching search for $str in $rdb");
 
   my $matches = $dbmgr->search($rdb, $str);
 
@@ -289,6 +292,8 @@ sub _cmd_randq {
   }
   $self->{LastRandq} = $selection;
 
+  $core->log->debug("dispatching get() for $selection in $rdb");
+
   my $item = $dbmgr->get($rdb, $selection);
   unless (ref $item eq 'HASH') {
     $core->log->debug("Error status from get(): $item");
@@ -300,7 +305,7 @@ sub _cmd_randq {
     }
     return rplprintf( $core->lang->{$rpl},
       { 
-        nick  => $msg_h->{src_nick}, 
+        nick  => $msg_h->{src_nick}//'',
         rdb   => $rdb, 
         index => $selection 
       }
