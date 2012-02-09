@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 use 5.12.1;
 use strict;
@@ -13,6 +13,8 @@ my $Modules = {
   YAMLXS => 'YAML::XS',
 
   JSON   => 'JSON',
+  
+  XML    => 'XML::Dumper',
 };
 
 sub new {
@@ -152,6 +154,19 @@ sub _check_if_avail {
   }
 }
 
+sub _dump_xml {
+  my ($self, $data) = @_;
+  require XML::Dumper;
+  my $xml = XML::Dumper->new()->pl2xml($data);
+  return $xml
+}
+
+sub _load_xml {
+  my ($self, $xml) = @_;
+  require XML::Dumper;
+  my $data = XML::Dumper->new()->xml2pl($xml);
+  return $data
+}
 
 sub _dump_yaml {
   my ($self, $data) = @_;
@@ -391,6 +406,10 @@ B<YAMLXS> - YAML1.1 via L<YAML::XS>
 =item *
 
 B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
+
+=item *
+
+B<XML> - XML via L<XML::Dumper>
 
 =back
 
