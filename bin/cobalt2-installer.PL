@@ -7,6 +7,8 @@ use warnings;
 use File::Find;
 use File::Spec;
 
+use JSON;
+
 my $bin_in  = 'tools/cobalt2-installer.in';
 die "Input $bin_in not found" unless -f $bin_in;
 
@@ -14,22 +16,6 @@ my $bin_out = shift;
 
 my $etcdir  = 'etc';
 die "$etcdir not a directory" unless -d $etcdir;
-
-
-## Find JSON
-for my $module (qw/JSON JSON::XS JSON::PP/) {
-  eval "require $module";
-  if ($@) {
-    next
-  } else {
-    say "Found JSON: $module";
-    $module->import('encode_json');
-    last
-  }
-}
-
-die "Could not find JSON" unless exists &encode_json;
-
 
 ## Find example confs and langs in $etcdir
 my @valid_exts = qw/ conf cf yml yaml json /;

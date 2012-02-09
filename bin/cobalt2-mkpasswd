@@ -2,18 +2,18 @@
 
 # cobalt2-mkpasswd
 # simple bcrypt-enabled mkpasswd
-# no Cobalt:: dependencies and licensed under the same terms as Perl
-# feel free to use as an easy bcrypt frontend in other projects
 
 use 5.10.0;
 use strict;
 use warnings;
 
-my $version = '0.11';
+my $version = '0.12';
 
 use Time::HiRes qw/ gettimeofday tv_interval /;
 
 use Getopt::Long;
+
+use Crypt::Eksblowfish::Bcrypt;
 
 my $type = 'bcrypt';
 my $bcrypt_cost = '08';
@@ -60,9 +60,6 @@ GetOptions(
     exit 0
   },  
 );
-
-eval { require Crypt::Eksblowfish::Bcrypt; };
-my $have_bcrypt = $@ ? 0 : 1;
 
 my $pwd;
 if (@ARGV) {
@@ -119,28 +116,22 @@ sub pwd_generate {
 
     when (/^bcrypt$/i) {  ## Bcrypt: requires Crypt::Eksblowfish
       ## blowfish w/ cost factor
-      unless ($have_bcrypt) {
-        say("WARNING: Attempting to use bcrypt but missing Crypt::Eksblowfish");
-        say("WARNING: Defaulting to MD5 instead . . . !");
-        $salt = '$1$'.$salt.'$';  ## no bcrypt here, generate md5 instead (sadface)
-      } else {
-        ## cost value is configurable, but 08 is a good choice.
-        ## has to be a two digit power of 2. pad with 0 as needed
-        my $cost = $bcrypt_cost // '08';
-        $cost = '0'.$cost if length $cost == 1;
-        ## bcrypt expects 16 octets of salt:
-        $salt = join '', map { chr int rand 256 } 1 .. 16;
-        ## ...base64-encoded via bcrypt's en_base64:
-        $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
-        ## actual settings string to feed bcrypt ($2a$COST$SALT)
-        $salt = join '', '$2a$', $cost, '$', $salt;
-        return Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $salt)
-      }
+      ## cost value is configurable, but 08 is a good choice.
+      ## has to be a two digit power of 2. pad with 0 as needed
+      my $cost = $bcrypt_cost // '08';
+      $cost = '0'.$cost if length $cost == 1;
+      ## bcrypt expects 16 octets of salt:
+      $salt = join '', map { chr int rand 256 } 1 .. 16;
+      ## ...base64-encoded via bcrypt's en_base64:
+      $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
+      ## actual settings string to feed bcrypt ($2a$COST$SALT)
+      $salt = join '', '$2a$', $cost, '$', $salt;
+      return Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $salt)
     } 
 
     when ("DES") {
       ## not documented because it's a Very Bad Idea ...
-      ## but here in case you're stuck with the world's worst crypt()
+      ## but here for amusement value
       ## srsly though, don't use it. no, really, the 80s are over, promise.
       $salt = join '', map { $p[rand@p] } 1..2;
     }
@@ -157,16 +148,12 @@ sub pwd_compare {
   my $pwd   = shift || return;
   my $crypt = shift || return;
 
-  if ( index($crypt, '$2a$') == 0 ) ## bcrypted
-  {
-    unless ($have_bcrypt) {
-      say("ERROR; Missing Crypt::Eksblowfish!");
-      say("ERROR; Cannot compare bcrypted password!");
-      return 0
-    } else {
-      return 0 unless $crypt eq
+  if (  index($crypt, '$2a$') == 0 
+     && index($crypt, '$', 3) == 3
+  ) { 
+    ## bcrypted
+    return 0 unless $crypt eq
         Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $crypt);
-    }
   }
   else  ## some crypt() method, hopefully we have it!
   {
