@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 ## Cobalt2 RDB manager
 
@@ -14,13 +14,16 @@ use Cobalt::Plugin::RDB::SearchCache;
 
 use Cobalt::Utils qw/glob_to_re_str/;
 
+use Cwd qw/abs_path/;
+
 use Digest::SHA1 qw/sha1_hex/;
 
 use File::Basename qw/fileparse/;
-
+use File::Find;
 use File::Path qw/mkpath/;
 
 use Time::HiRes;
+
 
 has 'RDBDir' => (
   is  => 'ro',
@@ -56,6 +59,7 @@ sub BUILD {
   );
 
   my $rdbdir = $self->RDBDir;
+  $core->log->debug("Using RDBDir $rdbdir");
   unless (-e $rdbdir) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
     mkpath($rdbdir);
@@ -64,17 +68,24 @@ sub BUILD {
   unless (-d $rdbdir) {
     croak "RDBDir not a directory: $rdbdir";
   }
-
-  my @paths = glob($rdbdir."/*.rdb");
   
+  my @paths;
+  find(sub {
+      push(@paths, $File::Find::fullname)
+        if $_ =~ /\.rdb$/;
+    },
+    $rdbdir
+  );
+
   for my $path (@paths) {
     my $rdb_name = fileparse($path, '.rdb');
     ## attempt to open this RDB to see if it's busted:
+    $self->RDBPaths->{$rdb_name} = $path;
     unless ( $self->_dbopen($rdb_name) ) {
+      delete $self->RDBPaths->{$rdb_name};
       $core->log->error("dbopen failure for $rdb_name");
       next
     }
-    $self->RDBPaths->{$rdb_name} = $path;
   }
   
   ## see if we have 'main'
