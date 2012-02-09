@@ -48,6 +48,9 @@ sub new {
   $self->{CacheObj} = Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => $opts{CacheKeys} // 30,
   );
+
+  ## initialize paths:
+  $self->get_paths();
   
   return $self
 }
