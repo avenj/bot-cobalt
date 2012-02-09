@@ -12,7 +12,7 @@ use warnings;
 use Carp;
 
 use File::Path qw/mkpath/;
-use File::Spec;
+use Cwd qw/abs_path/;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock :seek/;
@@ -34,7 +34,7 @@ sub new {
   $self->{LockDir} = $args{LockDir} || "/tmp/.c2locks" ;
   mkpath($self->{LockDir}) unless -e $self->{LockDir};
 
-  my $path = File::Spec->rel2abs($args{File});
+  my $path = abs_path($args{File});
 
   $self->{DatabasePath} = $path;
 
@@ -67,7 +67,7 @@ sub dbopen {
     $timer += 0.25;
   }
   truncate $lockf_fh, 0;
-  seek $lockf_fh, 0, SEEK_SET;
+  seek $lockf_fh, 0, 0;
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
 
@@ -130,6 +130,7 @@ sub dbclose {
   delete $self->{LockFH};
   unlink $self->{LockFile};
   $self->{DBOPEN} = 0;
+  return 1
 }
 
 sub DESTROY {
