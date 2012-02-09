@@ -12,10 +12,11 @@ use Cobalt::DB;
 use Cobalt::Plugin::RDB::Constants;
 use Cobalt::Plugin::RDB::SearchCache;
 
+use Cobalt::Utils qw/glob_to_re_str/;
+
 use Digest::SHA1 qw/sha1_hex/;
 
-use File::Basename;
-use File::Spec;
+use File::Basename qw/fileparse/;
 
 use File::Path qw/mkpath/;
 
@@ -83,6 +84,7 @@ sub BUILD {
       unless $self->createdb('main') eq SUCCESS;
   }
 
+  $core->log->debug(scalar keys %{$self->RDBPaths}." RDBs added");
 }
 
 sub dbexists {
@@ -182,7 +184,7 @@ sub get_keys {
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
-  my @keys = $cdb->keys() || ();
+  my @keys = $cdb->keys || ();
   $cdb->dbclose;
   return @keys
 }
@@ -212,7 +214,7 @@ sub random {
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
   
-  my @dbkeys = $cdb->keys();
+  my @dbkeys = $cdb->keys;
   return RDB_NOSUCH_ITEM unless @dbkeys;
   
   my $randkey = $dbkeys[rand @dbkeys];
