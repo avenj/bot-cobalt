@@ -43,11 +43,7 @@ has 'irc' => (
   isa => 'Object',
 );
 
-has 'NON_RELOADABLE' => (
-  is  => 'ro',
-  isa => 'Int',
-  default => 1,
-);
+sub NON_RELOADABLE { 1 }
 
 sub Cobalt_register {
   my ($self, $core) = @_;

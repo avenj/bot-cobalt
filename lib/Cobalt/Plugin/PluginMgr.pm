@@ -146,9 +146,7 @@ sub _load_module {
   ## plugin_add returns # of plugins in pipeline on success:
   my $loaded = $core->plugin_add( $alias, $obj );
   if ($loaded) {
-      if ( $obj->{NON_RELOADABLE}
-          || ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE )
-      ) {
+      if ( $obj->{NON_RELOADABLE} || $obj->can("NON_RELOADABLE") ) { 
         $core->log->debug("Marked $alias non-reloadable");
         $core->State->{NonReloadable}->{$alias} = $module;
       }

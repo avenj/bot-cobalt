@@ -223,10 +223,7 @@ sub syndicator_started {
     if ($@)
       { $self->log->warn("Could not load $module: $@"); next; }
     my $obj = $module->new();
-    if ( 
-      $obj->{NON_RELOADABLE}
-      || ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE )
-    ) {
+    if ( $obj->{NON_RELOADABLE} || $obj->can("NON_RELOADABLE") ) {
       ## mark plugin as 'static'
       $self->log->debug("Marked plugin $plugin non-reloadable");
       $self->State->{NonReloadable}->{$plugin} = $module;
