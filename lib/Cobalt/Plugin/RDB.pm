@@ -47,10 +47,12 @@ sub Cobalt_register {
     RDBDir => $rdbdir,
     core => $core,
   );
+  $core->log->debug("Created RDB manager instance");
   $self->{CDBM} = $dbmgr;
 
-  my @keys = $dbmgr->get_keys('main') || ();
+  my @keys = $dbmgr->get_keys('main');
   $core->Provided->{randstuff_items} = scalar @keys; 
+  $core->log->debug("initialized: ".scalar @keys." main RDB keys");
 
   $core->plugin_register($self, 'SERVER',
     [ 
@@ -64,6 +66,7 @@ sub Cobalt_register {
   ## delay is in Opts->RandDelay as a timestr
   ## (0 turns off timer)
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
+  $core->log->debug("randdelay: $randdelay");
   $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
   $self->{RandDelay} = $randdelay;
   if ($randdelay) {
@@ -104,6 +107,8 @@ sub Bot_public_msg {
   my $cmd = lc(shift @message || '');
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
+
+  $core->log->debug("Dispatching $cmd");
 
   ## dispatcher:
   my $resp;
