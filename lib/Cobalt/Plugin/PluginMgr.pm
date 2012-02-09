@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 ## handles and eats: !plugin
 
@@ -146,6 +146,13 @@ sub _load_module {
   ## plugin_add returns # of plugins in pipeline on success:
   my $loaded = $core->plugin_add( $alias, $obj );
   if ($loaded) {
+      if ( $obj->{NON_RELOADABLE}
+          || ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE )
+      ) {
+        $core->log->debug("Marked $alias non-reloadable";
+        $core->State->{NonReloadable}->{$alias} = $module;
+      }
+  
       return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
           {
             plugin => $alias,
