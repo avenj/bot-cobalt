@@ -357,7 +357,7 @@ sub _cmd_rdb {
 
   unless ($cmd && $cmd ~~ @handled) {
     return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
-           ."search <rdb> <str>, dbadd <rdb>, dbdel <rdb>";
+           ."search(idx) <rdb> <str>, dbadd <rdb>, dbdel <rdb>";
   }
   
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
@@ -509,13 +509,18 @@ sub _cmd_rdb {
       ## return metadata about an item by rdb and index number
       my ($rdb, $idx) = @message;
       return 'Syntax: rdb info <RDB> <index number>'
-        unless $rdb and $idx;
+        unless $rdb;
       
       my $dbmgr = $self->{CDBM};
       unless ( $dbmgr->dbexists($rdb) ) {
         return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
           { nick => $nickname, rdb  => $rdb  }
         );
+      }
+
+      unless ($idx) {
+        my $n_keys = $dbmgr->get_keys($rdb);
+        return "RDB $rdb has $n_keys items"
       }
 
       my $item = $dbmgr->get($rdb, $idx);
