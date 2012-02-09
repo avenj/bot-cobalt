@@ -230,8 +230,11 @@ sub Bot_info3_relay_string {
 
   ## if $resp is a +action, send ctcp action
   if ( index($resp, '+') == 0 ) {
+    $resp = substr($resp, 1);
+    $core->log->debug("Dispatching action -> $channel");
     $core->send_event('send_action', $context, $channel, $resp);
   } else {
+    $core->log->debug("Dispatching msg -> $channel");
     $core->send_event('send_message', $context, $channel, $resp);
   }
 
