@@ -95,7 +95,11 @@ sub Bot_ctcp_action {
   my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
 
   my $nick = $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $channel = $msg->{target};
+
+  ## is this a channel? ctcp_action doesn't differentiate on its own
+  return PLUGIN_EAT_NONE 
+    unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
 
   if ( index($match, '~') == 0) {
     my $rdb = (split ' ', $match)[0];

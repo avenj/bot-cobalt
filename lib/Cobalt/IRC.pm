@@ -458,12 +458,17 @@ sub irc_ctcp_action {
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    target => $target->[0],
+    target  => $target->[0],
     target_array => $target,
     message => $txt,
     orig => $orig,
     message_array => [ split ' ', $txt ],
   };
+
+  ## if this is a public ACTION, add a 'channel' key
+  ## same as ->target, but convenient for differentiating
+  $msg->{channel} = $target->[0] 
+    if $target->[0] ~~ [ split '', '#&+' ];
 
   ## Bot_ctcp_action
   $self->core->send_event( 'ctcp_action', 'Main', $msg );
