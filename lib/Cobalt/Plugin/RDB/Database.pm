@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 
 use 5.12.1;
 use strict;
@@ -161,6 +161,9 @@ sub deldb {
   undef $db;
   
   $core->log->info("Deleted RDB $rdb");
+
+  my $cache = $self->{CacheObj};
+  $cache->invalidate($rdb);
   
   return SUCCESS
 }
@@ -196,7 +199,9 @@ sub del {
     return RDB_DBFAIL
   }
   
-  ## FIXME invalidate search cache
+  ## invalidate search cache
+  my $cache = $self->{CacheObj};
+  $cache->invalidate($rdb);
   
   $db->dbclose;
   return SUCCESS
@@ -278,7 +283,8 @@ sub put {
     return RDB_DBFAIL
   }
   
-  ## FIXME invalidate cache
+  my $cache = $self->{CacheObj};
+  $cache->invalidate($rdb);
   $db->dbclose;
   return $newkey
 }
@@ -335,7 +341,12 @@ sub search {
     return RDB_DBFAIL
   }
   
-  ## FIXME hit search cache first
+  ## hit search cache first
+  my $cache = $self->{CacheObj};
+  my @matches = $cache->fetch($rdb, $glob);
+  if (@matches) {
+    return wantarray ? @matches : [ @matches ] ;
+  }
 
   my $re = glob_to_re_str($glob);
   $re = qr/$re/i;
@@ -354,7 +365,8 @@ sub search {
   
   $db->dbclose;
   
-  ## FIXME push back to cache
+  ## push back to cache
+  $cache->cache($rdb, $glob, [ @matches ] );
   
   return wantarray ? @matches : [ @matches ] ;
 }
