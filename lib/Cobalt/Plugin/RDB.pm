@@ -204,7 +204,7 @@ sub _select_random {
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
   if (ref $retval eq 'HASH') {
-    my $content = $retval->{String};
+    my $content = $retval->{String} // '';
     #my $index   = $retval->{DBKEY};
     return $content
   } else {
@@ -222,7 +222,7 @@ sub _select_random {
     }
     return rplprintf( $core->lang->{$rpl},
       {
-        nick => $msg_h->{src_nick},
+        nick => $msg_h->{src_nick}//'',
         rdb  => $rdb,
       },
     );

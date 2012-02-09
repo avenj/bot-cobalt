@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 ## ->new(File => $path)
 ##  To use a different lockfile dir:
@@ -12,7 +12,6 @@ use warnings;
 use Carp;
 
 use File::Path qw/mkpath/;
-use Cwd qw/abs_path/;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock :seek/;
@@ -31,10 +30,10 @@ sub new {
     croak "Constructor requires a specified File";
   }
 
+  my $path = $args{File};
+
   $self->{LockDir} = $args{LockDir} || "/tmp/.c2locks" ;
   mkpath($self->{LockDir}) unless -e $self->{LockDir};
-
-  my $path = abs_path($args{File});
 
   $self->{DatabasePath} = $path;
 
