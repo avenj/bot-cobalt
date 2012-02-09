@@ -64,7 +64,9 @@ sub fetch {
 
 sub invalidate {
   my ($self, $rdb) = @_;
-  ## should be called on add/del operations  
+  ## should be called on add/del operations 
+  ## invalidate all
+  $self->{Cache} = { } unless $rdb;
   return unless $self->{Cache}->{$rdb};
   return unless scalar keys %{ $self->{Cache}->{$rdb} };  
   return delete $self->{Cache}->{$rdb};
@@ -97,3 +99,22 @@ sub _shrink {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::RDB::SearchCache - generic limited-key memory caching
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
