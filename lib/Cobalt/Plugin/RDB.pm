@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -333,6 +333,7 @@ sub _cmd_rdb {
   ## cmd handler for:
   ##   rdb add
   ##   rdb del
+  ##   rdb get 
   ##   rdb dbadd
   ##   rdb dbdel
   ##   rdb info
@@ -356,8 +357,9 @@ sub _cmd_rdb {
   $cmd = 'del' if $cmd eq 'delete';
 
   unless ($cmd && $cmd ~~ @handled) {
-    return "Valid commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
-           ."search(idx) <rdb> <str>, dbadd <rdb>, dbdel <rdb>";
+    return "Commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
+           ."get <rdb> <idx>, search(idx) <rdb> <str>, dbadd <rdb>, "
+           ."dbdel <rdb>";
   }
   
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
@@ -505,10 +507,45 @@ sub _cmd_rdb {
       }  ## SWITCH
     }
 
+    when ("get") {
+      my ($rdb, $idx) = @message;
+      return 'Syntax: rdb get <RDB> <index key>'
+        unless $rdb;
+      
+      my $dbmgr = $self->{CDBM};
+      unless ( $dbmgr->dbexists($rdb) ) {
+        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
+          { nick => $nickname, rdb => $rdb }
+        );
+      }
+      
+      my $item = $dbmgr->get($rdb, $idx);
+      unless (ref $item eq 'HASH') {
+        if    ($item ~~ RDB_NOSUCH_ITEM) {
+          return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
+            { nick => $nickname, rdb  => $rdb, index => $idx }
+          );
+        }
+        elsif ($item ~~ RDB_DBFAIL) {
+          return rplprintf( $core->lang->{RPL_DB_ERR} );
+        }
+        elsif ($item ~~ RDB_NOSUCH) {
+          return rplprintf( $core->lang->{RPL_ERR_NO_SUCH_RDB},
+            { nick => $nickname, rdb => $rdb }
+          );
+        }
+        return "Unknown exit status $item"      
+      }
+     
+      my $indexkey = $item->{DBKEY}  // '(undef - broken db!)';
+      my $content  = $item->{String} // '(undef - broken db!)';
+      $resp = "[${indexkey}] $content"
+    }
+
     when ("info") {
       ## return metadata about an item by rdb and index number
       my ($rdb, $idx) = @message;
-      return 'Syntax: rdb info <RDB> <index number>'
+      return 'Syntax: rdb info <RDB> <index key>'
         unless $rdb;
       
       my $dbmgr = $self->{CDBM};
