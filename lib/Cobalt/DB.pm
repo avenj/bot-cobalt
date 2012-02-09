@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -133,7 +133,8 @@ sub dbkeys {
   my $self = shift;
   croak "attempted 'dbkeys' on unopened db"
     unless $self->{DBOPEN};
-  return keys %{ $self->{Tied} }
+  return wantarray ? (keys %{ $self->{Tied} })
+                   : scalar keys %{ $self->{Tied} };
 }
 
 sub get {
