@@ -149,7 +149,7 @@ sub _load_module {
       if ( $obj->{NON_RELOADABLE}
           || ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE )
       ) {
-        $core->log->debug("Marked $alias non-reloadable";
+        $core->log->debug("Marked $alias non-reloadable");
         $core->State->{NonReloadable}->{$alias} = $module;
       }
   

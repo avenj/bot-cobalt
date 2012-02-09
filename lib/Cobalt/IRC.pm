@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 ## Core IRC plugin
 ## (server context 'Main')
 

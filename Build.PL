@@ -115,7 +115,7 @@ my $build = $class->new(
 
     ### Storage / serialization
       'YAML::Syck'  => '1.18',
-      'JSON::XS' => 0,
+      'JSON::XS'    => 0,
 
     ### Release tools, commented for now
      # templating (cpodconv/release tools)

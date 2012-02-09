@@ -370,7 +370,6 @@ sub search {
     return RDB_DBFAIL
   }
   
-  my @matches;
   for my $dbkey ($db->dbkeys) {
     my $ref = $db->get($dbkey) // next;
     my $str = $ref->{String} // '';
