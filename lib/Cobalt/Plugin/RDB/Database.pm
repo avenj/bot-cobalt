@@ -3,8 +3,9 @@ our $VERSION = '0.24';
 
 ## Cobalt2 RDB manager
 
-use namespace::autoclean;
-use Moose;
+use 5.12.1;
+use strict;
+use warnings;
 use Carp;
 
 use Cobalt::DB;
@@ -25,40 +26,39 @@ use File::Path qw/mkpath/;
 use Time::HiRes;
 
 
-has 'RDBDir' => (
-  is  => 'ro',
-  isa => 'Str',
-  required => 1,
-);
+sub new {
+  my $self = {};
+  my $class = shift;
+  bless $self, $class;
+  
+  my %opts = @_;
+  
+  $self->{core} = $opts{core};
+  unless ( ref $self->{core} ) {
+    croak "new() needs a core object parameter"
+  }
+  
+  $self->{RDBDir} = $opts{RDBDir};
+  unless ( $self->{RDBDir} ) {
+    croak "new() needs a RDBDir parameter"
+  }
+  
+  $self->{RDBPaths} = { };
 
-has 'core' => (
-  is  => 'ro',
-  isa => 'Object',
-  required => 1,
-);
+  $self->{CacheObj} = Cobalt::Plugin::RDB::SearchCache->new(
+    MaxKeys => $opts{CacheKeys} // 30,
+  );
+  
+  return $self
+}
 
-has 'RDBPaths' => (
-  is => 'rw',
-  isa => 'HashRef',
-  default => sub { {} },
-);
 
-has 'SearchCache' => (
-  is => 'rw',
-  isa => 'Object',
-);
-
-sub BUILD {
+sub get_paths {
   ## Initialization -- Find our RDBs
   my ($self) = @_;
-  my $core = $self->core;
+  my $core = $self->{core};
 
-  $self->SearchCache( Cobalt::Plugin::RDB::SearchCache->new(
-      MaxKeys => 30,
-    ),
-  );
-
-  my $rdbdir = $self->RDBDir;
+  my $rdbdir = $self->{RDBDir};
   $core->log->debug("Using RDBDir $rdbdir");
   unless (-e $rdbdir) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
@@ -81,10 +81,10 @@ sub BUILD {
   for my $path (@paths) {
     my $rdb_name = fileparse($path, '.rdb');
     ## attempt to open this RDB to see if it's busted:
-    $self->RDBPaths->{$rdb_name} = $path;
+    $self->{RDBPaths}->{$rdb_name} = $path;
     my $cdb = $self->_dbopen($rdb_name);
     unless ($cdb) {
-      delete $self->RDBPaths->{$rdb_name};
+      delete $self->{RDBPaths}->{$rdb_name};
       $core->log->error("dbopen failure for $rdb_name");
       next
     }
@@ -104,7 +104,7 @@ sub BUILD {
 
 sub dbexists {
   my ($self, $rdb) = @_;
-  return 1 if $self->RDBPaths->{$rdb};
+  return 1 if $self->{RDBPaths}->{$rdb};
   return
 }
 
@@ -115,18 +115,18 @@ sub createdb {
 
   return RDB_INVALID_NAME unless $rdb =~ /^[A-Za-z0-9]+$/;
 
-  return RDB_EXISTS if $self->RDBPaths->{$rdb};
+  return RDB_EXISTS if $self->{RDBPaths}->{$rdb};
 
-  $self->core->log->debug("creating RDB $rdb");
+  $self->{core}->log->debug("creating RDB $rdb");
   
-  my $path = $self->RDBDir ."/". $rdb .".rdb";
+  my $path = $self->{RDBDir} ."/". $rdb .".rdb";
    # add to RDBPaths first so _dbopen can grab the path:
-  $self->RDBPaths->{$rdb} = $path;
+  $self->{RDBPaths}->{$rdb} = $path;
    # then try to open a Cobalt::DB:
   my $cdb = $self->_dbopen($rdb);
   unless ($cdb) {
-    $self->core->log->debug("_dbopen failure for $rdb");
-    delete $self->RDBPaths->{$rdb};
+    $self->{core}->log->debug("_dbopen failure for $rdb");
+    delete $self->{RDBPaths}->{$rdb};
     return RDB_DBFAIL
   }
 
@@ -134,18 +134,18 @@ sub createdb {
   ## Cobalt::DB will dbclose at DESTROY time
   $cdb->dbclose;
 
-  $self->core->log->debug("created: $rdb");
+  $self->{core}->log->debug("created: $rdb");
 
   return SUCCESS  
 }
 
 sub deldb {
   my ($self, $rdb) = @_;
-  my $core = $self->core;
+  my $core = $self->{core};
 
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   
-  my $path = $self->RDBPaths->{$rdb};
+  my $path = $self->{RDBPaths}->{$rdb};
   
   unless (-e $path && ( -f $path || -l $path ) ) {
     $core->log->error(
@@ -166,14 +166,14 @@ sub deldb {
     return RDB_FILEFAILURE
   }
 
-  delete $self->RDBPaths->{$rdb};
+  delete $self->{RDBPaths}->{$rdb};
   return SUCCESS
 }
 
 sub del {
   my ($self, $rdb, $key) = @_;
 
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
 
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
@@ -188,7 +188,7 @@ sub del {
   }
 
   $cdb->dbclose;  
-  $self->SearchCache->invalidate($rdb);
+  $self->{CacheObj}->invalidate($rdb);
 
   return SUCCESS
 }
@@ -196,7 +196,7 @@ sub del {
 sub get {
   ## Grab a specific key from RDB
   my ($self, $rdb, $key) = @_; 
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
@@ -209,7 +209,7 @@ sub get {
 
 sub get_keys {
   my ($self, $rdb) = @_;
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
   my @keys = $cdb->keys || ();
@@ -221,7 +221,7 @@ sub put {
   my ($self, $rdb, $ref) = @_;
   ## Add new entry to RDB
   ## Return the item's key
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
@@ -232,7 +232,7 @@ sub put {
     $cdb->dbclose;
     return RDB_DBFAIL 
   }
-  $self->SearchCache->invalidate($rdb);
+  $self->{CacheObj}->invalidate($rdb);
   $cdb->dbclose;
   return $key
 }
@@ -240,7 +240,7 @@ sub put {
 sub random {
   my ($self, $rdb) = @_;
   ## Grab a random entry from specified rdb
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   
   my $cdb = $self->_dbopen($rdb);
   return RDB_DBFAIL unless $cdb;
@@ -268,7 +268,7 @@ sub search {
   ## Search RDB entries, get an array(ref) of matching keys
   $glob = '*' unless $glob;
   
-  return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
+  return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
 
   ## hit the search cache first
   my @cached_result = $self->SearchCache->fetch($rdb, $glob);
@@ -293,15 +293,15 @@ sub search {
   $cdb->dbclose;
   
   ## Push resultset to the SearchCache
-  $self->SearchCache->cache($rdb, $glob, [ @matches ]);
+  $self->{CacheObj}->cache($rdb, $glob, [ @matches ]);
   
   return wantarray ? @matches : [ @matches ] ;
 }
 
 sub _dbopen {
   my ($self, $rdb) = @_;
-  my $core = $self->core;
-  my $path = $self->RDBPaths->{$rdb};
+  my $core = $self->{core};
+  my $path = $self->{RDBPaths}->{$rdb};
   unless ($path) {
     $core->log->error("_dbopen failed; no path for $rdb?");
     return
@@ -339,4 +339,4 @@ sub _gen_unique_key {
   return $newkey  
 }
 
-no Moose; 1;
+1;
