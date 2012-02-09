@@ -43,12 +43,14 @@ has 'irc' => (
   isa => 'Object',
 );
 
-
-sub NON_RELOADABLE { 1 }
+has 'NON_RELOADABLE' => (
+  is  => 'ro',
+  isa => 'Int',
+  default => 1,
+);
 
 sub Cobalt_register {
   my ($self, $core) = @_;
-
   $self->core($core);
 
   ## register for events

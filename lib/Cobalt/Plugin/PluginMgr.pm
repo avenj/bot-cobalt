@@ -12,9 +12,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use Cobalt::Utils qw/ rplprintf /;
 use Cobalt::Conf;
 
-sub new { bless {}, shift }
-
-sub NON_RELOADABLE { 1 }
+sub new { bless { NON_RELOADABLE => 1 }, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;

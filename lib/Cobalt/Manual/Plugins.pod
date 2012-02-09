@@ -925,9 +925,15 @@ included L<Cobalt::Plugin::PluginMgr> will recognize it as such and
 refuse to unload or reload the plugin once it is loaded.
 
 To declare itself as not being reloadable, a plugin simply needs to 
-return a boolean true value to a NON_RELOADABLE method call:
+return a boolean true value in $self->{NON_RELOADABLE} at construction 
+time:
 
   ## Plugin managers (should) refuse to reload this plugin.
+  sub new { bless { NON_RELOADABLE => 1 }, shift }
+
+Alternately, a method that returns a boolean true value will do:
+
+  ## Like above but outside your constructor.
   sub NON_RELOADABLE { 1 }
 
 It's rare to need such functionality, but it is there.

@@ -84,7 +84,7 @@ sub new {
   
   for my $path (@paths) {
     my $rdb_name = fileparse($path, '.rdb');
-    $core->log->debug("$rdb_name -> $path");
+#    $core->log->debug("$rdb_name -> $path");
     
     $self->{RDBPaths}->{$rdb_name} = $path;
   }

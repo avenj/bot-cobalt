@@ -31,9 +31,7 @@ use Cobalt::Utils qw/ :ALL /;
 
 use IRC::Utils qw/ decode_irc /;
 
-sub NON_RELOADABLE { 1 }
-
-sub new { bless( {}, shift ) }
+sub new { bless { NON_RELOADABLE => 1 }, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -340,6 +338,8 @@ sub _cmd_rdb {
   ##   rdb search
   ##   rdb searchidx
   ## FIXME handle voting here ... ?
+  ## this got out of hand fast.
+  ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
