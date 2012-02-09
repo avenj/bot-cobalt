@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use 5.12.1;
 use strict;
@@ -19,7 +19,7 @@ my $Modules = {
 
 sub new {
   ## my $serializer = Cobalt::Serializer->new( %opts )
-  ## Serialize to YAML using YAML::Syck:
+  ## Serialize to YAML using YAML::XS:
   ## ->new()
   ## - or -
   ## ->new($format)
@@ -27,7 +27,7 @@ sub new {
   ## - or -
   ## ->new( Format => 'JSON' )   ## --> to JSON
   ## - or -
-  ## ->new( Format => 'YAMLXS' ) ## --> to YAML1.1
+  ## ->new( Format => 'YAML' ) ## --> to YAML1.0
   ## - and / or -
   ## Specify something with a LogMethod method, default 'error':
   ## ->new( Logger => $core->log );
@@ -367,7 +367,7 @@ optionally providing the ability to read/write files directly.
 Spawn a serializer instance. Will croak if you are missing the relevant 
 serializer module; see L</Format>, below.
 
-The default is to spawn a B<YAML::Syck> (YAML1.0) serializer with error 
+The default is to spawn a B<YAML::XS> (YAML1.1) serializer with error 
 logging to C<carp>.
 
 You can spawn an instance using a different Format by passing a simple 
@@ -401,7 +401,7 @@ B<YAML> - YAML1.0 via L<YAML::Syck>
 
 =item *
 
-B<YAMLXS> - YAML1.1 via L<YAML::XS>
+B<YAMLXS> - YAML1.1 via L<YAML::XS>  I<(default)>
 
 =item *
 
@@ -409,11 +409,11 @@ B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
 
 =item *
 
-B<XML> - XML via L<XML::Dumper> (glacially slow)
+B<XML> - XML via L<XML::Dumper> I<(glacially slow)>
 
 =back
 
-The default is B<YAML> I<(YAML Ain't Markup Language)>
+The default is YAML I<(YAML Ain't Markup Language)> 1.1 (B<YAMLXS>)
 
 YAML is very powerful, and the appearance of the output makes it easy for 
 humans to read and edit.
@@ -598,6 +598,10 @@ L<YAML::XS> -- YAML1.1: L<http://yaml.org/spec/1.1/>
 =item *
 
 L<JSON>, L<JSON::XS> -- JSON: L<http://www.json.org/>
+
+=item *
+
+L<XML::Dumper>
 
 =back
 

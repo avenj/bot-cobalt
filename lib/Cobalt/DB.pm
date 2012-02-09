@@ -5,9 +5,9 @@ our $VERSION = '0.17';
 ##  To use a different lockfile:
 ## ->new(File => $path, LockFile => $lockpath)
 ##
-## Represents a DB_File (berkdb1.x interface)
+## Interface to a DB_File (berkdb1.x interface)
 ## Very simplistic, no readonly locking etc.
-## a 'DB2' interface using BerkeleyDB.pm is planned
+## a better 'DB2' interface using BerkeleyDB.pm is planned ...
 
 use 5.12.1;
 use strict;
@@ -223,9 +223,11 @@ Cobalt::DB - Locking Berkeley DBs with serialization
 B<Cobalt::DB> provides a simple object-oriented interface to basic 
 L<DB_File> (Berkeley DB 1.x) usage.
 
-BerkDB is a fairly simple key/value store. This module uses JSON to 
+BerkDB is a fast and simple key/value store. This module uses JSON to 
 store nested Perl data structures, providing easy database-backed 
 storage for B<Cobalt> plugins.
+
+B<< Performance will suffer miserably if you don't have L<JSON::XS>! >>
 
 =head2 Constructor
 
@@ -283,7 +285,7 @@ calls and attempt to close as quickly as possible.
 B<dbopen> opens and locks the database (via an external lockfile, 
 see the B<LockFile> constructor argument).
 
-Try to call a B<dbclose> as quickly as possible to reduce lock-related 
+Try to call a B<dbclose> as quickly as possible to reduce locking 
 contention.
 
 
