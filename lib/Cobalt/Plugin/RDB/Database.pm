@@ -82,11 +82,13 @@ sub BUILD {
     my $rdb_name = fileparse($path, '.rdb');
     ## attempt to open this RDB to see if it's busted:
     $self->RDBPaths->{$rdb_name} = $path;
-    unless ( $self->_dbopen($rdb_name) ) {
+    my $cdb = $self->_dbopen($rdb_name);
+    unless ($cdb) {
       delete $self->RDBPaths->{$rdb_name};
       $core->log->error("dbopen failure for $rdb_name");
       next
     }
+    $cdb->dbclose;
     $core->log->debug("mapped $rdb_name -> $path");
   }
   
@@ -97,7 +99,7 @@ sub BUILD {
       unless $self->createdb('main') == SUCCESS;
   }
 
-  $core->log->debug(scalar keys %{$self->RDBPaths}." RDBs added");
+  $core->log->debug("RDBs added");
 }
 
 sub dbexists {
@@ -174,7 +176,7 @@ sub del {
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
 
   my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL      unless $cdb;
+  return RDB_DBFAIL unless $cdb;
 
   unless ( $cdb->get($key) ) {
     $cdb->dbclose;

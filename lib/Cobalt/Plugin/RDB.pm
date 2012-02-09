@@ -38,6 +38,14 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
 
+  $core->plugin_register($self, 'SERVER',
+    [ 
+      'public_msg',
+      'rdb_broadcast',
+      'rdb_triggered',
+    ],
+  );  
+
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
 
   my $rdbdir = $core->var ."/". $cfg->{Opts}->{RDBDir} || $core->var ."/db/rdb" ;
@@ -53,14 +61,6 @@ sub Cobalt_register {
   my @keys = $dbmgr->get_keys('main') || ();
   $core->Provided->{randstuff_items} = scalar @keys; 
   $core->log->debug("initialized: ".scalar @keys." main RDB keys");
-
-  $core->plugin_register($self, 'SERVER',
-    [ 
-      'public_msg',
-      'rdb_broadcast',
-      'rdb_triggered',
-    ],
-  );  
 
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
