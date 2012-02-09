@@ -63,7 +63,7 @@ sub new {
   
   my @paths;
   find(sub {
-      return if $File::Find::name ~~ @paths;
+#      return if $File::Find::name ~~ @paths;
       push(@paths, $File::Find::name) if $_ =~ /\.rdb$/;
     },
     $rdbdir
