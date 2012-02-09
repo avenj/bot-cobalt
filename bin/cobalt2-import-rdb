@@ -1,4 +1,5 @@
 #!perl
+my $VERSION = '0.20';
 
 use 5.12.1;
 use strict;
@@ -9,6 +10,10 @@ use Cwd;
 use File::Path;
 
 use Cobalt::DB;
+
+use Digest::SHA1 qw/sha1_hex/;
+
+use Time::HiRes;
 
 STDOUT->autoflush(1);
 
@@ -28,10 +33,12 @@ close $rstuff_fh;
 
 my $rdbref = { };
 $rdbref->{main} = { };
-my $idx = 0;
 for my $item (@randstuff_ini) {
-  ++$idx;
   $item =~ s/\s+$//;
+  my $digest = sha1_hex($item.rand.Time::HiRes::time);
+  my @splitd = split //, $digest;
+  my $idx = join '', splice(@splitd, -4);
+  $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
   $rdbref->{main}->{$idx} = {
     AddedBy => '-Imported',
     AddedAt => time,
@@ -73,10 +80,12 @@ if ($rdb_dir_path) {
     my @current_rdb = <$rdb_fh>;
     close $rdb_fh;
 
-    $idx = 0;
     for my $item (@current_rdb) {
-      ++$idx;
       $item =~ s/\s+$//;
+      my $digest = sha1_hex($item.rand.Time::HiRes::time);
+      my @splitd = split //, $digest;
+      my $idx = join '', splice(@splitd, -4);
+      $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
       $rdbref->{$rdb_name}->{$idx} = {
         AddedBy => '-Imported',
         AddedAt => time,
