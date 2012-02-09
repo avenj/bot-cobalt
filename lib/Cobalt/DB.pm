@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 ## ->new(File => $path)
 ##  To use a different lockfile dir:
@@ -11,14 +11,10 @@ use strict;
 use warnings;
 use Carp;
 
-use File::Path qw/mkpath/;
-
 use DB_File;
-use Fcntl qw/:DEFAULT :flock :seek/;
+use Fcntl qw/:DEFAULT :flock/;
 
 use Cobalt::Serializer;
-
-use Digest::SHA1 qw/sha1_hex/;
 
 sub new {
   my $self = {};
@@ -32,14 +28,9 @@ sub new {
 
   my $path = $args{File};
 
-  $self->{LockDir} = $args{LockDir} || "/tmp/.c2locks" ;
-  mkpath($self->{LockDir}) unless -e $self->{LockDir};
-
   $self->{DatabasePath} = $path;
-
-  my $dblockfile = sha1_hex($path.time.rand);
-
-  $self->{LockFile} = $self->{LockDir} ."/.lock.".$dblockfile ;
+ 
+  $self->{LockFile} = $path . ".lock";
 
   $self->{Serializer} = Cobalt::Serializer->new(Format => 'JSON');
   
