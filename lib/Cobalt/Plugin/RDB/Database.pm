@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 ## Cobalt2 RDB manager
 
@@ -55,7 +55,7 @@ sub BUILD {
     ),
   );
 
-  my $rdbdir = $core->var ."/". $self->RDBDir || $core->var."/db/rdb" ;
+  my $rdbdir = $self->RDBDir;
   unless (-e $rdbdir) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
     mkpath($rdbdir);
@@ -101,6 +101,8 @@ sub createdb {
   return RDB_INVALID_NAME unless $rdb =~ /^[A-Za-z0-9]+$/;
 
   return RDB_EXISTS if $self->RDBPaths->{$rdb};
+
+  $self->core->log->debug("creating RDB $rdb");
   
   my $path = $self->RDBDir ."/". $rdb .".rdb";
    # add to RDBPaths first so _dbopen can grab the path:
@@ -108,6 +110,7 @@ sub createdb {
    # then try to open a Cobalt::DB:
   my $cdb = $self->_dbopen($rdb);
   unless ($cdb) {
+    $self->core->log->debug("_dbopen failure for $rdb");
     delete $self->RDBPaths->{$rdb};
     return RDB_DBFAIL
   }
@@ -115,6 +118,8 @@ sub createdb {
   ## these dbcloses are optional, but good practice
   ## Cobalt::DB will dbclose at DESTROY time
   $cdb->dbclose;
+
+  $self->core->log->debug("created: $rdb");
 
   return SUCCESS  
 }
@@ -127,12 +132,14 @@ sub deldb {
   
   my $path = $self->RDBPaths->{$rdb};
   
-  unless (-e $path) {
-    $core->log->error("Cannot delete RDB $rdb - $path not found");
+  unless (-e $path && ( -f $path || -l $path ) ) {
+    $core->log->error(
+      "Cannot delete RDB $rdb - $path not found or not a file"
+    );
     return RDB_NOSUCH
   }
 
-  my $cdb = $self->_dbopen($rdb);  
+  my $cdb = $self->_dbopen($rdb);
   unless ($cdb) {
     $core->log->error("Cannot delete RDB $rdb - might not be a valid DB");
     return RDB_DBFAIL
@@ -154,11 +161,17 @@ sub del {
   return RDB_NOSUCH unless $self->RDBPaths->{$rdb};
 
   my $cdb = $self->_dbopen($rdb);
-  
   return RDB_DBFAIL      unless $cdb;
-  return RDB_NOSUCH_ITEM unless $cdb->get($key);  
-  return RDB_DBFAIL      unless $cdb->del($key);
-  
+
+  unless ( $cdb->get($key) ) {
+    $cdb->dbclose;
+    return RDB_NOSUCH_ITEM
+  }
+  unless ( $cdb->del($key) ) {
+    $cdb->dbclose;
+    return RDB_DBFAIL 
+  }
+
   $cdb->dbclose;  
   $self->SearchCache->invalidate($rdb);
 
@@ -174,7 +187,7 @@ sub get {
   return RDB_DBFAIL unless $cdb;
   
   my $value = $cdb->get($key);
-  return RDB_NOSUCH_ITEM unless defined $value;
+  $value = RDB_NOSUCH_ITEM unless defined $value;
   $cdb->dbclose;
   return $value
 }
@@ -200,7 +213,10 @@ sub put {
 
   my $key = $self->_gen_unique_key($cdb, $rdb, $ref);
 
-  return RDB_DBFAIL unless $cdb->put($key, $ref);
+  unless ( $cdb->put($key, $ref) ) {
+    $cdb->dbclose;
+    return RDB_DBFAIL 
+  }
   $self->SearchCache->invalidate($rdb);
   $cdb->dbclose;
   return $key
@@ -215,12 +231,18 @@ sub random {
   return RDB_DBFAIL unless $cdb;
   
   my @dbkeys = $cdb->keys;
-  return RDB_NOSUCH_ITEM unless @dbkeys;
+  unless (@dbkeys) {
+    $cdb->dbclose;
+    return RDB_NOSUCH_ITEM
+  }
   
   my $randkey = $dbkeys[rand @dbkeys];
   my $ref = $cdb->get($randkey);
-  return RDB_NOSUCH_ITEM unless ref $ref;
-  
+  unless (ref $ref) {
+    $cdb->dbclose;
+    return RDB_NOSUCH_ITEM
+  }
+  $cdb->dbclose;
   ## add the key 'DBKEY' to this hash:
   $ref->{DBKEY} = $randkey;
   return $ref
@@ -271,7 +293,7 @@ sub _dbopen {
   }
 
   my $cdb = Cobalt::DB->new(
-    File => $path
+    File => $path,
   );
   
   unless ( $cdb->dbopen ) {

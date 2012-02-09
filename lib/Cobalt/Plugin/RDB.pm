@@ -40,7 +40,7 @@ sub Cobalt_register {
 
   my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
 
-  my $rdbdir = $cfg->{Opts}->{RDBDir} || $core->var ."/db/rdb" ;
+  my $rdbdir = $core->var ."/". $cfg->{Opts}->{RDBDir} || $core->var ."/db/rdb" ;
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = Cobalt::Plugin::RDB::Database->new(

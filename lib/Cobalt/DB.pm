@@ -2,8 +2,8 @@ package Cobalt::DB;
 our $VERSION = '0.12';
 
 ## ->new(File => $path)
-##  To use a different lockfile dir:
-## ->new(File => $path, LockDir => $lockpath)
+##  To use a different lockfile:
+## ->new(File => $path, LockFile => $lockpath)
 ## Represents a BerkDB
 
 use 5.12.1;
@@ -30,7 +30,7 @@ sub new {
 
   $self->{DatabasePath} = $path;
  
-  $self->{LockFile} = $path . ".lock";
+  $self->{LockFile} = $args{LockFile} // $path . ".lock";
 
   $self->{Serializer} = Cobalt::Serializer->new(Format => 'JSON');
   
@@ -56,8 +56,6 @@ sub dbopen {
     select undef, undef, undef, 0.25;
     $timer += 0.25;
   }
-  truncate $lockf_fh, 0;
-  seek $lockf_fh, 0, 0;
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
 
@@ -115,7 +113,6 @@ sub dbclose {
   $self->{DB} = undef;
   untie %{ $self->{Tied} };
   my $lockfh = $self->{LockFH};
-  flock($lockfh, LOCK_UN) or carp "unlock failed: $!";
   close $lockfh;
   delete $self->{LockFH};
   unlink $self->{LockFile};
@@ -126,6 +123,7 @@ sub dbclose {
 sub DESTROY {
   my $self = shift;
   $self->dbclose if $self->{DBOPEN};
+  $self->SUPER::DESTROY(@_);
 }
 
 sub keys {
