@@ -86,7 +86,7 @@ sub _shrink {
     my $nextkey = shift @cached;
     ++$deleted if delete $cacheref->{$nextkey};
   }
-  return $deleted || 1
+  return $deleted || -1
 }
 
 no Moose; 1;

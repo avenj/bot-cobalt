@@ -71,6 +71,7 @@ sub BUILD {
   
   my @paths;
   find(sub {
+      return if $File::Find::fullname ~~ @paths;
       push(@paths, $File::Find::fullname)
         if $_ =~ /\.rdb$/;
     },
@@ -86,13 +87,14 @@ sub BUILD {
       $core->log->error("dbopen failure for $rdb_name");
       next
     }
+    $core->log->debug("mapped $rdb_name -> $path");
   }
   
   ## see if we have 'main'
-  unless ( $self->RDBPaths->{'main'} ) {
+  unless ( $self->dbexists('main') ) {
     $core->log->debug("No main RDB found, creating one");
     $core->log->warn("Could not create 'main' RDB")
-      unless $self->createdb('main') eq SUCCESS;
+      unless $self->createdb('main') == SUCCESS;
   }
 
   $core->log->debug(scalar keys %{$self->RDBPaths}." RDBs added");
