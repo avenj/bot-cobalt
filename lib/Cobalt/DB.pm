@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.12';
+our $VERSION = '0.14';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -125,6 +125,10 @@ sub DESTROY {
   $self->dbclose if $self->{DBOPEN};
 }
 
+sub get_path {
+  return shift->{DatabasePath};
+}
+
 sub keys {
   my $self = shift;
   croak "attempted 'keys' on unopened db"
@@ -214,7 +218,7 @@ Berkeley DB:
     Perms => $octal_mode,
     # Locking is enabled regardless
     # but you can change the location:
-    LockDir => "/tmp",
+    LockFile => "/tmp/sharedlock",
   );
 
 =head2 Opening and closing

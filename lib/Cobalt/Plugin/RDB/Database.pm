@@ -1,7 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.24';
-
-## Cobalt2 RDB manager
+our $VERSION = '0.26';
 
 use 5.12.1;
 use strict;
@@ -13,9 +11,9 @@ use Cobalt::DB;
 use Cobalt::Plugin::RDB::Constants;
 use Cobalt::Plugin::RDB::SearchCache;
 
-use Cobalt::Utils qw/glob_to_re_str/;
+use Cobalt::Utils qw/ glob_to_re_str /;
 
-use Cwd qw/abs_path/;
+use Cwd qw/ abs_path /;
 
 use Digest::SHA1 qw/sha1_hex/;
 
@@ -30,122 +28,98 @@ sub new {
   my $self = {};
   my $class = shift;
   bless $self, $class;
-  
+
   my %opts = @_;
   
-  $self->{core} = $opts{core};
-  unless ( ref $self->{core} ) {
-    croak "new() needs a core object parameter"
-  }
-  
-  $self->{RDBDir} = $opts{RDBDir};
+  unless ( ref $opts{core} ) {
+    croak "new() needs a core => parameter"
+  }  
+  my $core = $opts{core};
+  $self->{core} = $core;
+
+  my $rdbdir = $opts{RDBDir};  
+  $self->{RDBDir} = $rdbdir;
   unless ( $self->{RDBDir} ) {
     croak "new() needs a RDBDir parameter"
   }
   
-  $self->{RDBPaths} = { };
-
+  $self->{RDBPaths} = {};
+  
   $self->{CacheObj} = Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => $opts{CacheKeys} // 30,
   );
-
-  ## initialize paths:
-  $self->get_paths();
   
-  return $self
-}
-
-
-sub get_paths {
-  ## Initialization -- Find our RDBs
-  my ($self) = @_;
-  my $core = $self->{core};
-
-  my $rdbdir = $self->{RDBDir};
   $core->log->debug("Using RDBDir $rdbdir");
+  
   unless (-e $rdbdir) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
     mkpath($rdbdir);
   }
-
+  
   unless (-d $rdbdir) {
-    croak "RDBDir not a directory: $rdbdir";
+    croak "RDBDir is not a directory ($rdbdir)"
   }
   
   my @paths;
   find(sub {
       return if $File::Find::fullname ~~ @paths;
-      push(@paths, $File::Find::fullname)
-        if $_ =~ /\.rdb$/;
+      push(@paths, $File::Find::fullname) if $_ =~ /\.rdb$/;
     },
     $rdbdir
   );
-
+  
   for my $path (@paths) {
     my $rdb_name = fileparse($path, '.rdb');
-    ## attempt to open this RDB to see if it's busted:
+    $core->log->debug("$rdb_name -> $path");
+    
     $self->{RDBPaths}->{$rdb_name} = $path;
-    my $cdb = $self->_dbopen($rdb_name);
-    unless ($cdb) {
-      delete $self->{RDBPaths}->{$rdb_name};
-      $core->log->error("dbopen failure for $rdb_name");
-      next
-    }
-    $cdb->dbclose;
-    $core->log->debug("mapped $rdb_name -> $path");
   }
   
-  ## see if we have 'main'
-  unless ( $self->dbexists('main') ) {
+  unless ( $self->{RDBPaths}->{main} ) {
     $core->log->debug("No main RDB found, creating one");
     $core->log->warn("Could not create 'main' RDB")
-      unless $self->createdb('main') == SUCCESS;
+      unless $self->createdb('main') ~~ SUCCESS;
   }
-
-  $core->log->debug("RDBs added");
-}
-
-sub dbexists {
-  my ($self, $rdb) = @_;
-  return 1 if $self->{RDBPaths}->{$rdb};
-  return
+  
+  return $self
 }
 
 sub createdb {
-  ## Initialize an empty RDB
-  ## return RDB_EXISTS, RDB_DBFAIL, SUCCESS
   my ($self, $rdb) = @_;
-
-  return RDB_INVALID_NAME unless $rdb =~ /^[A-Za-z0-9]+$/;
-
+  return RDB_INVALID_NAME unless $rdb
+    and $rdb =~ /^[A-Za-z0-9]+$/;
   return RDB_EXISTS if $self->{RDBPaths}->{$rdb};
-
-  $self->{core}->log->debug("creating RDB $rdb");
+  
+  my $core = $self->{core};
+  $core->log->debug("attempting to create RDB $rdb");
   
   my $path = $self->{RDBDir} ."/". $rdb .".rdb";
-   # add to RDBPaths first so _dbopen can grab the path:
   $self->{RDBPaths}->{$rdb} = $path;
-   # then try to open a Cobalt::DB:
-  my $cdb = $self->_dbopen($rdb);
-  unless ($cdb) {
-    $self->{core}->log->debug("_dbopen failure for $rdb");
+
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("Could not switch to RDB $rdb at $path");
+    return RDB_DBFAIL
+  }
+  
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in createdb");
     delete $self->{RDBPaths}->{$rdb};
     return RDB_DBFAIL
   }
-
-  ## these dbcloses are optional, but good practice
-  ## Cobalt::DB will dbclose at DESTROY time
-  $cdb->dbclose;
-
-  $self->{core}->log->debug("created: $rdb");
-
-  return SUCCESS  
+  
+  $db->dbclose;
+  
+  $core->log->info("Created RDB $rdb");
+  
+  return SUCCESS
 }
 
 sub deldb {
   my ($self, $rdb) = @_;
   my $core = $self->{core};
-
+  
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
   
   my $path = $self->{RDBPaths}->{$rdb};
@@ -156,190 +130,250 @@ sub deldb {
     );
     return RDB_NOSUCH
   }
-
-  my $cdb = $self->_dbopen($rdb);
-  unless ($cdb) {
-    $core->log->error("Cannot delete RDB $rdb - might not be a valid DB");
+  
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("deldb failure; cannot switch to $rdb");
     return RDB_DBFAIL
   }
-  $cdb->dbclose;
   
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in deldb");
+    $core->log->error("Refusing to unlink, admin should investigate.");
+    return RDB_DBFAIL
+  }
+  $db->dbclose;
+
   unless ( unlink($path) ) {
-    $core->log->error("Cannot delete RDB $rdb - unlink: ${path}: $!");
+    $core->log->error("Cannot unlink RDB $rdb at $path: $!");
     return RDB_FILEFAILURE
   }
-
+  
   delete $self->{RDBPaths}->{$rdb};
+  $self->{CURRENT} = undef;
+  undef $db;
+  
+  $core->log->info("Deleted RDB $rdb");
+  
   return SUCCESS
 }
 
 sub del {
   my ($self, $rdb, $key) = @_;
-
+  my $core = $self->{core};
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
-
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
-
-  unless ( $cdb->get($key) ) {
-    $cdb->dbclose;
+  
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
+  
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("del failure; cannot switch to $rdb");
+    return RDB_DBFAIL
+  }
+  
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in del");
+    return RDB_DBFAIL
+  }
+  
+  unless ( $db->get($key) ) {
+    $db->dbclose;
+    $core->log->debug("no such item: $key in $rdb");
     return RDB_NOSUCH_ITEM
   }
-  unless ( $cdb->del($key) ) {
-    $cdb->dbclose;
-    return RDB_DBFAIL 
+  
+  unless ( $db->del($key) ) {
+    $db->dbclose;
+    $core->log->warn("failure in db->del for $key in $rdb");
+    return RDB_DBFAIL
   }
-
-  $cdb->dbclose;  
-  $self->{CacheObj}->invalidate($rdb);
-
+  
+  ## FIXME invalidate search cache
+  
+  $db->dbclose;
   return SUCCESS
 }
 
 sub get {
-  ## Grab a specific key from RDB
-  my ($self, $rdb, $key) = @_; 
+  my ($self, $rdb, $key) = @_;
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
+  my $core = $self->{core};
   
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
   
-  my $value = $cdb->get($key);
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("get failure; cannot switch to $rdb");
+    return RDB_DBFAIL
+  }
+  
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in get");
+    return RDB_DBFAIL
+  }
+  
+  my $value = $db->get($key);
   $value = RDB_NOSUCH_ITEM unless defined $value;
-  $cdb->dbclose;
+  
+  $db->dbclose;
   return $value
 }
 
 sub get_keys {
   my ($self, $rdb) = @_;
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
-  my @keys = $cdb->keys || ();
-  $cdb->dbclose;
-  return @keys
+  my $core = $self->{core};
+  
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("get_keys failure; cannot switch to $rdb");
+    return RDB_DBFAIL
+  }
+  
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in get_keys");
+    return RDB_DBFAIL
+  }
+  
+  my @dbkeys = $db->keys;
+  $db->dbclose;
+  return @dbkeys
 }
 
 sub put {
   my ($self, $rdb, $ref) = @_;
-  ## Add new entry to RDB
-  ## Return the item's key
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
+  my $core = $self->{core};
   
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
-
-  my $key = $self->_gen_unique_key($cdb, $rdb, $ref);
-
-  unless ( $cdb->put($key, $ref) ) {
-    $cdb->dbclose;
-    return RDB_DBFAIL 
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("put failure; cannot switch to $rdb");
+    return RDB_DBFAIL
   }
-  $self->{CacheObj}->invalidate($rdb);
-  $cdb->dbclose;
-  return $key
+  
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in put");
+    return RDB_DBFAIL
+  }
+  
+  my $newkey = $self->_gen_unique_key($ref);
+  
+  unless ( $db->put($newkey, $ref) ) {
+    $db->dbclose;
+    return RDB_DBFAIL
+  }
+  
+  ## FIXME invalidate cache
+  $db->dbclose;
+  return $newkey
 }
 
 sub random {
   my ($self, $rdb) = @_;
-  ## Grab a random entry from specified rdb
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
+  my $core = $self->{core};
   
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("random failure; cannot switch to $rdb");
+    return RDB_DBFAIL
+  }
   
-  my @dbkeys = $cdb->keys;
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in random");
+    return RDB_DBFAIL
+  }
+  
+  my @dbkeys = $db->keys;
   unless (@dbkeys) {
-    $cdb->dbclose;
+    $db->dbclose;
     return RDB_NOSUCH_ITEM
   }
   
   my $randkey = $dbkeys[rand @dbkeys];
-  my $ref = $cdb->get($randkey);
-  unless (ref $ref) {
-    $cdb->dbclose;
-    return RDB_NOSUCH_ITEM
+  my $ref = $db->get($randkey);
+  unless (ref $ref eq 'HASH') {
+    $db->dbclose;
+    $core->log->error("Broken DB? item $randkey in $rdb not a hash");
+    return RDB_DBFAIL
   }
-  $cdb->dbclose;
-  ## add the key 'DBKEY' to this hash:
+  $db->dbclose;
+  
   $ref->{DBKEY} = $randkey;
   return $ref
 }
 
 sub search {
   my ($self, $rdb, $glob) = @_;
-  ## Search RDB entries, get an array(ref) of matching keys
-  $glob = '*' unless $glob;
   
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
 
-  ## hit the search cache first
-  my @cached_result = $self->{CacheObj}->fetch($rdb, $glob);
+  my $core = $self->{core};
   
-  if (@cached_result) { 
-    return wantarray ? @cached_result : [ @cached_result ]
+  $self->_rdb_switch($rdb);
+  my $db = $self->{CURRENT};
+  my $path = $self->{RDBPaths}->{$rdb};
+  unless ( ref $db && $db->get_path eq $path ) {
+    $core->log->error("search failure; cannot switch to $rdb");
+    return RDB_DBFAIL
   }
+  
+  ## FIXME hit search cache first
 
   my $re = glob_to_re_str($glob);
   $re = qr/$re/i;
 
-  my $cdb = $self->_dbopen($rdb);
-  return RDB_DBFAIL unless $cdb;
-
-  my @matches;  
-  for my $dbkey ($cdb->keys) {
-    my $ref = $cdb->get($dbkey) // next;
+  unless ( $db->dbopen ) {
+    $core->log->error("dbopen failure for $rdb in search");
+    return RDB_DBFAIL
+  }
+  
+  my @matches;
+  for my $dbkey ($db->keys) {
+    my $ref = $db->get($dbkey) // next;
     my $str = $ref->{String} // '';
     push(@matches, $dbkey) if $str =~ $re;
   }
   
-  $cdb->dbclose;
+  $db->dbclose;
   
-  ## Push resultset to the SearchCache
-  $self->{CacheObj}->cache($rdb, $glob, [ @matches ]);
+  ## FIXME push back to cache
   
   return wantarray ? @matches : [ @matches ] ;
 }
 
-sub _dbopen {
+sub _gen_unique_key {
+  my ($self, $ref) = @_;
+  my $db = $self->{CURRENT} || return;
+  my $stringified = $ref->{String}.rand.Time::HiRes::time();
+  my $digest = sha1_hex($stringified);
+  my @splitd = split //, $digest;
+  my $newkey = join '', splice(@splitd, -4);
+  $newkey .= pop @splitd while exists $db->{Tied}{$newkey} and @splitd;
+  return $newkey
+}
+
+sub _rdb_switch {
   my ($self, $rdb) = @_;
   my $core = $self->{core};
   my $path = $self->{RDBPaths}->{$rdb};
   unless ($path) {
-    $core->log->error("_dbopen failed; no path for $rdb?");
+    $core->log->error("_rdb_switch failed; no path for $rdb");
     return
   }
-
-  my $cdb = Cobalt::DB->new(
+  
+  $self->{CURRENT} = Cobalt::DB->new(
     File => $path,
-  );
-  
-  unless ( $cdb->dbopen ) {
-    $core->log->error("Cobalt::DB dbopen failure for $rdb");
-    return
-  }
-  
-  ## Return the $cdb obj for this rdb
-  return $cdb
-}
-
-sub _gen_unique_key {
-  ## _gen_unique_key($cdb, $rdb, $ref)
-  ##  Create unique key for this rdb item
-  my ($self, $cdb, $rdb, $ref) = @_;
-  
-  unless (ref $cdb and $cdb->{Tied}) {
-    warn "_gen_unique_key cannot find Cobalt::DB tied hash";
-  }
-
-  my $stringified = $ref->{String} .rand. Time::HiRes::time();
-  my $digest = sha1_hex($stringified);
-  
-  ## start at 4, add back chars if it's not unique:
-  my @splitd = split //, $digest;
-  my $newkey = join '', splice(@splitd, -4);
-  $newkey .= pop @splitd while exists $cdb->{Tied}{$newkey} and @splitd;
-  return $newkey  
+  ) or $self->{CURRENT} = undef;
 }
 
 1;

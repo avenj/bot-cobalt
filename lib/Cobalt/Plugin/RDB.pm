@@ -31,6 +31,7 @@ use Cobalt::Utils qw/ :ALL /;
 
 use IRC::Utils qw/ decode_irc /;
 
+sub NON_RELOADABLE { 1 }
 
 sub new { bless( {}, shift ) }
 
