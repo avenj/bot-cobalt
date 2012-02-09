@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 
 use 5.12.1;
 use strict;
@@ -253,9 +253,9 @@ sub get_keys {
     return
   }
   
-  my $dbkeys_c = $db->dbkeys;
+  my @dbkeys = $db->dbkeys;
   $db->dbclose;
-  return $dbkeys_c
+  return wantarray ? @dbkeys : scalar(@dbkeys) ;
 }
 
 sub put {
