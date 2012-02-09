@@ -49,7 +49,7 @@ sub Cobalt_register {
   );
   $self->{CDBM} = $dbmgr;
 
-  my @keys = $dbmgr->get_keys('main');
+  my @keys = $dbmgr->get_keys('main') || ();
   $core->Provided->{randstuff_items} = scalar @keys; 
 
   $core->plugin_register($self, 'SERVER',
@@ -149,7 +149,8 @@ sub _cmd_randstuff {
   ## ...but this may be randstuff ~rdb ... syntax:
   if (index($message[0], '~') == 0) {
     $rdb = substr(shift @message, 1);
-    unless ($rdb && exists $self->{RDB}->{$rdb}) {
+    my $dbmgr = $self->{CDBM};
+    unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
       return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
         {
@@ -583,7 +584,7 @@ sub Bot_rdb_triggered {
   ## if referenced rdb doesn't exist, send orig string
   my $send_orig;
   unless ( $dbmgr->dbexists($rdb) ) {
-    ++$send_orig;
+      ++$send_orig;
   }
   
   ## construct fake msg hash for _select_random
