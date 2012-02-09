@@ -274,7 +274,7 @@ sub search {
   return RDB_NOSUCH unless $self->{RDBPaths}->{$rdb};
 
   ## hit the search cache first
-  my @cached_result = $self->SearchCache->fetch($rdb, $glob);
+  my @cached_result = $self->{CacheObj}->fetch($rdb, $glob);
   
   if (@cached_result) { 
     return wantarray ? @cached_result : [ @cached_result ]
