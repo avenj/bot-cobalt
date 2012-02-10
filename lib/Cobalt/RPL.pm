@@ -1,5 +1,5 @@
 package Cobalt::RPL;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 ## Object returned by $core->rpl_parser
 ##
@@ -10,7 +10,9 @@ our $VERSION = '0.02';
 ##  $parser->varname($value);
 ##    .. etc ..
 ##  my $formatted = $parser->Format("SOME_RPL_KEY");
-
+##
+## The tradeoff, of course, is that the method cache is useless and 
+## there is a performance penalty attached to magicking up methods . . .
 
 use 5.12.1;
 use strict;
@@ -58,7 +60,7 @@ sub AUTOLOAD {
   
   return unless index($AUTOLOAD, 'DESTROY') == -1;
   
-  my ($method) = $AUTOLOAD =~ s/.*:://;
+  (my $method = $AUTOLOAD) =~ s/.*:://;
 
   my $accessor = sub {
     my $this_self = shift;
