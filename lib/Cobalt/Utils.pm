@@ -464,7 +464,7 @@ Standard regex syntax will be escaped and a translated regex returned.
 
 =head3 glob_to_re
 
-glob_to_re() Converts Cobalt-style globs to B<compiled> regexes (qr//)
+glob_to_re() converts Cobalt-style globs to B<compiled> regexes (qr//)
 
 Using a compiled regex for matching is faster. Note that compiled regexes 
 can also be serialized to B<YAML> using Cobalt::Serializer.
