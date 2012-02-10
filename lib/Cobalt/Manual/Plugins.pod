@@ -275,7 +275,10 @@ B<This is the most common return value for event handlers.>
 
 Eat the event, removing it from the plugin pipeline.
 
-Typically you might return *_EAT_ALL on self-syndicated events.
+Typically you might return PLUGIN_EAT_ALL on self-syndicated events
+(that is to say, events the plugin intends for itself to handle, 
+such as a L<Cobalt::Plugin::WWW> response, timed event, event-aware 
+loop as described in L/"ADVANCED CONCEPTS">, etc.)
 
 This can also be useful when there is a good reason to terminate an 
 event's lifetime; for example, implementing a plugin that loads itself 
@@ -552,13 +555,75 @@ $self is generally fairly convenient:
 
 =head4 Provided
 
-FIXME
+The B<Provided> hash allows plugins to declare that some functionality 
+or event provided by the plugin is available (for example, the 
+B<< $core->Provided->{www_request} >> element is boolean true if 
+L<Cobalt::Plugin::WWW> is registered).
+
+This is useful when your plugin provides some event interface usable 
+by other plugins, or when the presence of this plugin may alter 
+another plugin's behavior.
+
+A plugin should declare its Provided functionality at register-time:
+
+  sub Cobalt_register {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    ## ... register for events, etc ...
+
+    ## declare that 'tasty_snacks' functionality is available
+    ## this example does nothing if it's already defined (//):
+    $core->Provided->{tasty_snacks} //= 1;
+    
+    return PLUGIN_EAT_NONE
+  }
+
+B<The core has no way of automatically knowing that this functionality 
+disappears when your plugin does.>
+
+You should delete the Provided element in your _unregister:
+
+  sub Cobalt_unregister {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    delete $core->Provided->{tasty_snacks};
+    
+    $core->log->info("Bye!");
+    return PLUGIN_EAT_NONE
+  }
+
+Some plugins use this to share simple bits of state information in 
+addition to their advisory nature; for example, L<Cobalt::Plugin::RDB> 
+shares the number of items in the 'main' RDB via the integer value of 
+B<< $core->Provided->{randstuff_items} >>.
+
+Therefore, when attempting to determine whether a specific piece of 
+functionality is available, it may be advisable to check for 'defined' 
+status instead of boolean value:
+
+  if ( defined $core->Provided->{randstuff_items} ) {
+    ## we have RDB.pm
+  }
+
+(More complicated data-sharing should be done via event interfaces or 
+I<if absolutely necessary> via a data structure in C<$core->State->{HEAP}>.)
+
+Since plugin load order is generally not guaranteed and plugins may 
+be dynamically (un)loaded, it is good practice to only check for 
+B<Provided> functionality in the narrowest possible scope; that is to 
+say, directly prior to execution of the dependent code, rather than at 
+plugin register-time.
 
 =head4 get_core_cfg
 
   my $core_cf = $core->get_core_cfg()
 
 Retrieves the 'core' configuration directives from C<cobalt.conf>.
+
+This includes configuration for L<Cobalt::IRC>:
+
+  my $core_cf = $core->get_core_cfg();
+  my $cf_serverport = $core_cf->{IRC}->{ServerPort};
 
 =head4 get_channels_cfg
 
@@ -587,7 +652,6 @@ memory:
 
   $core->log->warn("Missing config for __PACKAGE__")
     unless $core->get_plugin_cfg( __PACKAGE__ );
-
 
 =head4 get_irc_casemap
 
@@ -1223,12 +1287,14 @@ L<Cobalt::IRC> will attempt to determine and save a server's CASEMAPPING value
 at connect time. Some broken server configurations announce junk in 
 I<CASEMAPPING> and their actual valid casemapping ruleset in I<CHARSET>; 
 L<Cobalt::IRC> will fall back to I<CHARSET> if I<CHARSET> is a valid casemap 
-but I<CASEMAPPING> is invalid. If all else fails, B<rfc1459> is used. The 
-saved value can be used to feed C<eq_irc> and friends from L<IRC::Utils> and
+but I<CASEMAPPING> is invalid. If all else fails, B<rfc1459> is used.
+
+(Relatedly, feel free to make fun of ParadoxIRC until they fix their daemons.)
+
+The saved value can be used to feed C<eq_irc> and friends from L<IRC::Utils> and
 determine nickname/channel equivalency.
 
 See L</get_irc_casemap> and L<IRC::Utils>
-
 
 
 =head2 Character encodings
