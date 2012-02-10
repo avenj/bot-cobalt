@@ -13,7 +13,7 @@ Cobalt::Lang -- read cobalt2 langsets
 
 Provides language set loading for the Cobalt core.
 
-Langsets should be in a YAML format readable by L<YAML::Syck>.
+Langsets should be in a YAML format readable by L<YAML::XS>.
 
 B<IMPORTANT>: 
 Langset names are automatically lowercased. 
@@ -30,12 +30,11 @@ L<Cobalt::Utils>.
 Inspect C<etc/langs/english.yml> for an example.
 
 B<The English langset is built in to this module at install time.>
-
 Missing values in the loaded language set will be automatically filled 
 by the compiled-in English set, unless this is a prefixed plugin set.
 
 Be sure to read the L<Cobalt::Utils> documentation for more on variable 
-replacement with C<rplprintf>
+replacement with C<rplprintf>.
 
 =head1 METHODS
 
@@ -72,6 +71,8 @@ That being said, if you do so, you may want to check for rehashes
 
 
 =head1 EMITTED EVENTS
+
+Events are emitted if load_langset is accessed via Cobalt::Core.
 
 =head2 langset_loaded
 

@@ -278,7 +278,7 @@ Eat the event, removing it from the plugin pipeline.
 Typically you might return PLUGIN_EAT_ALL on self-syndicated events
 (that is to say, events the plugin intends for itself to handle, 
 such as a L<Cobalt::Plugin::WWW> response, timed event, event-aware 
-loop as described in L/"ADVANCED CONCEPTS">, etc.)
+loop as described in L</"ADVANCED CONCEPTS">, etc.)
 
 This can also be useful when there is a good reason to terminate an 
 event's lifetime; for example, implementing a plugin that loads itself 
@@ -382,7 +382,6 @@ B<cmd> => the relevant command if B<cmdprefix> is true
 =back
 
 B<Note that a '/ME' is a CTCP ACTION and not handled by _msg handlers.>
-
 For that, you'll need to catch B<Bot_ctcp_action>, which carries 
 essentially the same syntax. (If the action is sent to a channel, the 
 key 'channel' will be available in the message's hash.)
@@ -485,25 +484,38 @@ Event arguments are the same as L</send_message> and L</send_notice>.
 
 =head3 Channel-related commands
 
-=head4 join
+The following common IRC commands are handled.
 
-FIXME
+Like any other interaction, they are sent as events:
 
-=head4 part
+  ## (attempt to) join a channel on $context:
+  $core->send_event( 'join', $context, $channel );
 
-FIXME
+=over
 
-=head4 kick
+=item *
 
-FIXME
+B<join>
 
-=head4 mode
+=item *
 
-FIXME
+B<part>
 
-=head4 topic
+=item *
 
-FIXME
+B<mode>
+
+=item *
+
+B<kick>
+
+=item *
+
+B<topic>
+
+=back
+
+See L<Cobalt::IRC> for event argument syntax and details.
 
 
 =head3 Accessing the IRC component directly

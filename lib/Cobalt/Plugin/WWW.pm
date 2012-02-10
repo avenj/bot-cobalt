@@ -341,8 +341,8 @@ The specified event can carry its own set of arguments. These are usually
 in array form, but a scalar or a hashref is perfectly acceptable.
 
 It is often a good idea to check for the boolean value of 
-$core->Provided->{www_request} and possibly fall back to using LWP with 
-a short timeout, in case this plugin is not loaded.
+B<< $core->Provided->{www_request} >> and possibly fall back to using LWP 
+with a short timeout, in case this plugin is not loaded.
 See L<Cobalt::Plugin::Extras::Shorten> for an example.
 
 =head1 SEE ALSO

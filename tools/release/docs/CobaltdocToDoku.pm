@@ -104,7 +104,7 @@ sub _handle_text {
       next unless /\S/;
 #      next if m[^(ht|f)tp://];             # Ignore URLs
       ## escape DokuWiki formatting:
-#      s@(([*}{%'[\]/_\\#=])\2+)@<nowiki>$1</nowiki>@g;
+      s@(([*}{%'[\]/_\\#=])\2+)@<nowiki>$1</nowiki>@g;
     }
 
     # Rejoin the tokens and whitespace.
