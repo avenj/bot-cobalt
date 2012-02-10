@@ -808,7 +808,7 @@ sub Bot_topic {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
-  my $topic   = ${$_[2]} || '';
+  my $topic   = ${$_[2] || \''};
 
   unless ( $context
            && $context eq 'Main'
@@ -852,7 +852,7 @@ sub Bot_kick {
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $target  = ${$_[2]};
-  my $reason  = ${$_[3]} // 'Kicked';
+  my $reason  = ${$_[3] // \'Kicked'};
 
   unless ( $context
            && $context eq 'Main'
@@ -892,7 +892,7 @@ sub Bot_part {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
-  my $reason  = ${$_[2]} // 'Leaving';
+  my $reason  = ${$_[2] // \'Leaving' };
 
   unless ( $context
            && $context eq 'Main'
