@@ -10,8 +10,12 @@ It has been automatically converted to DokuWiki format.
 
 ===== [% Category %] =====
 
- [%- FOREACH LinkItem IN IndexItems.$Category %]
+[% FOREACH LinkItem IN IndexItems.$Category %]
+[%- IF LinkItem.Title.match('Manual') %]
+  * ** [[[% LinkItem.Link %]|[% LinkItem.Title %]]] **
+[%- ELSE %]
   * [[[% LinkItem.Link %]|[% LinkItem.Title %]]]
- [%- END -%]
+[%- END -%]
+[%- END -%]
 
 [% END %]
