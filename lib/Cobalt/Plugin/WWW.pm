@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 use 5.12.1;
 use strict;
@@ -273,7 +273,7 @@ sub _worker_input {
   $core->log->debug("dispatching $event ($tag)");
 
   my $content = $response->is_success ? 
-                $response->content 
+                $response->decoded_content 
                 : $response->message;
 
   $core->send_event($event, $content, $response, $ev_args);  
