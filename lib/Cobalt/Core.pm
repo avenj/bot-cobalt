@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_14';
+our $VERSION = '2.00_16';
 
 use 5.12.1;
 use Carp;
@@ -648,8 +648,10 @@ sub rpl_parser {
   ## Spawn a Cobalt::RPL parser
   $self->log->debug("spawning rpl_parser");
 
+  my $langset = $self->lang;
+  
   my $rpl_obj = Cobalt::RPL->new(
-    Lang => $self->lang,
+    Lang => $langset,
   ) || $self->log->warn("rpl_parser: could not create obj");
     
   return $rpl_obj

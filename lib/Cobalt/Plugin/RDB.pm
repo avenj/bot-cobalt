@@ -334,6 +334,7 @@ sub _cmd_rdb {
   ##   rdb info
   ##   rdb search
   ##   rdb searchidx
+  ## FIXME rdb dblist
   ## FIXME handle voting here ... ?
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
