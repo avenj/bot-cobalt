@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 use 5.12.1;
 use strict;
@@ -262,7 +262,8 @@ sub _worker_input {
   
   unless (ref $response) {
     $core->log->warn("HTTP::Response obj could not be formed; tag $tag");
-    ## FIXME create and return generic error response?
+    ## not really a 400 but this will do ...
+    $response = HTTP::Response->new('400', 'PARSE_ERR');
   }
 
   my $eventmap = delete $self->{EventMap}->{$tag};
@@ -271,7 +272,9 @@ sub _worker_input {
 
   $core->log->debug("dispatching $event ($tag)");
 
-  my $content = $response->content || '';
+  my $content = $response->is_success ? 
+                $response->content 
+                : $response->message;
 
   $core->send_event($event, $content, $response, $ev_args);  
 }
