@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0008
+Plugins guide revision: 0.009
 
-Last updated for cobalt 2.00_09
+Last updated for cobalt 2.00_12
 
 =head1 DESCRIPTION
 
@@ -277,10 +277,6 @@ Eat the event, removing it from the plugin pipeline.
 
 Typically you might return *_EAT_ALL on self-syndicated events.
 
-For example, a plugin that breaks up a loop into chunks without its 
-own POE session might self-syndicate some kind of loop event, eating 
-the event when the loop is complete (also see L</"ADVANCED CONCEPTS">).
-
 This can also be useful when there is a good reason to terminate an 
 event's lifetime; for example, implementing a plugin that loads itself 
 at the front of the pipeline and restricts outgoing events based on 
@@ -317,7 +313,81 @@ See L<Cobalt::IRC> for a list of IRC events and their event syntax.
 
 =head3 Messages
 
-FIXME
+The most common use-case for an IRC bot is, of course, responding to 
+messages.
+
+Incoming messages are handled by B<Bot_public_msg> and B<Bot_private_msg> 
+plugin event handlers. (If they are prefixed by our CmdChar, they'll 
+I<also> trigger a Bot_public_cmd_ event -- see L</"Commands">, below).
+
+A _msg event is passed a context and a C<$msg> hash:
+
+  sub Bot_public_msg {
+    my ($self, $core) = splice @_, 0, 2;
+    my $context = ${ $_[0] };
+    my $msg     = ${ $_[1] };
+    
+    ## You probably don't want to eat IRC events, unless 
+    ## you're quite sure of what you're doing:
+    return PLUGIN_EAT_NONE
+  }
+
+The C<$msg> hash has the following keys:
+
+=over
+
+=item *
+
+B<myself> => bot's current nickname
+
+=item *
+
+B<src> => full nick!user@host of the message source
+
+=item *
+
+B<src_nick>, B<src_user>, B<src_host>
+
+=item *
+
+B<channel>, B<target> => channel or nick of first target seen
+
+=item *
+
+B<target_array> => array of targets message was seen on
+
+=item *
+
+B<orig> => original, unparsed message content
+
+=item *
+
+B<message> => format/color-stripped message content
+
+=item *
+
+B<highlight> => true if the bot was being addressed
+
+=item *
+
+B<cmdprefix> => true if the string was CmdChar-prefixed
+
+=item *
+
+B<cmd> => the relevant command if B<cmdprefix> is true
+
+=back
+
+B<Note that a '/ME' is a CTCP ACTION and not handled by _msg handlers.>
+
+For that, you'll need to catch B<Bot_ctcp_action>, which carries 
+essentially the same syntax. (If the action is sent to a channel, the 
+key 'channel' will be available in the message's hash.)
+
+Additionally, a '/NOTICE' is not a _msg. B<Bot_notice> also carries the 
+same syntax.
+
+B<< See L<Cobalt::IRC> for more details. >>
 
 =head3 Commands
 
@@ -915,6 +985,35 @@ boolean true; you can fall back to LWP with a short timeout, perhaps:
   }
 
 
+=head2 Keeping track of $core
+
+It's frequently useful to maintain a reference to the Cobalt::Core 
+object within your plugin, so that discrete methods can easily refer 
+to core attributes and methods outside of an event handler.
+
+The easiest way is to grab $core from Cobalt_register and store it 
+somewhere in $self:
+
+  sub new { bless {}, shift }
+  
+  sub Cobalt_register {
+    ## get self and Cobalt::Core objects:
+    my ($self, $core) = splice @_, 0, 2;
+    
+    ## stash $core in $self to make it available to internals:
+    $self->{core} = $core;
+    
+    # ... do normal plugin registration ...
+  }
+
+  sub _my_method {
+    my ($self) = @_;
+    
+    ## get $core back for ease of use:
+    my $core = $self->{core};
+  }
+
+
 =head2 Non-reloadable plugins
 
 By default, a plugin can be unloaded/reloaded at any time, typically via 
@@ -923,6 +1022,8 @@ the L<Cobalt::Plugin::PluginMgr> !plugin administrative interface.
 If a plugin is marked as being unreloadable, plugin managers such as the 
 included L<Cobalt::Plugin::PluginMgr> will recognize it as such and 
 refuse to unload or reload the plugin once it is loaded.
+
+=head3 Declaring non-reloadable status
 
 To declare itself as not being reloadable, a plugin simply needs to 
 return a boolean true value in $self->{NON_RELOADABLE} at construction 
@@ -934,25 +1035,146 @@ time:
 Alternately, a method named NON_RELOADABLE will do:
 
   ## Like above but outside your constructor.
-  ## Note that B<Cobalt::Core> doesn't care what the method returns.
+  ## Must return a boolean true value.
   sub NON_RELOADABLE { 1 }
 
-It's rare to need such functionality, but it is there.
 
-=head2 Keeping track of $core
+=head3 Plugin managers and is_reloadable
 
-FIXME
+All plugin load/unload frontends should make use of the Cobalt::Core 
+method B<is_reloadable>.
+
+Before unloading a plugin, a plugin manager should check the reloadable 
+status of the plugin's alias:
+
+  ## In a plugin manager of some sort, perhaps:
+  unless ( $core->is_reloadable($plugin_alias) ) {
+    ## plugin is not safe to reload on-the-fly
+    # ... refuse to reload the plugin, log it ...
+  }
+
+When loading a plugin, a plugin manager should tell is_reloadable 
+about the new object:
+
+  my $plug_obj = My::Plugin->new;
+   # ... add plugin to pipeline ...
+  if ( $core->is_reloadable($plugin_alias, $plug_obj) ) {
+    ## plugin is reloadable
+  } else {
+    ## plugin is NOT reloadable
+    ## internal state has been updated to note same
+  }
+
 
 =head2 Using Moose
 
-FIXME
+Cobalt::Core makes use of L<Moose> -- it's perfectly valid to use 
+Moose for your plugins, as well (and it's already loaded!)
+
+  package Cobalt::Plugin::User::MyPlugin;
+  
+  use Moose;
+  has 'core' => ( is => 'rw', isa => 'Object' );
+  
+  sub Cobalt_register {
+    my ($self, $core) = splice @_, 0, 2;
+    $self->core( $core );
+    # ...
+    
+    return PLUGIN_EAT_NONE
+  }
+  
+  no Moose; 1;
+
+Moose is a proper object system for Perl, covering Perl's fairly 
+basic OO facilities with a lot of tasty sugar.
+
+Moose may make life much easier when writing large plugins requiring 
+a useful inheritance structure.
+
+You will probably want to read the L<Moose::Manual> if you are not 
+previously familiar with Moose.
+
+B<A reloadable plugin cannot call meta->make_immutable> -- attempting to 
+reload a plugin that has been made immutable will break spectacularly.
+Mark the plugin as NON_RELOADABLE or skip the immutable call.
 
 
 =head1 ADVANCED CONCEPTS
 
 =head2 Breaking up lengthy loops
 
-FIXME discussion of pushing self-events back to pipeline to loop
+Cobalt operates in an event loop -- implying that any piece of 
+code that blocks for any significant length of time is holding up 
+the rest of the loop:
+
+  sub Bot_some_event {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    my @items = long_list_of_items();
+    
+    BIGLOOP: for my $item (@items) {
+      do_work_on($item);
+    }
+    ## everything else stops until BIGLOOP is done
+  }
+
+Instead, you can break the loop into event handlers and yield back to 
+the event loop, cooperatively multitasking with other events.
+
+The below example processes a large list of items, pushing remaining 
+items back to the 'worker' event handler after iterating 100 items.
+
+  sub Cobalt_register {
+    ## ... initialization...
+    ## ... register for myplugin_start_work, myplugin_do_work
+  }
+
+  ## Some event that starts a long-running loop:
+  sub Bot_myplugin_start_work {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    my @items = long_list_of_items();
+        
+     ## begin _do_work
+     ## pass our @items to it, for example:
+    $core->send_event( 'myplugin_do_work', [ @items ] );
+    
+    return PLUGIN_EAT_ALL   
+  }
+  
+  sub Bot_myplugin_do_work {
+    my ($self, $core) = splice @_, 0, 2;
+    
+     ## our remaining items:
+    my $itemref = ${ $_[0] };
+    my @items = @$itemref;
+    
+     ## maximum number of elements to process before yield:
+    my $max_per_run = 100;
+ 
+     ## work until there's no items left or we hit the max:
+    my $counter = 0;
+    while (@items && $counter++ < $max_per_run) {
+      my $item = shift @items;
+      ## ... do some work on $item ...
+    }
+
+     ## if there's any items left, push them and yield:
+    if (@items) {
+      $core->send_event( 'myplugin_do_work', [ @items ] );
+    } else {
+      ## no items left, we finished
+      ## tell pipeline we're done, perhaps:
+      $core->send_event( 'myplugin_finished_work' );
+    }
+
+    return PLUGIN_EAT_ALL
+  }
+
+For more fine-grained control, consider running your own POE::Session; 
+see L</"Spawning your own POE::Session">, below.
+
 
 =head2 Custom per-plugin language sets
 
