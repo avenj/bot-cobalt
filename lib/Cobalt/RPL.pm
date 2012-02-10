@@ -47,7 +47,7 @@ sub Format {
   
   my $vars;
   for my $var (@{ $self->{'%%ADDED'} }) {
-    $vars->{$var} = $self->$var;
+    $vars->{$var} = $self->$var();
   }  
 
   my $formatted = rplprintf( $self->{'%%LANG'}->{$rpl}, $vars );
@@ -64,6 +64,8 @@ sub AUTOLOAD {
   
   (my $method = $AUTOLOAD) =~ s/.*:://;
 
+  push(@{ $self->{'%%ADDED'} }, $method);
+
   my $accessor = sub {
     my $this_self = shift;
     
@@ -75,8 +77,6 @@ sub AUTOLOAD {
   no strict 'refs';
   *$AUTOLOAD = $accessor;
   use strict;
-
-  push(@{ $self->{'%%ADDED'} }, $method);
   
   ## put $self back:
   unshift @_, $self;
