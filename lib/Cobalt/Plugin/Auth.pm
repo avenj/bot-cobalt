@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 ## "Standard" Auth module
 ##
@@ -65,21 +65,9 @@ use warnings;
 use Moose;
 use namespace::autoclean;
 
-use Object::Pluggable::Constants qw/ :ALL /;
+use Cobalt::Common;
 
-### Utils:
-use IRC::Utils qw/
-  matches_mask normalize_mask
-  parse_user
-  lc_irc uc_irc eq_irc 
-/;
-
-use Cobalt::Utils qw/ :ALL /;
 use Cobalt::Serializer;
-
-### Serialization:
-use YAML::Syck;
-use Fcntl qw/:flock/;
 
 
 ### Constants, mostly for internal retvals:

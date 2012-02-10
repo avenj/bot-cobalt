@@ -22,14 +22,11 @@ use 5.12.1;
 use strict;
 use warnings;
 
-use Object::Pluggable::Constants qw/ :ALL /;
+use Cobalt::Common;
 
 use Cobalt::Plugin::RDB::Constants;
 use Cobalt::Plugin::RDB::Database;
 
-use Cobalt::Utils qw/ :ALL /;
-
-use IRC::Utils qw/ decode_irc /;
 
 sub new { bless { NON_RELOADABLE => 1 }, shift }
 
