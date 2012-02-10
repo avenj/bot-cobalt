@@ -1007,6 +1007,7 @@ FIXME
 
 =head2 Useful tools
 
+
 =head3 Cobalt::Common
 
 L<Cobalt::Common> is a simple exporter that will pull in common constants 
@@ -1051,10 +1052,6 @@ too expensive.
   $db->dbclose;
 
 See L<Cobalt::DB> for complete usage information.
-
-=head3 Cobalt::RPL
-
-FIXME
 
 =head3 Cobalt::Serializer
 
@@ -1366,6 +1363,40 @@ see L</"Spawning your own POE::Session">, below.
 =head2 Custom per-plugin language sets
 
 FIXME discussion of using load_langset to create a 'local' RPL hash
+
+=head3 rpl_parser
+
+B<Cobalt::Core> provides an easy object-oriented frontend to parsing RPLs 
+via L<Cobalt::Utils/"rplprintf">.
+
+A rpl_parser call creates a new B<Cobalt::RPL> object referencing the 
+B<< $core->lang >> language set.
+
+  ## Ready to parse some responses:
+  my $rplp = $core->rpl_parser;
+
+The only methods provided by the new object are B<new> and B<Format> -- 
+all other methods calls set or retrieve an arbitrary variable's value:
+
+  ## Set up a few vars for a response:
+  $rplp->nick( $nickname );
+  $rplp->chan( $channel );
+  ## Retrieve a var, if needed:
+  my $current_rpl_chan = $rplp->chan;
+
+After variables are set up, passing a RPL key to B<Format> returns a 
+C<rplprintf>-formatted string (or the RPL name if it is missing):
+
+  my $resp = $rplp->Format("RPL_SOME_REPLY");
+
+This interface is useful for situations where you have few variables to 
+replace in templated RPL strings, but a large number of potential RPL 
+responses to process. Sometimes it is more convenient to use C<rplprintf> 
+directly.
+
+=head3 rplprintf
+
+FIXME
 
 =head2 Spawning your own POE::Session
 
