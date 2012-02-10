@@ -81,6 +81,12 @@ has 'State' => (
   isa => 'HashRef',
   default => sub {
     {
+      ## non-core plugins can make use of State->{HEAP}
+      ## care should be taken to use specific naming..
+      ## this is here for convenience with no guarantee regarding 
+      ## collisions
+      HEAP => { },
+    
       StartedTS => time(),
       Counters => {
         Sent => 0,
