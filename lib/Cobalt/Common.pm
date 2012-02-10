@@ -1,6 +1,7 @@
 package Cobalt::Common;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
+use 5.12.1;  ## because you're gonna need it
 use strict;
 use warnings;
 
@@ -111,6 +112,7 @@ By default, B<strict>, B<warnings>, and the B<5.12> feature set are
 also enabled (but it's still good practice to make use of them. Life 
 sucks when you start forgetting later!)
 
+
 =head2 Exported
 
 =head3 Constants
@@ -172,6 +174,10 @@ See L<Cobalt::Utils> for details.
 
   timestr_to_secs
   secs_to_timestr
+
+=head1 BUGS
+
+Your namespace will be full of Stuff.
 
 =head1 AUTHOR
 
