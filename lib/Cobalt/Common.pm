@@ -1,5 +1,5 @@
 package Cobalt::Common;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use strict;
 use warnings;
@@ -78,6 +78,9 @@ our @EXPORT;
 }
 
 sub import {
+  strict->import;
+  warnings->import;
+  feature->import( ':5.12' );
   __PACKAGE__->export_to_level(1, @_);  
 }
 
@@ -95,17 +98,18 @@ Cobalt::Common - import commonly-used tools and constants
   package Cobalt::Plugin::User::MyPlugin;
   our $VERSION = '0.10';
 
-  use strict;
-  use warnings;
-  use 5.12.1;
-  
-  ## Import useful IRC::Utils / Cobalt::Utils / constants:
+  ## Import useful IRC::Utils / Cobalt::Utils / constants
+  ## also get strict, warnings, 5.12 features
   use Cobalt::Common;
 
 =head1 DESCRIPTION
 
 This is a small exporter module providing easy inclusion of commonly 
 used tools and constants.
+
+By default, B<strict>, B<warnings>, and the B<5.12> feature set are 
+also enabled (but it's still good practice to make use of them. Life 
+sucks when you start forgetting later!)
 
 =head2 Exported
 
