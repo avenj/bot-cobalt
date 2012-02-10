@@ -69,9 +69,8 @@ has 'url' => (
 );
 
 has 'lang' => (
-  ## should read $Language.yml out of etc/langs
-  ## shouldfix; need some kind of schema ..
   ## pull hash from Conf->load_langset
+  ## see Cobalt::Lang POD
   is => 'rw',
   isa => 'HashRef',
 );
@@ -201,6 +200,31 @@ sub init {
 
 }
 
+sub is_reloadable {
+  my ($self, $alias, $obj) = @_;
+  
+  if ($obj and ref $obj) {
+    ## passed an object
+    ## see if the object is marked non-reloadable
+    ## if it is, update State
+    if ( $obj->{NON_RELOADABLE} || 
+       ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
+    ) {
+      $self->log->debug("Marked plugin $alias non-reloadable");
+      $self->State->{NonReloadable}->{$alias} = 1;
+      ## not reloadable, return 0
+      return 0
+    } else {
+      ## reloadable, return 1
+      delete $self->State->{NonReloadable}->{$alias};
+      return 1
+    }
+  }
+  ## passed just an alias (or a bustedass object)
+  ## return whether the alias is reloadable
+  return 0 if $self->State->{NonReloadable}->{$alias};
+  return 1
+}
 
 sub syndicator_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
@@ -213,9 +237,7 @@ sub syndicator_started {
   $self->log->info("-> Loading Core IRC module");
   my $irc_obj = Cobalt::IRC->new();
   $self->plugin_add('IRC', $irc_obj);
-  $self->State->{NonReloadable}->{'IRC'} = 'Cobalt::IRC' 
-    if $irc_obj->can("NON_RELOADABLE")
-    or $irc_obj->{NON_RELOADABLE} ;
+  $self->is_reloadable('IRC', $irc_obj);
 
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");
@@ -229,11 +251,7 @@ sub syndicator_started {
       { $self->log->warn("Could not load $module: $@"); next; }
     my $obj = $module->new();
     $self->plugin_add($plugin, $obj);
-    if ( $obj->{NON_RELOADABLE} || $obj->can("NON_RELOADABLE") ) {
-      ## mark plugin as 'static'
-      $self->log->debug("Marked plugin $plugin non-reloadable");
-      $self->State->{NonReloadable}->{$plugin} = $module;
-    }
+    $self->is_reloadable($plugin, $obj);
     $i++;
   }
 

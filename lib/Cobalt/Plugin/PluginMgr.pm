@@ -46,7 +46,7 @@ sub _unload {
               err => 'No such plugin found, is it loaded?' 
             }
     );
-  } elsif ($core->State->{NonReloadable}->{$alias}) {
+  } elsif (! $core->is_reloadable($alias) ) {
     $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
             {
               plugin => $alias,
@@ -146,9 +146,8 @@ sub _load_module {
   ## plugin_add returns # of plugins in pipeline on success:
   my $loaded = $core->plugin_add( $alias, $obj );
   if ($loaded) {
-      if ( $obj->{NON_RELOADABLE} || $obj->can("NON_RELOADABLE") ) { 
-        $core->log->debug("Marked $alias non-reloadable");
-        $core->State->{NonReloadable}->{$alias} = $module;
+      unless ( $core->is_reloadable($alias, $obj) ) {
+        $core->log->debug("$alias flagged non-reloadable");
       }
   
       return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},

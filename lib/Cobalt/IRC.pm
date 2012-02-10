@@ -352,7 +352,7 @@ sub irc_public {
     ## this means the command *without prefix* is in $msg->{cmd}
     ## the text array *without command or prefix* is in $msg->{message_array}
     ## the original unmodified string is in $msg->{orig}
-    ## the format/color-stripped string is in $msg->{txt}
+    ## the format/color-stripped string is in $msg->{message}
     ## the text array here may well be empty (no args specified)
 
     my %cmd_msg = %{ $msg };
