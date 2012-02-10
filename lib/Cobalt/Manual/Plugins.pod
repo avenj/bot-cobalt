@@ -185,8 +185,8 @@ this writing.
   ## (when called send_event, leave the prefix out)
   sub Bot_public_msg {
     my ($self, $core) = @_;
-    my $context = $$_[0];
-    my $msghash = $$_[1];
+    my $context = ${ $_[0] };
+    my $msghash = ${ $_[1] };
     ...
   }
   
@@ -246,8 +246,36 @@ arguments before it continues through the plugin pipeline.
 
 Be aware of this behavior and code appropriately.
 
-Don't be confused, yet! For the most part, you can just dereference args 
-as shown in the example above.
+B<Don't be confused, yet!> For the most part, you can just dereference args 
+as shown in the example above. The dereferenced value might be a simple 
+scalar, or it might be a reference of some sort, such as a hash:
+
+  sub Bot_some_event {
+    my ($self, $core) = splice @_, 0, 2;
+    ## handler that expects a hash(ref) as the first argument:
+    my $ev_hash = ${ $_[0] };    
+
+    unless (ref $ev_hash eq 'HASH') {
+      ## didn't get the input we expected!
+      $core->log->warn("some_event expected a hashref");
+      return PLUGIN_EAT_NONE
+    }
+    
+    my $item = $ev_hash->{some_item};
+    . . .
+    
+    return PLUGIN_EAT_NONE
+  }
+
+B<Be cautious with your argument modifiers!>
+
+For example, when splicing values from a C<< $msg->{message_array} >> 
+(I<< L</Messages> >>):
+
+  ## copy, then splice/shift/pop
+  my @message = @{ $msg->{message_array} };
+  my ($first, $second) = splice @message, 0, 2;
+  my $third = shift @message;
 
 
 =head3 Returning proper values
@@ -285,6 +313,7 @@ event's lifetime; for example, implementing a plugin that loads itself
 at the front of the pipeline and restricts outgoing events based on 
 some criteria.
 
+=head1 USING IRC
 
 =head2 Receiving IRC events
 
@@ -547,6 +576,7 @@ core's get_irc_obj method. Expects a server context:
 FIXME
 
 
+=head1 USING THE CORE
 
 =head2 Core methods
 
@@ -563,7 +593,7 @@ $self is generally fairly convenient:
   my $plug_cf = $self->{core}->get_plugin_cfg(__PACKAGE__);
 
 
-=head3 Accessors
+=head3 Attributes
 
 =head4 Provided
 
@@ -618,13 +648,70 @@ status instead of boolean value:
   }
 
 (More complicated data-sharing should be done via event interfaces or 
-I<if absolutely necessary> via a data structure in C<$core->State->{HEAP}>.)
+I<if absolutely necessary> via a data structure in L</State>; see below.)
 
 Since plugin load order is generally not guaranteed and plugins may 
 be dynamically (un)loaded, it is good practice to only check for 
 B<Provided> functionality in the narrowest possible scope; that is to 
 say, directly prior to execution of the dependent code, rather than at 
 plugin register-time.
+
+=head4 State
+
+The B<< $core->State >> hashref is the global state hash.
+
+B<Unless you're quite sure of what you're doing, you probably do not 
+want to play with the top-level State hash.>
+
+However, if you absolutely I<must> synchronously share some data 
+between a set of plugins, B<< $core->State->{HEAP} >> is initialized 
+as a hashref and guaranteed to be untouched by the core plugin set.
+(Of course, that doesn't mean 3rd party plugins can't overwrite each 
+other; use a uniquely-named deeper data structure within {HEAP}.)
+
+State should be treated cautiously; you can easily break the 
+current instance by clobbering values. Most important bits available 
+in the top-level hash can be pulled out via methods described herein.
+
+=head4 Servers
+
+B<< $core->Servers >> is a hashref keyed on server "context" name; see 
+L</"Understanding server context">.
+
+B<<You should probably be using L</get_irc_server>!>>
+
+The only valid reason to access ->Servers directly is to iterate all 
+contexts:
+
+  my $servers = $core->Servers;
+  for my $context ( keys %$servers ) {
+    . . .
+  }
+
+=head4 var
+
+Returns the path to the current VAR dir, typically used for log files, 
+databases, or other potentially dynamic data.
+
+Plugins should typically dump serialized data and place databases in a 
+path under B<< $core->var >> -- to avoid clobbering files, non-trivial 
+plugins using databases or serialization are encouraged to create their 
+own directories under B<< $core->var >> for storage.
+
+=head4 version
+
+Returns the current Cobalt::Core version.
+
+This can be used to require a specific Cobalt version for a 3rd-party 
+plugin (via die()/croak() in Cobalt_register).
+
+=head4 detached
+
+Returns a boolean value indicating whether or not this Cobalt instance 
+is attached to a terminal or daemonized.
+
+
+=head3 Configuration-related methods
 
 =head4 get_core_cfg
 
@@ -665,6 +752,9 @@ memory:
   $core->log->warn("Missing config for __PACKAGE__")
     unless $core->get_plugin_cfg( __PACKAGE__ );
 
+
+=head3 IRC-related methods
+
 =head4 get_irc_casemap
 
   my $casemapping = $core->get_irc_casemap( $context );
@@ -702,7 +792,7 @@ more on interacting directly with the IRC component.
 
   my $server_state = $core->get_irc_server( $context );
 
-Retrieves the appropriate hash reference from B<$core->Servers>
+Retrieves the appropriate hash reference from B<< $core->Servers >>
 
 A server context must be specified.
 
@@ -736,6 +826,8 @@ B<MaxModes>: The server's announced MAXMODES (or 4)
 
 =back
 
+
+=head3 Auth-related methods
 
 =head4 auth_level
 
@@ -907,11 +999,6 @@ FIXME
 =head3 Timer-related
 
 FIXME
-
-=head3 Auth module
-
-FIXME
-
 
 
 =head1 PLUGIN DESIGN TIPS
