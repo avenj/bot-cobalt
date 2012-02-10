@@ -646,11 +646,11 @@ sub rpl_parser {
   my $self = shift;
   
   ## Spawn a Cobalt::RPL parser
-  $core->log->debug("spawning rpl_parser");
+  $self->log->debug("spawning rpl_parser");
 
   my $rpl_obj = Cobalt::RPL->new(
     Lang => $self->lang,
-  ) || $core->log->warn("rpl_parser: could not create obj");
+  ) || $self->log->warn("rpl_parser: could not create obj");
     
   return $rpl_obj
 }
