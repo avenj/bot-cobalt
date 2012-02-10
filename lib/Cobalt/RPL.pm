@@ -1,7 +1,16 @@
 package Cobalt::RPL;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 ## Object returned by $core->rpl_parser
+##
+## This is a RPL parser that automatically creates unknown methods 
+## in other to provide syntax sugar via $core->rpl_parser:
+##
+##  my $parser = $core->rpl_parser;
+##  $parser->varname($value);
+##    .. etc ..
+##  my $formatted = $parser->Format("SOME_RPL_KEY");
+
 
 use 5.12.1;
 use strict;

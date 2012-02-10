@@ -64,6 +64,7 @@ lib/Cobalt/Plugin/Rehash.pm
 lib/Cobalt/Plugin/User/.keep
 lib/Cobalt/Plugin/Version.pm
 lib/Cobalt/Plugin/WWW.pm
+lib/Cobalt/RPL.pm
 lib/Cobalt/Serializer.pm
 lib/Cobalt/Utils.pm
 Makefile.PL

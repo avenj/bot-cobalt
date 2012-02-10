@@ -1052,6 +1052,10 @@ too expensive.
 
 See L<Cobalt::DB> for complete usage information.
 
+=head3 Cobalt::RPL
+
+FIXME
+
 =head3 Cobalt::Serializer
 
 It is often useful to serialize arbitrary data structures to some 

@@ -16,6 +16,7 @@ extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
 
 use Cobalt::IRC;
+use Cobalt::RPL;
 
 ## a whole bunch of attributes ...
 
@@ -645,14 +646,12 @@ sub rpl_parser {
   my $self = shift;
   
   ## Spawn a Cobalt::RPL parser
-  
-  my %initial = @_;
-  
+  $core->log->debug("spawning rpl_parser");
+
   my $rpl_obj = Cobalt::RPL->new(
     Lang => $self->lang,
-    Initial => \%initial,
-  );
-  
+  ) || $core->log->warn("rpl_parser: could not create obj");
+    
   return $rpl_obj
 }
 
