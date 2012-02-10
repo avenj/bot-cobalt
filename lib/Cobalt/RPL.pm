@@ -70,10 +70,9 @@ sub AUTOLOAD {
     return $this_self->{$method}
   };
   
-  {
-    no strict 'refs';
-    *$AUTOLOAD = $accessor;
-  }
+  no strict 'refs';
+  *$AUTOLOAD = $accessor;
+  use strict;
 
   push(@{ $self->{__ADDED} }, $method);
   
