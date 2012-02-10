@@ -18,10 +18,6 @@ our $VERSION = '0.24';
 
 ## FIXME: voting
 
-use 5.12.1;
-use strict;
-use warnings;
-
 use Cobalt::Common;
 
 use Cobalt::Plugin::RDB::Constants;

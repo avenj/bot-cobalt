@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.009
+Plugins guide revision: 0.010
 
 Last updated for cobalt 2.00_12
 
@@ -131,63 +131,63 @@ this writing.
 
   package Cobalt::Plugin::User::MyPlugin;
   our $VERSION = '0.001';
+
   use strict;
   use warnings;
-  
-  ## You need Object::Pluggable::Constants in order to return valid
-  ## pipeline control values, else you might break some or all plugins.
-  ##
-  ## See "Returning proper values" under "Handling events" in this POD.
-  ## 
-  ## PLUGIN_EAT_NONE is the most common.
-  ##
-  ## importing :ALL will give you all of them:
-  use Object::Pluggable::Constants qw/ :ALL /;
-  
-  ## Cobalt::Utils provides many useful methods:
-  use Cobalt::Utils qw/ :ALL /;
+
+  use Cobalt::Common;
   
   ## minimalist object constructor:
-  sub new { bless( {}, shift ) }
+  sub new { bless {}, shift }
   
   ## called when we are loaded:
   sub Cobalt_register {
-    ## handlers receive $self and $core as first two args:
-    ## $self is "this object"
-    ## $core gives us access to core attributes and methods:
-    my ($self, $core) = @_;
+    ## Handlers receive $self and $core as first two args:
+    ##  $self is "this object"
+    ##  $core gives us access to core attributes and methods
+    my ($self, $core) = splice @_, 0, 2;
     
-    ## register to only receive public msg events:
+    ## Register to only receive public msg events
+    ## (We could also register for a list or 'all')
     $core->plugin_register( $self, 'SERVER',
       [ 'public_msg' ]
     );
     
-    ## log that we're here now:
+    ## Log that we're here now:
     $core->log->info("Registered");
 
-    ## we could save $core to $self->{core} to make life easier 
+    ## We could save $core to $self->{core} to make life easier 
     ## on our internal methods, perhaps:
     $self->{core} = $core;
     
-    ## ALWAYS return an Object::Pluggable::Constants value:
+    ## ALWAYS return an Object::Pluggable::Constants value
+    ## (Importing Cobalt::Common will also pull _NONE and _ALL in)
+    ## See "Returning proper values" under "Handling events"
+    ## 
+    ## PLUGIN_EAT_NONE is the most common:
     return PLUGIN_EAT_NONE
   }
   
   ## called when we are unloaded:
   sub Cobalt_unregister {
-    my ($self, $core) = @_;
-    ## . . . do some clean up, perhaps . . .
+    my ($self, $core) = splice @_, 0, 2;
+
+    . . . do some clean up, perhaps . . .
+    
     $core->log->info("Unregistering; bye!");
     return PLUGIN_EAT_NONE
   }
   
-  ## Syndicated events become prefixed with 'Bot_'
-  ## (when called send_event, leave the prefix out)
+  ## Syndicated events become prefixed with 'Bot_' when dispatched
+  ## (when calling send_event, leave the prefix out)
   sub Bot_public_msg {
-    my ($self, $core) = @_;
+    my ($self, $core) = splice @_, 0, 2;
     my $context = ${ $_[0] };
     my $msghash = ${ $_[1] };
-    ...
+
+    . . . do something with message . . .
+
+    return PLUGIN_EAT_NONE 
   }
   
   1;  ## perl modules must end in '1;'
@@ -1004,6 +1004,24 @@ FIXME
 =head1 PLUGIN DESIGN TIPS
 
 =head2 Useful tools
+
+=head3 Cobalt::Common
+
+L<Cobalt::Common> is a simple exporter that will pull in common constants 
+and utilities from L<Object::Pluggable::Constants>, L<IRC::Utils>, and 
+L<Cobalt::Utils>.
+
+Additionally, C<use Cobalt::Constant> will enable the B<strict> and 
+B<warnings> pragmas and import the '5.12' featureset (see 'perldoc feature')
+
+This is provided as a convenience for plugin authors; rather than importing 
+from a goodly handful of modules, you can simply:
+
+  use Cobalt::Common;
+
+Declaring strict and warnings explicitly are still good practice.
+
+See L<Cobalt::Common> for details.
 
 =head3 Cobalt::DB
 

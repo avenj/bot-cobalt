@@ -58,10 +58,6 @@ our $VERSION = '0.12';
 ## Auth hash should be adjusted when nicknames change.
 ## This plugin tracks 'lost' identified users and clears as needed
 
-use 5.12.1;
-use strict;
-use warnings;
-
 use Moose;
 use namespace::autoclean;
 
