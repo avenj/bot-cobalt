@@ -330,4 +330,67 @@ __END__
 
 =pod
 
+=head1 NAME
+
+Cobalt::Plugin::PluginMgr - IRC plugin manager
+
+=head1 DESCRIPTION
+
+This is a fairly simplistic online plugin manager.
+
+Required level defaults to 9999 (standard-auth superusers) unless 
+the LevelRequired option is specified in PluginMgr's plugins.conf 
+B<Opts> directive:
+
+  PluginMgr:
+    Module: Cobalt::Plugin::PluginMgr
+    Opts:
+      ## '3' is legacy darkbot 'administrator':
+      LevelRequired: 3
+
+=head1 COMMANDS
+
+B<PluginMgr> responds to the C<!plugin> command:
+
+  <JoeUser> !plugin reload Shorten
+
+=head2 list
+
+Lists the aliases of all currently loaded plugins.
+
+=head2 load
+
+Load a specified plugin.
+
+If the plugin has a C<plugins.conf> directive, the alias can be 
+specified by itself; the Module specified in C<plugins.conf> will be 
+used:
+
+  <JoeUser> !plugin load Shorten
+
+Otherwise, a module must be specified:
+
+  <JoeUser> !plugin load Shorten Cobalt::Plugin::Extras::Shorten
+
+If the module's alias has a Config or Opts specified, they will 
+also be loaded.
+
+=head2 unload
+
+Unload a specified plugin.
+
+The only argument is the plugin's alias.
+
+=head2 reload
+
+Unload and re-load the specified plugin, rehashing any applicable 
+configuration.
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
 =cut
