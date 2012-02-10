@@ -11,7 +11,7 @@ use Carp;
 use Moose;
 use namespace::autoclean;
 
-use Object::Pluggable::Constants qw( :ALL );
+use Object::Pluggable::Constants qw/ :ALL /;
 
 use POE;
 use POE::Component::IRC::State;
@@ -43,7 +43,11 @@ has 'irc' => (
   isa => 'Object',
 );
 
-sub NON_RELOADABLE { 1 }
+has 'NON_RELOADABLE' => (
+  isa => 'Int',
+  is  => 'rw',
+  default => 1,
+);
 
 sub Cobalt_register {
   my ($self, $core) = @_;
@@ -64,12 +68,16 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = @_;
   $core->log->info("Unregistering core IRC plugin");
+
   $core->log->debug("clearing 'Main' context from Auth");
   delete $core->State->{Auth}->{Main};
+
   $core->log->debug("disconnecting");
+
   $core->Servers->{Main}->{Connected} = 0;
   my $irc = $core->Servers->{Main}->{Object};
   $irc->shutdown if ref $irc and $irc->can('shutdown');
+
   return PLUGIN_EAT_NONE
 }
 
@@ -97,7 +105,7 @@ sub _start_irc {
   my %spawn_opts = (
     nick     => $nick,
     username => $cfg->{IRC}->{Username} || 'cobalt',
-    ircname  => $cfg->{IRC}->{Realname}  || 'http://cobaltirc.org',
+    ircname  => $cfg->{IRC}->{Realname} || 'http://cobaltirc.org',
     server   => $server,
     port     => $port,
     useipv6  => $use_v6,
@@ -234,7 +242,7 @@ sub _start {
       Channels => \%ajoin,
       RejoinOnKick => $cfg->{Opts}->{Chan_RetryAfterKick} // 1,
       Rejoin_delay => $cfg->{Opts}->{Chan_RejoinDelay} // 5,
-      NickServ_delay => $cfg->{Opts}->{Chan_NickServDelay} // 1,
+      NickServ_delay    => $cfg->{Opts}->{Chan_NickServDelay} // 1,
       Retry_when_banned => $cfg->{Opts}->{Chan_RetryAfterBan} // 60,
     ),
   );
@@ -318,12 +326,12 @@ sub irc_public {
   my $msg = {
     context => 'Main',  # server context
     myself => $me,      # bot's current nickname
-    src => $src,        # full Nick!User@Host
+    src    => $src,        # full Nick!User@Host
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    channel => $channel,  # first dest. channel seen
-    target => $channel, # maintain compat with privmsg handler
+    channel  => $channel,  # first dest. channel seen
+    target   => $channel, # maintain compat with privmsg handler
     target_array => $where, # array of all chans seen
     highlight => 0,  # these two are set up below
     cmdprefix => 0,
@@ -390,15 +398,15 @@ sub irc_msg {
 
   my $msg = {
     context => 'Main',
-    myself => $me,
+    myself  => $me,
     src => $src,
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    target => $sent_to,  # first dest. seen
+    target   => $sent_to,  # first dest. seen
     target_array => $target,
     message => $txt,
-    orig => $orig,
+    orig    => $orig,
     message_array => [ split ' ', $txt ],
   };
 
@@ -420,7 +428,7 @@ sub irc_notice {
 
   my $msg = {
     context => 'Main',
-    myself => $me,
+    myself  => $me,
     src => $src,
     src_nick => $nick,
     src_user => $user,
@@ -428,7 +436,7 @@ sub irc_notice {
     target => $target->[0],
     target_array => $target,
     message => $txt,
-    orig => $orig,
+    orig    => $orig,
     message_array => [ split ' ', $txt ],
   };
 
@@ -449,15 +457,15 @@ sub irc_ctcp_action {
 
   my $msg = {
     context => 'Main',  
-    myself => $me,      
+    myself  => $me,      
     src => $src,        
     src_nick => $nick,
     src_user => $user,
     src_host => $host,
-    target  => $target->[0],
+    target   => $target->[0],
     target_array => $target,
     message => $txt,
-    orig => $orig,
+    orig    => $orig,
     message_array => [ split ' ', $txt ],
   };
 

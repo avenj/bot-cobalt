@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.010
+Plugins guide revision: 0.011
 
-Last updated for cobalt 2.00_12
+Last updated for cobalt 2.00_14
 
 =head1 DESCRIPTION
 
@@ -52,8 +52,8 @@ Simple plugins might only need one or two config options; in this case,
 you can specify a B<Opts:> directive. It should be a hash (or a list, 
 in very odd cases).
 
-If an Opts: directive is supplied, it will be loaded into 
-'cfg->{plugin_cf}->{$pkg}->{PluginOpts}' -- see L</PluginOpts>.
+If an Opts: directive is supplied, it will be loaded as well; see 
+L</PluginOpts>.
 
 
 =head3 Accessing plugin configuration
@@ -1348,7 +1348,7 @@ items back to the 'worker' event handler after iterating 100 items.
     if (@items) {
       $core->send_event( 'myplugin_do_work', [ @items ] );
     } else {
-      ## no items left, we finished
+      ## no items left, we are finished
       ## tell pipeline we're done, perhaps:
       $core->send_event( 'myplugin_finished_work' );
     }

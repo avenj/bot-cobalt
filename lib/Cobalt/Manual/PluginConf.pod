@@ -29,6 +29,22 @@ Typically, you will see structures like this:
     'cmd_refrobulate' => 1,
   };
 
+(See L<Cobalt::Manual::Plugins/"get_plugin_cfg"> from the plugin authoring 
+documentation for information on retrieving plugin configuration.)
+
+Your text encoding should be UTF-8.
+
+=head1 INDENTATION
+
+B<Tab characters are not recognized as valid YAML indentation.>
+
+You should use two spaces to indent elements:
+
+  Opts:
+    SomeOpt: 1
+    OtherOpts:
+      DeeperOpt: 2
+
 
 =head1 BOOLEANS
 
@@ -45,12 +61,65 @@ boolean true/false:
 
 =head1 STRINGS
 
+  SomeString: A string
+
+Strings can be quoted:
+
+  SomeString: "A string"
+
+You can force a data-type for numbers via quoting, for example:
+
+  SomeNum: 176.100    ## Numeric 176.1
+  SomeNum: "176.100"  ## String "176.100"
+
+Within double-quotes, special characters can be escaped C-style.
+
+The YAML spec says that octal escape \0 is also valid.
+
+=head2 Block literals
+
+A block literal might look something like this:
+
+  ## newlines preserved:
+  ThisDoc: |
+    Some text here.
+    And even more text here.
+    Perhaps some more!
+
+  ## newlines folded:
+  ThisDoc: >
+    <p>Some literal html</p>
+    <p>More of it</p>
 
 =head1 HASHES
+
+  MyHash:
+    Scalar_item: "a scalar"
+    Another_Hash:
+      Item_one: 1
+      Item_two: "String"
+
+Item_two would be available via MyHash->{Another_Hash}->{Item_two}.
 
 
 =head1 LISTS
 
+A list looks something like this:
+
+  MyList:
+    - An item
+    - Another item
+
+  ## a deeply nested structure:
+  MyUsers:
+    - JoeUser
+    - Bobby
+    - Another list
+    - SomeHash:
+        One_Item: 1
+        Another_item: "Some string"
+
+In this example, Another_item would be available via MyUsers[3]->{Another_item}
 
 =head1 AUTHOR
 

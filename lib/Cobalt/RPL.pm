@@ -1,5 +1,5 @@
 package Cobalt::RPL;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 ## Object returned by $core->rpl_parser
 ##
@@ -33,8 +33,9 @@ sub new {
     warn "Cobalt::RPL needs to be passed a langset via Lang\n";
     return
   }
-  
-  $self->{__LANG} = $langset;
+
+  ## ugly self keys are because these aren't valid rplprintf vars:
+  $self->{'%%LANG'} = $langset;
   
   return $self
 }
@@ -42,20 +43,21 @@ sub new {
 sub Format {
   my ($self, $rpl) = @_;
   return unless $rpl;
-  return "Missing/undef RPL: $rpl" unless $self->{__LANG}->{$rpl};
+  return "Missing/undef RPL: $rpl" unless $self->{'%%LANG'}->{$rpl};
   
   my $vars;
-  for my $var (@{ $self->{__ADDED} }) {
+  for my $var (@{ $self->{'%%ADDED'} }) {
     $vars->{$var} = $self->$var;
   }  
 
-  my $formatted = rplprintf( $self->{__LANG}->{$rpl}, $vars );
+  my $formatted = rplprintf( $self->{'%%LANG'}->{$rpl}, $vars );
   
   return $formatted
 }
 
 sub AUTOLOAD {
   ## magic method creation
+  ## (after initialization this accessor sticks around)
   my $self = shift || return undef;
   
   return unless index($AUTOLOAD, 'DESTROY') == -1;
@@ -74,7 +76,7 @@ sub AUTOLOAD {
   *$AUTOLOAD = $accessor;
   use strict;
 
-  push(@{ $self->{__ADDED} }, $method);
+  push(@{ $self->{'%%ADDED'} }, $method);
   
   ## put $self back:
   unshift @_, $self;

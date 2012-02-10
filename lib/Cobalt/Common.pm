@@ -75,10 +75,11 @@ our %EXPORT_TAGS = (
 
 our @EXPORT;
 
+## see perldoc Exporter:
 {
   my %seen;
   push @EXPORT,
-    grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} foreach keys %EXPORT_TAGS; 
+    grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} for keys %EXPORT_TAGS; 
 }
 
 sub import {
