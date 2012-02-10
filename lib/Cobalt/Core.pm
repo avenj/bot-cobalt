@@ -102,7 +102,7 @@ has 'State' => (
 );
 
 has 'TimerPool' => (
-  ## timers; see timer_check_pool and timer_set methods
+  ## timers; see _core_timer_check_pool and timer_set methods
   is => 'rw',
   isa => 'HashRef',
   default => sub { 
@@ -199,7 +199,7 @@ sub init {
         'shutdown',
         'ev_plugin_error',
 
-        'timer_check_pool',
+        '_core_timer_check_pool',
       ],
     ],
   );
@@ -268,7 +268,7 @@ sub syndicator_started {
   $self->log->info("-> started, plugins_initialized sent");
 
   ## kickstart timer pool
-  $kernel->yield('timer_check_pool');
+  $kernel->yield('_core_timer_check_pool');
 }
 
 sub shutdown {
@@ -293,7 +293,7 @@ sub ev_plugin_error {
 
 ### Core timer pieces.
 
-sub timer_check_pool {
+sub _core_timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
   ## Timer hash format:
@@ -302,22 +302,34 @@ sub timer_check_pool {
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
 
-  for my $id (keys %{ $self->TimerPool->{TIMERS} }) {
-    my $timer = $self->TimerPool->{TIMERS}->{$id};
-    my $execute_ts = $timer->{ExecuteAt};
+  my $timerpool = $self->TimerPool->{TIMERS};
+  
+  for my $id (keys %$timerpool) {
+    my $timer = $timerpool->{$id};
+     # this should never happen ...
+     # ... unless a plugin author is a fucking idiot:
+    unless (ref $timer eq 'HASH' && scalar keys %$timer) {
+      $self->log->warn("broken timer, not a hash: $id");
+      delete $timerpool->{$id};
+      next
+    }
+    
+    my $execute_ts = $timer->{ExecuteAt} // next;
     if ( $execute_ts <= time ) {
       my $event = $timer->{Event};
       my @args = @{ $timer->{Args} };
       $self->log->debug("timer execute: $id (ev: $event)");
       ## dispatch this event:
-      $self->send_event( $event, @args );
+      $self->send_event( $event, @args ) if $event;
       ## send executed_timer to indicate this timer's done:
       $self->send_event( 'executed_timer', $id );
-      delete $self->TimerPool->{TIMERS}->{$id};
+      delete $timerpool->{$id};
     }
   }
 
-  $kernel->alarm('timer_check_pool' => time + 1);
+  ## most definitely NOT a high-precision timer.
+  ## checked every second or so
+  $kernel->alarm('_core_timer_check_pool' => time + 1);
 }
 
 
@@ -628,6 +640,21 @@ sub get_plugin_cfg {
   return \%{ $plugin_cf };
 }
 
+
+sub rpl_parser {
+  my $self = shift;
+  
+  ## Spawn a Cobalt::RPL parser
+  
+  my %initial = @_;
+  
+  my $rpl_obj = Cobalt::RPL->new(
+    Lang => $self->lang,
+    Initial => \%initial,
+  );
+  
+  return $rpl_obj
+}
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;

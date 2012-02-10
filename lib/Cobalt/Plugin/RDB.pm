@@ -164,10 +164,7 @@ sub _cmd_randstuff {
     unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
       return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-        {
-          nick => $src_nick,
-          rdb  => $rdb,
-        }
+        { nick => $src_nick, rdb => $rdb }
       );
     }
   }

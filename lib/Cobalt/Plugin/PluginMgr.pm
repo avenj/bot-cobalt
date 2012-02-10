@@ -135,7 +135,7 @@ sub _load_module {
   }
   my $obj = $module->new();
   unless ($obj && ref $obj) {
-      return rplprintf(
+      return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
           {
             plugin => $alias,
             err => "Constructor for $module returned junk",

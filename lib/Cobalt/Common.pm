@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use base 'Exporter';
-## Import a bunch of stuff very commonly useful to Cobalt plugins.
+## Import a bunch of stuff very commonly useful to Cobalt plugins
 
 use Cobalt::Utils qw/ :ALL /;
 
@@ -20,7 +20,10 @@ use IRC::Utils qw/
   is_valid_chan_name
 /;
 
-use Object::Pluggable::Constants qw/ PLUGIN_EAT_NONE PLUGIN_EAT_ALL /;
+use Object::Pluggable::Constants qw/ 
+  PLUGIN_EAT_NONE 
+  PLUGIN_EAT_ALL 
+/;
 
 our %EXPORT_TAGS = (
   string => [ qw/
@@ -99,7 +102,10 @@ Cobalt::Common - import commonly-used tools and constants
   package Cobalt::Plugin::User::MyPlugin;
   our $VERSION = '0.10';
 
-  ## Import useful IRC::Utils / Cobalt::Utils / constants
+  ## Import useful stuff from:
+  ##  IRC::Utils
+  ##  Cobalt::Utils
+  ##  Object::Pluggable::Constants
   ## also get strict, warnings, 5.12 features
   use Cobalt::Common;
 
@@ -109,8 +115,8 @@ This is a small exporter module providing easy inclusion of commonly
 used tools and constants.
 
 By default, B<strict>, B<warnings>, and the B<5.12> feature set are 
-also enabled (but it's still good practice to make use of them. Life 
-sucks when you start forgetting later!)
+also enabled (but it's still good practice to explicitly make use of 
+them -- life sucks when you start forgetting later . . . )
 
 
 =head2 Exported

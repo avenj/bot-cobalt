@@ -135,12 +135,13 @@ this writing.
   use strict;
   use warnings;
 
+  ## Import lots of useful stuff:
   use Cobalt::Common;
   
-  ## minimalist object constructor:
+  ## Minimalist object constructor:
   sub new { bless {}, shift }
   
-  ## called when we are loaded:
+  ## Called when we are loaded:
   sub Cobalt_register {
     ## Handlers receive $self and $core as first two args:
     ##  $self is "this object"
@@ -168,7 +169,7 @@ this writing.
     return PLUGIN_EAT_NONE
   }
   
-  ## called when we are unloaded:
+  ## Called when we are unloaded:
   sub Cobalt_unregister {
     my ($self, $core) = splice @_, 0, 2;
 
@@ -678,7 +679,7 @@ in the top-level hash can be pulled out via methods described herein.
 B<< $core->Servers >> is a hashref keyed on server "context" name; see 
 L</"Understanding server context">.
 
-B<<You should probably be using L</get_irc_server>!>>
+B<You should probably be using L</get_irc_server>!>
 
 The only valid reason to access ->Servers directly is to iterate all 
 contexts:
@@ -888,8 +889,8 @@ B<Cobalt_unregister> handlers.
 
 =head3 Timers
 
-Core timers live in $core->TimerPool ; if need be, you can access 
-the timer pool directly via $core->TimerPool->{TIMERS}, which is a 
+Core timers live in B<< $core->TimerPool >>; if need be, you can access 
+the timer pool directly via B<< $core->TimerPool->{TIMERS} >>, which is a 
 hash keyed on timer ID.
 
 Typically most plugins will only need the following functionality:
@@ -949,7 +950,8 @@ This can be useful for resetting timers you've already set; grab the ID
 returned by a C<timer_set()> call and reset it to change the event or delay.
 
 You may want C<timestr_to_secs> from L<Cobalt::Utils> for easy 
-conversion of human-readable strings into seconds.
+conversion of human-readable strings into seconds. This is, of course, 
+included by default if you C<< use L<Cobalt::Common> >>.
 
 If you need better accuracy, you'll need to use your own alarm()/delay() 
 calls to L<POE::Kernel>; the timer pool is checked every second or so.
