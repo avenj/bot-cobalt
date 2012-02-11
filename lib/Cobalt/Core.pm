@@ -669,7 +669,7 @@ sub get_plugin_cfg {
 #    }
     $alias = $self->PluginObjects->{$plugin};
     unless ($alias) {
-      $core->log->error("No alias for $plugin");
+      $self->log->error("No alias for $plugin");
       return undef
     }
   } else {
