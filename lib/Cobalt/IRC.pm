@@ -32,7 +32,6 @@ use Cobalt::Utils qw/
   rplprintf
 /;
 
-
 has 'core' => (
   is => 'rw',
   isa => 'Object',
@@ -364,7 +363,9 @@ sub irc_public {
     ## the text array here may well be empty (no args specified)
 
     my $cmd_msg = \%{ $msg };
-    shift @{ $cmd_msg->{message_array} };
+    my @msgarr = @{ $cmd_msg->{message_array} };
+    shift @msgarr;
+    $cmd_msg->{message_array} = [ @msgarr ];
 
     ## issue a public_cmd_$cmd event to plugins (w/ different ref)
     ## command-only plugins can choose to only receive specified events
