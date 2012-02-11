@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.27';
+our $VERSION = '0.28';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -345,6 +345,7 @@ sub _cmd_rdb {
   my @handled = qw/
     add
     del
+    get
     dbadd
     dbdel
     info
