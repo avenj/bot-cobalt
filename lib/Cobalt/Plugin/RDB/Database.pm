@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.30';
+our $VERSION = '0.31';
 
 ## Frontend to managing RDB-style Cobalt::DB instances
 ##
@@ -288,6 +288,7 @@ sub get {
   my $value = $db->get($key);
   unless ( defined $value ) {
     $self->Error("RDB_NOSUCH_ITEM");
+    $db->dbclose;
     return 0
   }
   
