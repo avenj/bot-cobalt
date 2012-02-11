@@ -1,5 +1,5 @@
 package Cobalt::Conf;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 ## Cobalt::Conf
 ## Looks for the following YAML confs:
 ##   etc/cobalt.conf
@@ -107,19 +107,18 @@ sub _read_plugin_conf {
 sub _autoload_plugin_confs {
   my $self = shift;
   my $plugincf = shift || $self->_read_core_plugins_conf;
-  my $perpkgcf = { };
+  my $per_alias_cf = { };
 
   for my $plugin_alias (keys %$plugincf) {
-    ## core plugin_cf is keyed on __PACKAGE__ definitions:
     my $pkg = $plugincf->{$plugin_alias}->{Module};
     unless ($pkg) {
       carp "skipping $plugin_alias, no Module directive";
       next
     }
-    $perpkgcf->{$pkg} = $self->_read_plugin_conf($plugin_alias, $plugincf);
+    $per_alias_cf->{$plugin_alias} = $self->_read_plugin_conf($plugin_alias, $plugincf);
   }
 
-  return $perpkgcf
+  return $per_alias_cf
 }
 
 

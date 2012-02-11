@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 use 5.12.1;
 use strict;
@@ -64,7 +64,7 @@ sub _load_games {
   my ($self) = @_;
   my $core = $self->{core};
   
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
   my $games = $pcfg->{Games} // {};
 
   $core->log->debug("Loading games");

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 use 5.12.1;
 use strict;
@@ -42,7 +42,7 @@ sub Bot_public_cmd_alarmclock {
   my $resp;
 
   my $setter = $msg->{src_nick};
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $cfg = $core->get_plugin_cfg( $self );
   my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
 
   ## quietly do nothing for unauthorized users

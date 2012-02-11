@@ -27,7 +27,7 @@ sub Cobalt_register {
   $self->{WorkersByPID} = {};
   $self->{WorkersByWID} = {};
 
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
   $self->{MAX_WORKERS} = $pcfg->{Opts}->{MaxWorkers} || 5;
   $self->{PROXY_ADDR}  = $pcfg->{Opts}->{Proxy} || undef;
   $self->{LWP_TIMEOUT} = $pcfg->{Opts}->{Timeout} || 60;

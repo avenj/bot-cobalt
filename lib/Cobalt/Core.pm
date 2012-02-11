@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_17';
+our $VERSION = '2.00_18';
 
 use 5.12.1;
 use Carp;
@@ -103,7 +103,7 @@ has 'State' => (
 
 has 'TimerPool' => (
   ## timers; see _core_timer_check_pool and timer_set methods
-  is => 'rw',
+  is  => 'rw',
   isa => 'HashRef',
   default => sub { 
     {
@@ -123,7 +123,7 @@ has 'TimerPool' => (
 ##   ConnectedAt => time(),
 ## }
 has 'Servers' => (
-  is => 'rw',
+  is  => 'rw',
   isa => 'HashRef',
   default => sub { {} },
 );
@@ -131,7 +131,16 @@ has 'Servers' => (
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is => 'rw',
+  is  => 'rw',
+  isa => 'HashRef',
+  default => sub { {} },
+);
+
+## map stringified plugin objs to aliases
+## saves us having to ask Pipeline about it later
+## (note that Cobalt::IRC doesn't live here)
+has 'PluginObjects' => (
+  is  => 'rw',
   isa => 'HashRef',
   default => sub { {} },
 );
@@ -257,13 +266,22 @@ sub syndicator_started {
   for my $plugin (sort keys %{ $self->cfg->{plugins} })
   { 
     next if $self->cfg->{plugins}->{$plugin}->{NoAutoLoad};
+    
     my $module = $self->cfg->{plugins}->{$plugin}->{Module};
+    
     eval "require $module";
     if ($@)
-      { $self->log->warn("Could not load $module: $@"); next; }
+      { $self->log->warn("Could not load $module: $@"); next }
+    
     my $obj = $module->new();
     $self->plugin_add($plugin, $obj);
     $self->is_reloadable($plugin, $obj);
+
+    ## store a hash mapping stringified objects to aliases
+    ## then we can get_plugin_cfg for $self and support 
+    ## multiple instances of one plugin sanely
+    $self->PluginObjects->{$obj} = $plugin;
+
     $i++;
   }
 
@@ -450,6 +468,8 @@ sub timer_del {
   return delete $self->TimerPool->{TIMERS}->{$id};
 }
 
+## FIXME: timer_del_pkg is deprecated as of 2.00_18 and should go away
+## (may clobber other timers if there are dupe modules)
 sub timer_del_pkg {
   my $self = shift;
   my $pkg = shift || return;
@@ -633,17 +653,24 @@ sub get_channels_cfg {
 }
 
 sub get_plugin_cfg {
-  my ($self, $pkg) = @_;
-  ## my $plugcf = $core->get_plugin_cfg( __PACKAGE__ )
-  ## Returns false if no cfg for this pkg was found.
-  my $plugin_cf = $self->cfg->{plugin_cf}->{$pkg} // return;
+  my ($self, $obj) = @_;
+  ## my $plugcf = $core->get_plugin_cfg( $self )
+  ## -or-
+  ## my $plugcf = $core->get_plugin_cfg( $alias )
+  ## Returns undef if no cfg was found
+  my $alias = ref $obj ? $self->PluginObjects->{$obj} : $obj ;
+  
+  my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return;
+  
   unless (ref $plugin_cf eq 'HASH') {
-    $self->log->debug("get_plugin_cfg; $pkg cfg not a HASH");
-    return
+    $self->log->debug("get_plugin_cfg; $alias cfg not a HASH");
+    return undef
   }
+  
   ## return a copy, not a ref to the original.
   ## that way we can worry less about stupid plugins breaking things
-  return \%{ $plugin_cf };
+  my $cloned = dclone($plugin_cf);
+  return $cloned
 }
 
 

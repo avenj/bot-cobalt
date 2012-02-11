@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.29';
+our $VERSION = '0.291';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -37,7 +37,7 @@ sub Cobalt_register {
     ],
   );  
 
-  my $cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $cfg = $core->get_plugin_cfg( $self );
 
   my $rdbdir =    $core->var ."/". $cfg->{Opts}->{RDBDir} 
                || $core->var ."/db/rdb" ;
@@ -146,7 +146,7 @@ sub _cmd_randstuff {
   my $context  = $msg_h->{context};
 
   my $core = $self->{core};
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
   my $rplvars;
@@ -343,7 +343,7 @@ sub _cmd_rdb {
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
 
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
   my $required_levs = $pcfg->{RequiredLevels} // {};
   ## this hash maps commands to levels.
   ## commands not found here aren't recognized.
@@ -787,7 +787,7 @@ sub _delete_rdb {
   my ($self, $rdb) = @_;
   return unless $rdb;
   my $core = $self->{core};
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
 
   my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
 

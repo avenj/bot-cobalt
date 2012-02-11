@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.012
+Plugins guide revision: 0.013
 
-Last updated for cobalt 2.00_16
+Last updated for cobalt 2.00_18
 
 =head1 DESCRIPTION
 
@@ -66,8 +66,8 @@ in the Core C<cfg> attribute.
 The normal way to access a plugin's configuration structure is via the 
 core method B<get_plugin_cfg>:
 
-  ## Our __PACKAGE__ must be specified:
-  my $plug_cf = $core->get_plugin_cfg( __PACKAGE__ );
+  ## Our $self object or our alias must be specified:
+  my $plug_cf = $core->get_plugin_cfg( $self );
   unless ($plug_cf) {
     ## No configuration found for our plugin ...
   }
@@ -99,7 +99,7 @@ possible to specify options in C<plugins.conf> directly via B<Opts>:
 Any B<Opts> specified in C<plugins.conf> directly will be available to the 
 plugin via the B<PluginOpts> key:
 
-  my $plug_cf  = $core->get_plugin_cfg( __PACKAGE__ );
+  my $plug_cf  = $core->get_plugin_cfg( $self );
   my $some_opt = $plug_cf->{PluginOpts}->{Some_Option} // 
 
 a B<Config:> directive can be specified as normal, although this is 
@@ -118,15 +118,16 @@ If your plugin needs to modify its configuration values directly
 hash directly.
 
 Loaded configuration values for plugins are available via 
-B<< $core->cfg->{plugin_cf} >>, keyed on package name:
+B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
 
-  my $pkg = __PACKAGE__;
-  my $plug_cf = $core->cfg->{plugin_cf}->{$pkg};
+  ## ask Core for our alias:
+  my $plugin_alias = $core->PluginObjects->{$self};
+  my $plug_cf = $core->cfg->{plugin_cf}->{$plugin_alias};
   ## modify this plugin's conf hash directly:
   $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
 
 There is no built-in facility for writing these changes back out as of 
-this writing.
+this writing; plugins are on their own for configuration file modification.
 
 
 =head2 A basic plugin outline
@@ -593,7 +594,7 @@ $self is generally fairly convenient:
   $self->{core} = $core;
   ...
   ## later, in an internal method...
-  my $plug_cf = $self->{core}->get_plugin_cfg(__PACKAGE__);
+  my $plug_cf = $self->{core}->get_plugin_cfg( $self );
 
 
 =head3 Attributes
@@ -740,20 +741,21 @@ server context.
 
 =head4 get_plugin_cfg
 
-  my $plug_cf = $core->get_plugin_cfg( __PACKAGE__ ) || {};
+  my $plug_cf = $core->get_plugin_cfg( $self ) || {};
 
 Retrieves the configuration hash for a specific plugin.
 
-The package name for the plugin must be specified.
+Either the plugin's C<$self> object or its current alias must be 
+specified.
 
 Returns a hashref that is a copy of the plugin's config, as found 
-in I<<$core->cfg->{plugin_cf}->{__PACKAGE__}>>
+in I<<$core->cfg->{plugin_cf}->{$alias}>>
 
-Returns boolean false if there is no plugin configuration stored in 
-memory:
+Returns undef if there is no plugin configuration stored for this 
+plugin:
 
-  $core->log->warn("Missing config for __PACKAGE__")
-    unless $core->get_plugin_cfg( __PACKAGE__ );
+  $core->log->warn("Missing config!")
+    unless $core->get_plugin_cfg( $self );
 
 
 =head3 IRC-related methods
@@ -976,16 +978,6 @@ if needed:
    if ( $core->timer_set( 60, $postponed, $id ) ) {
      ## readding postponed timer successful
    }
-
-
-=head4 timer_del_pkg
-
-Delete all core timers owned by __PACKAGE__ :
-
-  $core->timer_del_pkg( __PACKAGE__ );
-
-Typically used by plugins that may need to clean up their core timers 
-upon unregistering.
 
 
 =head2 Syndicated core events

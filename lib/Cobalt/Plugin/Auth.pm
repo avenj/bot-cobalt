@@ -100,7 +100,7 @@ sub Cobalt_register {
   ## Set $self->core to make life easier on our internals:
   $self->core($core);
 
-  my $p_cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $p_cfg = $core->get_plugin_cfg( $self );
 
   my $relative_path = $p_cfg->{Opts}->{AuthDB} || 'db/authdb.yml';
   my $authdb = $core->var ."/". $relative_path;
@@ -721,7 +721,7 @@ sub _mkpasswd {
   ## $self->_mkpasswd( $passwd );
   ## simple frontend to Cobalt::Utils::mkpasswd()
   ## handles grabbing cfg opts for us:
-  my $cfg = $self->core->get_plugin_cfg( __PACKAGE__ );
+  my $cfg = $self->core->get_plugin_cfg( $self );
   my $method = $cfg->{Method} // 'bcrypt';
   my $bcrypt_cost = $cfg->{Bcrypt_Cost} // '08';
   return mkpasswd($passwd, $method, $bcrypt_cost);
@@ -777,7 +777,7 @@ sub _write_access_list {
     $core->log->emerg("Failed to serialize db to disk: $authdb");
   }
 
-  my $p_cfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $p_cfg = $core->get_plugin_cfg( $self );
   my $perms = $p_cfg->{Opts}->{AuthDB_Perms} // 0600;
   chmod($perms, $authdb);
 }

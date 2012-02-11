@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 ## handles and eats: !plugin
 
@@ -75,7 +75,7 @@ sub _unload {
       use strict;
 
       ## also cleanup our config if there is one:
-      delete $core->cfg->{plugin_cf}->{$plugisa};
+      delete $core->cfg->{plugin_cf}->{$alias};
       $core->timer_del_pkg($plugisa);
       
       $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
@@ -149,6 +149,9 @@ sub _load_module {
       unless ( $core->is_reloadable($alias, $obj) ) {
         $core->log->debug("$alias flagged non-reloadable");
       }
+      
+      ## store PluginObjects (::Core 2.00_18):
+      $core->PluginObjects->{$obj} = $alias;
   
       return rplprintf( $core->lang->{RPL_PLUGIN_LOAD},
           {
@@ -231,7 +234,7 @@ sub _load_conf {
   my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
   $thisplugcf = {} unless ref $thisplugcf;
   ## directly fuck with core's cfg hash:
-  $core->cfg->{plugin_cf}->{$pkgname} = $thisplugcf;
+  $core->cfg->{plugin_cf}->{$alias} = $thisplugcf;
 }
 
 
@@ -242,7 +245,7 @@ sub Bot_public_cmd_plugin {
 
   my $chan = $msg->{channel};
   my $nick = $msg->{src_nick};
-  my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
+  my $pcfg = $core->get_plugin_cfg( $self );
 
   ## default to superuser-only:
   my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
