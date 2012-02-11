@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -47,6 +47,8 @@ has 'NON_RELOADABLE' => (
   is  => 'rw',
   default => 1,
 );
+
+use Storable qw/dclone/;
 
 sub Cobalt_register {
   my ($self, $core) = @_;
@@ -362,10 +364,8 @@ sub irc_public {
     ## the format/color-stripped string is in $msg->{message}
     ## the text array here may well be empty (no args specified)
 
-    my $cmd_msg = \%{ $msg };
-    my @msgarr = @{ $cmd_msg->{message_array} };
-    shift @msgarr;
-    $cmd_msg->{message_array} = [ @msgarr ];
+    my $cmd_msg = dclone($msg);
+    shift @{ $cmd_msg->{message_array} };
 
     ## issue a public_cmd_$cmd event to plugins (w/ different ref)
     ## command-only plugins can choose to only receive specified events

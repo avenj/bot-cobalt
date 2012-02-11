@@ -55,14 +55,15 @@ my $build = $class->new(
       'perl' => '5.12.1',
       'Carp' => 0,
       'Cwd'  => 0,
-      'Data::Dumper' => 0,
-      'DB_File'      => 0,
+      'Data::Dumper'   => 0,
+      'DB_File'        => 0,
       'Digest::SHA1'   => 0,
       'File::Basename' => 0,
-      'File::Find' => 0,
-      'File::Path' => '2.00',
-      'File::Spec' => 0,
-      'Getopt::Long' => 0,
+      'File::Find'     => 0,
+      'File::Path'     => '2.00',
+      'File::Spec'     => 0,
+      'Getopt::Long'   => 0,
+      'Storable'       => 0,
 
    ### Cobalt set ###
      # Crypt
