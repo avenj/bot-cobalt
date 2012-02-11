@@ -669,11 +669,6 @@ sub get_plugin_cfg {
 
   if (ref $plugin) {
     ## plugin obj (theoretically) specified
-#    (my $plugobj, $alias) = $self->pipeline->get($plugin);
-#    unless ($plugobj) {
-#      $self->log->error("get_plugin_cfg; pipeline->get failure");
-#      return undef
-#    }
     $alias = $self->PluginObjects->{$plugin};
     unless ($alias) {
       $self->log->error("No alias for $plugin");
