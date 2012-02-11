@@ -654,10 +654,10 @@ sub get_channels_cfg {
 }
 
 sub get_plugin_alias {
-  my ($self, $plugin) = @_;
-  return undef unless ref $plugin;
-  my $alias = $self->PluginObjects->{$plugin};
-  return $alias // undef
+  my ($self, $plugobj) = @_;
+  return undef unless ref $plugobj;
+  my $alias = $self->PluginObjects->{$plugobj} || undef;
+  return $alias
 }
 
 sub get_plugin_cfg {

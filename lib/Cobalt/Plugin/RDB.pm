@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.291';
+our $VERSION = '0.292';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -363,7 +363,7 @@ sub _cmd_rdb {
 
   my @handled = keys %access_levs;
   unless ($cmd && $cmd ~~ @handled) {
-    return "Commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
+    return "Commands: add <rdb>, del <rdb> <idx>, info <rdb> <idx>, "
            ."get <rdb> <idx>, search(idx) <rdb> <str>, dbadd <rdb>, "
            ."dbdel <rdb>";
   }

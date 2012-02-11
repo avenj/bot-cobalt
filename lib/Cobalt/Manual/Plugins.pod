@@ -48,7 +48,7 @@ See L<Cobalt::Manual::PluginConf> for more about YAML and plugin configs.
 
 The config file will be loaded when the plugin is; the data structure 
 loaded will be stored in the core B<cfg> attribute, keyed by the plugin's 
-package name.
+alias.
 
 Simple plugins might only need one or two config options; in this case, 
 you can specify a B<Opts:> directive. It should be a hash (or a list, 
@@ -120,8 +120,8 @@ hash directly.
 Loaded configuration values for plugins are available via 
 B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
 
-  ## ask pipeline for our alias:
-  my ($obj, $alias) = $core->pipeline->get($self);
+  ## ask Core for our current alias:
+  my $alias = $core->get_plugin_alias( $self );
   my $plug_cf = $core->cfg->{plugin_cf}->{ $alias };
   ## modify this plugin's conf hash directly:
   $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
@@ -757,6 +757,17 @@ plugin:
   $core->log->warn("Missing config!")
     unless $core->get_plugin_cfg( $self );
 
+=head4 get_plugin_alias
+
+As of 2.00_19 a plugin can be instanced many times with discrete conf 
+values. Sometimes it's useful to know the name of your current alias.
+
+Your plugin's $self object must be specified:
+
+  my $plugin_alias = $core->get_plugin_alias( $self );
+
+(Of course, this also works for getting the alias of other plugin 
+objects.)
 
 =head3 IRC-related methods
 
