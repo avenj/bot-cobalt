@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -61,7 +61,7 @@ sub Cobalt_register {
   ## give ourselves an Auth hash
   $core->State->{Auth}->{Main} = { };
 
-  $core->log->info(__PACKAGE__." registered");
+  $core->log->info("$VERSION registered, waiting for plugin load");
   return PLUGIN_EAT_NONE
 }
 
@@ -363,15 +363,15 @@ sub irc_public {
     ## the format/color-stripped string is in $msg->{message}
     ## the text array here may well be empty (no args specified)
 
-    my %cmd_msg = %{ $msg };
-    shift @{ $cmd_msg{message_array} };
+    my $cmd_msg = \%{ $msg };
+    shift @{ $cmd_msg->{message_array} };
 
     ## issue a public_cmd_$cmd event to plugins (w/ different ref)
     ## command-only plugins can choose to only receive specified events
     $self->core->send_event( 
       'public_cmd_'.$cmd,
       'Main', 
-      \%cmd_msg 
+      $cmd_msg
     );
   }
 
