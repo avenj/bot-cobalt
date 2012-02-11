@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_18';
+our $VERSION = '2.00_19';
 
 use 5.12.1;
 use Carp;
@@ -651,6 +651,13 @@ sub get_channels_cfg {
   ## Returns empty hash if there's no conf for this channel:
   my $chcfg = dclone( $self->cfg->{channels}->{$context} // {} );
   return $chcfg
+}
+
+sub get_plugin_alias {
+  my ($self, $plugin) = @_;
+  return undef unless ref $plugin;
+  my $alias = $self->PluginObjects->{$plugin};
+  return $alias // undef
 }
 
 sub get_plugin_cfg {
