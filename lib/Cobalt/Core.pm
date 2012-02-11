@@ -114,6 +114,12 @@ has 'TimerPool' => (
   },
 );
 
+has 'PluginObjects' => (
+  is  => 'rw',
+  isa => 'HashRef',
+  default => sub { {} },
+);
+
 ## the core IRC plugin is single-server
 ## however a MultiServer plugin is possible (and planned)
 ## thusly, track hashes for our servers here.
@@ -267,9 +273,10 @@ sub syndicator_started {
       { $self->log->warn("Could not load $module: $@"); next }
     
     my $obj = $module->new();
-
+    $self->PluginObjects->{$obj} = $plugin;
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
+      delete $self->PluginObjects->{$obj};
       next
     }
     $self->is_reloadable($plugin, $obj);
@@ -655,9 +662,14 @@ sub get_plugin_cfg {
 
   if (ref $plugin) {
     ## plugin obj (theoretically) specified
-    (my $plugobj, $alias) = $self->pipeline->get($plugin);
-    unless ($plugobj) {
-      $self->log->error("get_plugin_cfg; pipeline->get failure");
+#    (my $plugobj, $alias) = $self->pipeline->get($plugin);
+#    unless ($plugobj) {
+#      $self->log->error("get_plugin_cfg; pipeline->get failure");
+#      return undef
+#    }
+    $alias = $self->PluginObjects->{$plugin};
+    unless ($alias) {
+      $core->log->error("No alias for $plugin");
       return undef
     }
   } else {
@@ -666,7 +678,7 @@ sub get_plugin_cfg {
   }
 
   unless ($alias) {
-    $self->log->error("get_plugin_cfg: no plugin alias?");
+    $self->log->error("get_plugin_cfg: no plugin alias? ".scalar caller);
     return undef
   }
   
