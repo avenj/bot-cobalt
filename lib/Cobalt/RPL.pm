@@ -1,5 +1,5 @@
 package Cobalt::RPL;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 ## Object returned by $core->rpl_parser
 ##
@@ -45,12 +45,12 @@ sub Format {
   return unless $rpl;
   return "Missing/undef RPL: $rpl" unless $self->{'%%LANG'}->{$rpl};
   
-  my $vars;
-  for my $var (@{ $self->{'%%ADDED'} }) {
-    $vars->{$var} = $self->$var();
+  my $rplvars;
+  for my $var (keys %{ $self->{'%%ADDED'} }) {
+    $rplvars->{$var} = $self->$var;
   }  
 
-  my $formatted = rplprintf( $self->{'%%LANG'}->{$rpl}, $vars );
+  my $formatted = rplprintf( $self->{'%%LANG'}->{$rpl}, $rplvars );
   
   return $formatted
 }
@@ -63,7 +63,7 @@ sub AUTOLOAD {
   my ($method) = $AUTOLOAD =~ m/::(.*)$/;
   return if $method eq 'DESTROY';
 
-  push(@{ $self->{'%%ADDED'} }, $method);
+  $self->{'%%ADDED'}->{$method} = 1;
 
   my $accessor = sub {
     my $this_self = shift;
