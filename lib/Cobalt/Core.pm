@@ -274,16 +274,18 @@ sub syndicator_started {
       { $self->log->warn("Could not load $module: $@"); next }
     
     my $obj = $module->new();
-    $self->PluginObjects->{$obj} = $plugin;
-    unless ( $self->plugin_add($plugin, $obj) ) {
-      delete $self->PluginObjects->{$obj};
-      $self->log->error("plugin_add failure for $plugin");
-    }
-    $self->is_reloadable($plugin, $obj);
 
     ## store a hash mapping stringified objects to aliases
     ## then we can get_plugin_cfg for $self and support 
     ## multiple instances of one plugin sanely
+    $self->PluginObjects->{$obj} = $plugin;
+    unless ( $self->plugin_add($plugin, $obj) ) {
+      delete $self->PluginObjects->{$obj};
+      $self->log->error("plugin_add failure for $plugin");
+      next
+    }
+    $self->is_reloadable($plugin, $obj);
+
     $i++;
   }
 
@@ -661,6 +663,10 @@ sub get_plugin_cfg {
   ## my $plugcf = $core->get_plugin_cfg( $alias )
   ## Returns undef if no cfg was found
   my $alias = ref $obj ? $self->PluginObjects->{$obj} : $obj ;
+  ## deeper ref, probably from an event handler:
+  if (ref $alias eq 'REF') {
+    $alias = ${ $alias };
+  }
   
   my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return;
   
