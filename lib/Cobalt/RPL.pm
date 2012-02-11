@@ -60,9 +60,8 @@ sub AUTOLOAD {
   ## (after initialization this accessor sticks around)
   my $self = shift || return undef;
   
-  return unless index($AUTOLOAD, 'DESTROY') == -1;
-  
-  (my $method = $AUTOLOAD) =~ s/.*:://;
+  my ($method) = $AUTOLOAD =~ m/::(.*)$/;
+  return if $method eq 'DESTROY';
 
   push(@{ $self->{'%%ADDED'} }, $method);
 

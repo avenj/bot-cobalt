@@ -31,6 +31,7 @@ lib/Cobalt/Manual/Examples.pod
 lib/Cobalt/Manual/PluginConf.pod
 lib/Cobalt/Manual/PluginDist.pod
 lib/Cobalt/Manual/Plugins.pod
+lib/Cobalt/Manual/Tutorial.pod
 lib/Cobalt/Plugin/Alarmclock.pm
 lib/Cobalt/Plugin/Auth.pm
 lib/Cobalt/Plugin/ChanMgr.pm
@@ -57,7 +58,6 @@ lib/Cobalt/Plugin/OutputFilters/StripColor.pm
 lib/Cobalt/Plugin/OutputFilters/StripFormat.pm
 lib/Cobalt/Plugin/PluginMgr.pm
 lib/Cobalt/Plugin/RDB.pm
-lib/Cobalt/Plugin/RDB/Constants.pm
 lib/Cobalt/Plugin/RDB/Database.pm
 lib/Cobalt/Plugin/RDB/SearchCache.pm
 lib/Cobalt/Plugin/Rehash.pm

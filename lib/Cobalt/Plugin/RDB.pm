@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -20,7 +20,6 @@ our $VERSION = '0.25';
 
 use Cobalt::Common;
 
-use Cobalt::Plugin::RDB::Constants;
 use Cobalt::Plugin::RDB::Database;
 
 
@@ -151,7 +150,7 @@ sub _cmd_randstuff {
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
   my $rplp = $core->rpl_parser || return 'RPL parser failure';
-  $rplp->nick($src_nick);
+  $rplp->nick( $src_nick // '(undef)' );
 
   unless ( $core->auth_level($context, $src_nick) >= $required_level ) {
     return $rplp->Format("RPL_NO_ACCESS");
@@ -160,7 +159,7 @@ sub _cmd_randstuff {
   my $rdb = 'main';      # randstuff is 'main', darkbot legacy
   $rplp->rdb($rdb);
   ## ...but this may be randstuff ~rdb ... syntax:
-  if (index($message[0], '~') == 0) {
+  if (@message && index($message[0], '~') == 0) {
     $rdb = substr(shift @message, 1);
     $rplp->rdb($rdb);
     my $dbmgr = $self->{CDBM};
@@ -180,24 +179,22 @@ sub _cmd_randstuff {
 
   ## call _add_item
   my $username = $core->auth_username($context, $src_nick);
-  my $newidx = $self->_add_item($rdb, $randstuff_str, $username);
+  my ($newidx, $err) =
+    $self->_add_item($rdb, $randstuff_str, $username);
   $rplp->index($newidx);
   ## _add_item returns either a status from ::Database->put
   ## or a new item key:
-  given ($newidx) {
-    when ([RDB_DBFAIL]) {
-      return $rplp->Format("RPL_DB_ERR");
-    }
-    
-    when ([RDB_NOSUCH]) {
-      return $rplp->Format("RDB_ERR_NO_SUCH_RDB");
-    }
-    
-    default {
-      return $rplp->Format("RDB_ITEM_ADDED");
-    }
-  }
 
+  unless ($newidx) {
+    given ($err) {
+      return $rplp->Format("RPL_DB_ERR")          when "RDB_DBFAIL";
+      return $rplp->Format("RPL_ERR_NO_SUCH_RDB") when "RDB_NOSUCH";
+      default { return "Unknown error status: $err" }
+    }
+  } else {
+    return $rplp->Format("RDB_ITEM_ADDED");
+  }
+  
 }
 
 sub _select_random {
@@ -207,7 +204,7 @@ sub _select_random {
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
   
-  if (ref $retval eq 'HASH') {
+  if ($retval && ref $retval eq 'HASH') {
     my $content = $retval->{String} // '';
     if ($self->{LastRandom}
         && $self->{LastRandom} eq $content
@@ -223,11 +220,11 @@ sub _select_random {
     ## (e.g. in a rdb_triggered for a bustedass rdb)
     return if $quietfail;
     my $rpl;
-    given ($retval) {
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when [RDB_NOSUCH];
-      $rpl = "RPL_DB_ERR"          when [RDB_DBFAIL];
+    given ($dbmgr->Error) {
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
       ## send nothing if this rdb has no keys:
-      return                       when [RDB_NOSUCH_ITEM];
+      return                       when "RDB_NOSUCH_ITEM";
       ## unknown error status?
       default { $rpl = "RPL_DB_ERR" }
     }
@@ -268,12 +265,12 @@ sub _cmd_randq {
 
   my $matches = $dbmgr->search($rdb, $str);
 
-  unless (ref $matches eq 'ARRAY') {
+  unless ($matches && ref $matches eq 'ARRAY') {
     $core->log->debug("Error status from search(): $matches");
     my $rpl;
-    given ($matches) {
-      $rpl = "RPL_DB_ERR"          when [RDB_DBFAIL];
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when [RDB_NOSUCH];
+    given ($dbmgr->Error) {
+      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
       ## not an arrayref and not a known error status, wtf?
       default { $rpl = "RPL_DB_ERR" }
     }
@@ -300,11 +297,11 @@ sub _cmd_randq {
   $core->log->debug("dispatching get() for $selection in $rdb");
 
   my $item = $dbmgr->get($rdb, $selection);
-  unless (ref $item eq 'HASH') {
+  unless ($item && ref $item eq 'HASH') {
     $core->log->debug("Error status from get(): $item");
     my $rpl;
-    given ($item) {
-      $rpl = "RDB_ERR_NO_SUCH_ITEM" when [RDB_NOSUCH_ITEM];
+    given ($dbmgr->Error) {
+      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
       ## an unknown non-hashref $item is also a DB_ERR:
       default { "RPL_DB_ERR" }
     }
@@ -396,19 +393,25 @@ sub _cmd_rdb {
         unless $rdb =~ /^[A-Za-z0-9]+$/;
 
       my $retval = $dbmgr->createdb($rdb);
-      if      ($retval == RDB_EXISTS) {
-        $resp = rplprintf( $core->lang->{RDB_ERR_RDB_EXISTS},
-          { nick => $nickname, rdb => $rdb, op => $cmd }
-        );
-      } elsif ($retval == RDB_DBFAIL) {
-        $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
-      } elsif ($retval == SUCCESS) {
-        $resp = rplprintf( $core->lang->{RDB_CREATED},
-          { nick => $nickname, rdb  => $rdb }
-        );
+
+      my $rplp = $core->rpl_parser;
+      $rplp->nick( $nickname );
+      $rplp->rdb( $rdb );
+      $rplp->op( $cmd );
+      
+      my $rpl;
+      
+      if ($retval) {
+        $rpl = "RDB_CREATED";
       } else {
-        $resp = "Unknown retval $retval from createdb";
+        given ($dbmgr->Error) {
+          $rpl = "RDB_ERR_RDB_EXISTS" when "RDB_EXISTS";
+          $rpl = "RDB_DBFAIL"         when "RDB_DBFAIL";        
+          default { $resp = "Unknown retval $retval from createdb"; }
+        }
       }
+      
+      return $rplp->Format($rpl);
     }
 
     when ("dbdel") {
@@ -421,32 +424,25 @@ sub _cmd_rdb {
       $rplp->rdb($rdb);
       $rplp->op($cmd);
 
-      my $retval = $self->_delete_rdb($rdb);
+      my ($retval, $err) = $self->_delete_rdb($rdb);
+      
+      my $rpl;
 
-      SWITCH: {
-        if ($retval == RDB_NOTPERMITTED) {
-          $resp = $rplp->Format("RDB_ERR_NOTPERMITTED"); last SWITCH
+      if ($retval) {
+        $rpl = "RDB_DELETED";
+      } else {
+        ## FIXME handle retvals from _delete_rdb
+        ## _delete_rdb should act like Database.pm
+        given ($err) {
+          $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
+          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+          $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
+          default { return "Unknown err $err from _delete_rdb" }
         }
-
-        if ($retval == RDB_NOSUCH) {
-          $resp = $rplp->Format("RDB_ERR_NO_SUCH_RDB");  last SWITCH
-        }
-        
-        if ($retval == RDB_DBFAIL) {
-          $resp = $rplp->Format("RPL_DB_ERR");           last SWITCH
-        }
-        
-        if ($retval == RDB_FILEFAILURE) {
-          $resp = $rplp->Format("RDB_UNLINK_FAILED");    last SWITCH
-        }
-
-        if ($retval == SUCCESS) {
-          $resp = $rplp->Format("RDB_DELETED");          last SWITCH
-        }
-
-        $resp = "Unknown retval $retval from _delete_rdb";
       }
       
+      return $rplp->Format($rpl);
     }
     
     when ("add") {
@@ -457,17 +453,22 @@ sub _cmd_rdb {
       $rplp->nick($nickname);
       $rplp->rdb($rdb);
 
-      my $retval = $self->_add_item($rdb, decode_irc($item), $username);
-            
-      if      ($retval ~~ RDB_NOSUCH) {
-        $resp = $rplp->Format("RDB_ERR_NO_SUCH_RDB");
-      } elsif ($retval ~~ RDB_DBFAIL) {
-        $resp = rplprintf( $core->lang->{RPL_DB_ERR} );
-      } else {
-        ## should've been returned a unique index number
+      my ($retval, $err) = 
+        $self->_add_item($rdb, decode_irc($item), $username);
+
+      my $rpl;
+      if ($retval) {
         $rplp->index($retval);
-        $resp = $rplp->Format("RBD_ITEM_ADDED");
+        $rpl = "RDB_ITEM_ADDED";
+      } else {
+        given ($err) {
+          $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
+          $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
+          default { return "Unknown err $err from _add_item" }
+        }
       }
+
+      return $rplp->Format($rpl);
     }
     
     when ("del") {
@@ -480,59 +481,56 @@ sub _cmd_rdb {
       $rplp->rdb($rdb);
       $rplp->index($item_idx);
 
-      my $retval = $self->_delete_item($rdb, $item_idx, $username);
+      my ($retval, $err) = 
+        $self->_delete_item($rdb, $item_idx, $username);
 
-      SWITCH: {
-        if ($retval ~~ RDB_NOSUCH) {
-          $resp = $rplp->Format("RDB_ERR_NO_SUCH_RDB");          last SWITCH
+      my $rpl;
+      if ($retval) {
+        $rpl = "RDB_ITEM_DELETED";
+      } else {
+        given ($err) {
+          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+          $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
         }
-        
-        if ($retval ~~ RDB_DBFAIL) {
-          $resp = rplprintf( $core->lang->{RPL_DB_ERR} );        last SWITCH
-        }
-        
-        if ($retval ~~ RDB_NOSUCH_ITEM) {
-          $resp = $rplp->Format("RDB_ERR_NO_SUCH_ITEM");         last SWITCH
-        }
-        
-        $resp = $rplp->Format("RDB_ITEM_DELETED");
-      }  ## SWITCH
-
+      }
+      
+      return $rplp->Format($rpl);
     }
 
     when ("get") {
       my ($rdb, $idx) = @message;
       return 'Syntax: rdb get <RDB> <index key>'
-        unless $rdb;
+        unless $rdb and $idx;
+
+      my $rplp = $core->rpl_parser || return 'RPL parser failure';
+      $rplp->nick($nickname);
+      $rplp->rdb($rdb);
+      $rplp->index($idx);
       
       my $dbmgr = $self->{CDBM};
       unless ( $dbmgr->dbexists($rdb) ) {
-        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB},
-          { nick => $nickname, rdb => $rdb }
-        );
+        return $rplp->Format("RDB_ERR_NO_SUCH_RDB");
       }
       
       my $item = $dbmgr->get($rdb, $idx);
-      unless (ref $item eq 'HASH') {
-        if    ($item ~~ RDB_NOSUCH_ITEM) {
-          return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_ITEM},
-            { nick => $nickname, rdb  => $rdb, index => $idx }
-          );
+
+      if ($item and ref $item eq 'HASH') {
+        my $indexkey = $item->{DBKEY}  // '(undef)';
+        my $content  = $item->{String} // '(undef)';
+        return "[${indexkey}] $content"
+      } else {
+        my $err = $dbmgr->Error || 'Unknown error';
+        my $rpl;
+        given ($err) {
+          $rpl = "RDB_ERR_NO_SUCH_ITEM"  when "RDB_NOSUCH_ITEM";
+          $rpl = "RDB_ERR_NO_SUCH_RDB"   when "RDB_NOSUCH";
+          $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
+          default { return "Error: $err" }
         }
-        elsif ($item ~~ RDB_DBFAIL) {
-          return rplprintf( $core->lang->{RPL_DB_ERR} );
-        }
-        elsif ($item ~~ RDB_NOSUCH) {
-          return rplprintf( $core->lang->{RPL_ERR_NO_SUCH_RDB},
-            { nick => $nickname, rdb => $rdb }
-          );
-        }
-        return "Unknown exit status $item"      
+        return $rplp->Format($rpl);
       }
-     
-      my $indexkey = $item->{DBKEY}  // '(undef - broken db!)';
-      my $content  = $item->{String} // '(undef - broken db!)';
-      $resp = "[${indexkey}] $content"
+
     }
 
     when ("info") {
@@ -558,18 +556,16 @@ sub _cmd_rdb {
       $rplp->index($idx);
 
       my $item = $dbmgr->get($rdb, $idx);
-      unless (ref $item eq 'HASH') {
-      
-        if    ($item ~~ RDB_NOSUCH_ITEM) {
-          return $rplp->Format("RDB_ERR_NO_SUCH_ITEM");
+      unless ($item && ref $item eq 'HASH') {
+        my $err = $dbmgr->Error || 'Unknown error';
+        my $rpl;
+        given ($err) {
+          $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
+          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+          default { return "Error: $err" }
         }
-        elsif ($item ~~ RDB_DBFAIL) {
-          return rplprintf( $core->lang->{RPL_DB_ERR} );
-        }
-        elsif ($item ~~ RDB_NOSUCH) {
-          return $rplp->Format("RPL_ERR_NO_SUCH_RDB");
-        }
-        return "Unknown exit status $item"
+        return $rplp->Format($rpl); 
       }
 
       my $added_dt = DateTime->from_epoch(
@@ -718,8 +714,9 @@ sub _searchidx {
   my $ret = $dbmgr->search($rdb, $string);
   
   unless (ref $ret eq 'ARRAY') {
-    $self->{core}->log->warn("searchidx failure: retval: $ret");
-    return wantarray ? () : $ret ;
+    my $err = $dbmgr->Error;
+    $self->{core}->log->warn("searchidx failure: retval: $err");
+    return wantarray ? () : $err ;
   }
   return wantarray ? @$ret : $ret ;
 }
@@ -733,7 +730,7 @@ sub _add_item {
   my $dbmgr = $self->{CDBM};
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot add item to nonexistant rdb: $rdb");
-    return RDB_NOSUCH
+    return (0, 'RDB_NOSUCH')
   }
   
   my $itemref = {
@@ -743,14 +740,13 @@ sub _add_item {
     Votes => { Up => 0, Down => 0 },
   };
 
-  ## on failure put() will return one of:
-  ##   RDB_NOSUCH
-  ##   RDB_DBFAIL
   my $status = $dbmgr->put($rdb, $itemref);
   
-  if ($status =~ /^\d+$/) {
-    return $status if $status == RDB_DBFAIL 
-                   or $status == RDB_NOSUCH;
+  unless ($status) {
+    ##   RDB_NOSUCH
+    ##   RDB_DBFAIL
+    my $err = $dbmgr->Error;
+    return (0, $err)
   }
 
   ## otherwise we should've gotten the new key back:
@@ -767,17 +763,15 @@ sub _delete_item {
   
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete from nonexistant rdb: $rdb");
-    return RDB_NOSUCH
+    return (0, 'RDB_NOSUCH')
   }
 
-  my $retval = $dbmgr->del($rdb, $item_idx);
-  if ( $retval 
-       ~~ [ RDB_DBFAIL, RDB_NOSUCH, RDB_NOSUCH_ITEM ] ) 
-  {
-    $core->log->debug(
-      "cannot delete item: $item_idx [$rdb] (err: $retval)"
-    );
-    return $retval
+  my $status = $dbmgr->del($rdb, $item_idx);
+  
+  unless ($status) {
+    my $err = $dbmgr->Error;
+    $core->log->debug("cannot _delete_item: $rdb $item_idx ($err)");
+    return (0, $err)
   }
 
   --$core->Provided->{randstuff_items} if $rdb eq 'main';
@@ -795,30 +789,36 @@ sub _delete_rdb {
 
   unless ($can_delete) {
     $core->log->debug("attempted delete but AllowDelete = 0");
-    return RDB_NOTPERMITTED
+    return (0, 'RDB_NOTPERMITTED')
   }
 
   my $dbmgr = $self->{CDBM};
 
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete nonexistant rdb $rdb");
-    return RDB_NOSUCH
-  } else {
-    if ($rdb eq 'main') {
-      ## check if this is 'main'
-      ##  check core cfg to see if we can delete 'main'
-      ##  default to no
-      my $can_del_main = $pcfg->{Opts}->{AllowDeleteMain} // 0;
-      unless ($can_del_main) {
-        $core->log->debug(
-          "attempted to delete main but AllowDelete Main = 0"
-        );
-        return RDB_NOTPERMITTED
-      }
-    }
-    
-    return $dbmgr->deldb($rdb);
+    return (0, 'RDB_NOSUCH')
   }
+
+  if ($rdb eq 'main') {
+    ## check if this is 'main'
+    ##  check core cfg to see if we can delete 'main'
+    ##  default to no
+    my $can_del_main = $pcfg->{Opts}->{AllowDeleteMain} // 0;
+    unless ($can_del_main) {
+      $core->log->debug(
+        "attempted to delete main but AllowDelete Main = 0"
+      );
+      return (0, 'RDB_NOTPERMITTED')
+    }    
+  }
+
+  my $status = $dbmgr->deldb($rdb);
+  
+  unless ($status) {
+    my $err = $dbmgr->Error;
+    return $err
+  }
+
 }
 
 
