@@ -679,7 +679,7 @@ sub Bot_rdb_broadcast {
     my @channels = map { lc_irc($_, $casemap) } keys %$on_channels;
 
     CHAN: for my $channel (@channels) {
-      next CHAN if $chcfg->{$channel}->{rdb_randstuffs} == 0;
+      next CHAN if ($chcfg->{$channel}->{rdb_randstuffs}//1) == 0;
  
       ## action/msg check    
       if ( index($random, '+') == 0 ) {
