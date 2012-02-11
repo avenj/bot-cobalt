@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -149,23 +149,23 @@ sub _cmd_randstuff {
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
-  my $rplp = $core->rpl_parser || return 'RPL parser failure';
-  $rplp->nick( $src_nick // '(undef)' );
+  my $rplvars;
+  $rplvars->{nick} = $src_nick;
 
   unless ( $core->auth_level($context, $src_nick) >= $required_level ) {
-    return $rplp->Format("RPL_NO_ACCESS");
+    return rplprintf( $core->lang->{RPL_NO_ACCESS}, $rplvars );
   }
   
   my $rdb = 'main';      # randstuff is 'main', darkbot legacy
-  $rplp->rdb($rdb);
+  $rplvars->{rdb} = $rdb;
   ## ...but this may be randstuff ~rdb ... syntax:
   if (@message && index($message[0], '~') == 0) {
     $rdb = substr(shift @message, 1);
-    $rplp->rdb($rdb);
+    $rplvars->{rdb} = $rdb;
     my $dbmgr = $self->{CDBM};
     unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
-      return $rplp->Format("RDB_ERR_NO_SUCH_RDB");
+      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
     }
   }
 
@@ -174,25 +174,29 @@ sub _cmd_randstuff {
   $randstuff_str = decode_irc($randstuff_str);
 
   unless ($randstuff_str) {
-    return $rplp->Format("RDB_ERR_NO_STRING");
+    return rplprintf( $core->lang->{RDB_ERR_NO_STRING}, $rplvars );
   }
 
   ## call _add_item
   my $username = $core->auth_username($context, $src_nick);
   my ($newidx, $err) =
     $self->_add_item($rdb, $randstuff_str, $username);
-  $rplp->index($newidx);
+  $rplvars->{index} = $newidx;
   ## _add_item returns either a status from ::Database->put
   ## or a new item key:
 
   unless ($newidx) {
     given ($err) {
-      return $rplp->Format("RPL_DB_ERR")          when "RDB_DBFAIL";
-      return $rplp->Format("RPL_ERR_NO_SUCH_RDB") when "RDB_NOSUCH";
+      return rplprintf( $core->lang->{RPL_DB_ERR}, $rplvars )
+        when "RDB_DBFAIL";
+      
+      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+        when "RDB_NOSUCH";
+      
       default { return "Unknown error status: $err" }
     }
   } else {
-    return $rplp->Format("RDB_ITEM_ADDED");
+    return rplprintf( $core->lang->{RDB_ITEM_ADDED}, $rplvars );
   }
   
 }
@@ -394,24 +398,24 @@ sub _cmd_rdb {
 
       my $retval = $dbmgr->createdb($rdb);
 
-      my $rplp = $core->rpl_parser;
-      $rplp->nick( $nickname );
-      $rplp->rdb( $rdb );
-      $rplp->op( $cmd );
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+        op  => $cmd,
+      };
       
-      my $rpl;
-      
+      my $rpl;      
       if ($retval) {
         $rpl = "RDB_CREATED";
       } else {
         given ($dbmgr->Error) {
           $rpl = "RDB_ERR_RDB_EXISTS" when "RDB_EXISTS";
           $rpl = "RDB_DBFAIL"         when "RDB_DBFAIL";        
-          default { $resp = "Unknown retval $retval from createdb"; }
+          default { return "Unknown retval $retval from createdb"; }
         }
       }
       
-      return $rplp->Format($rpl);
+      return rplprintf( $core->lang->{$rpl}, $rplvars );
     }
 
     when ("dbdel") {
@@ -419,15 +423,15 @@ sub _cmd_rdb {
       my ($rdb) = @message;
       return 'Syntax: rdb dbdel <RDB>' unless $rdb;
       
-      my $rplp = $core->rpl_parser || return 'RPL parser failure';
-      $rplp->nick($nickname);
-      $rplp->rdb($rdb);
-      $rplp->op($cmd);
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+        op   => $cmd,
+      };
 
       my ($retval, $err) = $self->_delete_rdb($rdb);
       
       my $rpl;
-
       if ($retval) {
         $rpl = "RDB_DELETED";
       } else {
@@ -442,23 +446,24 @@ sub _cmd_rdb {
         }
       }
       
-      return $rplp->Format($rpl);
+      return rplprintf( $core->lang->{$rpl}, $rplvars );
     }
     
     when ("add") {
       my ($rdb, $item) = @message;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
 
-      my $rplp = $core->rpl_parser || return 'RPL parser failure';
-      $rplp->nick($nickname);
-      $rplp->rdb($rdb);
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+      };
 
       my ($retval, $err) = 
         $self->_add_item($rdb, decode_irc($item), $username);
 
       my $rpl;
       if ($retval) {
-        $rplp->index($retval);
+        $rplvars->{index} = $retval;
         $rpl = "RDB_ITEM_ADDED";
       } else {
         given ($err) {
@@ -468,7 +473,7 @@ sub _cmd_rdb {
         }
       }
 
-      return $rplp->Format($rpl);
+      return rplprintf( $core->lang->{$rpl}, $rplvars );
     }
     
     when ("del") {
@@ -476,10 +481,11 @@ sub _cmd_rdb {
       return 'Syntax: rdb del <RDB> <index number>'
         unless $rdb and $item_idx;
 
-      my $rplp = $core->rpl_parser || return 'RPL parser failure';
-      $rplp->nick($nickname);
-      $rplp->rdb($rdb);
-      $rplp->index($item_idx);
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+        index => $item_idx,
+      };
 
       my ($retval, $err) = 
         $self->_delete_item($rdb, $item_idx, $username);
@@ -494,8 +500,8 @@ sub _cmd_rdb {
           $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
         }
       }
-      
-      return $rplp->Format($rpl);
+
+      return rplprintf( $core->lang->{$rpl}, $rplvars ) ;      
     }
 
     when ("get") {
@@ -503,14 +509,15 @@ sub _cmd_rdb {
       return 'Syntax: rdb get <RDB> <index key>'
         unless $rdb and $idx;
 
-      my $rplp = $core->rpl_parser || return 'RPL parser failure';
-      $rplp->nick($nickname);
-      $rplp->rdb($rdb);
-      $rplp->index($idx);
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+        index => $idx,
+      };
       
       my $dbmgr = $self->{CDBM};
       unless ( $dbmgr->dbexists($rdb) ) {
-        return $rplp->Format("RDB_ERR_NO_SUCH_RDB");
+        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
       }
       
       my $item = $dbmgr->get($rdb, $idx);
@@ -528,7 +535,7 @@ sub _cmd_rdb {
           $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
           default { return "Error: $err" }
         }
-        return $rplp->Format($rpl);
+        return rplprintf( $core->lang->{$rpl}, $rplvars );
       }
 
     }
@@ -541,11 +548,12 @@ sub _cmd_rdb {
       
       my $dbmgr = $self->{CDBM};
 
-      my $rplp = $core->rpl_parser || return 'RPL parser failure';
-      $rplp->nick($nickname);
-      $rplp->rdb($rdb);
+      my $rplvars = {
+        nick => $nickname,
+        rdb  => $rdb,
+      };
 
-      return $rplp->Format("RDB_ERR_NO_SUCH_RDB")
+      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
         unless $dbmgr->dbexists($rdb);
 
       unless ($idx) {
@@ -553,7 +561,7 @@ sub _cmd_rdb {
         return "RDB $rdb has $n_keys items"
       }
       
-      $rplp->index($idx);
+      $rplvars->{index} = $idx;
 
       my $item = $dbmgr->get($rdb, $idx);
       unless ($item && ref $item eq 'HASH') {
@@ -565,7 +573,7 @@ sub _cmd_rdb {
           $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
           default { return "Error: $err" }
         }
-        return $rplp->Format($rpl); 
+        return rplprintf( $core->lang->{$rpl}, $rplvars );
       }
 
       my $added_dt = DateTime->from_epoch(
@@ -574,7 +582,7 @@ sub _cmd_rdb {
       my $votes_r = $item->{Votes} // {};
       my $added_by = $item->{AddedBy} // '(undef)';
   
-      my $rplvars = {
+      $rplvars = {
         nick  => $nickname,
         rdb   => $rdb,
         index => $idx,

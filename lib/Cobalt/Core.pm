@@ -16,7 +16,6 @@ extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
 
 use Cobalt::IRC;
-use Cobalt::RPL;
 
 ## a whole bunch of attributes ...
 
@@ -642,20 +641,6 @@ sub get_plugin_cfg {
 }
 
 
-sub rpl_parser {
-  my $self = shift;
-  
-  ## Spawn a Cobalt::RPL parser
-  $self->log->debug("spawning rpl_parser");
-
-  my $langset = $self->lang;
-  
-  my $rpl_obj = Cobalt::RPL->new(
-    Lang => $langset,
-  ) || $self->log->warn("rpl_parser: could not create obj");
-    
-  return $rpl_obj
-}
 
 __PACKAGE__->meta->make_immutable;
 no Moose; 1;
