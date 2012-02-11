@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 use 5.12.1;
 use strict;
@@ -52,7 +52,7 @@ sub Bot_public_cmd_shorturl {
 }
 
 sub Bot_public_cmd_shorten {
- Bot_public_cmd_short(@_);
+ Bot_public_cmd_shorturl(@_);
 }
 
 sub Bot_public_cmd_longurl {
@@ -72,7 +72,7 @@ sub Bot_public_cmd_longurl {
 }
 
 sub Bot_public_cmd_lengthen {
-  Bot_public_cmd_long(@_);
+  Bot_public_cmd_longurl(@_);
 }
 
 
