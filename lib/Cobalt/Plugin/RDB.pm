@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.28';
+our $VERSION = '0.29';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -342,29 +342,14 @@ sub _cmd_rdb {
   my ($self, $parsed_msg_a, $msg_h) = @_;
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
-  my @handled = qw/
-    add
-    del
-    get
-    dbadd
-    dbdel
-    info
-    search
-    searchidx
-  /;
 
-  my $cmd = lc(shift @message || '');
-  $cmd = 'del' if $cmd eq 'delete';
-
-  unless ($cmd && $cmd ~~ @handled) {
-    return "Commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
-           ."get <rdb> <idx>, search(idx) <rdb> <str>, dbadd <rdb>, "
-           ."dbdel <rdb>";
-  }
-  
   my $pcfg = $core->get_plugin_cfg( __PACKAGE__ );
   my $required_levs = $pcfg->{RequiredLevels} // {};
+  ## this hash maps commands to levels.
+  ## commands not found here aren't recognized.
   my %access_levs = (
+    get    => $required_levs->{rdb_get_item}  // 0,
+    dblist => $required_levs->{rdb_dblist}    // 0,
     info   => $required_levs->{rdb_info}      // 0,
     dbadd  => $required_levs->{rdb_create}    // 9999,
     dbdel  => $required_levs->{rdb_delete}    // 9999,
@@ -373,10 +358,20 @@ sub _cmd_rdb {
     search    => $required_levs->{rdb_search} // 0,
     searchidx => $required_levs->{rdb_search} // 0,
   );
-  
+
+  my $cmd = lc(shift @message || '');
+  $cmd = 'del' if $cmd eq 'delete';
+
+  my @handled = keys %access_levs;
+  unless ($cmd && $cmd ~~ @handled) {
+    return "Commands: add <rdb>, del <rdb>, info <rdb> <idx>, "
+           ."get <rdb> <idx>, search(idx) <rdb> <str>, dbadd <rdb>, "
+           ."dbdel <rdb>";
+  }
+    
   my $context  = $msg_h->{context};
   my $nickname = $msg_h->{src_nick};
-  my $user_lev = $core->auth_level($context, $nickname);
+  my $user_lev = $core->auth_level($context, $nickname) // 0;
   my $username = $core->auth_username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
@@ -613,7 +608,7 @@ sub _cmd_rdb {
         unless $rdb and $str;
       my @indices = $self->_searchidx($rdb, $str);
       $indices[0] = "NONE" unless @indices;
-      $resp = "First 20 matches: ".join('  ', @indices);
+      $resp = "First 30 matches: ".join('  ', @indices[0 .. 29]);
     }
 
   }
