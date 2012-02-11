@@ -17,6 +17,8 @@ extends 'POE::Component::Syndicator',
 
 use Cobalt::IRC;
 
+use Storable qw/dclone/;
+
 ## a whole bunch of attributes ...
 
 has 'cfg' => (
@@ -131,15 +133,6 @@ has 'Servers' => (
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is  => 'rw',
-  isa => 'HashRef',
-  default => sub { {} },
-);
-
-## map stringified plugin objs to aliases
-## saves us having to ask Pipeline about it later
-## (note that Cobalt::IRC doesn't live here)
-has 'PluginObjects' => (
   is  => 'rw',
   isa => 'HashRef',
   default => sub { {} },
@@ -275,12 +268,7 @@ sub syndicator_started {
     
     my $obj = $module->new();
 
-    ## store a hash mapping stringified objects to aliases
-    ## then we can get_plugin_cfg for $self and support 
-    ## multiple instances of one plugin sanely
-    $self->PluginObjects->{$obj} = $plugin;
     unless ( $self->plugin_add($plugin, $obj) ) {
-      delete $self->PluginObjects->{$obj};
       $self->log->error("plugin_add failure for $plugin");
       next
     }
@@ -642,7 +630,8 @@ sub get_irc_server {
 sub get_core_cfg {
   ## Get (a copy of) $core->cfg->{core}:
   my ($self) = @_;
-  return \%{ $self->cfg->{core} };
+  my $corecfg = dclone($self->cfg->{core});
+  return $corecfg
 }
 
 sub get_channels_cfg {
@@ -653,19 +642,32 @@ sub get_channels_cfg {
     return undef
   } 
   ## Returns empty hash if there's no conf for this channel:
-  return \%{ $self->cfg->{channels}->{$context} // {} }
+  my $chcfg = dclone( $self->cfg->{channels}->{$context} // {} );
+  return $chcfg
 }
 
 sub get_plugin_cfg {
-  my ($self, $obj) = @_;
+  my ($self, $plugin) = @_;
   ## my $plugcf = $core->get_plugin_cfg( $self )
-  ## -or-
-  ## my $plugcf = $core->get_plugin_cfg( $alias )
   ## Returns undef if no cfg was found
-  my $alias = ref $obj ? $self->PluginObjects->{$obj} : $obj ;
-  ## deeper ref, probably from an event handler:
-  if (ref $alias eq 'REF') {
-    $alias = ${ $alias };
+  
+  my $alias;
+
+  if (ref $plugin) {
+    ## plugin obj (theoretically) specified
+    (my $plugobj, $alias) = $self->pipeline->get($plugin);
+    unless ($plugobj) {
+      $self->log->error("get_plugin_cfg; pipeline->get failure");
+      return undef
+    }
+  } else {
+    ## string alias specified
+    $alias = $plugin;
+  }
+
+  unless ($alias) {
+    $self->log->error("get_plugin_cfg: no plugin alias?");
+    return undef
   }
   
   my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return;

@@ -120,9 +120,9 @@ hash directly.
 Loaded configuration values for plugins are available via 
 B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
 
-  ## ask Core for our alias:
-  my $plugin_alias = $core->PluginObjects->{$self};
-  my $plug_cf = $core->cfg->{plugin_cf}->{$plugin_alias};
+  ## ask pipeline for our alias:
+  my ($obj, $alias) = $core->pipeline->get($self);
+  my $plug_cf = $core->cfg->{plugin_cf}->{ $alias };
   ## modify this plugin's conf hash directly:
   $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
 
