@@ -6,8 +6,21 @@ our $VERSION = '0.31';
 ## We may have a lot of RDBs.
 ## This plugin tries to make it easy to operate on them discretely
 ## with a minimum of angst in the frontend app.
-## The frontend interfaces take RDB names; we map them to paths and 
+##
+## If there is no DB in our RDBDir named 'main' it is initialized.
+##
+## If an error occurs, the first argument returned will be boolean false.
+## The error as a simple string is available via the 'Error' method.
+## These values are only 'sort-of' human readable; they're holdovers from 
+## the previous constant retvals, and typically translated into langset 
+## RPLs by Plugin::RDB.
+##
+## Our RDB interfaces typically take RDB names; we map them to paths and 
 ## attempt to switch our ->{CURRENT} Cobalt::DB object appropriately.
+##
+## The frontend doesn't have to worry about dbopen/dbclose, which works 
+## for RDBs because access is almost always a single operation and we 
+## can afford to open / lock / access / unlock / close every call.
 ##
 ## If you're trying to program against this interface, I apologize. :)
 ## Go read the Cobalt::DB POD and write something better instead.
