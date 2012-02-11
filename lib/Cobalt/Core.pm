@@ -249,6 +249,11 @@ sub syndicator_started {
   $self->log->info("-> Initializing plugins . . .");
 
   my $i = 0;
+  my @plugins = sort {
+    ($self->cfg->{plugins}->{$b}->{Priority}//1)
+    <=>
+    ($self->cfg->{plugins}->{$a}->{Priority}//1)
+                } keys %{ $self->cfg->{plugins} };
   for my $plugin (sort keys %{ $self->cfg->{plugins} })
   { 
     next if $self->cfg->{plugins}->{$plugin}->{NoAutoLoad};
