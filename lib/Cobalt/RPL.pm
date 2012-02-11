@@ -36,6 +36,8 @@ sub new {
 
   ## ugly self keys are because these aren't valid rplprintf vars:
   $self->{'%%LANG'} = $langset;
+
+  $self->{'%%ADDED'} = { };
   
   return $self
 }
