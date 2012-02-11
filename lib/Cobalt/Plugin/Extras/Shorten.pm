@@ -161,3 +161,30 @@ sub _request_longurl {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::Shorten - IRC interface to metamark
+
+=head1 SYNOPSIS
+
+  !shorten http://some/long/url
+    
+  !lengthen http://xrl.us/<id>
+
+=head1 DESCRIPTION
+
+Provides a simple IRC interface to the http://xrl.us URL shortener.
+
+Uses L<Cobalt::Plugin::WWW> if available; otherwise falls back to LWP.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
