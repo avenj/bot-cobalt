@@ -27,7 +27,7 @@ B<Plugin authors should at least read the L<Cobalt::IRC> POD>
 =head3 plugins.conf
 
 Plugins specified in plugins.conf (located in our etc/) will be 
-automatically loaded at runtime.
+automatically loaded at runtime unless B<NoAutoLoad> is specified.
 
 C<plugins.conf> is YAML in the following structure:
 
@@ -35,6 +35,8 @@ C<plugins.conf> is YAML in the following structure:
   MyPlugin:
     Module: Cobalt::Plugin::User::MyPlugin
     Config: plugins/mine/myplugin.conf
+    ## Enable to skip runtime auto-loading:
+    #NoAutoLoad: 1
     ## Optional:
     Opts:
       Level: 2
@@ -44,8 +46,8 @@ B<YAML1.0>. You can read all about YAML at L<http://www.yaml.org> --
 for the most part, YAML is fairly self-explanatory.
 See L<Cobalt::Manual::PluginConf> for more about YAML and plugin configs.
 
-They'll be automatically loaded at run-time; the data structure loaded 
-will be stored in the core B<cfg> attribute, keyed by the plugin's 
+The config file will be loaded when the plugin is; the data structure 
+loaded will be stored in the core B<cfg> attribute, keyed by the plugin's 
 package name.
 
 Simple plugins might only need one or two config options; in this case, 
