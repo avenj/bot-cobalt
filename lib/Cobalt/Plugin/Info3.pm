@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -11,21 +11,13 @@ our $VERSION = '0.18';
 ##
 ## Also handles darkbot-style variable replacement
 
-use 5.12.1;
-use strict;
-use warnings;
-use Carp;
+use Cobalt::Common;
+use Cobalt::DB;
+## borrow RDB's SearchCache
+use Cobalt::Plugin::RDB::SearchCache;
 
 use DateTime;
 
-use Object::Pluggable::Constants qw/ :ALL /;
-
-use Cobalt::Utils qw/ :ALL /;
-
-use Cobalt::DB;
-
-## borrow RDB's SearchCache
-use Cobalt::Plugin::RDB::SearchCache;
 
 sub new { bless( {}, shift ) }
 
