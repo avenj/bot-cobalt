@@ -19,7 +19,7 @@ sub Cobalt_register {
     [ 'public_msg' ],
   );
 
-  $core->log->info("Registered");
+  $core->log->info("$VERSION loaded");
   return PLUGIN_EAT_NONE
 }
 

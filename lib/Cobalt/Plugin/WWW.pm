@@ -45,7 +45,7 @@ sub Cobalt_register {
     ],
   );
   
-  $core->log->info("Registered");
+  $core->log->info("$VERSION loaded");
 
   $core->log->debug("Spawning POE session");
   
