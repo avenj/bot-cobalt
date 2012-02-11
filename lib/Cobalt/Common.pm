@@ -1,12 +1,18 @@
 package Cobalt::Common;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
+
+## Import a bunch of stuff very commonly useful to Cobalt plugins
+##
+## Does some Evil; the importing package will also have strict, warnings, 
+## and the '5.12' featureset ('say', 'given/when', 'unicode_strings' ..)
 
 use 5.12.1;  ## because you're gonna need it
 use strict;
 use warnings;
 
+use Carp;
+
 use base 'Exporter';
-## Import a bunch of stuff very commonly useful to Cobalt plugins
 
 use Cobalt::Utils qw/ :ALL /;
 
@@ -25,6 +31,8 @@ use Object::Pluggable::Constants qw/
   PLUGIN_EAT_ALL 
 /;
 
+## FIXME: These sets should be documented .. eventually ..
+
 our %EXPORT_TAGS = (
   string => [ qw/
   
@@ -39,6 +47,12 @@ our %EXPORT_TAGS = (
     strip_formatting
     
   / ],
+
+  errors => [ qw/
+    carp
+    croak
+    confess
+  / ],
   
   passwd => [ qw/
 
@@ -52,7 +66,7 @@ our %EXPORT_TAGS = (
 
   / ],
 
-  valid  => [ qw/
+  validate => [ qw/
     
     is_valid_nick_name
     is_valid_chan_name
@@ -181,6 +195,17 @@ See L<Cobalt::Utils> for details.
 
   timestr_to_secs
   secs_to_timestr
+
+=head3 Carp
+
+=head4 Warnings
+
+  carp
+  
+=head4 Errors
+
+  croak
+  confess
 
 =head1 BUGS
 
