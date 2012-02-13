@@ -220,7 +220,7 @@ sub _start {
 
   ## see if we should be identifying to nickserv automagically
   ## note that the 'Main' context's nickservpass exists in cobalt.conf:
-  if ($cfg->{IRC}->{NickServPass}) {
+  if (defined $cfg->{IRC}->{NickServPass}) {
     $self->irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
         Password => $cfg->{IRC}->{NickServPass},
@@ -301,11 +301,11 @@ sub irc_public {
   my ($nick, $user, $host) = parse_user($src);
   my $channel = $where->[0];
 
-  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->get_irc_casemap('Main');
   for my $mask (keys %{ $self->core->State->{Ignored} }) {
     ## Check against ignore list
     ## (Ignore list should be keyed by hostmask)
-    return if matches_mask( $mask, $src, $map );
+    return if matches_mask( $mask, $src, $casemap );
   }
 
   ## create a msg hash and send_event to self->core
@@ -390,9 +390,9 @@ sub irc_msg {
   ## private msg handler
   ## similar to irc_public
 
-  my $map = $self->core->get_irc_casemap("Main");
+  my $casemap = $self->core->get_irc_casemap("Main");
   for my $mask (keys %{ $self->core->State->{Ignored} }) {
-    return if matches_mask( $mask, $src, $map );
+    return if matches_mask( $mask, $src, $casemap );
   }
 
   my $sent_to = $target->[0];
@@ -422,9 +422,9 @@ sub irc_notice {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
-  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->get_irc_casemap('Main');
   for my $mask (keys %{ $self->core->State->{Ignored} }) {
-    return if matches_mask( $mask, $src, $map );
+    return if matches_mask( $mask, $src, $casemap );
   }
 
   my $msg = {
@@ -603,7 +603,7 @@ sub irc_mode {
   };
   ## try to guess whether the mode change was umode (us):
   my $me = $self->irc->nick_name();
-  my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->get_irc_casemap('Main');
   if ( eq_irc($me, $changed_on, $casemap) ) {
     ## our umode changed
     $self->core->send_event( 'umode_changed', 'Main', $modestr );
@@ -647,9 +647,9 @@ sub irc_nick {
     $self->core->send_event( 'self_nick_changed', 'Main', $new );
   }
 
-  my $map = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->get_irc_casemap('Main');
   ## is this just a case change ?
-  my $equal = eq_irc($old, $new, $map) ? 1 : 0 ;
+  my $equal = eq_irc($old, $new, $casemap) ? 1 : 0 ;
   my $nick_change = {
     old => $old,
     new => $new,
@@ -689,7 +689,7 @@ sub irc_part {
   };
 
   my $me = $self->irc->nick_name();
-  my $casemap = $self->core->Servers->{Main}->{CaseMap} // 'rfc1459';
+  my $casemap = $self->core->get_irc_casemap('Main');
   ## shouldfix? we could try an 'eq' here ... but is a part issued by
   ## force methods going to be guaranteed the same case ... ?
   if ( eq_irc($me, $nick, $casemap) ) {
