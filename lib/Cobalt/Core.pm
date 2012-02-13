@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_19';
+our $VERSION = '2.00_20';
 
 use 5.12.1;
 use Carp;
@@ -416,11 +416,12 @@ sub timer_set {
   ##   Context => $server_context, # defaults to 'Main'
 
   ## for example, a random-ID timer to join a channel 60s from now:
-  ##  timer_set( 60,
+  ##  my $id = timer_set( 60,
   ##    {
-  ##      Type => 'event', 
+  ##      Type  => 'event', 
   ##      Event => 'join',
-  ##      Args => [ $context, $channel ],
+  ##      Args  => [ $context, $channel ],
+  ##      Alias => $core->get_plugin_alias( $self ),
   ##    } 
   ##  );
 
@@ -473,32 +474,66 @@ sub timer_set {
     }
   }
 
+  # tag w/ __PACKAGE__ if no alias is specified
+  my $addedby = $ev->{Alias} // scalar caller;
+
   if ($event_name) {
     $self->TimerPool->{TIMERS}->{$id} = {
       ExecuteAt => time() + $delay,
-      Event => $event_name,
-      Args => [ @event_args ],
-      AddedBy => scalar caller(),
+      Event   => $event_name,
+      Args    => [ @event_args ],
+      AddedBy => $addedby,
     };
     $self->log->debug("timer_set; $id $delay $event_name");
     return $id
   } else {
     $self->log->debug("timer_set called but no timer added; bad type?");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
+    $self->log->debug("timer_set failure for ".join(' ', (caller)[0,2]) );
   }
-
+  return
 }
 
 sub timer_del {
   ## delete a timer by its ID
-  my $self = shift;
-  my $id = shift || return;
+  ## doesn't care if the timerID actually exists or not.
+  my ($self, $id) = @_;
+  return unless $id;
   $self->log->debug("timer del; $id");
   return delete $self->TimerPool->{TIMERS}->{$id};
 }
 
-## FIXME: timer_del_pkg is deprecated as of 2.00_18 and should go away
+sub timer_get_alias {
+  ## get all timerIDs for this alias
+  my ($self, $alias) = @_;
+  return unless $alias;
+  my @timers;
+  my $timerpool = $self->TimerPool->{TIMERS};
+  for my $timerID (keys %$timerpool) {
+    my $entry = $timerpool->{$timerID};
+    push(@timers, $timerID) if $entry->{AddedBy} eq $alias;
+  }
+  return wantarray ? @timers : \@timers;
+}
+
+sub timer_del_alias {
+  my ($self, $alias) = @_;
+  return $alias;
+  my $timerpool = $self->TimerPool->{TIMERS};
+  
+  my @deleted;
+  for my $timerID (keys %$timerpool) {
+    my $entry = $timerpool->{$timerID};
+    if ($entry->{AddedBy} eq $alias) {
+      delete $timerpool->{$timerID};
+      push(@deleted, $timerID);
+    }
+  }
+  return wantarray ? @deleted : scalar @deleted ;
+}
+
+## FIXME timer_del_pkg is deprecated as of 2.00_18 and should go away
 ## (may clobber other timers if there are dupe modules)
+## pkgs not declaring their alias in timer_set are on their own
 sub timer_del_pkg {
   my $self = shift;
   my $pkg = shift || return;

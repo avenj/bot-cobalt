@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 use 5.12.1;
 use strict;
@@ -67,7 +67,8 @@ sub Bot_public_cmd_alarmclock {
       Type => 'msg',
       Context => $context,
       Target => $channel,
-      Text => $txtstr,
+      Text   => $txtstr,
+      Alias  => $core->get_plugin_alias($self),
     }
   );
 

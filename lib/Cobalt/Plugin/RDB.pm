@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.293';
+our $VERSION = '0.294';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -62,7 +62,10 @@ sub Cobalt_register {
   $self->{RandDelay} = $randdelay;
   if ($randdelay) {
     $core->timer_set( $randdelay, 
-      { Event => 'rdb_broadcast' }, 
+      { 
+        Event => 'rdb_broadcast', 
+        Alias => $core->get_plugin_alias($self) 
+      }, 
       'RANDSTUFF'
     );
   }
@@ -699,7 +702,11 @@ sub Bot_rdb_broadcast {
   ## reset timer unless randdelay is 0
   if ($self->{RandDelay}) {
     $core->timer_set( $self->{RandDelay}, 
-      { Event => 'rdb_broadcast' }, 'RANDSTUFF'
+      { 
+        Event => 'rdb_broadcast', 
+        Alias => $core->get_plugin_alias($self) 
+      }, 
+      'RANDSTUFF'
     );
   }
 

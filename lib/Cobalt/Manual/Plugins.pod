@@ -948,6 +948,23 @@ If no B<Type> is specified, I<event> is assumed:
     }
   );
 
+You can tags packages with your plugin's B<Alias>, if you'd like; 
+if an Alias is set, you'll be able to clear all timers by alias via 
+L</timer_del_alias>:
+
+  ## Alias-tagged timer
+  my $id = $core->timer_set( $secs,
+    {
+      Event => $event,
+      Args  => [ @args ],
+      ## Safely retrieve our $self object's plugin alias:
+      Alias => $core->get_plugin_alias( $self ),
+    },
+  );
+
+Additionally, L<Cobalt::Plugin::PluginMgr> automatically tries to clear 
+plugin timers for unloaded plugins; this only works for Alias-tagged timers.
+Without a specified Alias, a timer is essentially considered ownerless.
 
 By default, a random timer ID is chosen (and returned).
 
@@ -990,6 +1007,20 @@ if needed:
      ## readding postponed timer successful
    }
 
+=head4 timer_del_alias
+
+Delete all timers owned by the specified alias:
+
+  my $plugin_alias  = $core->plugin_get_alias( $self );
+  my $deleted_count = $core->timer_del_alias( $plugin_alias );
+
+Only works for timers tagged with their Alias; see L</timer_set>.
+Timers with no Alias tag are considered essentially "ownerless" and left 
+to their own devices; they'll fail quietly if the timed event was handled 
+by an unloaded plugin.
+
+This is also called automatically by the core plugin manager 
+(L<Cobalt::Plugin::PluginMgr>) when a plugin is unloaded.
 
 =head2 Syndicated core events
 

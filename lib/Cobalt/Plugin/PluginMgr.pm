@@ -60,7 +60,8 @@ sub _unload {
       $core->unloader_cleanup($plugisa);
       ## also cleanup our config if there is one:
       delete $core->cfg->{plugin_cf}->{$alias};
-      $core->timer_del_pkg($plugisa); ## FIXME object or alias keyed timers
+      ## and timers:
+      $core->timer_del_alias($alias);
       
       $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
         { plugin => $alias } 
