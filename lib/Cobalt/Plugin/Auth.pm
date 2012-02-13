@@ -422,6 +422,21 @@ sub _cmd_chpass {
   );
 }
 
+sub _cmd_whoami {
+  my ($self, $context, $msg) = @_;
+  ## FIXME return current auth status
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $self->core->auth_level($context, $nick);
+  my $auth_usr = $self->core->auth_username($context, $nick);
+  return rplprintf( $self->core->lang->{AUTH_STATUS},
+    {
+      username => $auth_usr,
+      nick => $nick,
+      lev  => $auth_lev,
+    }
+  );  
+}
+
 sub _cmd_user {
   my ($self, $context, $msg) = @_;
 
