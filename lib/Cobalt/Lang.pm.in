@@ -1,5 +1,5 @@
 package Cobalt::Lang;
-our $VERSION = "0.15";
+our $VERSION = "0.16";
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
@@ -48,9 +48,22 @@ sub load_langset {  ## load_langset(language)
   my $serializer = Cobalt::Serializer->new(%opts);
   my $langset = $serializer->readfile($path);
 
-  ## Load __DATA__'s english langset first:
+  ## Load __DATA__'s english langset:
   my $default_langset_yaml = <DATA> ;
   my $default_langset = $serializer->thaw($default_langset_yaml);
+
+  my $extern_rev  = $langset->{REV} // 0;
+  my $builtin_rev = $default_langset->{REV} // 0;
+  
+  ## not a prefixed load, probably a core langset.
+  ## is the on-disk set out of date?
+  if (!$prefix && $builtin_rev > $extern_rev) {
+      $self->log->warn(
+        "This appears to be a core langset load, but the internal"
+        ." set has a higher REV number than $path:"
+        ." $builtin_rev > $extern_rev"
+      ) if $self->can('log');
+  }
   
   ## Push anything missing in $langset
   ## (but only if there was no prefix specified)
