@@ -61,7 +61,7 @@ sub load_langset {  ## load_langset(language)
       $self->log->warn(
         "This appears to be a core langset load, but the internal"
         ." set has a higher REV number than $path:"
-        ." $builtin_rev > $extern_rev"
+        ." $builtin_rev > $extern_rev -- you may want to update langsets."
       ) if $self->can('log');
   }
   
