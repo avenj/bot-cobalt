@@ -240,6 +240,31 @@ sub is_reloadable {
   return 1
 }
 
+sub unloader_cleanup {
+  ## clean up symbol table after a module load fails miserably
+  ## (or when unloading)
+  my ($self, $module) = @_;
+
+  $self->log->debug("cleaning up after $module (unloader_cleanup)");
+
+  my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';  
+  
+  $self->log->debug("removing from INC: $included");
+  delete $INC{$included};
+  
+  no strict 'refs';
+  @{$module.'::ISA'} = ();
+  my $s_table = $module.'::';
+  for my $symbol (keys %$s_table) {
+    next if $symbol =~ /\A[^:]+::\z/;
+    delete $s_table->{$symbol};
+  }
+  use strict;
+  
+  $self->log->debug("finished module cleanup");
+  return 1
+}
+
 sub syndicator_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
@@ -250,7 +275,8 @@ sub syndicator_started {
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
   my $irc_obj = Cobalt::IRC->new();
-  $self->plugin_add('IRC', $irc_obj);
+  $self->plugin_add('IRC', $irc_obj) 
+    or croak "Core IRC plugin could not be loaded!";
   $self->is_reloadable('IRC', $irc_obj);
 
   ## add configurable plugins
@@ -269,14 +295,18 @@ sub syndicator_started {
     my $module = $self->cfg->{plugins}->{$plugin}->{Module};
     
     eval "require $module";
-    if ($@)
-      { $self->log->warn("Could not load $module: $@"); next }
+    if ($@) {
+      $self->log->warn("Could not load $module: $@");
+      $self->unloader_cleanup($module);
+      next 
+    }
     
     my $obj = $module->new();
     $self->PluginObjects->{$obj} = $plugin;
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
       delete $self->PluginObjects->{$obj};
+      $self->unloader_cleanup($module);
       next
     }
     $self->is_reloadable($plugin, $obj);

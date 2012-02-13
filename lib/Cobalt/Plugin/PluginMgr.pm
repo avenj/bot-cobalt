@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 ## handles and eats: !plugin
 
@@ -56,27 +56,11 @@ sub _unload {
   } else {
     $core->log->info("Attempting to unload $alias ($plugisa) per request");
     if ( $core->plugin_del($alias) ) {
-
-      ## shamelessly borrowed from Class::Unload
-
-      ## clear from %INC:
-      my $included = join( '/', split /(?:'|::)/, $plugisa ) . '.pm';
-      $core->log->debug("removing from INC: $included");
-      delete $INC{$included};
-
-      ## clean up symbol table
-      no strict 'refs';
-      @{$plugisa.'::ISA'} = ();
-      my $s_table = $plugisa.'::';
-      for my $symbol (keys %$s_table) {
-        next if $symbol =~ /\A[^:]+::\z/;
-        delete $s_table->{$symbol};
-      }
-      use strict;
-
+      ## ask core to clean up symbol table:
+      $core->unloader_cleanup($plugisa);
       ## also cleanup our config if there is one:
       delete $core->cfg->{plugin_cf}->{$alias};
-      $core->timer_del_pkg($plugisa);
+      $core->timer_del_pkg($plugisa); ## FIXME object or alias keyed timers
       
       $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD}, 
         { plugin => $alias } 
@@ -103,17 +87,8 @@ sub _load_module {
     ## 'require' failed
     my $err = $@;
     $core->log->warn("Plugin load failure; $err");
-    my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';
-    $core->log->debug("removing from INC: $included");
-    delete $INC{$included};
-    no strict 'refs';
-    @{$module.'::ISA'} = ();
-    my $s_table = $module.'::';
-    for my $symbol (keys %$s_table) {
-      next if $symbol =~ /\A[^:]+::\z/;
-      delete $s_table->{$symbol};
-    }
-    use strict;
+    
+    $core->unloader_cleanup($module);
 
     return rplprintf( $core->lang->{RPL_PLUGIN_ERR},
         {
