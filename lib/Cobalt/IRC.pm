@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 ## Core IRC plugin
 ## (server context 'Main')
 
@@ -115,11 +115,11 @@ sub _start_irc {
   );
 
   ## see if we should be specifying a local bindaddr:
-  my $localaddr = $cfg->{IRC}->{BindAddr} // undef;
+  my $localaddr = $cfg->{IRC}->{BindAddr} || undef;
   $spawn_opts{localaddr} = $localaddr if $localaddr;
   ## .. or passwd:
-  my $server_pass = $cfg->{IRC}->{ServerPass} // undef;
-  $spawn_opts{password} = $server_pass if $server_pass;
+  my $server_pass = $cfg->{IRC}->{ServerPass};
+  $spawn_opts{password} = $server_pass if defined $server_pass;
 
   my $i = POE::Component::IRC::State->spawn(
     %spawn_opts,
