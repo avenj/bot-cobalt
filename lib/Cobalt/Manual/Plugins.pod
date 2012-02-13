@@ -1022,6 +1022,14 @@ by an unloaded plugin.
 This is also called automatically by the core plugin manager 
 (L<Cobalt::Plugin::PluginMgr>) when a plugin is unloaded.
 
+=head4 timer_get_alias
+
+Find out which active timerIDs are owned by the specified alias:
+
+  my $plugin_alias  = $core->plugin_get_alias( $self );
+  my @active_timers = $core->timer_get_alias( $plugin_alias );
+
+
 =head2 Syndicated core events
 
 FIXME
