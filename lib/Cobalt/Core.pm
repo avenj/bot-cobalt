@@ -584,26 +584,26 @@ sub auth_level {
 sub auth_user { auth_username(@_) }
 sub auth_username {
   ## retrieve an auth username by context -> IRC nick
-  ## retval is boolean untrue if user can't be found
+  ## retval is undef if user can't be found
   my ($self, $context, $nickname) = @_;
 
   if (! $context) {
     $self->log->debug("auth_username called but no context specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2] ) );
-    return
+    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
+    return undef
   } elsif (! $nickname) {
     $self->log->debug("auth_username called but no nickname specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2] ) );
-    return
+    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
+    return undef
   }
 
-  return unless exists $self->State->{Auth}->{$context};
+  return undef unless exists $self->State->{Auth}->{$context};
   my $context_rec = $self->State->{Auth}->{$context};
 
-  return unless exists $context_rec->{$nickname};
+  return undef unless exists $context_rec->{$nickname};
   my $username = $context_rec->{$nickname}->{Username};
 
-  return $username ? $username : ();
+  return $username ? $username : undef;
 }
 
 sub auth_flags {

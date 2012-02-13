@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 ## "Standard" Auth module
 ##
@@ -427,7 +427,8 @@ sub _cmd_whoami {
   ## FIXME return current auth status
   my $nick = $msg->{src_nick};
   my $auth_lev = $self->core->auth_level($context, $nick);
-  my $auth_usr = $self->core->auth_username($context, $nick);
+  my $auth_usr = $self->core->auth_username($context, $nick) 
+                 // 'Not Authorized';
   return rplprintf( $self->core->lang->{AUTH_STATUS},
     {
       username => $auth_usr,
