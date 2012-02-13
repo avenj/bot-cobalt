@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.292';
+our $VERSION = '0.293';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -626,6 +626,7 @@ sub Bot_rdb_triggered {
   my $nick    = ${$_[2]};
   my $rdb     = ${$_[3] // \'main'};
   my $orig    = ${$_[4] // \$rdb };
+  my $questionstr = ${$_[5]};
 
   ## event normally triggered by Info3 when a topic references a ~rdb
   ## grab a random response and throw it back at the pipeline
@@ -650,7 +651,7 @@ sub Bot_rdb_triggered {
                : $self->_select_random($msg_h, $rdb, 'quietfail') ;
 
   $core->send_event( 
-    'info3_relay_string', $context, $channel, $nick, $random 
+    'info3_relay_string', $context, $channel, $nick, $random, $questionstr
   );
 
   return PLUGIN_EAT_ALL

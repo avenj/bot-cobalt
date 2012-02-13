@@ -1,5 +1,5 @@
 #!perl
-my $VERSION = '0.20';
+my $VERSION = '0.21';
 
 use 5.12.1;
 use strict;
@@ -133,7 +133,9 @@ for my $rdb (keys %$rdbref) {
   }
   
   for my $rdbidx (keys %{ $rdbref->{$rdb} }) {
-    $cdb->put($rdbidx, $rdbref->{$rdb}->{$rdbidx});
+    unless ( $cdb->put($rdbidx, $rdbref->{$rdb}->{$rdbidx}) ) {
+      warn "!! db put failure on $rdb item index $rdbidx"; 
+    }
   }
   
   $cdb->dbclose;

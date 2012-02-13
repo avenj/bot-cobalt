@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.19';
+our $VERSION = '0.200';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -102,7 +102,9 @@ sub Bot_ctcp_action {
         $channel,
         $nick,
         lc($rdb),
-        $match
+        $match,
+        ## orig question str for Q~ etc replacement:
+        join(' ', @message)
       );
       return PLUGIN_EAT_NONE
     }
@@ -193,7 +195,8 @@ sub Bot_public_msg {
         $channel,
         $nick,
         lc($rdb),
-        $match
+        $match,
+        $str
       );
       return PLUGIN_EAT_NONE
     }
@@ -202,7 +205,7 @@ sub Bot_public_msg {
   $core->log->debug("issuing info3_relay_string");
   
   $core->send_event( 'info3_relay_string', 
-    $context, $channel, $nick, $match
+    $context, $channel, $nick, $match, $str
   );
 
   return PLUGIN_EAT_NONE
@@ -214,6 +217,7 @@ sub Bot_info3_relay_string {
   my $channel = ${$_[1]};
   my $nick    = ${$_[2]};
   my $string  = ${$_[3]};
+  my $orig    = ${$_[4]};
 
   ## format and send info3 response
   ## also received from RDB when handing off ~rdb responses
@@ -222,7 +226,7 @@ sub Bot_info3_relay_string {
 
   $core->log->debug("info3_relay_string received; calling _info_format");
   
-  my $resp = $self->_info_format($context, $nick, $channel, $string);
+  my $resp = $self->_info_format($context, $nick, $channel, $string, $orig);
 
   ## if $resp is a +action, send ctcp action
   if ( index($resp, '+') == 0 ) {
@@ -504,7 +508,8 @@ sub _info_tell {
         $msg->{channel},
         $target,
         lc($rdb),
-        $match
+        $match,
+        $str_to_match
       );
       return
     }
@@ -700,7 +705,7 @@ sub _info_varhelp {
 
 # Variable replacement / format
 sub _info_format {
-  my ($self, $context, $nick, $channel, $str) = @_;
+  my ($self, $context, $nick, $channel, $str, $orig) = @_;
   ## variable replacement for responses
   ## some of these need to pull info from context
   ## maintains oldschool darkbot6 variable format
@@ -724,7 +729,7 @@ sub _info_format {
     H => $irc_obj->nick_long_form($irc_obj->nick_name) || '',
     N => $nick,               ## nickname
     P => $irc_obj->port,      ## remote port
-    Q => $str,                ## question string
+    Q => $orig,               ## question string
     R => $random,             ## random nickname
     S => $irc_obj->server,    ## current server
     t => time,                ## unixtime
@@ -737,7 +742,7 @@ sub _info_format {
   
   ##  1~ 2~ .. etc
   my $x = 0;
-  for my $item (split ' ', $str) {
+  for my $item (split ' ', $orig) {
     ++$x;
     $vars->{$x} = $item;
   }
