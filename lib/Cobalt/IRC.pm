@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.20';
+our $VERSION = '0.201';
 
 use Cobalt::Common;
 
@@ -69,7 +69,7 @@ sub _start_irc {
   ## The IRC: directive in cobalt.conf provides context 'Main'
   ## (This will override any 'Main' specified in multiserv.conf)
   my $corecfg = $core->get_core_cfg;
-  my $main_net = $cfg->{IRC};
+  my $main_net = $corecfg->{IRC};
   $cfg->{Networks}->{Main} = $main_net;
   SERVER: for my $context (keys %{ $cfg->{Networks} } ) {
     my $thiscfg = $cfg->{Networks}->{$context};
