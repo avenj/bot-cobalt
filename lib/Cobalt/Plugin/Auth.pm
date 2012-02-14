@@ -1,6 +1,8 @@
 package Cobalt::Plugin::Auth;
 our $VERSION = '0.13';
 
+## FIXME handle context 'ALL'
+
 ## "Standard" Auth module
 ##
 ## Commands:

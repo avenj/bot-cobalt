@@ -5,6 +5,8 @@ our $VERSION = '0.10';
 ## IRC.pm/MultiServer.pm should check ignorelist before dispatch
 ## manage temp ignores
 
+## FIXME
+
 use 5.12.1;
 use strict;
 use warnings;
@@ -39,7 +41,6 @@ sub Cobalt_register {
       'private_msg',
       'notice',
       'ctcp_action',
-# FIXME autoload for irc events so we can grab irc_ctcp etc
 
 # FIXME catch Outgoing_*
 # if we've sent the same string too many times sequentially in a short span
@@ -62,28 +63,34 @@ sub Cobalt_unregister {
 }
 
 sub Bot_public_msg {
+  ## start a context->chan->user counter when a user speaks
 }
 
 sub Bot_private_msg {
 }
 
 sub Bot_notice {
-
+  ## fold in with pubmsg/privmsg trackers
 }
 
 sub Bot_ctcp_action {
-
+  ## fold in with pubmsg/privmsg trackers as appropriate
 }
 
 sub Bot_floodprot_ignore_expire {
   ## FIXME event called by timer to clear a floodprot ignore
 }
 
-
-sub _clear_all_ignores {
+sub Bot_floodprot_counters_expire {
+  ## check TS delta since last message seen, clear if needed
 
 }
 
+sub _clear_all_ignores {
+  ## clear all temp ignores belonging to our alias
+}
+
+## FIXME CTCP
 
 1;
 __END__

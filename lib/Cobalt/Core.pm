@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_20';
+our $VERSION = '2.00_21';
 
 use 5.12.1;
 use Carp;
@@ -274,10 +274,12 @@ sub syndicator_started {
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
-  my $irc_obj = Cobalt::IRC->new();
-  $self->plugin_add('IRC', $irc_obj) 
-    or croak "Core IRC plugin could not be loaded!";
-  $self->is_reloadable('IRC', $irc_obj);
+ 
+ ## FIXME: kill this, load Cobalt::IRC out of plugins.conf   
+#  my $irc_obj = Cobalt::IRC->new();
+#  $self->plugin_add('IRC', $irc_obj) 
+#    or croak "Core IRC plugin could not be loaded!";
+#  $self->is_reloadable('IRC', $irc_obj);
 
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");
