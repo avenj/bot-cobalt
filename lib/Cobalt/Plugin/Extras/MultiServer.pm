@@ -16,6 +16,8 @@ use IRC::Utils qw/ parse_mode_line /;
 
 use Storable qw/dclone/;
 
+sub new { bless {}, shift }
+
 sub Cobalt_register {
   my ($self, $core) = @_;
 
