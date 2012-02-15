@@ -155,9 +155,18 @@ Cobalt::Plugin::Extras::Relay - simplistic bidirectional IRC relay
 
 This is a simplistic plugin providing bi-directional relay.
 
+As of this writing, it doesn't know how to multiplex -- you can only 
+relay between a pair of channels (on the same or different networks).
+
 =head1 CONFIGURATION
 
-FIXME
+See etc/plugins/relay.conf in the core Cobalt2 distribution.
+
+=head1 COMMANDS
+
+=head2 !relay
+
+Display any currently configured relay.
 
 =head1 AUTHOR
 
