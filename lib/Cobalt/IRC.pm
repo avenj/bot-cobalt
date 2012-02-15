@@ -79,7 +79,7 @@ sub _start_irc {
       next SERVER
     }
     
-    next if not defined $thiscfg->{Enabled} or $thiscfg->{Enabled} == 0;
+    next if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
     
     my $server = $thiscfg->{ServerAddr};
     my $port   = $thiscfg->{ServerPort} // 6667;
