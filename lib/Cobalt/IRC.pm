@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.201';
+our $VERSION = '0.202';
 
 use Cobalt::Common;
 
@@ -451,7 +451,7 @@ sub irc_ctcp_action {
   ## if this is a public ACTION, add a 'channel' key
   ## same as ->target, but convenient for differentiating
   $msg->{channel} = $target->[0] 
-    if $target->[0] ~~ [ split '', '#&+' ];
+    if $target->[0] =~ /^[#&+]/;
 
   ## Bot_ctcp_action
   $core->send_event( 'ctcp_action', $context, $msg );
