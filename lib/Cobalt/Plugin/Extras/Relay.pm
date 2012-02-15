@@ -84,12 +84,7 @@ sub Bot_ctcp_action {
   my $context = ${ $_[0] };
   my $action  = ${ $_[1] };
   
-  ## ACTION should give us a channel if this was a public ev:
-  return PLUGIN_EAT_NONE
-    unless defined $action->{channel};
-
-  my $channel = $action->{channel};
-  
+  my $channel = $action->{target};
   return PLUGIN_EAT_NONE
     unless $self->{Relays}->{$context}->{$channel};
 
@@ -132,8 +127,37 @@ sub Bot_public_cmd_relay {
 
 sub Bot_public_cmd_rwhois {
   my ($self, $core) = splice @_, 0, 2;
+
+  if ($self->{Relays}->{$context}->{$channel}) {
+    ## FIXME
+  } else {
+    $resp = "There are no relays for $channel on context $channel";
+  }
   
   return PLUGIN_EAT_ALL
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::Relay - simplistic bidirectional IRC relay
+
+=head1 DESCRIPTION
+
+This is a simplistic plugin providing bi-directional relay.
+
+=head1 CONFIGURATION
+
+FIXME
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
