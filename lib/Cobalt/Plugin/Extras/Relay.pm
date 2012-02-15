@@ -3,11 +3,7 @@ our $VERSION = '0.001';
 
 ## Simplistic relaybot plugin
 
-use 5.12.1;
-use strict;
-use warnings;
-
-use Object::Pluggable::Constants qw/ :ALL /;
+use Cobalt::Common;
 
 sub new { bless {}, shift }
 
@@ -24,11 +20,15 @@ sub Cobalt_register {
       my $to   = $ref->{To}   // next;
       my $context0 = $from->{Context};
       my $channel0 = $from->{Channel};
-      my $context1 = $from->{Context};
-      my $channel1 = $from->{Channel};
+      my $context1 = $to->{Context};
+      my $channel1 = $to->{Channel};
       
       $self->{Relays}->{$context0}->{$channel0} = [ $context1, $channel1 ];
       $self->{Relays}->{$context1}->{$context1} = [ $context0, $context0 ];
+      
+      $core->log->debug(
+        "relaying: $context0 $channel0 -> $context1 $channel1"
+      );
     }
   }
 
@@ -67,15 +67,6 @@ sub Bot_public_msg {
   my $to_context = $self->{Relays}->{$context}->{$channel}[0];
   my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
   
-  return PLUGIN_EAT_NONE
-    unless exists $core->Servers->{$to_context}
-    and $core->Servers->{$to_context}->{Connected};
-  
-  my $irc = $core->get_irc_obj($to_context);
-
-  return PLUGIN_EAT_NONE
-    unless $irc->channels->{$to_channel};
-
   ## should be good to relay away ...
   my $text = $msg->{orig};
   my $str  = "<${src_nick}:${channel}> $text";
@@ -107,15 +98,6 @@ sub Bot_ctcp_action {
   my $to_context = $self->{Relays}->{$context}->{$channel}[0];
   my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
   
-  return PLUGIN_EAT_NONE
-    unless exists $core->Servers->{$to_context}
-    and $core->Servers->{$to_context}->{Connected};
-  
-  my $irc = $core->get_irc_obj($to_context);
-
-  return PLUGIN_EAT_NONE
-    unless $irc->channels->{$to_channel};
-
   my $text = $action->{orig};
   my $str  = "<action:${channel}> * $src_nick $text";
   $core->send_event( 'send_message',
