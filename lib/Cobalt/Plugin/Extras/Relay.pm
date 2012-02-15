@@ -24,7 +24,7 @@ sub Cobalt_register {
       my $channel1 = $to->{Channel};
       
       $self->{Relays}->{$context0}->{$channel0} = [ $context1, $channel1 ];
-      $self->{Relays}->{$context1}->{$context1} = [ $context0, $channel0 ];
+      $self->{Relays}->{$context1}->{$channel1} = [ $context0, $channel0 ];
       
       $core->log->debug(
         "relaying: $context0 $channel0 -> $context1 $channel1"
