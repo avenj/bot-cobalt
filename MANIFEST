@@ -13,6 +13,7 @@ etc/channels.conf
 etc/cobalt.conf
 etc/langs/ebonics.yml
 etc/langs/english.yml
+etc/multiserv.conf
 etc/plugins.conf
 etc/plugins/games.conf
 etc/plugins/info3.conf
