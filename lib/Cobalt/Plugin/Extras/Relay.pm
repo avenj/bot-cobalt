@@ -64,7 +64,7 @@ sub Bot_public_msg {
 
   ## don't relay our handled commands
   return PLUGIN_EAT_NONE 
-    if  $msg->{cmd}
+    if  $msg->{cmdprefix}
     and $msg->{cmd} eq 'relay'
     or  $msg->{cmd} eq 'rwhois';
 

@@ -18,6 +18,7 @@ etc/plugins.conf
 etc/plugins/games.conf
 etc/plugins/info3.conf
 etc/plugins/rdb.conf
+etc/plugins/relay.conf
 etc/plugins/www.conf
 lib/Cobalt/Common.pm
 lib/Cobalt/Conf.pm
