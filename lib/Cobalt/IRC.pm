@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.202';
+our $VERSION = '0.203';
 
 use Cobalt::Common;
 
@@ -722,8 +722,7 @@ sub irc_part {
 
 sub irc_quit {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($src, $msg) = @_[ARG0, ARG1];
-  ## depending on ircd we might get a hostmask .. or not ..
+  my ($src, $msg, $common) = @_[ARG0 .. ARG2];
   my ($nick, $user, $host) = parse_user($src);
 
   my $context = $heap->{Context};
@@ -736,6 +735,7 @@ sub irc_quit {
     src_user => $user,
     src_host => $host,
     reason => $msg,
+    common => $common,
   };
 
   ## Bot_user_quit
@@ -1365,6 +1365,7 @@ ${$_[1]} is a hash with the following keys:
     src_host =>
     channel => Channel kick took place on
     kicked => User that was kicked
+    reason => Kick reason
   }
 
 
@@ -1434,6 +1435,7 @@ $quit_h would be a hash with the following keys:
     src_user =>
     src_host =>
     reason =>
+    common => Arrayref of formerly common channels (per PoCo::IRC::State)
   }
 
 
