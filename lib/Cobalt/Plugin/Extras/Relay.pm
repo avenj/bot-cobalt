@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 ## Simplistic relaybot plugin
 
@@ -114,9 +114,20 @@ sub Bot_public_cmd_relay {
   
   my $resp;
   if ($self->{Relays}->{$context}->{$channel}) {
+
     my $to_context = $self->{Relays}->{$context}->{$channel}[0];
     my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
+
     $resp = "Currently relaying to $to_channel on context $to_context";
+
+    SERVINFO: unless ( $core->get_irc_server($to_context) ) {
+      $resp .= "; remote end appears to be missing!"
+    } else {
+      my $irc = $core->get_irc_obj($to_context) || last SERVINFO;
+      my $servername = $irc->server_name;
+      $resp .= "; remote end: $servername";
+    }
+
   } else {
     $resp = "There are no relays for $channel on context $context";
   }
@@ -132,12 +143,31 @@ sub Bot_public_cmd_rwhois {
 
   my $channel = $msg->{target};
 
+  my $remoteuser = $msg->{message_array}[0];
+
+  return PLUGIN_EAT_ALL unless $remoteuser;
+
   my $resp;
-  if ($self->{Relays}->{$context}->{$channel}) {
-    ## FIXME
-  } else {
-    $resp = "There are no relays for $channel on context $channel";
+  RWHOIS: if ($self->{Relays}->{$context}->{$channel}) {
+    my $to_context = $self->{Relays}->{$context}->{$channel}[0];
+    my $irc = $core->get_irc_obj($to_context) || last RWHOIS;
+    my $nickinfo = $irc->nick_info($remoteuser);
+    
+    unless ($nickinfo) {
+      $resp = "No such user: $remoteuser";
+    } else {
+      my $nick = $nickinfo->{Nick};
+      my $user = $nickinfo->{User};
+      my $host = $nickinfo->{Host};
+      my $real = $nickinfo->{Real};
+      my $userhost = "${nick}!${user}\@${host}";
+      $resp = "$remoteuser ($userhost) [$real]"
+    }
   }
+  
+  $resp = "There are no relays for $channel on context $channel"
+    unless $resp;
+  $core->send_event( 'send_message', $context, $channel, $resp );
   
   return PLUGIN_EAT_ALL
 }
@@ -158,7 +188,25 @@ This is a simplistic plugin providing bi-directional relay.
 As of this writing, it doesn't know how to multiplex -- you can only 
 relay between a pair of channels (on the same or different networks).
 
+... patches welcome, of course :-)
+
 =head1 CONFIGURATION
+
+An example relay.conf:
+
+  Relays:
+    - From:
+        Context: Main
+        Channel: '#otw'
+      To:
+        Context: IRCNode
+        Channel: '#otw'
+    - From:
+        Context: Main
+        Channel: '#unix'
+      To:
+        Context: Paradox
+        Channel: '#perl'
 
 See etc/plugins/relay.conf in the core Cobalt2 distribution.
 
@@ -166,7 +214,7 @@ See etc/plugins/relay.conf in the core Cobalt2 distribution.
 
 =head2 !relay
 
-Display any currently configured relay.
+Display the configured relay for the current channel.
 
 =head1 AUTHOR
 
