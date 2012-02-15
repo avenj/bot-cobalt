@@ -74,7 +74,7 @@ sub Bot_public_msg {
   my $irc = $core->get_irc_obj($to_context);
 
   return PLUGIN_EAT_NONE
-    unless $irc->is_channel_synced($to_channel);
+    unless $irc->channels->{$to_channel};
 
   ## should be good to relay away ...
   my $text = $msg->{orig};
@@ -114,7 +114,7 @@ sub Bot_ctcp_action {
   my $irc = $core->get_irc_obj($to_context);
 
   return PLUGIN_EAT_NONE
-    unless $irc->is_channel_synced($to_channel);
+    unless $irc->channels->{$to_channel};
 
   my $text = $action->{orig};
   my $str  = "<action:${channel}> * $src_nick $text";
