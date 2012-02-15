@@ -127,6 +127,10 @@ sub Bot_public_cmd_relay {
 
 sub Bot_public_cmd_rwhois {
   my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $msg     = ${ $_[1] };
+
+  my $channel = $msg->{target};
 
   if ($self->{Relays}->{$context}->{$channel}) {
     ## FIXME
