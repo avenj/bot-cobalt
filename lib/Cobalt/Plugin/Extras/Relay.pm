@@ -80,8 +80,8 @@ sub Bot_public_msg {
   my $text = $msg->{orig};
   my $str  = "<${src_nick}:${channel}> $text";
   $core->send_event( 'send_message',
-    $context,
-    $channel,
+    $to_context,
+    $to_channel,
     $str
   );
   
@@ -119,8 +119,8 @@ sub Bot_ctcp_action {
   my $text = $action->{orig};
   my $str  = "<action:${channel}> * $src_nick $text";
   $core->send_event( 'send_message',
-    $context,
-    $channel,
+    $to_context,
+    $to_channel,
     $str
   );
 
