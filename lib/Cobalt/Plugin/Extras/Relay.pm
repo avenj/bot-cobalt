@@ -132,6 +132,7 @@ sub Bot_public_cmd_rwhois {
 
   my $channel = $msg->{target};
 
+  my $resp;
   if ($self->{Relays}->{$context}->{$channel}) {
     ## FIXME
   } else {
