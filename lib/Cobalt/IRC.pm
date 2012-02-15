@@ -536,6 +536,7 @@ sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
+  $self->{core}->Servers->{$context}->{Connected} = 0;
   $self->{core}->log->warn("IRC error: $context: $reason");
   $self->{core}->send_event( 'server_error', $context, $reason );
 }

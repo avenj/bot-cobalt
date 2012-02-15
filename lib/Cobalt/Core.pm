@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_21';
+our $VERSION = '2.00_22';
 
 use 5.12.1;
 use Carp;
@@ -646,6 +646,7 @@ sub auth_pkg {
 
 ### Accessors acting on ->Servers:
 
+sub get_irc_object { get_irc_obj(@_) }
 sub get_irc_obj {
   ## retrieve our POE::Component::IRC obj for $context
   my ($self, $context) = @_;

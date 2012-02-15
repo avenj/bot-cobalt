@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 ## Simplistic relaybot plugin
 
@@ -61,6 +61,12 @@ sub Bot_public_msg {
 
   return PLUGIN_EAT_NONE
     unless $self->{Relays}->{$context}->{$channel};
+
+  ## don't relay our handled commands
+  return PLUGIN_EAT_NONE 
+    if  $msg->{cmd}
+    and $msg->{cmd} eq 'relay'
+    or  $msg->{cmd} eq 'rwhois';
 
   my $src_nick = $msg->{src_nick};
 
@@ -215,6 +221,10 @@ See etc/plugins/relay.conf in the core Cobalt2 distribution.
 =head2 !relay
 
 Display the configured relay for the current channel.
+
+=head2 !rwhois
+
+Remotely 'whois' a user on the relayed end.
 
 =head1 AUTHOR
 
