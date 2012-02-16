@@ -853,7 +853,6 @@ Later versions included a search interface and "RDBs" -- discrete
 to return a random response.
 
 B<cobalt1> used essentially the same interface.
-
 This B<RDB> plugin attempts to expand on that functionality.
 
 This functionality is often useful to simulate humanoid responses to 
@@ -892,6 +891,10 @@ Add a new "randstuff" to the 'main' RDB
 
   <JoeUser> bot: randstuff new randstuff string
 
+A randstuff can also be an action; simply prefix the string with B<+> :
+
+  <JoeUser> bot: randstuff +dances around
+
 Legacy darkbot-style syntax is supported; you can add items to RDBs 
 by prefixing the RDB name with B<~>, like so:
 
@@ -915,7 +918,7 @@ item, including the username that added it and the date it was added.
 
   rdb add <rdb> <new item string>
 
-Add a new item to the specified RDB.
+Add a new item to the specified RDB. Also see L</randstuff>
 
 =head3 rdb del
 
@@ -969,6 +972,7 @@ Triggered (usually by L<Cobalt::Plugin::Info3>) when a RDB is polled
 for a random response.
 
 Arguments are:
+
   $context, $channel, $nick, $rdb, $topic_value, $original_str
 
 Broadcasts an L</info3_relay_string> in response, which is picked up by 
@@ -982,6 +986,7 @@ calling channel.
 Broadcast by L</rdb_triggered> to be picked up by L<Cobalt::Plugin::Info3>.
 
 Arguments are:
+
   $context, $channel, $nick, $string, $original
 
 =head1 AUTHOR

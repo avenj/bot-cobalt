@@ -48,7 +48,6 @@ lib/Cobalt/Plugin/Extras/Relay.pm
 lib/Cobalt/Plugin/Extras/Shared.pm
 lib/Cobalt/Plugin/Extras/Shorten.pm
 lib/Cobalt/Plugin/Extras/TempConv.pm
-lib/Cobalt/Plugin/FloodProtect.pm
 lib/Cobalt/Plugin/Games.pm
 lib/Cobalt/Plugin/Games/Dice.pm
 lib/Cobalt/Plugin/Games/Magic8.pm

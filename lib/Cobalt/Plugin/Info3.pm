@@ -765,5 +765,168 @@ __END__
 
 =pod
 
+=head1 NAME
+
+Cobalt::Plugin::Info3 - enhanced text-triggered responses
+
+=head1 DESCRIPTION
+
+B<darkbot6> came with built-in I<info2> functionality; text responses 
+(possibly with variables) could be triggered by simple glob matches.
+
+This plugin follows largely the same pattern; users can add a topic:
+
+  <JoeUser> cobaltbot: add hello*everyone Howdy N~! Welcome to C~!
+
+Whenever a user says something matching the glob, the response is 
+triggered:
+
+  <Somebody> hello there, everyone
+  <cobaltbot> Howdy Somebody! Welcome to #thischannel!
+
+(Note that if multiple added globs match a given IRC string, the result 
+is somewhat unpredictable and will largely depend on what your database 
+gives up first. Managing your topics sanely is up to you.)
+
+Topics can also be hooked into randomized responses.
+See L</"RDB integration"> -- this functionality also requires 
+L<Cobalt::Plugin::RDB>.
+
+Back-end storage takes place via L<Cobalt::DB>.
+The core distribution comes with a tool called B<cobalt2-import-info2> 
+capable of converting B<darkbot> and B<cobalt1> 'info' databases.
+
+=head1 USAGE
+
+=head2 Add and delete
+
+=head3 add
+
+Add a new B<info3> topic:
+
+  bot: add my+new+topic This is my new topic.
+  
+  bot: add help You're beyond help, N~!
+
+The most common wildcards are * (match any number of any character) and 
++ (match a single space).
+See L<Cobalt::Utils/glob_to_re_str> for details regarding glob syntax.
+
+Note that ^$ start/end anchors are not valid when adding B<info3> globs; 
+every glob is automatically anchored.
+
+Variables are available for use in topic responses -- see 
+L</"Response variables">.
+
+=head4 Responding with an action
+
+A topic response can also be an action ('/me').
+
+In order to send a response as an action, prefix the response with B<+> :
+
+  bot: add greetings +waves to N~
+
+Variable replacement works as-normal.
+
+=head3 del
+
+Deletes the specified topic.
+
+  bot: del my+new+topic
+
+
+=head2 Searching
+
+=head3 search
+
+Searches for the literal string specified within our stored topics.
+
+  bot: search some+topic
+
+Only matches B<topics> -- see L</dsearch> to search within responses.
+
+=head3 dsearch
+
+Does a 'deep search,' checking the B<contents> of every topic for a possible 
+match to the specified string.
+
+  bot: dsearch N~
+
+
+=head2 Response variables
+
+Responses to topics can include variables that are processed before 
+the response string is sent.
+
+These mostly follow legacy B<darkbot6> syntax.
+
+The following variables are valid:
+
+  !~  == Bot's command character
+  B~  == Bot's nick for this server
+  C~  == The current channel
+  H~  == Bot's current nick!user@host
+  N~  == Nickname of the user bot is talking to
+  P~  == Port we're connected to
+  Q~  == Original string bot is responding to
+  R~  == A random nickname from the channel
+  S~  == Server we're connected to
+  t~  == Unix epoch seconds (unixtime)
+  T~  == Human-readable date and time
+  V~  == Current bot version
+  W~  == Cobalt2 website
+
+Additionally, words in the original string that triggered the response can 
+be pulled out individually by their relative position. The first word is 
+B<1~>, the second word is B<2~>, and so forth.
+
+=head3 infovars
+
+The 'infovars' command will send you a notice briefly describing the 
+available variables; useful for a quick refresher when adding topics.
+
+
+=head2 RDB integration
+
+Topics can also triggered randomized responses, as long as the 
+L<Cobalt::Plugin::RDB> plugin is loaded.
+
+In order to pull a randomized response from a B<RDB>, a topic should 
+trigger a response starting with '~<rdbname>' -- for example:
+
+  bot: add hello ~hi
+  bot: rdbadd hi
+  bot: rdb add hi Hello N~! Welcome to C~!
+  bot: rdb add hi How goes it, N~?
+
+See L<Cobalt::Plugin::RDB> for more details.
+
+
+=head1 EVENTS
+
+=head2 Received Events
+
+=head3 Bot_info3_relay_string
+
+Feeds a given string to the response formatter and relays the result 
+back to IRC.
+
+Arguments are:
+
+  $context, $channel, $nick, $string_to_format, $question_string
+
+
+=head2 Emitted Events
+
+=head3 Bot_rdb_triggered
+
+Broadcast when a topic's response triggers a RDB; see 
+L<Cobalt::Plugin::RDB> for details.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
