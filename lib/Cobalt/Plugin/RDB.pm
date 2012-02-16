@@ -892,27 +892,102 @@ Add a new "randstuff" to the 'main' RDB
 
   <JoeUser> bot: randstuff new randstuff string
 
+Legacy darkbot-style syntax is supported; you can add items to RDBs 
+by prefixing the RDB name with B<~>, like so:
+
+  randstuff ~myrdb some new string
+
+The RDB must already exist; see L</"rdb dbadd">
 
 =head2 rdb
 
 =head3 rdb info
 
+  rdb info <rdb>
+  rdb info <rdb> <itemID>
+
+Given just a RDB name, returns the number of items in the RDB.
+
+Given a RDB name and a valid itemID, returns some metadata regarding the 
+item, including the username that added it and the date it was added.
+
 =head3 rdb add
+
+  rdb add <rdb> <new item string>
+
+Add a new item to the specified RDB.
 
 =head3 rdb del
 
+  rdb del <rdb> <itemID>
+
+Deletes an item from the specified RDB by item index ID.
+
 =head3 rdb dbadd
+
+  rdb dbadd <rdb>
+
+Creates a new, empty RDB.
 
 =head3 rdb dbdel
 
+  rdb dbdel <rdb>
+
+Deletes the specified RDB entirely.
+
+Deletion may be disabled in the plugin's configuration file via the 
+B<<Opts->AllowDelete>> directive.
+
 =head3 rdb search
 
+  rdb search <rdb> <glob>
+
+Search within a specific RDB. Returns a single random response from the 
+result set.
+
 =head3 rdb searchidx
+
+  rdb searchidx <rdb> <glob>
+
+Returns all RDB item IDs matching the specified glob.
 
 =head1 EVENTS
 
 =head2 Received events
 
+=head3 rdb_broadcast
+
+Self-triggered event.
+
+Called on a timer to broadcast randstuffs from RDB "main."
+
+Takes no arguments.
+
+=head3 rdb_triggered
+
+Triggered (usually by L<Cobalt::Plugin::Info3>) when a RDB is polled 
+for a random response.
+
+Arguments are:
+  $context, $channel, $nick, $rdb, $topic_value, $original_str
+
+Broadcasts an L</info3_relay_string> in response, which is picked up by 
+B<Info3> to perform variable replacement before relaying back to the 
+calling channel.
+
 =head2 Emitted events
+
+=head3 info3_relay_string
+
+Broadcast by L</rdb_triggered> to be picked up by L<Cobalt::Plugin::Info3>.
+
+Arguments are:
+  $context, $channel, $nick, $string, $original
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
