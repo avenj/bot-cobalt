@@ -264,7 +264,8 @@ sub Bot_user_joined {
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
   
   my $src_nick = $joinref->{src_nick};
-  push( @{ $self->{JoinQueue}->{$context}->{$channel} }, $src_nick );
+  push( @{ $self->{JoinQueue}->{$context}->{$channel} }, $src_nick )
+    unless $src_nick ~~ @{ $self->{JoinQueue}->{$context}->{$channel}//[] };
 
   return PLUGIN_EAT_NONE
 }
