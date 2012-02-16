@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::TempConv;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 ## RECEIVES AND EATS:
 ##  _public_cmd_tempconv  ( !tempconv )
@@ -62,7 +62,7 @@ sub Bot_public_cmd_temp {
   my $channel = $msg->{channel};
   $core->send_event( 'send_message', $context, $channel, $resp );
 
-  return PLUGIN_EAT_NONE
+  return PLUGIN_EAT_ALL
 }
 
 ## Conversion functions:
@@ -76,3 +76,30 @@ sub _k2f {  shift(@_) * (9/5) - 459.67  }
 sub _k2c {  shift(@_) - 273.15          }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::TempConv - temperature conversion plugin
+
+=head1 DESCRIPTION
+
+Simple temperature conversion plugin for Cobalt.
+
+Speaks Fahrenheit, Celsius, and Kelvin.
+A converted temperature is returned in all three formats:
+
+  <avenj> !temp 27f
+  <cobalt> (27.00F) == (-2.78C) == (270.37K)
+
+(B<!tempconv> is also an alias for B<!temp>)
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
