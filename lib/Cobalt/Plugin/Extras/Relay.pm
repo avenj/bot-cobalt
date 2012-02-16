@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 ## Simplistic relaybot plugin
 
@@ -7,8 +7,56 @@ use Cobalt::Common;
 
 sub new { bless {}, shift }
 
+sub get_relays {
+  my ($self, $context, $channel) = @_;
+  return unless $context and $channel;
+  
+  ## array of arrays mapping relay relationships
+  ## $channel = [
+  ##   [
+  ##     $target_context,
+  ##     $target_channel
+  ##   ],
+  ## ]
+  return unless exists $self->{Relays}->{$context};
+  my $relays = $self->{Relays}->{$context}->{$channel} // return;
+  return unless @$relays;
+  wantarray ? return @$relays : return $relays ; 
+}
+
+sub add_relay {
+  my ($self, $ref) = @_;
+  ## take a hash mapping From and To
+  return unless $ref and ref $ref eq 'HASH';
+  
+  my $from = $ref->{From} // return;
+  my $to   = $ref->{To}   // return;
+  
+  my $context0 = $from->{Context} // return;
+  my $chan0    = $from->{Channel} // return;
+  
+  my $context1 = $to->{Context} // return;
+  my $chan1    = $to->{Channel} // return;
+  
+  ## context0:chan0 is relayed to *1:
+  push( @{ $self->{Relays}->{$context0}->{$chan0} },
+    [ $context1, $chan1 ],
+  );
+  ## and vice-versa:
+  push( @{ $self->{Relays}->{$context1}->{$chan1} },
+    [ $context0, $chan0 ],
+  );
+
+  $self->{core}->log->debug(
+    "relaying: $context0 $chan0 -> $context1 $chan1"
+  );
+  return 1
+}
+
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
+
+  $self->{core} = $core;
 
   my $pcfg = $core->get_plugin_cfg($self);
   my $relays = $pcfg->{Relays};
@@ -16,19 +64,7 @@ sub Cobalt_register {
     $core->log->warn("'Relays' conf directive not valid, should be a list");
   } else {
     for my $ref (@$relays) {
-      my $from = $ref->{From} // next;
-      my $to   = $ref->{To}   // next;
-      my $context0 = $from->{Context};
-      my $channel0 = $from->{Channel};
-      my $context1 = $to->{Context};
-      my $channel1 = $to->{Channel};
-      
-      $self->{Relays}->{$context0}->{$channel0} = [ $context1, $channel1 ];
-      $self->{Relays}->{$context1}->{$channel1} = [ $context0, $channel0 ];
-      
-      $core->log->debug(
-        "relaying: $context0 $channel0 -> $context1 $channel1"
-      );
+      $self->add_relay($ref);
     }
   }
 
@@ -36,12 +72,32 @@ sub Cobalt_register {
     [
       'public_msg',
       'ctcp_action',
+      
+      'user_joined',
+      'user_kicked',
+      'user_left',
+      'user_quit',
+      'nick_changed',
+
       'public_cmd_relay',
       'public_cmd_rwhois',
+      
+      'relay_push_join_queue',
+      'relay_push_left_queue',
     ],
   );
 
   $core->log->info("$VERSION loaded");
+
+  $core->timer_set( 3,
+    { Event => 'relay_push_join_queue' },
+    'RELAYBOT_JOINQUEUE'
+  );
+
+  $core->timer_set( 3,
+    { Event => 'relay_push_left_queue' },
+    'RELAYBOT_LEFTQUEUE'
+  );
 
   return PLUGIN_EAT_NONE
 }
@@ -52,6 +108,99 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_relay_push_join_queue {
+  my ($self, $core) = splice @_, 0, 2;
+
+  my $queue = $self->{JoinQueue}//{};
+
+  SERV: for my $context (keys %$queue) {
+    next SERV unless scalar keys %{ $self->{Relays}->{$context} };
+    CHAN: for my $channel (keys %{ $queue->{$context} }) {
+      my @relays = $self->get_relays($context, $channel);
+      next CHAN unless @relays;
+      my @pending = @{ $queue->{$context}->{$channel} };
+      my $str = "[joined: ${context}:${channel}] ";
+      if (@pending > 5) {
+        $str .= join ', ', splice @pending, 0, 5;
+        my $remaining = scalar @pending;
+        $str .= " ($remaining more, truncated)";
+      } else {
+        $str .= join ', ', @pending;
+      }      
+      ## clear queue
+      $queue->{$context}->{$channel} = [];
+      
+      RELAY: for my $relay (@relays) {
+        my ($to_context, $to_channel) = @$relay;
+        $core->send_event( 'send_message',
+          $to_context,
+          $to_channel,
+          $str
+        );
+      } # RELAY
+      
+    } # CHAN
+    
+  }  # SERV
+
+  $self->{JoinQueue} = {};
+  
+  $core->timer_set( 3,
+    { Event => 'relay_push_join_queue' },
+    'RELAYBOT_JOINQUEUE'
+  );
+  
+  return PLUGIN_EAT_ALL
+}
+
+sub Bot_relay_push_left_queue {
+  my ($self, $core) = splice @_, 0, 2;
+
+  my $queue = $self->{PartQueue}//{};
+  my $quitqueue = $self->{QuitQueue}//{};
+  ## (destructively) combine hashes
+  @$queue{keys %$quitqueue} = values %$quitqueue;
+
+  SERV: for my $context (keys %$queue) {
+    next SERV unless scalar keys %{ $self->{Relays}->{$context} };
+    CHAN: for my $channel (keys %{ $queue->{$context} }) {
+      my @relays = $self->get_relays($context, $channel);
+      next CHAN unless @relays;
+      my @pending = @{ $queue->{$context}->{$channel} };
+      my $str = "[left: ${context}:${channel}] ";
+      if (@pending > 5) {
+        $str .= join ', ', splice @pending, 0, 5;
+        my $remaining = scalar @pending;
+        $str .= " ($remaining more, truncated)";
+      } else {
+        $str .= join ', ', @pending;
+      }
+      
+      RELAY: for my $relay (@relays) {
+        my ($to_context, $to_channel) = @$relay;
+        $core->send_event( 'send_message',
+          $to_context,
+          $to_channel,
+          $str
+        );
+      } # RELAY
+      
+    } # CHAN
+    
+  }  # SERV
+
+  $self->{PartQueue} = {};
+  $self->{QuitQueue} = {};
+
+  $core->timer_set( 3,
+    { Event => 'relay_push_left_queue' },
+    'RELAYBOT_LEFTQUEUE'
+  );
+
+  return PLUGIN_EAT_ALL
+}
+
+
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
@@ -59,28 +208,31 @@ sub Bot_public_msg {
 
   my $channel = $msg->{target};
 
-  return PLUGIN_EAT_NONE
-    unless $self->{Relays}->{$context}->{$channel};
+  my @relays = $self->get_relays($context, $channel);
+  return PLUGIN_EAT_NONE unless @relays;
 
   ## don't relay our handled commands
-  return PLUGIN_EAT_NONE 
-    if  $msg->{cmdprefix}
-    and $msg->{cmd} eq 'relay'
-    or  $msg->{cmd} eq 'rwhois';
+  my @handled = qw/ relay rwhois /;
+  if ($msg->{cmdprefix}) {
+    return PLUGIN_EAT_NONE if $msg->{cmd}
+      and $msg->{cmd} ~~ @handled;
+  }
 
   my $src_nick = $msg->{src_nick};
-
-  my $to_context = $self->{Relays}->{$context}->{$channel}[0];
-  my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
-  
-  ## should be good to relay away ...
   my $text = $msg->{orig};
   my $str  = "<${src_nick}:${channel}> $text";
-  $core->send_event( 'send_message',
-    $to_context,
-    $to_channel,
-    $str
-  );
+
+  for my $relay (@relays) {
+    my $to_context = $relay->[0];
+    my $to_channel = $relay->[1];
+  
+    ## should be good to relay away ...
+    $core->send_event( 'send_message',
+      $to_context,
+      $to_channel,
+      $str
+    );
+  }
   
   return PLUGIN_EAT_NONE
 }
@@ -91,22 +243,139 @@ sub Bot_ctcp_action {
   my $action  = ${ $_[1] };
   
   my $channel = $action->{target};
-  return PLUGIN_EAT_NONE
-    unless $self->{Relays}->{$context}->{$channel};
+
+  my @relays = $self->get_relays($context, $channel);
+  return PLUGIN_EAT_NONE unless @relays;
 
   my $src_nick = $action->{src_nick};
-
-  my $to_context = $self->{Relays}->{$context}->{$channel}[0];
-  my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
-  
   my $text = $action->{orig};
-  my $str  = "<action:${channel}> * $src_nick $text";
-  $core->send_event( 'send_message',
-    $to_context,
-    $to_channel,
-    $str
-  );
+  my $str  = "[action:${channel}] * $src_nick $text";
 
+  for my $relay (@relays) {
+    my $to_context = $relay->[0];
+    my $to_channel = $relay->[1];
+  
+    $core->send_event( 'send_message',
+      $to_context,
+      $to_channel,
+      $str
+    );
+  }
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_user_joined {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $joinref = ${ $_[1] };
+  
+  my $channel = $joinref->{channel};
+
+  return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
+  
+  my $src_nick = $joinref->{src_nick};
+  push( @{ $self->{JoinQueue}->{$context}->{$channel} }, $src_nick );
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_user_left {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $partref = ${ $_[1] };
+  
+  my $channel = $partref->{channel};
+  
+  return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
+    
+  my $src_nick = $partref->{src_nick};
+  push( @{ $self->{PartQueue}->{$context}->{$channel} }, $src_nick );
+  
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_user_kicked {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $kickref = ${ $_[1] };
+
+  my $channel = $kickref->{channel};
+  
+  my @relays = $self->get_relays($context, $channel);
+  return PLUGIN_EAT_NONE unless @relays;
+  
+  my $src_nick = $kickref->{src_nick};
+  my $kicked_u = $kickref->{kicked};
+  my $reason   = $kickref->{reason};
+
+  for my $relay (@relays) {  
+    my $to_context = $relay->[0];
+    my $to_channel = $relay->[1];
+  
+    my $str = 
+      "<kick:${channel}> $kicked_u was kicked by $src_nick ($reason)";  
+    $core->send_event( 'send_message',
+      $to_context,
+      $to_channel,
+      $str
+    );
+  }
+    
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_user_quit {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $quitref = ${ $_[1] };
+  
+  return PLUGIN_EAT_NONE
+    unless $self->{Relays}->{$context};
+  
+  my $src_nick = $quitref->{src_nick};
+  my @common = @{ $quitref->{common}||[] };
+
+  ## see if we have any applicable relays for this quit
+  ## send the quit to all of them
+  for my $channel (@common) {
+    my @relays = $self->get_relays($context, $channel);
+    next unless @relays;
+    RELAY: for my $relay (@relays) {
+      my ($to_context, $to_channel) = @$relay;
+      push(@{ $self->{QuitQueue}->{$context}->{$channel} }, $src_nick );
+    }
+  }
+  
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_nick_changed {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $nchange = ${ $_[1] };
+  
+  ## disregard case changes to cut back noise
+  return PLUGIN_EAT_NONE if $nchange->{equal};
+
+  return PLUGIN_EAT_NONE
+    unless $self->{Relays}->{$context};
+
+  my $src_nick = $nchange->{new};
+  my $old_nick = $nchange->{old};
+  my @common = @{ $nchange->{common}||[] };
+
+  for my $channel (@common) {
+    my @relays = $self->get_relays($context, $channel);
+    next unless @relays;
+    RELAY: for my $relay (@relays) {
+      my ($to_context, $to_channel) = @$relay;
+      my $str = 
+        "[relay: $channel] $old_nick changed nickname to $src_nick";
+      $core->send_event( 'send_message', $to_context, $to_channel, $str );
+    }
+  }
+  
   return PLUGIN_EAT_NONE
 }
 
@@ -118,27 +387,26 @@ sub Bot_public_cmd_relay {
   
   my $channel = $msg->{target};
   
-  my $resp;
-  if ($self->{Relays}->{$context}->{$channel}) {
-
-    my $to_context = $self->{Relays}->{$context}->{$channel}[0];
-    my $to_channel = $self->{Relays}->{$context}->{$channel}[1];
-
-    $resp = "Currently relaying to $to_channel on context $to_context";
-
-    SERVINFO: unless ( $core->get_irc_server($to_context) ) {
-      $resp .= "; remote end appears to be missing!"
-    } else {
-      my $irc = $core->get_irc_obj($to_context) || last SERVINFO;
-      my $servername = $irc->server_name;
-      $resp .= "; remote end: $servername";
-    }
-
-  } else {
-    $resp = "There are no relays for $channel on context $context";
-  }
+  my @relays = $self->get_relays($context, $channel);
   
-  $core->send_event( 'send_message', $context, $channel, $resp );
+  unless (@relays) {
+    $core->send_event( 'send_message',
+      $context,
+      $channel,
+      "There are no relays for $channel on context $context"
+    );
+    return PLUGIN_EAT_ALL
+  }
+
+  my $str = "Currently relaying to: ";
+  
+  my $idx = 0;
+  for my $relay (@relays) {
+    my ($to_context, $to_channel) = @$relay;
+    $str .= "${to_context}:${to_channel} ";
+  }
+
+  $core->send_event( 'send_message', $context, $channel, $str );
   return PLUGIN_EAT_ALL
 }
 
@@ -149,30 +417,48 @@ sub Bot_public_cmd_rwhois {
 
   my $channel = $msg->{target};
 
-  my $remoteuser = $msg->{message_array}[0];
+  my ($remotenet, $remoteuser) = @{ $msg->{message_array} };
+  unless ($remotenet && $remoteuser) {
+    my $src_nick = $msg->{src_nick};
+    $core->send_event( 'send_message',
+      $context,
+      $channel,
+      "${src_nick}: Usage: rwhois <context> <nickname>"
+    );
+    return PLUGIN_EAT_ALL
+  }
 
-  return PLUGIN_EAT_ALL unless $remoteuser;
+  unless ( $self->get_relays($context, $channel) ) {
+    $core->send_event( 'send_message',
+      $context,
+      $channel,
+      "There are no active relays for $channel on context $context"
+    );
+    return PLUGIN_EAT_ALL  
+  }
 
-  my $resp;
-  RWHOIS: if ($self->{Relays}->{$context}->{$channel}) {
-    my $to_context = $self->{Relays}->{$context}->{$channel}[0];
-    my $irc = $core->get_irc_obj($to_context) || last RWHOIS;
-    my $nickinfo = $irc->nick_info($remoteuser);
-    
-    unless ($nickinfo) {
-      $resp = "No such user: $remoteuser";
-    } else {
-      my $nick = $nickinfo->{Nick};
-      my $user = $nickinfo->{User};
-      my $host = $nickinfo->{Host};
-      my $real = $nickinfo->{Real};
-      my $userhost = "${nick}!${user}\@${host}";
-      $resp = "$remoteuser ($userhost) [$real]"
-    }
+  my $irc_obj = $core->get_irc_obj($remotenet);
+  unless ( $self->{Relays}->{$remotenet} and ref $irc_obj ) {
+    $core->send_event( 'send_message',
+      $context,
+      $channel,
+      "We don't seem to have a relay for $remotenet"
+    );
+    return PLUGIN_EAT_ALL
   }
   
-  $resp = "There are no relays for $channel on context $channel"
-    unless $resp;
+  my $nickinfo = $irc_obj->nick_info($remoteuser);
+  my $resp;
+  unless ($nickinfo) {
+    $resp = "No such user: $remoteuser";
+  } else {
+    my $nick = $nickinfo->{Nick};
+    my $user = $nickinfo->{User};
+    my $host = $nickinfo->{Host};
+    my $real = $nickinfo->{Real};
+    my $userhost = "${nick}!${user}\@${host}";
+    $resp = "$remoteuser ($userhost) [$real]"
+  }
   $core->send_event( 'send_message', $context, $channel, $resp );
   
   return PLUGIN_EAT_ALL
@@ -189,12 +475,12 @@ Cobalt::Plugin::Extras::Relay - simplistic bidirectional IRC relay
 
 =head1 DESCRIPTION
 
-This is a simplistic plugin providing bi-directional relay.
+This is a sort of simplistic IRC multiplexer; it can be used to 
+relay IRC channel chatter across networks in flexible ways.
 
-As of this writing, it doesn't know how to multiplex -- you can only 
-relay between a pair of channels (on the same or different networks).
-
-... patches welcome, of course :-)
+Channels on any context can be mapped to channels on any other 
+context; relaying should mostly Do What You Mean, as far as one-to-one 
+or one-to-many relay relationships.
 
 =head1 CONFIGURATION
 
@@ -209,7 +495,7 @@ An example relay.conf:
         Channel: '#otw'
     - From:
         Context: Main
-        Channel: '#unix'
+        Channel: '#otw'
       To:
         Context: Paradox
         Channel: '#perl'
