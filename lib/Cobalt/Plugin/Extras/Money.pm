@@ -52,7 +52,7 @@ sub Bot_currencyconv_expire_cache {
     }
   }
   
-  $core->timer_set( 600,
+  $core->timer_set( 1200,
     {
       Event => 'currencyconv_expire_cache',
       Alias => $core->get_plugin_alias($self),
