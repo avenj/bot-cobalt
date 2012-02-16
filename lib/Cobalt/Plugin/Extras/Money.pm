@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Cobalt::Common;
 
@@ -11,6 +11,7 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+  $self->{Cached} = {};
   $core->plugin_register( $self, 'SERVER',
     [
       'public_cmd_currency',
@@ -18,9 +19,19 @@ sub Cobalt_register {
       'public_cmd_money',
       
       'currencyconv_rate_recv',
+      'currencyconv_expire_cache',
     ],
   );
   $core->log->info("$VERSION loaded");
+
+  $core->timer_set( 1200,
+    {
+      Event => 'currencyconv_expire_cache',
+      Alias => $core->get_plugin_alias($self),
+    },
+    'CURRENCYCONV_CACHE'
+  );
+
   return PLUGIN_EAT_NONE 
 }
 
@@ -28,6 +39,28 @@ sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unloaded");
   return PLUGIN_EAT_NONE
+}
+
+sub Bot_currencyconv_expire_cache {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  for my $fromto (keys %{ $self->{Cached} }) {
+    my $delta = time - $self->{Cached}->{$fromto}->{TS};
+    if ($delta >= 1200) {
+      $core->log->debug("expired cached: $fromto");
+      delete $self->{Cached}->{$fromto};
+    }
+  }
+  
+  $core->timer_set( 600,
+    {
+      Event => 'currencyconv_expire_cache',
+      Alias => $core->get_plugin_alias($self),
+    },
+    'CURRENCYCONV_CACHE'
+  );
+  
+  return PLUGIN_EAT_ALL;
 }
 
 sub Bot_public_cmd_currency {
@@ -99,6 +132,12 @@ sub Bot_currencyconv_rate_recv {
     );
     return PLUGIN_EAT_ALL
   }
+
+  my $cachekey = "${from}-${to}";
+  $self->{Cached}->{$cachekey} = {
+    Rate => $rate,
+    TS   => time,
+  };
   
   $core->send_event( 'send_message', $context, $channel,
     "$value $from == $converted $to"
@@ -112,6 +151,17 @@ sub _request_conversion_rate {
   return unless $from and $to;
 
   my $core = $self->{core};
+
+  ## maybe cached
+  my $cachekey = "${from}-${to}";
+  if ($self->{Cached}->{$cachekey}) {
+    my $cachedrate = $self->{Cached}->{$cachekey}->{Rate};
+    my $converted = $value * $cachedrate;
+    $core->send_event( 'send_message', $context, $channel,
+      "$value $from == $converted $to"
+    );
+    return 1
+  }
 
   my $uri = 
      "http://www.webservicex.net/CurrencyConvertor.asmx"
@@ -138,6 +188,7 @@ sub _request_conversion_rate {
       [ $value, $context, $channel, $from, $to ] 
     );
   }
+  return 1
 }
 
 1;
