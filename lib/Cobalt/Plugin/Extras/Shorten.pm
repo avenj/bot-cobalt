@@ -48,7 +48,7 @@ sub Bot_public_cmd_shorturl {
 
   $self->_request_shorturl($url, $context, $channel, $nick);
 
-  return PLUGIN_EAT_NONE
+  return PLUGIN_EAT_ALL
 }
 
 sub Bot_public_cmd_shorten {

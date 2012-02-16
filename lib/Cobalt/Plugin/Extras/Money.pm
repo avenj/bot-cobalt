@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Cobalt::Common;
 
@@ -90,8 +90,8 @@ sub Bot_currencyconv_rate_recv {
   
   my($rate,$converted);
   if ( $content =~ /<double.*>(.*)<\/double>/i ) {
-    $rate = $1;
-    $converted = $rate ? $value * $rate : 0;
+    $rate = $1||1;
+    $converted = $value * $rate ;
   } else {
     $core->send_event( 'send_message', $context, $channel,
       "Failed to retrieve currency conversion ($from -> $to)"
