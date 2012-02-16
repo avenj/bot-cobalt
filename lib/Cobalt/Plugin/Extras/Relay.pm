@@ -464,21 +464,25 @@ __END__
 
 =head1 NAME
 
-Cobalt::Plugin::Extras::Relay - simplistic bidirectional IRC relay
+Cobalt::Plugin::Extras::Relay - multiplex IRC channels
 
 =head1 DESCRIPTION
 
-This is a sort of simplistic IRC multiplexer; it can be used to 
-relay IRC channel chatter across networks in flexible ways.
+This plugin is an IRC multiplexer; it can be used to relay IRC channel 
+chatter across networks (or on the same network, if you like) in 
+flexible ways.
 
 Channels on any context can be mapped to channels on any other 
-context; relaying should mostly Do What You Mean, as far as one-to-one 
-or one-to-many relay relationships.
+context; relays are always bidirectional, but you can still map 
+one-to-many; see the configuration example below.
 
 =head1 CONFIGURATION
 
 An example relay.conf:
 
+  ## Map Main:#otw <-> IRCNode:#otw
+  ## Map Main:#otw <-> Paradox:#perl
+  ## (Paradox and IRCNode won't be relayed to each other)
   Relays:
     - From:
         Context: Main
