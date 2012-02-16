@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 use 5.12.1;
 use strict;
@@ -94,3 +94,35 @@ sub Bot_public_cmd_alarmclock {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Alarmclock - simple timed highlights
+
+=head1 DESCRIPTION
+
+This plugin allows authorized users to set a time via either a time string 
+(see L<Cobalt::Utils/"timestr_to_secs">) or a specified number of seconds.
+
+When the timer expires, the bot will highlight the user's nickname and 
+display the specified string in the channel in which the alarmclock was set.
+
+For example:
+
+  !alarmclock 5m check my laundry
+  !alarmclock 2h15m10s remind me in 2 hours 15 mins 10 secs
+
+(Accuracy down to the second is not guaranteed. Plus, this is IRC. Sorry.)
+
+Mimics B<darkbot6> behavior, but with saner time string grammar.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
