@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 use 5.12.1;
 use strict;
@@ -217,6 +217,9 @@ sub timestr_to_secs {
   my $timestr = shift || return;
   my($hrs,$mins,$secs,$total);
 
+  ## maybe just seconds:
+  return $timestr if $timestr =~ /^\d+$/;
+
   ## FIXME smarter regex, add days ?
   if ($timestr =~ m/(\d+)h/)
     { $hrs = $1; }
@@ -224,7 +227,7 @@ sub timestr_to_secs {
     { $mins = $1; }
   if ($timestr =~ m/(\d+)s/)
     { $secs = $1; }
-  $total = $secs;
+  $total = $secs // 0;
   $total += (int $mins * 60) if $mins;
   $total += (int $hrs * 3600) if $hrs;
   return int($total)
