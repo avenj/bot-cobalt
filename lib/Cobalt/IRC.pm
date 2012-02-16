@@ -639,7 +639,7 @@ sub irc_topic {
 
 sub irc_nick {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($src, $new) = @_[ARG0, ARG1];
+  my ($src, $new, $common) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
@@ -660,6 +660,7 @@ sub irc_nick {
     old => $old,
     new => $new,
     equal => $equal,
+    common => $common,
   };
 
   ## Bot_nick_changed
@@ -1398,6 +1399,7 @@ ${$_[1]} is a hash with the following keys:
     old => Previous nickname
     new => New nickname
     equal => Indicates a simple case change
+    common => Array(ref) of channels shared with the user
   }
 
 I<equal> is determined by attempting to get server CASEMAPPING= 
