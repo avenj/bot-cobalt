@@ -83,7 +83,6 @@ sub Cobalt_register {
       'public_cmd_rwhois',
       
       'relay_push_join_queue',
-      'relay_push_left_queue',
     ],
   );
 
@@ -105,6 +104,8 @@ sub Cobalt_unregister {
 
 sub Bot_relay_push_join_queue {
   my ($self, $core) = splice @_, 0, 2;
+
+  $self->_push_left_queue;
 
   my $queue = $self->{JoinQueue}//{};
 
@@ -150,9 +151,9 @@ sub Bot_relay_push_join_queue {
   return PLUGIN_EAT_ALL
 }
 
-sub Bot_relay_push_left_queue {
-  my ($self, $core) = splice @_, 0, 2;
-
+sub _push_left_queue {
+  my ($self) = @_;
+  my $core = $self->{core};
   my $queue = $self->{LeftQueue}//{};
 
   SERV: for my $context (keys %$queue) {
