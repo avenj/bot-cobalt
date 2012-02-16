@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Cobalt::Common;
 
@@ -54,6 +54,7 @@ sub Bot_public_cmd_currency {
     $core->send_event( 'send_message', $context, $channel,
       "$value is not a valid quantity."
     );  
+    return PLUGIN_EAT_ALL
   }
   
   unless ($from =~ $valid_abbrev && $to =~ $valid_abbrev) {
