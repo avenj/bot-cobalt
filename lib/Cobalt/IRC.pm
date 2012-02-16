@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.203';
+our $VERSION = '0.204';
 
 use Cobalt::Common;
 
@@ -220,9 +220,10 @@ sub _start {
   ## define ctcp responses
   $irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
-      version  => "cobalt ".$core->version." (perl $^V)",
-      userinfo => __PACKAGE__,
-      source   => 'http://www.cobaltirc.org',
+      version  => "cobalt ".$core->version." (perl $^V) ".$core->url,
+      userinfo   => __PACKAGE__.'-'.$VERSION,
+      clientinfo => __PACKAGE__.'-'.$VERSION,
+      source     => $core->url,
     ),
   );
 
