@@ -180,7 +180,7 @@ sub dbdump {
   
   my $dumper = Cobalt::Serializer->new( Format => $format );
   my $serial = $dumper->freeze($copy);
-  return $serial;
+  return $serial
 }
 
 1;

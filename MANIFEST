@@ -40,7 +40,6 @@ lib/Cobalt/Plugin/ChanMgr.pm
 lib/Cobalt/Plugin/Extras/BanMgr.pm
 lib/Cobalt/Plugin/Extras/Calc.pm
 lib/Cobalt/Plugin/Extras/Debug.pm
-lib/Cobalt/Plugin/Extras/Deparse.pm
 lib/Cobalt/Plugin/Extras/Ignore.pm
 lib/Cobalt/Plugin/Extras/Karma.pm
 lib/Cobalt/Plugin/Extras/Money.pm
