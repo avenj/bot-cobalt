@@ -142,3 +142,29 @@ sub _request_conversion_rate {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::Money - currency conversion plugin
+
+=head1 USAGE
+
+  !cc 20 NZD to USD
+  <cobalt2> 20 NZD == 16.564 USD
+
+=head1 DESCRIPTION
+
+Uses L<http://www.webservicex.net> to handle currency conversion.
+
+Will use L<Cobalt::Plugin::WWW> if available, otherwise falling back to 
+L<LWP::UserAgent>.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
