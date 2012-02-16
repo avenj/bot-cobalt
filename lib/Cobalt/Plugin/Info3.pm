@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.200';
+our $VERSION = '0.201';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -112,7 +112,7 @@ sub Bot_ctcp_action {
 
   $core->log->debug("issuing info3_relay_string in response to action");
   $core->send_event( 'info3_relay_string', 
-    $context, $channel, $nick, $match
+    $context, $channel, $nick, $match, join(' ', @message)
   );
   return PLUGIN_EAT_NONE
 }
@@ -520,7 +520,7 @@ sub _info_tell {
   $core->log->debug("issuing info3_relay_string for tell");
 
   $core->send_event( 'info3_relay_string', 
-    $msg->{context}, $channel, $target, $match
+    $msg->{context}, $channel, $target, $match, $str_to_match
   );
 
   return
@@ -834,6 +834,12 @@ Deletes the specified topic.
 
   bot: del my+new+topic
 
+=head3 replace
+
+Same as doing a 'del' then 'add' for a preexisting topic:
+
+  bot: replace this+topic Some new string
+
 
 =head2 Searching
 
@@ -852,6 +858,14 @@ match to the specified string.
 
   bot: dsearch N~
 
+=head2 Directing responses at other users
+
+=head4 tell
+
+You can instruct the bot to "talk" to someone else using B<tell>:
+
+  bot: add how+good+is+perl Awesome!
+  bot: tell Somebody about how good is perl
 
 =head2 Response variables
 
