@@ -89,7 +89,10 @@ sub Cobalt_register {
   $core->log->info("$VERSION loaded");
 
   $core->timer_set( 3,
-    { Event => 'relay_push_join_queue' },
+    { 
+      Event => 'relay_push_join_queue', 
+      Alias => $core->get_plugin_alias($self),
+    },
     'RELAYBOT_JOINQUEUE'
   );
 
@@ -144,7 +147,10 @@ sub Bot_relay_push_join_queue {
   $core->send_event('relay_push_left_queue');
 
   $core->timer_set( 3,
-    { Event => 'relay_push_join_queue' },
+    { 
+      Event => 'relay_push_join_queue',
+      Alias => $core->get_plugin_alias($self),
+    },
     'RELAYBOT_JOINQUEUE'
   );
   
