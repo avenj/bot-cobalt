@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 ## Simplistic relaybot plugin
 
