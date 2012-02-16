@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.294';
+our $VERSION = '0.296';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -90,7 +90,6 @@ sub Bot_public_msg {
   my @handled = qw/
     randstuff
     randq
-    random
     rdb    
   /;
 
@@ -112,8 +111,6 @@ sub Bot_public_msg {
       when "randstuff";
     $resp = $self->_cmd_randq(\@message, $msg, 'randq')
       when "randq";
-    $resp = $self->_cmd_randq(\@message, $msg, 'random')
-      when "random";
     $resp = $self->_cmd_rdb(\@message, $msg)
       when "rdb";
   }
@@ -121,10 +118,7 @@ sub Bot_public_msg {
   $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->{channel};
-  if (
-      $cmd ~~ [ 'randq', 'random' ]
-      && index($resp, '+') == 0
-  ) {
+  if ( $cmd eq 'randq' && index($resp, '+') == 0 ) {
     $resp = substr($resp, 1);
     $core->log->debug("dispatching action -> $channel");
     $core->send_event( 'send_action', $context, $channel, $resp );
@@ -254,9 +248,8 @@ sub _cmd_randq {
 
   my($str, $rdb);
   if    ($type eq 'random') {
-    ## FIXME allow random <rdb> syntax
-    ## dispatch out to _cmd_random
-    ## shouldfix; holdovers from 0.10
+    ## FIXME this is actually deprecated
+    ## use '~main' rdb info3 topic trick instead
     return $self->_select_random($msg_h, 'main');
   } elsif ($type eq 'rdb') {
     $rdb = $rdbpassed;
@@ -870,11 +863,6 @@ Commands are prefixed with the bot's nickname, rather than CmdChar.
 This is a holdover from darkbot legacy syntax.
 
   <JoeUser> botnick: randq some*glob
-
-=head2 random
-
-Retrieves a single random response ('randstuff') from the "main" RDB.
-
 
 =head2 randq
 
