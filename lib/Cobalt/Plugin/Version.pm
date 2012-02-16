@@ -85,9 +85,11 @@ sub Bot_public_msg {
   my $resp;
 
   ## $message_array->[1] is the first word aside from botnick.
-  given ($msg->{message_array}->[1]) {
+  my $cmd = $msg->{message_array}->[1] || return PLUGIN_EAT_NONE;
 
-    when (/^info$/i) {
+  given ( lc($cmd) ) {
+
+    when ("info") {
       my $startedts = $core->State->{StartedTS} // 0;
       my $delta = time() - $startedts;
 
@@ -106,7 +108,7 @@ sub Bot_public_msg {
       );
     }
 
-    when (/^version$/i) {
+    when ("version") {
       $resp = rplprintf( $core->lang->{RPL_VERSION},
         {
           version => 'cobalt '.$core->version,
@@ -117,7 +119,7 @@ sub Bot_public_msg {
       );
     }
 
-    when (/^os$/i) {
+    when ("os") {
       $resp = rplprintf( $core->lang->{RPL_OS}, { os => $^O } );
     }
 
