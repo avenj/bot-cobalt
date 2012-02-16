@@ -94,11 +94,6 @@ sub Cobalt_register {
     'RELAYBOT_JOINQUEUE'
   );
 
-  $core->timer_set( 3,
-    { Event => 'relay_push_left_queue' },
-    'RELAYBOT_LEFTQUEUE'
-  );
-
   return PLUGIN_EAT_NONE
 }
 
@@ -145,6 +140,8 @@ sub Bot_relay_push_join_queue {
 
   $self->{JoinQueue} = {};
   
+  $core->send_event('relay_push_left_queue');
+
   $core->timer_set( 3,
     { Event => 'relay_push_join_queue' },
     'RELAYBOT_JOINQUEUE'
@@ -156,10 +153,7 @@ sub Bot_relay_push_join_queue {
 sub Bot_relay_push_left_queue {
   my ($self, $core) = splice @_, 0, 2;
 
-  my $queue = $self->{PartQueue}//{};
-  my $quitqueue = $self->{QuitQueue}//{};
-  ## (destructively) combine hashes
-  @$queue{keys %$quitqueue} = values %$quitqueue;
+  my $queue = $self->{LeftQueue}//{};
 
   SERV: for my $context (keys %$queue) {
     next SERV unless scalar keys %{ $self->{Relays}->{$context} };
@@ -189,13 +183,7 @@ sub Bot_relay_push_left_queue {
     
   }  # SERV
 
-  $self->{PartQueue} = {};
-  $self->{QuitQueue} = {};
-
-  $core->timer_set( 3,
-    { Event => 'relay_push_left_queue' },
-    'RELAYBOT_LEFTQUEUE'
-  );
+  $self->{LeftQueue} = {};
 
   return PLUGIN_EAT_ALL
 }
@@ -290,7 +278,8 @@ sub Bot_user_left {
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
     
   my $src_nick = $partref->{src_nick};
-  push( @{ $self->{PartQueue}->{$context}->{$channel} }, $src_nick );
+  push( @{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
+    unless $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
   
   return PLUGIN_EAT_NONE
 }
@@ -343,7 +332,9 @@ sub Bot_user_quit {
     next unless @relays;
     RELAY: for my $relay (@relays) {
       my ($to_context, $to_channel) = @$relay;
-      push(@{ $self->{QuitQueue}->{$context}->{$channel} }, $src_nick );
+      push(@{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
+        unless 
+        $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
     }
   }
   
