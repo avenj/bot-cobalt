@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Cobalt::Common;
 
@@ -36,11 +36,11 @@ sub Bot_public_cmd_currency {
   my $msg     = ${ $_[1] };
   
   my $channel = $msg->{channel};
-  
-  my @message = $msg->{message_array};
+
+  my @message = @{ $msg->{message_array} };
   my ($value, $from, undef, $to) = @message;
   
-  unless ($value and $from and $to) {
+  unless ($value && $from && $to) {
     $core->send_event( 'send_message', $context, $channel,
       "Syntax: !cc <value> <abbrev> TO <abbrev>"
     );
