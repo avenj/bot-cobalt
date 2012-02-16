@@ -1,5 +1,5 @@
 package Cobalt::Common;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##
@@ -10,9 +10,9 @@ use 5.12.1;  ## because you're gonna need it
 use strict;
 use warnings;
 
-use Carp;
-
 use base 'Exporter';
+
+use Carp;
 
 use Cobalt::Utils qw/ :ALL /;
 
@@ -51,7 +51,6 @@ our %EXPORT_TAGS = (
   errors => [ qw/
     carp
     croak
-    confess
   / ],
   
   passwd => [ qw/
@@ -205,7 +204,6 @@ See L<Cobalt::Utils> for details.
 =head4 Errors
 
   croak
-  confess
 
 =head1 BUGS
 
