@@ -29,11 +29,11 @@ lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm.in
 lib/Cobalt/Lang.pm.PL
 lib/Cobalt/Lang.pod
-lib/Cobalt/Manual/Examples.pod
 lib/Cobalt/Manual/PluginConf.pod
 lib/Cobalt/Manual/PluginDist.pod
+lib/Cobalt/Manual/PluginTutorial.pod
 lib/Cobalt/Manual/Plugins.pod
-lib/Cobalt/Manual/Tutorial.pod
+lib/Cobalt/Manual/UserTutorial.pod
 lib/Cobalt/Plugin/Alarmclock.pm
 lib/Cobalt/Plugin/Auth.pm
 lib/Cobalt/Plugin/ChanMgr.pm

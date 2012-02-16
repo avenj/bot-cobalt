@@ -16,6 +16,8 @@ my $class = Module::Build->subclass(
 
     sub ACTION_wikidocs {
       ## FIXME doesn't grab README / INSTALL PODs
+      ## move them to Cobalt::Manual::
+      ## create top-level plaintext README referencing online POD
       my $self = shift;
       my $base = $self->base_dir;
       my $remote = 'eris.cobaltirc.org';
