@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 ## simple karma++/-- tracking
 
@@ -10,6 +10,8 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Cobalt::Serializer;
+
+use IRC::Utils qw/decode_irc/;
 
 sub new { bless {}, shift }
 
@@ -45,6 +47,7 @@ sub Bot_public_msg {
   return PLUGIN_EAT_NONE if $msg->{cmdprefix};
 
   my $first_word = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
+  $first_word = decode_irc($first_word);
   if ($first_word =~ $self->{karma_regex}) {
     my ($karma_for, $karma) = (lc($1), $2);
     if      ($karma eq '--') {

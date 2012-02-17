@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.296';
+our $VERSION = '0.298';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -39,7 +39,7 @@ sub Cobalt_register {
 
   my $cfg = $core->get_plugin_cfg( $self );
 
-  my $rdbdir =    $core->var ."/". ($cfg->{Opts}->{RDBDir} || "db/rdb");
+  my $rdbdir = $core->var ."/". ($cfg->{Opts}->{RDBDir} || "db/rdb");
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = Cobalt::Plugin::RDB::Database->new(
@@ -824,6 +824,7 @@ sub _delete_rdb {
     return $err
   }
 
+  return 1
 }
 
 
@@ -941,6 +942,19 @@ result set.
   rdb searchidx <rdb> <glob>
 
 Returns all RDB item IDs matching the specified glob.
+
+
+=head2 random
+
+'random' is not actually a built-in command; however, assuming you have 
+L<Cobalt::Plugin::Info3>, a handy trick is to add a topic named 'random' 
+that triggers RDB 'main':
+
+  <JoeUser> bot: add random ~main
+
+That will allow use of 'random' to pull a randomly-selected entry from the 
+'randstuffs' database.
+
 
 =head1 EVENTS
 

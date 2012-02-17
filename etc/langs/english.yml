@@ -16,7 +16,7 @@
 
 NAME: english
 REV: 8   ## bump +1 on significant revisions please
-SPEC: 0  ## someday there'll be a langspec.
+SPEC: 1  ## compare to core english.yml set.
 
 RPL:
 
