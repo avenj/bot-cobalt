@@ -44,7 +44,6 @@ lib/Cobalt/Plugin/Extras/Ignore.pm
 lib/Cobalt/Plugin/Extras/Karma.pm
 lib/Cobalt/Plugin/Extras/Money.pm
 lib/Cobalt/Plugin/Extras/Relay.pm
-lib/Cobalt/Plugin/Extras/Shared.pm
 lib/Cobalt/Plugin/Extras/Shorten.pm
 lib/Cobalt/Plugin/Extras/TempConv.pm
 lib/Cobalt/Plugin/Games.pm
