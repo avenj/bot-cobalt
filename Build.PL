@@ -18,6 +18,7 @@ my $class = Module::Build->subclass(
       ## FIXME doesn't grab README / INSTALL PODs
       ## move them to Cobalt::Manual::
       ## create top-level plaintext README referencing online POD
+      ## FIXME stick cobalt2-installer POD somewhere?
       my $self = shift;
       my $base = $self->base_dir;
       my $remote = 'eris.cobaltirc.org';
@@ -75,6 +76,12 @@ my $build = $class->new(
      # Files
       'File::Slurp' => '9999',
 
+     # HTTP
+      'HTTP::Request'  => 0,
+      'HTTP::Response' => 0,
+      'URI::Escape'    => 0,
+      'LWP::UserAgent' => 0,
+
      # Utils
       'DateTime'    => 0,
       'IRC::Utils'  => '0.12',
@@ -93,9 +100,12 @@ my $build = $class->new(
 
      # POE::
       'POE'            => '1.311',
+      'POE::Wheel::Run'        => 0,
+      'POE::Filter::Reference' => 0,
 
       # pocoirc6.75 contained bugfix fixing use of LocalAddr
       'POE::Component::IRC'        => '6.75',
+      'POE::Component::IRC::State' => 0,
       'POE::Component::Syndicator' => '0.06',
       'Object::Pluggable'          => '1.27',
 
@@ -110,12 +120,6 @@ my $build = $class->new(
     ### Utils / misc
       # terminal interaction
       'Term::ReadKey' => 0,
-      
-      # http
-      'HTTP::Request'  => 0,
-      'HTTP::Response' => 0,
-      'URI::Escape'    => 0,
-      'LWP::UserAgent' => 0,
 
     ### Storage / serialization
       'YAML::Syck'  => '1.18',
