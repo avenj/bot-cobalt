@@ -1,0 +1,175 @@
+---
+## etc/langs/ebonics.yml
+## This is a cobalt2 core langset.
+##
+## Loosely based on the original darkbot6 ebonics.h by rapsux
+
+NAME: ebonics
+REV: 1
+SPEC: 1
+
+RPL:
+
+ ## Core Cobalt set:
+
+  ## RPL_NO_ACCESS: %nick
+  RPL_NO_ACCESS: "%nick%, you aint got the juice for dat!"
+  
+  ## RPL_DB_ERR
+  RPL_DB_ERR: "yo playa I ain't able to access the database!"
+
+  ## RPL_PLUGIN_LOAD: %plugin, %module
+  RPL_PLUGIN_LOAD: "yo I be holdin' dis here %plugin (%module%)"
+
+  ## RPL_PLUGIN_UNLOAD: %plugin
+  RPL_PLUGIN_UNLOAD: "yo I just tossed %plugin cuz'a 5-0"
+
+  ## RPL_PLUGIN_ERR: %plugin, %err
+  RPL_PLUGIN_ERR: "that shit be fucked up: %plugin%: %err"
+
+  ## RPL_PLUGIN_UNLOAD_ERR: %plugin, %err
+  RPL_PLUGIN_UNLOAD_ERR: "tried to drop %plugin% but that shit be fucked up: %err"
+
+  ## RPL_TIMER_ERR
+  RPL_TIMER_ERR: "nigga I be hittin' too much rock to set no timer!"
+
+
+ ## Cobalt::IRC:
+
+  ## RPL_CHAN_SYNC: %chan
+  RPL_CHAN_SYNC: "Now bein' about my paper on %chan"
+
+
+ ## Plugin::Version:
+
+  ## RPL_VERSION: %version, %perl_v, %poe_v, %pocoirc_v
+  RPL_VERSION: "I be hustlin' wit %version (perl-%perl_v poe-%poe_v pocoirc-%pocoirc_v%) -- http://www.cobaltirc.org"
+
+  ## RPL_INFO: %version, %plugins, %uptime, %sent, %topics, %randstuffs
+  RPL_INFO: "Running %version%. I have %plugins plugins loaded. I've been up for %uptime and responded %sent times. I have %topics info3 topics and %randstuffs randstuffs."
+
+  ## RPL_OS: %os
+  RPL_OS: "representin' %os"
+
+
+ ## Plugin::Alarmclock:
+
+  ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
+  ALARMCLOCK_SET: "Alarm set to trigger in %secs%s (%nick%) [timerID: %timerid%]"
+
+
+ ## Plugin::Auth:
+
+  ## Broken syntax RPLs, no args:
+  AUTH_BADSYN_LOGIN: "dis be how you get down: LOGIN <username> <passwd>"
+  AUTH_BADSYN_CHPASS: "dis be how you get down: CHPASS <oldpass> <newpass>"
+
+  ## AUTH_SUCCESS: %context, %src, %nick, %user, %lev
+  AUTH_SUCCESS: "you be in the clique now, dawg [%nick%] (%user - %lev%)"
+# FIXME
+  ## AUTH_FAIL_*: %context, %src, %nick, %user
+  AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src%]"
+  AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user%)"
+  AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user%)"
+  
+  ## AUTH_CHPASS_*: %context, %src, %nick, %user 
+  AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"
+  AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
+
+  ## AUTH_STATUS, %nick, %username, %lev
+  AUTH_STATUS: "%nick% (%username%) is level %lev%"
+
+  ## AUTH_USER_ADDED, %nick, %username, %mask, %lev
+  AUTH_USER_ADDED: "Added username %username% (%mask%) at level %lev%"
+
+  ## AUTH_MASK_ADDED, %nick, %mask, %username
+  AUTH_MASK_ADDED: "Added new mask (%mask%) to %username%"
+
+  ## AUTH_MASK_EXISTS, %nick, %mask, %username
+  AUTH_MASK_EXISTS: "User %username% appears to have mask %mask% already"
+
+  ## AUTH_MASK_DELETED, %nick, %mask, %username
+  AUTH_MASK_DELETED: "Deleted mask %mask% from user %username%"
+
+  ## AUTH_USER_DELETED, %nick, %username
+  AUTH_USER_DELETED: "Deleted user %username%"
+
+  ## AUTH_USER_NOSUCH, %nick, %username
+  AUTH_USER_NOSUCH: "Could not find user %username%"
+
+  ## AUTH_USER_EXISTS, %nick, %username
+  AUTH_USER_EXISTS: "User %username% already exists"
+
+
+ ## Plugin::Info3:
+
+  ## INFO_DONTKNOW, %nick, %topic
+  INFO_DONTKNOW: "%nick%, I don't know anything about %topic"
+
+  ## INFO_WHAT, %nick
+  INFO_WHAT: "%nick%, what?"
+  
+  ## INFO_TELL_WHO, %nick
+  INFO_TELL_WHO: "Tell who what, %nick%?"
+  
+  ## INFO_TELL_WHAT, %nick, %target
+  INFO_TELL_WHAT: "Tell %target% about what, %nick%?"
+
+  ## INFO_ADD, %nick, %topic
+  INFO_ADD: "%nick%, %topic has been added."
+
+  ## INFO_DEL, %nick, %topic
+  INFO_DEL: "%nick%, %topic has been removed."
+
+  ## INFO_ABOUT, %nick, %topic, %author, %date, %length
+  INFO_ABOUT: "(%topic%) added by %author% at %date%. Response is %length% characters"
+
+  ## INFO_REPLACE, %nick, %topic
+  INFO_REPLACE: "Alright, %nick%, I just replaced %topic"
+
+  # INFO_ERR_NOSUCH, %nick, %topic
+  INFO_ERR_NOSUCH: "Could not find topic %topic%, %nick%."
+
+  # INFO_ERR_EXISTS, %nick, %topic
+  INFO_ERR_EXISTS: "%nick%, %topic already exists; perhaps you meant replace?"
+  
+  INFO_BADSYNTAX_ADD: "Usage: <bot> ADD <topic> <response>"
+  INFO_BADSYNTAX_DEL: "Usage: <bot> DEL <topic>"
+  INFO_BADSYNTAX_REPL: "Usage: <bot> REPLACE <topic> <new response>"
+
+
+ ## Plugin::RDB:
+
+  ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb
+  RDB_ERR_NO_SUCH_RDB: "%nick%, RDB %rdb% doesn't appear to exist."
+  
+  ## RDB_ERR_NO_SUCH_ITEM, %nick, %rdb, %index
+  RDB_ERR_NO_SUCH_ITEM: "%nick%, RDB %rdb doesn't appear to have item %index"
+  
+  ## RDB_ERR_NO_STRING, %nick, %rdb
+  RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
+  
+  ## RDB_ERR_RDB_EXISTS, %nick, %rdb
+  RDB_ERR_RDB_EXISTS: "RDB %rdb already exists, %nick%!"
+  
+  ## RDB_ERR_NOTPERMITTED, %nick, %rdb, %op
+  RDB_ERR_NOTPERMITTED: "Operation %op appears to be disallowed."
+
+  ## RDB_CREATED, %nick, %rdb
+  RDB_CREATED: "Created RDB %rdb per request of %nick"
+
+  ## RDB_DELETED, %nick, %rdb
+  RDB_DELETED: "Deleted RDB %rdb%, %nick"
+
+  ## RDB_ITEM_ADDED, %nick, %rdb, %index
+  RDB_ITEM_ADDED: "Added item %index to %rdb for %nick"
+
+  ## RDB_ITEM_DELETED, %nick, %rdb, %index
+  RDB_ITEM_DELETED: "Deleted item %index from %rdb per request of %nick"
+
+  ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
+  ##                %votedup, %voteddown
+  RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"
+
+  ## RDB_UNLINK_FAILED, %nick, %rdb
+  RDB_UNLINK_FAILED: "Failed to unlink RDB for %rdb"
