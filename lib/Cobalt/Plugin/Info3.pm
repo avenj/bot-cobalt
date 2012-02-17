@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.201';
+our $VERSION = '0.210';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -38,6 +38,12 @@ sub Cobalt_register {
     File => $dbpath,
   );
 
+  $self->{MAX_TRIGGERED} = $cfg->{Opts}->{MaxTriggered} || 3;
+
+  ## hash mapping contexts/channels to previously-triggered topics
+  ## used for MaxTriggered
+  $self->{LastTriggered} = { };
+
   ## glob-to-re mapping:
   $self->{Globs} = { };
   ## reverse of above:
@@ -73,6 +79,34 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub _over_max_triggered {
+  my ($self, $context, $channel, $match) = @_;
+  my $core = $self->{core};
+
+  if ($self->{LastTriggered}->{$context}->{$channel}) {
+    my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
+    my ($last_match, $tries) = @$lasttrig;
+    if ($match eq $last_match) {
+      $tries++;
+      if ($tries > $self->{MAX_TRIGGERED}) {
+        ## we've hit this topic too many times in a row
+        ## plugin should EAT_NONE
+        return 1
+      } else {
+        ## haven't hit MAX_TRIGGERED yet.
+        $self->{LastTriggered}->{$context}->{$channel} = [$match, $tries];
+      }
+    } else {
+      ## not the previously-returned topic
+      ## reset
+      delete $self->{LastTriggered}->{$context}->{$channel};
+    }
+  } else {
+    $self->{LastTriggered}->{$context}->{$channel} = [ $match, 1 ];
+  }
+  return 0
+}
+
 sub Bot_ctcp_action {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
@@ -92,6 +126,9 @@ sub Bot_ctcp_action {
   ## is this a channel? ctcp_action doesn't differentiate on its own
   return PLUGIN_EAT_NONE 
     unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
+
+  return PLUGIN_EAT_NONE
+    if $self->_over_max_triggered($context, $channel, $match);
 
   if ( index($match, '~') == 0) {
     my $rdb = (split ' ', $match)[0];
@@ -183,6 +220,9 @@ sub Bot_public_msg {
 
   my $nick = $msg->{src_nick};
   my $channel = $msg->{channel};
+
+  return PLUGIN_EAT_NONE
+    if $self->_over_max_triggered($context, $channel, $match);
 
   ## ~rdb, maybe? hand off to RDB.pm
   if ( index($match, '~') == 0) {
@@ -857,6 +897,13 @@ Does a 'deep search,' checking the B<contents> of every topic for a possible
 match to the specified string.
 
   bot: dsearch N~
+
+=head3 display
+
+Displays the raw (unparsed) topic response.
+
+Useful for checking for variables or RDBs.
+
 
 =head2 Directing responses at other users
 
