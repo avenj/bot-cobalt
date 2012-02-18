@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 use 5.12.1;
 use strict;
@@ -19,11 +19,23 @@ sub new {
 sub execute {
   my ($self, $msg) = @_;
   my $cyls = 5;
-  my $loaded = int rand($cyls);
 
-  return int rand($cyls) == $loaded ? 
-                color('bold', 'BANG!') 
-              : 'Click . . .'  ;
+  my $context = $msg->{context};
+  my $nick = $msg->{src_nick};
+
+  my $curcyl = $self->{Cylinder}->{$context}->{$nick}->{Current} 
+               //= int rand($cys);
+
+  my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
+               //= int rand($cyls);
+
+  if ($curcyl eq $loaded) {
+    delete $self->{Cylinder}->{$context}->{$nick};
+    return color('bold', 'BANG!')
+  }
+  
+  return 'Click . . .'
 }
 
 1;
+__END__

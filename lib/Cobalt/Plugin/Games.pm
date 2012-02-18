@@ -96,3 +96,69 @@ sub _load_games {
 
 
 1;
+__END
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Games - interface some silly games
+
+=head1 SYNOPSIS
+
+  !roll 2d6    -- Dice roller
+  !rr          -- Russian Roulette
+  !rps <throw> -- Rock, paper, scissors
+  !magic8      -- Ask the Magic 8-ball
+
+=head1 DESCRIPTION
+
+B<Games.pm> interfaces a handful of silly games, mapped to commands 
+in a configuration file (usually C<etc/plugins/games.conf>).
+
+=head1 WRITING GAMES
+
+On the backend, commands specified in our config are mapped to 
+modules that are automatically loaded when this plugin is.
+
+Games modules are given a 'core' argument in new() that tells them 
+where to find the core instance:
+
+  sub new { my %arg = @_; bless { core => $arg{core} }, shift }
+
+When the specified command is handled, the game module's B<execute> 
+method is called and passed the original message hash (as specified 
+in L<Cobalt::IRC/Bot_public_msg>) and the stripped string without 
+the command:
+
+  sub execute {
+    my ($self, $msg_h, $str) = @_;
+    ## We saved {core} in new():
+    my $core = $self->{core};
+    my $src_nick = $msg->{src_nick};
+    
+    ...
+
+    ## We can return a response to the channel:
+    return $some_response
+    
+    ## ...or use $core and return nothing:
+    $core->send_event( 'send_message',
+      $msg->{context},
+      $msg->{channel},
+      $some_response
+    );
+    return
+  }
+
+For more complicated games, you may want to write a stand-alone plugin.
+
+See L<Cobalt::Manual::Plugins>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
