@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.210';
+our $VERSION = '0.212';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -65,6 +65,7 @@ sub Cobalt_register {
       'public_msg',
       'ctcp_action',
       'info3_relay_string',
+      'info3_expire_maxtriggered',
     ],
   );
 
@@ -100,7 +101,7 @@ sub Bot_ctcp_action {
     unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
 
   return PLUGIN_EAT_NONE
-    if $self->_over_max_triggered($context, $channel, $match);
+    if $self->_over_max_triggered($context, $channel, $str);
 
   if ( index($match, '~') == 0) {
     my $rdb = (split ' ', $match)[0];
@@ -194,7 +195,7 @@ sub Bot_public_msg {
   my $channel = $msg->{channel};
 
   return PLUGIN_EAT_NONE
-    if $self->_over_max_triggered($context, $channel, $match);
+    if $self->_over_max_triggered($context, $channel, $str);
 
   ## ~rdb, maybe? hand off to RDB.pm
   if ( index($match, '~') == 0) {
@@ -253,26 +254,48 @@ sub Bot_info3_relay_string {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_info3_expire_maxtriggered {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $channel = ${ $_[1] };
+  
+  unless ($context && $channel) {
+    $core->log->debug(
+      "missing context and channel pair in expire_maxtriggered"
+    );
+  }
+  
+  delete $self->{LastTriggered}->{$context}->{$channel};  
+  return PLUGIN_EAT_ALL
+}
 
 ### Internal methods
 
 sub _over_max_triggered {
-  my ($self, $context, $channel, $match) = @_;
+  my ($self, $context, $channel, $str) = @_;
   my $core = $self->{core};
 
   if ($self->{LastTriggered}->{$context}->{$channel}) {
     my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
     my ($last_match, $tries) = @$lasttrig;
-    if ($match eq $last_match) {
+    if ($str eq $last_match) {
       ++$tries;
       if ($tries > $self->{MAX_TRIGGERED}) {
         ## we've hit this topic too many times in a row
         ## plugin should EAT_NONE
-        $core->log->debug("Over trigger limit for $match");
+        $core->log->debug("Over trigger limit for $str");
+        ## set a timer to expire this LastTriggered
+        $core->timer_set( 90,
+          {
+            Alias => $core->get_plugin_alias($self),
+            Event => 'info3_expire_maxtriggered',
+            Args => [ $context, $channel ],
+          },
+        );
         return 1
       } else {
         ## haven't hit MAX_TRIGGERED yet.
-        $self->{LastTriggered}->{$context}->{$channel} = [$match, $tries];
+        $self->{LastTriggered}->{$context}->{$channel} = [$str, $tries];
       }
     } else {
       ## not the previously-returned topic
@@ -280,7 +303,7 @@ sub _over_max_triggered {
       delete $self->{LastTriggered}->{$context}->{$channel};
     }
   } else {
-    $self->{LastTriggered}->{$context}->{$channel} = [ $match, 1 ];
+    $self->{LastTriggered}->{$context}->{$channel} = [ $str, 1 ];
   }
   return 0
 }
@@ -978,6 +1001,9 @@ Arguments are:
 
   $context, $channel, $nick, $string_to_format, $question_string
 
+=head3 Bot_info3_expire_maxtriggered
+
+Expires MaxTriggered for a particular topic match after 90 seconds.
 
 =head2 Emitted Events
 
