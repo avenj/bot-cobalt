@@ -464,6 +464,9 @@ For string search functions, it's better to use Cobalt-style globs:
 
 Standard regex syntax will be escaped and a translated regex returned.
 
+The only exception is character classes; this is valid, for example:
+
+  ^[a-z0-9]*$
 
 =head3 glob_to_re
 

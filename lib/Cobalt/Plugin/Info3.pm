@@ -79,35 +79,6 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-sub _over_max_triggered {
-  my ($self, $context, $channel, $match) = @_;
-  my $core = $self->{core};
-
-  if ($self->{LastTriggered}->{$context}->{$channel}) {
-    my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
-    my ($last_match, $tries) = @$lasttrig;
-    if ($match eq $last_match) {
-      ++$tries;
-      if ($tries > $self->{MAX_TRIGGERED}) {
-        ## we've hit this topic too many times in a row
-        ## plugin should EAT_NONE
-        $core->log->debug("Over trigger limit for $match");
-        return 1
-      } else {
-        ## haven't hit MAX_TRIGGERED yet.
-        $self->{LastTriggered}->{$context}->{$channel} = [$match, $tries];
-      }
-    } else {
-      ## not the previously-returned topic
-      ## reset
-      delete $self->{LastTriggered}->{$context}->{$channel};
-    }
-  } else {
-    $self->{LastTriggered}->{$context}->{$channel} = [ $match, 1 ];
-  }
-  return 0
-}
-
 sub Bot_ctcp_action {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
@@ -284,6 +255,36 @@ sub Bot_info3_relay_string {
 
 
 ### Internal methods
+
+sub _over_max_triggered {
+  my ($self, $context, $channel, $match) = @_;
+  my $core = $self->{core};
+
+  if ($self->{LastTriggered}->{$context}->{$channel}) {
+    my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
+    my ($last_match, $tries) = @$lasttrig;
+    if ($match eq $last_match) {
+      ++$tries;
+      if ($tries > $self->{MAX_TRIGGERED}) {
+        ## we've hit this topic too many times in a row
+        ## plugin should EAT_NONE
+        $core->log->debug("Over trigger limit for $match");
+        return 1
+      } else {
+        ## haven't hit MAX_TRIGGERED yet.
+        $self->{LastTriggered}->{$context}->{$channel} = [$match, $tries];
+      }
+    } else {
+      ## not the previously-returned topic
+      ## reset
+      delete $self->{LastTriggered}->{$context}->{$channel};
+    }
+  } else {
+    $self->{LastTriggered}->{$context}->{$channel} = [ $match, 1 ];
+  }
+  return 0
+}
+
 
 sub _info_add {
   my ($self, $msg, @args) = @_;
