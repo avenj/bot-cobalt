@@ -264,7 +264,7 @@ sub Bot_info3_expire_maxtriggered {
       "missing context and channel pair in expire_maxtriggered"
     );
   }
-  
+  $core->log->debug("cleared maxtriggered for $channel on $context";  
   delete $self->{LastTriggered}->{$context}->{$channel};  
   return PLUGIN_EAT_ALL
 }
