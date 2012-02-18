@@ -988,6 +988,16 @@ included by default if you C<< use L<Cobalt::Common> >>.
 If you need better accuracy, you'll need to use your own alarm()/delay() 
 calls to L<POE::Kernel>; the timer pool is checked every second or so.
 
+Arguments specified in the B<Args> array reference will be relayed to 
+plugin event handlers just like any other event:
+
+  sub Bot_some_timed_event {
+    ## Called by a timer_set() timer
+    my ($self, $core) = splice @_, 0, 2;
+    my $firstarg = ${ $_[0] };
+    my $second   = ${ $_[1] };
+  }
+
 
 =head4 timer_del
 

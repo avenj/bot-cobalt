@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 ## handles and eats: !plugin
 
@@ -12,7 +12,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use Cobalt::Utils qw/ rplprintf /;
 use Cobalt::Conf;
 
-sub new { bless { NON_RELOADABLE => 1 }, shift }
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
