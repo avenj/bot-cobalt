@@ -24,7 +24,7 @@ sub execute {
   my $nick = $msg->{src_nick};
 
   my $curcyl = $self->{Cylinder}->{$context}->{$nick}->{Current} 
-               //= int rand($cys);
+               //= int rand($cyls);
 
   my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
                //= int rand($cyls);
