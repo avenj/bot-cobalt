@@ -23,17 +23,14 @@ sub execute {
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
 
-  my $curcyl = $self->{Cylinder}->{$context}->{$nick}->{Current} 
-               //= int rand($cyls);
-
   my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
                //= int rand($cyls);
 
-  if ($curcyl eq $loaded) {
+  if ($loaded == 0) {
     delete $self->{Cylinder}->{$context}->{$nick};
     return color('bold', 'BANG!')
   }
-  ++$self->{Cylinder}->{$context}->{$nick}->{Current};  
+  --$self->{Cylinder}->{$context}->{$nick}->{Loaded};
   return 'Click . . .'
 }
 
