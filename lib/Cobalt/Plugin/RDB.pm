@@ -22,7 +22,8 @@ use Cobalt::Common;
 
 use Cobalt::Plugin::RDB::Database;
 
-
+## marked non-reloadable .. shouldfix
+## ought to feed our external RDB:: modules to unloader_cleanup
 sub new { bless { NON_RELOADABLE => 1 }, shift }
 
 sub Cobalt_register {

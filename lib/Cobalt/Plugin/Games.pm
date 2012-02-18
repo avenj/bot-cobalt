@@ -113,9 +113,9 @@ Cobalt::Plugin::Games - interface some silly games
 =head1 SYNOPSIS
 
   !roll 2d6    -- Dice roller
-  !rr          -- Russian Roulette
   !rps <throw> -- Rock, paper, scissors
   !magic8      -- Ask the Magic 8-ball
+  !rr          -- Russian Roulette
 
 =head1 DESCRIPTION
 
@@ -165,6 +165,6 @@ See L<Cobalt::Manual::Plugins>
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
+B<Roulette.pm> provided by B<Schroedingers_hat> @ irc.cobaltirc.org
 
 =cut

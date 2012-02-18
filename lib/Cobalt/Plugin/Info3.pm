@@ -861,6 +861,13 @@ Back-end storage takes place via L<Cobalt::DB>.
 The core distribution comes with a tool called B<cobalt2-import-info2> 
 capable of converting B<darkbot> and B<cobalt1> 'info' databases.
 
+By default, the same topic can be requested 4 times in a row before 
+being blocked to prevent loops. This can be adjusted via B<Opts> 
+in your B<info3.conf>:
+
+  Opts:
+    MaxTriggered: 2
+
 =head1 USAGE
 
 =head2 Add and delete
