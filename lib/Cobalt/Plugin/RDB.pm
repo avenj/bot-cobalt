@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.298';
+our $VERSION = '0.299';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -343,6 +343,8 @@ sub _cmd_rdb {
   ## this hash maps commands to levels.
   ## commands not found here aren't recognized.
   my %access_levs = (
+    ## FIXME document these ...
+    count  => $required_levs->{rdb_count}     // 0,
     get    => $required_levs->{rdb_get_item}  // 0,
     dblist => $required_levs->{rdb_dblist}    // 0,
     info   => $required_levs->{rdb_info}      // 0,
@@ -605,6 +607,15 @@ sub _cmd_rdb {
       $indices[0] = 'No matches' unless @indices;
       my @returned = scalar @indices > 30 ? @indices[0 .. 29] : @indices ;
       $resp = "Matches (max 30): ".join('  ', @returned);
+    }
+    
+    when ("count") {
+      my ($rdb, $str) = @message;
+      return 'Syntax: rdb count <RDB> <str>'
+        unless $rdb and $str;
+      my @indices = $self->_searchidx($rdb, $str);
+      my $count = scalar @indices;
+      $resp = "${nickname}: Found $count matches";
     }
 
   }
@@ -943,6 +954,11 @@ result set.
 
 Returns all RDB item IDs matching the specified glob.
 
+=head3 rdb count
+
+  rdb count <rdb> <glob>
+
+Returns just the total number of matches for the specified glob.
 
 =head2 random
 
