@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 use 5.12.1;
 use strict;
@@ -25,7 +25,11 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistering core IRC plugin");
+  $core->log->debug("Cleaning up our games...");
+  for my $module (@{ $self->{ModuleNames}//[] }) {
+    $core->unloader_cleanup($module);
+  }
+  $core->log->info("Unloaded");
   return PLUGIN_EAT_NONE
 }
 
@@ -81,6 +85,8 @@ sub _load_games {
     } else {
       $core->log->debug("Found: $module");
     }
+
+    push(@{ $self->{ModuleNames} }, $module);
 
     my $obj = $module->new(core => $core);
     $self->{Objects}->{$game} = $obj;
