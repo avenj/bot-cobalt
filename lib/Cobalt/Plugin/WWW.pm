@@ -284,7 +284,10 @@ sub _worker_stderr {
   my ($err, $worker_wheelid) = @_[ARG0, ARG1];
   my $core = $self->{core};
   $core->log->warn("HTTP worker reported err: $err");  
-  ## FIXME terminate this worker perhaps?
+  # Cobalt::HTTP will pretty reliably die off and sigchld.
+  # we could kill to be sure .. undecided.
+#  my $wheel = $self->{WorkersByWID}->{$worker_wheelid};
+#  $wheel->kill(9);
 }
 
 sub _worker_error {
@@ -347,6 +350,25 @@ It is often a good idea to check for the boolean value of
 B<< $core->Provided->{www_request} >> and possibly fall back to using LWP 
 with a short timeout, in case this plugin is not loaded.
 See L<Cobalt::Plugin::Extras::Shorten> for an example.
+
+=head2 Why not POE::Component::Client::HTTP?
+
+L<POE::Component::Client::HTTP> is B<great>. Seriously. An acquaintance 
+recently managed 13k concurrent proxy requests while stress-testing an 
+internal proxy using L<POE::Wheel::Run> and L<POE::Component::Client::HTTP>.
+
+That's a lot.
+
+Why not use it for async HTTP here? Well, unfortunately, the HTTP component 
+also needs L<POE::Component::Resolver>, which has a small bug that results in 
+L<POE::Component::Resolver::Sidecar> instances sticking around as long as the 
+HTTP component does -- which in our case is the lifetime of the bot.
+
+Rather than start a new useragent session every time there are pending HTTP 
+requests, L<LWP::UserAgent> instances are forked off and die when they're 
+finished. This back-end behavior may change in the future, but plugin 
+authors need not concern themselves with that; the public interface is 
+unlikely to change.
 
 =head1 SEE ALSO
 

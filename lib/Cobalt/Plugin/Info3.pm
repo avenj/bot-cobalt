@@ -87,10 +87,11 @@ sub _over_max_triggered {
     my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
     my ($last_match, $tries) = @$lasttrig;
     if ($match eq $last_match) {
-      $tries++;
+      ++$tries;
       if ($tries > $self->{MAX_TRIGGERED}) {
         ## we've hit this topic too many times in a row
         ## plugin should EAT_NONE
+        $core->log->debug("Over trigger limit for $match");
         return 1
       } else {
         ## haven't hit MAX_TRIGGERED yet.
