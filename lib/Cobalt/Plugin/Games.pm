@@ -96,7 +96,7 @@ sub _load_games {
 
 
 1;
-__END
+__END__
 
 =pod
 
