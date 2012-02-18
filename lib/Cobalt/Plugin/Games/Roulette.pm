@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 use 5.12.1;
 use strict;
@@ -33,7 +33,7 @@ sub execute {
     delete $self->{Cylinder}->{$context}->{$nick};
     return color('bold', 'BANG!')
   }
-  
+  ++$self->{Cylinder}->{$context}->{$nick}->{Current};  
   return 'Click . . .'
 }
 
