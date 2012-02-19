@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.212';
+our $VERSION = '0.213';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -91,7 +91,7 @@ sub Bot_ctcp_action {
   return PLUGIN_EAT_NONE unless @message;
 
   my $str = join ' ', '~action', @message;
-  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
+  my $match = $self->_info_match($str, 'ACTION') || return PLUGIN_EAT_NONE;
 
   my $nick = $msg->{src_nick};
   my $channel = $msg->{target};
@@ -731,13 +731,21 @@ sub _info_exec_dsearch {
 }
 
 sub _info_match {
-  my ($self, $txt) = @_;
+  my ($self, $txt, $isaction) = @_;
   my $core = $self->{core};
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ /$re/) {
       my $glob = $self->{Regexes}->{$re};
+      ## is this glob an action response?
+      if ( index($glob, '~action') == 0 ) {
+        ## action topic, are we matching a ctcp_action?
+        next unless $isaction;
+      } else {
+        ## not an action topic
+        next if $isaction;
+      }
       $self->{DB}->dbopen || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;

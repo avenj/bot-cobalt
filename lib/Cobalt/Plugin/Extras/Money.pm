@@ -115,12 +115,12 @@ sub Bot_currencyconv_rate_recv {
   
   unless ($response->is_success) {
     $core->send_event( 'send_message', $context, $channel,
-      "HTTP response failed: ".$response->code
+      "HTTP failed: ".$response->code
     );
     return PLUGIN_EAT_ALL
   }
 
-  my $content = $response->content;
+  my $content = $response->decoded_content;
   
   my($rate,$converted);
   if ( $content =~ /<double.*>(.*)<\/double>/i ) {
