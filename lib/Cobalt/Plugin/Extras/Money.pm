@@ -175,6 +175,8 @@ sub _request_conversion_rate {
       [ $value, $context, $channel, $from, $to ],
     );
   } else {
+    $core->log->warn("No async HTTP! Install Cobalt::Plugin::WWW");
+    $core->log->warn("Falling back to blocking LWP . . .");
     require LWP::UserAgent;
     my $ua = LWP::UserAgent->new(
       timeout => 3,

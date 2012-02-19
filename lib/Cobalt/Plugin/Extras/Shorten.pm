@@ -143,7 +143,9 @@ sub _request_longurl {
     );
 
   } else {
-    ## no async http, use LWP
+    ## no async http, use blocking LWP (ew)
+    $core->log->warn("No async HTTP available!");
+    $core->log->warn("You probably want Cobalt::Plugin::WWW loaded");
     my $ua = LWP::UserAgent->new(
       timeout      => 5,
       max_redirect => 0,
