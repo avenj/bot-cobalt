@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 use 5.12.1;
 use strict;
@@ -22,6 +22,12 @@ sub execute {
 
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
+
+  if ($msg && index(lc($msg), 'spin') == 0) {
+    ## clear loaded
+    delete $self->{Cylinder}->{$context}->{$nick};
+    return "Spun cylinders for ${nick}."
+  }
 
   my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
                //= int rand($cyls);
