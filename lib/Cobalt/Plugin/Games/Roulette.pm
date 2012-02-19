@@ -17,13 +17,13 @@ sub new {
 }
 
 sub execute {
-  my ($self, $msg) = @_;
+  my ($self, $msg, $str) = @_;
   my $cyls = 6;
 
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
 
-  if ($msg && index(lc($msg), 'spin') == 0) {
+  if ( $str && index(lc($str), 'spin') == 0 ) {
     ## clear loaded
     delete $self->{Cylinder}->{$context}->{$nick};
     return "Spun cylinders for ${nick}."
