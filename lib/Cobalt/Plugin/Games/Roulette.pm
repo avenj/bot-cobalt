@@ -18,7 +18,7 @@ sub new {
 
 sub execute {
   my ($self, $msg) = @_;
-  my $cyls = 5;
+  my $cyls = 6;
 
   my $context = $msg->{context};
   my $nick = $msg->{src_nick};
