@@ -66,41 +66,41 @@ RPL:
 
   ## AUTH_SUCCESS: %context, %src, %nick, %user, %lev
   AUTH_SUCCESS: "you be in the clique now, dawg [%nick%] (%user - %lev%)"
-# FIXME
+
   ## AUTH_FAIL_*: %context, %src, %nick, %user
-  AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src%]"
-  AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user%)"
-  AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user%)"
+  AUTH_FAIL_BADHOST: "no luck homie; host mismatch for %user [%src%]"
+  AUTH_FAIL_BADPASS: "no luck homie; passwd mismatch (%user%)"
+  AUTH_FAIL_NO_SUCH: "no luck homie; no such user (%user%)"
   
   ## AUTH_CHPASS_*: %context, %src, %nick, %user 
-  AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"
-  AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
+  AUTH_CHPASS_BADPASS: "yo that nickname aint a match son (%user%)"
+  AUTH_CHPASS_SUCCESS: "word dawg you gots a new passwd now (%user%)"
 
   ## AUTH_STATUS, %nick, %username, %lev
-  AUTH_STATUS: "%nick% (%username%) is level %lev%"
+  AUTH_STATUS: "%nick% (%username%) be level %lev%"
 
   ## AUTH_USER_ADDED, %nick, %username, %mask, %lev
-  AUTH_USER_ADDED: "Added username %username% (%mask%) at level %lev%"
+  AUTH_USER_ADDED: "aight I gots username %username% (%mask%) at level %lev%"
 
   ## AUTH_MASK_ADDED, %nick, %mask, %username
-  AUTH_MASK_ADDED: "Added new mask (%mask%) to %username%"
+  AUTH_MASK_ADDED: "aight I gots new mask (%mask%) fo' %username%"
 
   ## AUTH_MASK_EXISTS, %nick, %mask, %username
-  AUTH_MASK_EXISTS: "User %username% appears to have mask %mask% already"
+  AUTH_MASK_EXISTS: "dawg %username% already gots mask %mask%"
 
   ## AUTH_MASK_DELETED, %nick, %mask, %username
-  AUTH_MASK_DELETED: "Deleted mask %mask% from user %username%"
+  AUTH_MASK_DELETED: "aight aint got mask %mask% fo' user %username% no more"
 
   ## AUTH_USER_DELETED, %nick, %username
-  AUTH_USER_DELETED: "Deleted user %username%"
+  AUTH_USER_DELETED: "aight I aint got user %username% no more"
 
   ## AUTH_USER_NOSUCH, %nick, %username
-  AUTH_USER_NOSUCH: "Could not find user %username%"
+  AUTH_USER_NOSUCH: "I ain't be findin' %username%"
 
   ## AUTH_USER_EXISTS, %nick, %username
-  AUTH_USER_EXISTS: "User %username% already exists"
+  AUTH_USER_EXISTS: "we already gots user %username% homie"
 
-
+## FIXME
  ## Plugin::Info3:
 
   ## INFO_DONTKNOW, %nick, %topic

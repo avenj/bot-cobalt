@@ -6,6 +6,8 @@ use 5.12.1;
 use strict;
 use warnings;
 
+use Time::HiRes qw/gettimeofday tv_interval/;
+
 use Cobalt::DB;
 
 use Cobalt::Utils qw/
@@ -16,12 +18,13 @@ use Cobalt::Utils qw/
 my $info2_path;
 my $output_path;
 my $verbose = 0;
-
+my $bench   = 0;
 use Getopt::Long;
 GetOptions(
   'info2=s' => \$info2_path,
   'dest=s'  => \$output_path,
-  'verbose!' => \$verbose,
+  'verbose!'   => \$verbose,
+  'benchmark!' => \$bench,
   help => \&help,
 );
 
@@ -80,7 +83,7 @@ say "Pushing $count topics to Info3 DB";
 my $cdb = Cobalt::DB->new(
   File => $output_path,
 );
-
+my $timer0 = [gettimeofday];
 $cdb->dbopen || die "failed to open db\n";
 for my $glob (keys %$info3ref) {
   unless ( $cdb->put($glob, $info3ref->{$glob}) ) {
@@ -88,5 +91,8 @@ for my $glob (keys %$info3ref) {
   }
 }
 $cdb->dbclose;
+my $interval = tv_interval($timer0);
+
 
 say "Done.";
+say $interval if $bench;
