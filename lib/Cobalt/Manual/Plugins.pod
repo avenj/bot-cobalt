@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.013
+Plugins guide revision: 0.014
 
-Last updated for cobalt 2.00_18
+Last updated for cobalt 2.00_22
 
 =head1 DESCRIPTION
 
@@ -21,6 +21,73 @@ B<Plugin authors should at least read the L<Cobalt::IRC> POD>
 
 
 =head1 PLUGIN FUNDAMENTALS
+
+=head2 A basic plugin outline
+
+  package Cobalt::Plugin::User::MyPlugin;
+  our $VERSION = '0.001';
+
+  use strict;
+  use warnings;
+
+  ## Import lots of useful stuff:
+  use Cobalt::Common;
+  
+  ## Minimalist object constructor:
+  sub new { bless {}, shift }
+  
+  ## Called when we are loaded:
+  sub Cobalt_register {
+    ## Handlers receive $self and $core as first two args:
+    ##  $self is "this object"
+    ##  $core gives us access to core attributes and methods
+    my ($self, $core) = splice @_, 0, 2;
+    
+    ## Register to only receive public msg events
+    ## (We could also register for a list or 'all')
+    $core->plugin_register( $self, 'SERVER',
+      [ 'public_msg' ]
+    );
+    
+    ## Log that we're here now:
+    $core->log->info("Registered");
+
+    ## We could save $core to $self->{core} to make life easier 
+    ## on our internal methods, perhaps:
+    $self->{core} = $core;
+    
+    ## ALWAYS return an Object::Pluggable::Constants value
+    ## (Importing Cobalt::Common will also pull _NONE and _ALL in)
+    ## See "Returning proper values" under "Handling events"
+    ## 
+    ## PLUGIN_EAT_NONE is the most common:
+    return PLUGIN_EAT_NONE
+  }
+  
+  ## Called when we are unloaded:
+  sub Cobalt_unregister {
+    my ($self, $core) = splice @_, 0, 2;
+
+    . . . do some clean up, perhaps . . .
+    
+    $core->log->info("Unregistering; bye!");
+    return PLUGIN_EAT_NONE
+  }
+  
+  ## Syndicated events become prefixed with 'Bot_' when dispatched
+  ## (when calling send_event, leave the prefix out)
+  sub Bot_public_msg {
+    my ($self, $core) = splice @_, 0, 2;
+    my $context = ${ $_[0] };
+    my $msghash = ${ $_[1] };
+
+    . . . do something with message . . .
+
+    return PLUGIN_EAT_NONE 
+  }
+  
+  1;  ## perl modules must end in '1;'
+
 
 =head2 Module paths and configuration
 
@@ -127,75 +194,7 @@ B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
   $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
 
 There is no built-in facility for writing these changes back out as of 
-this writing; plugins are on their own for configuration file modification.
-
-
-=head2 A basic plugin outline
-
-  package Cobalt::Plugin::User::MyPlugin;
-  our $VERSION = '0.001';
-
-  use strict;
-  use warnings;
-
-  ## Import lots of useful stuff:
-  use Cobalt::Common;
-  
-  ## Minimalist object constructor:
-  sub new { bless {}, shift }
-  
-  ## Called when we are loaded:
-  sub Cobalt_register {
-    ## Handlers receive $self and $core as first two args:
-    ##  $self is "this object"
-    ##  $core gives us access to core attributes and methods
-    my ($self, $core) = splice @_, 0, 2;
-    
-    ## Register to only receive public msg events
-    ## (We could also register for a list or 'all')
-    $core->plugin_register( $self, 'SERVER',
-      [ 'public_msg' ]
-    );
-    
-    ## Log that we're here now:
-    $core->log->info("Registered");
-
-    ## We could save $core to $self->{core} to make life easier 
-    ## on our internal methods, perhaps:
-    $self->{core} = $core;
-    
-    ## ALWAYS return an Object::Pluggable::Constants value
-    ## (Importing Cobalt::Common will also pull _NONE and _ALL in)
-    ## See "Returning proper values" under "Handling events"
-    ## 
-    ## PLUGIN_EAT_NONE is the most common:
-    return PLUGIN_EAT_NONE
-  }
-  
-  ## Called when we are unloaded:
-  sub Cobalt_unregister {
-    my ($self, $core) = splice @_, 0, 2;
-
-    . . . do some clean up, perhaps . . .
-    
-    $core->log->info("Unregistering; bye!");
-    return PLUGIN_EAT_NONE
-  }
-  
-  ## Syndicated events become prefixed with 'Bot_' when dispatched
-  ## (when calling send_event, leave the prefix out)
-  sub Bot_public_msg {
-    my ($self, $core) = splice @_, 0, 2;
-    my $context = ${ $_[0] };
-    my $msghash = ${ $_[1] };
-
-    . . . do something with message . . .
-
-    return PLUGIN_EAT_NONE 
-  }
-  
-  1;  ## perl modules must end in '1;'
-  
+this writing; plugins are on their own for configuration file modification.  
 
 
 =head2 Handling events
