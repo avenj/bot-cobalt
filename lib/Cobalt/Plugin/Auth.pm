@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 ## FIXME handle context 'ALL'
 
@@ -580,8 +580,8 @@ sub _user_add {
 
   ## user add <username> <lev> <mask> <passwd> ?
   my @message = $msg->{message_array};
-  shift @message;
-  my ($target_usr, $target_lev, $mask, $passwd) = @message;
+  my @args = @message[2 .. $#message];
+  my ($target_usr, $target_lev, $mask, $passwd) = @args;
   unless ($target_usr && $target_lev && $mask && $passwd) {
     return "Usage: user add <username> <level> <mask> <initial_passwd>"
   }
@@ -673,7 +673,7 @@ sub _user_del {
   }
 
   ## user del <username>
-  my $target_usr = $msg->{message_array}[1];
+  my $target_usr = $msg->{message_array}[2];
   unless ($target_usr) {
     return "Usage: user del <username>"
   }
@@ -730,6 +730,10 @@ sub _user_del {
 }
 
 sub _user_list {
+
+}
+
+sub _user_info {
 
 }
 
