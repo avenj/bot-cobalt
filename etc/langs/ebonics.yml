@@ -5,8 +5,8 @@
 ## Loosely based on the original darkbot6 ebonics.h by rapsux
 
 NAME: ebonics
-REV: 1
-SPEC: 2
+REV: 2
+SPEC: 3
 
 RPL:
 
@@ -71,6 +71,7 @@ RPL:
   AUTH_FAIL_BADHOST: "no luck homie; host mismatch for %user [%src%]"
   AUTH_FAIL_BADPASS: "no luck homie; passwd mismatch (%user%)"
   AUTH_FAIL_NO_SUCH: "no luck homie; no such user (%user%)"
+  AUTH_FAIL_NO_CHANS: "yo dawg you aint on my corner (no shared channel!)"
   
   ## AUTH_CHPASS_*: %context, %src, %nick, %user 
   AUTH_CHPASS_BADPASS: "yo that nickname aint a match son (%user%)"

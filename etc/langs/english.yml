@@ -15,8 +15,10 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 9   ## bump +1 on significant revisions please
-SPEC: 2  ## compare to core english.yml set.
+  ## bump +1 on significant revisions please:
+REV: 10
+  ## compare to core english.yml set:
+SPEC: 3
 
 RPL:
 
@@ -81,6 +83,7 @@ RPL:
   AUTH_FAIL_BADHOST: "Login failed; host mismatch for %user [%src%]"
   AUTH_FAIL_BADPASS: "Login failed; passwd mismatch (%user%)"
   AUTH_FAIL_NO_SUCH: "Login failed; no such user (%user%)"
+  AUTH_FAIL_NO_CHANS: "Login failed; I don't share any channels with you!"
   
   ## AUTH_CHPASS_*: %context, %src, %nick, %user 
   AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"

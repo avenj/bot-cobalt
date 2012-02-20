@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 ## FIXME handle context 'ALL'
 
@@ -75,6 +75,7 @@ use constant {
     E_NOSUCH  => 2,
     E_BADPASS => 3,
     E_BADHOST => 4,
+    E_NOCHANS => 5,
 };
 
 
@@ -350,9 +351,7 @@ sub _cmd_login {
   ## (that way we don't have to worry about it when checking access levels)
 
   ## _do_login returns constants we can translate into a langset RPL:
-  ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST
-
-  ## FIXME: E_NOCHANS (and check for shared channels in order to allow a login)
+  ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST E_NOCHANS
   my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
   my $rplvars = {
     context => $context,
@@ -378,6 +377,10 @@ sub _cmd_login {
     }
     if ($retval == E_BADHOST) {
       $resp = rplprintf( $self->core->lang->{AUTH_FAIL_BADHOST}, $rplvars );
+      last RETVAL
+    }
+    if ($retval == E_NOCHANS) {
+      $resp = rplprintf( $self->core->lang->{AUTH_FAIL_NO_CHANS}, $rplvars );
       last RETVAL
     }
   }
@@ -480,7 +483,9 @@ sub _do_login {
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
 
   unless (exists $self->AccessList->{$context}->{$username}) {
-    $self->core->log->debug("[$context] authfail; no such user: $username ($host)");
+    $self->core->log->debug(
+      "[$context] authfail; no such user: $username ($host)"
+    );
     ## auth_failed_login ($context, $nick, $username, $host, $error_str)
     $self->core->send_event( 'auth_failed_login',
       $context,
@@ -490,6 +495,22 @@ sub _do_login {
       'NO_SUCH_USER',
     );
     return E_NOSUCH
+  }
+
+  ## fail if we don't share channels with this user
+  my $irc = $self->core->get_irc_obj($context);
+  unless ($irc->nick_channels($nick)) {
+    $self->core->log->debug(
+      "[$context] authfail; no shared chans: $username ($host)"
+    );
+    $self->core->send_event( 'auth_failed_login',
+      $context,
+      $nick,
+      $username,
+      $host,
+      'NO_SHARED_CHANS',
+    );
+    return E_NOCHANS
   }
 
   ## check username/passwd/host against AccessList:
