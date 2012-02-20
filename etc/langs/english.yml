@@ -15,8 +15,8 @@
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
 NAME: english
-REV: 8   ## bump +1 on significant revisions please
-SPEC: 1  ## compare to core english.yml set.
+REV: 9   ## bump +1 on significant revisions please
+SPEC: 2  ## compare to core english.yml set.
 
 RPL:
 
@@ -107,9 +107,11 @@ RPL:
   ## AUTH_USER_NOSUCH, %nick, %username
   AUTH_USER_NOSUCH: "Could not find user %username%"
 
-  ## AUTH_USER_EXISTS, %nick, %username
-  AUTH_USER_EXISTS: "User %username% already exists"
+  ## AUTH_USER_EXISTS, %nick, %user
+  AUTH_USER_EXISTS: "User %user% already exists"
 
+  ## AUTH_NOT_ENOUGH_ACCESS, %nick, %lev
+  AUTH_NOT_ENOUGH_ACCESS: "You don't have enough access for that operation (current: %lev%)"
 
  ## Plugin::Info3:
 

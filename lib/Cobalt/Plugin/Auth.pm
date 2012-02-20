@@ -342,7 +342,7 @@ sub _cmd_login {
   }
 
   ## NOTE: usernames in accesslist are stored lowercase per rfc1459 rules:
-  $l_user = lc_irc($l_user);
+  $l_user = lc_irc $l_user;
 
   ## IMPORTANT:
   ## nicknames (for auth hash) remain unmolested
@@ -426,7 +426,7 @@ sub _cmd_chpass {
 
 sub _cmd_whoami {
   my ($self, $context, $msg) = @_;
-  ## FIXME return current auth status
+  ## return current auth status
   my $nick = $msg->{src_nick};
   my $auth_lev = $self->core->auth_level($context, $nick);
   my $auth_usr = $self->core->auth_username($context, $nick) 
@@ -472,8 +472,7 @@ sub _cmd_user {
 
 sub _do_login {
   ## backend handler for _cmd_login, returns constants
-  ## we can be fairly sure syntax is correct from here
-  ## also, $username should've already been normalized via lc_irc:
+  ## $username should've already been normalized via lc_irc:
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
 
   ## note that this'll autoviv a nonexistant AccessList context
@@ -552,11 +551,142 @@ sub _do_login {
 
 
 sub _user_add {
-  ## add users to AccessList and call a list sync
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
+  
+  unless ($auth_usr) {
+    ## not logged in, return rpl
+    $core->log->info("Failed user add attempt by $nick on $context");
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nick }
+    );
+  }
+
+  my $pcfg = $core->get_plugin_cfg($self);
+  
+  my $required_base_lev = $pcfg->{RequiredPrivs}->{AddingUsers} // 2;
+  
+  unless ($auth_lev >= $required_base_lev) {
+    ## doesn't match configured required base level
+    ## otherwise this user can add users with lower access levs than theirs
+    $core->log->info(
+      "Failed user add; $nick ($auth_usr) has insufficient perms"
+    );
+    return rplprintf( $core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
+
+  ## user add <username> <lev> <mask> <passwd> ?
+  my @message = $msg->{message_array};
+  shift @message;
+  my ($target_usr, $target_lev, $mask, $passwd) = @message;
+  unless ($target_usr && $target_lev && $mask && $passwd) {
+    return "Usage: user add <username> <level> <mask> <initial_passwd>"
+  }
+  
+  $target_usr = lc_irc($target_usr);
+  
+  unless ($target_lev =~ /^\d+$/) {
+    return "Usage: user add <username> <level> <mask> <initial_passwd>"
+  }
+  
+  if ( exists $self->AccessList->{$context}->{$target_usr} ) {
+    $core->log->info(
+      "Failed user add ($nick); $target_usr already exists on $context"
+    );
+    return rplprintf( $core->lang->{AUTH_USER_EXISTS},
+      ## old/new username/user syntax:
+      { nick => $nick, username => $target_usr, user => $target_usr }
+    );
+  }
+  
+  unless ($target_lev < $auth_lev) {
+    ## user doesn't have enough access to add this level
+    ## (superusers have to be hardcoded in auth.conf)
+    $core->log->info(
+      "Failed user add; lev ($target_lev) too high for $auth_usr ($nick)"
+    );
+    return rplprintf( $core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
+
+  $passwd = $self->_mkpasswd($passwd);
+  $mask   = normalize_mask($mask);
+  
+  ## add to AccessList
+  $self->AccessList->{$context}->{$target_usr} = {
+    Masks    => [ $mask ],
+    Password => $passwd,  
+    Level    => $target_lev,
+    Flags    => {},
+  };
+  
+  unless ( $self->_write_access_list ) {
+    $core->log->warn("Couldn't _write_access_list in _user_add");
+    $core->log->warn("AuthDB may be broken or inaccessible.");
+    ## notify user also:
+    $core->send_event( 'send_message',
+      $context, $nick,
+      "Failed access list write! Admin should check logs."
+    );
+  }
+
+  return rplprintf( $core->lang->{AUTH_USER_ADDED},
+    { 
+      nick => $nick, 
+      user => $target_usr, 
+      username => $target_usr, 
+      lev => $target_lev
+    }
+  );
 }
 
 sub _user_delete { _user_del(@_) }
 sub _user_del {
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
+  
+  unless ($auth_usr) {
+    $core->log->info("Failed user del attempt by $nick on $context");
+    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+      { nick => $nick }
+    );
+  }
+
+  my $pcfg = $core->get_plugin_cfg($self);
+  
+  my $required_base_lev = $pcfg->{RequiredPrivs}->{DeletingUsers} // 2;
+  
+  unless ($auth_lev >= $required_base_lev) {
+    $core->log->info(
+      "Failed user del; $nick ($auth_usr) has insufficient perms"
+    );
+    return rplprintf( $core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
+
+  ## user del <username>
+  my $target_usr = $msg->{message_array}[1];
+  unless ($target_usr) {
+    return "Usage: user del <username>"
+  }
+  
+  $target_usr = lc_irc($target_usr);
+  
+  ## check if exists
+  
+  ## get target user's auth_level
+  ## check if authed user has a higher identified level
+
   ## delete users from AccessList and call a list sync
 }
 
