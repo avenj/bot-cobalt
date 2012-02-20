@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 
 ## FIXME handle context 'ALL'
 
@@ -119,9 +119,9 @@ sub Cobalt_register {
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
   my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
-  for my $context (keys %su) {
+  SERVER: for my $context (keys %su) {
 
-    for my $user (keys $su{$context}) {
+    USER: for my $user (keys $su{$context}) {
       ## Usernames on accesslist automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
       ## (we probably don't even know the server's CASEMAPPING= yet)
@@ -148,10 +148,10 @@ sub Cobalt_register {
       ## Mask and Masks are both valid directives, Mask trumps Masks
       ## ...whether that's sane behavior or not is questionable
       ## (but it's what the comments in auth.conf specify)
-      if (exists $su{$context}->{$user}->{Masks} &&
-          !exists $su{$context}->{$user}->{Mask}) {
-        $su{$context}->{$user}->{Mask} =
-          $su{$context}->{$user}->{Masks};
+      if (exists $su{$context}->{$user}->{Masks} 
+          && !exists $su{$context}->{$user}->{Mask} ) {
+        $su{$context}->{$user}->{Mask} = 
+          delete $su{$context}->{$user}->{Masks};
       }
 
       ## the Mask specification in cfg may be an array or a string:
@@ -161,16 +161,16 @@ sub Cobalt_register {
             map { normalize_mask($_) } 
               @{ $su{$context}->{$user}->{Mask} }
           ];
-        } else {
+      } else {
           $self->AccessList->{$context}->{$user}->{Masks} = [ 
             normalize_mask( $su{$context}->{$user}->{Mask} ) 
           ];
-        }
+      }
 
       $core->log->debug("added superuser: $user (context: $context)");
-    }
+    } ## USER
 
-  }
+  } ## SERVER
 
   $core->plugin_register($self, 'SERVER',
     [
@@ -475,8 +475,6 @@ sub _do_login {
   ## $username should've already been normalized via lc_irc:
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
 
-  ## note that this'll autoviv a nonexistant AccessList context
-  ## (which is alright, but it's good to be aware of it)
   unless (exists $self->AccessList->{$context}->{$username}) {
     $self->core->log->debug("[$context] authfail; no such user: $username ($host)");
     ## auth_failed_login ($context, $nick, $username, $host, $error_str)
@@ -974,9 +972,7 @@ sub _write_access_list {
   chmod($perms, $authdb);
 }
 
-## Moosey plugins specifically MUST NOT be made immutable!
 no Moose; 1;
-
 __END__
 
 
