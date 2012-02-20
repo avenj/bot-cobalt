@@ -361,20 +361,24 @@ sub _cmd_login {
     user => $l_user,
   };
   my $resp;
-  given ($retval) {
-    when (SUCCESS) {
+  RETVAL: {
+    if ($retval == SUCCESS) {
       ## add level to rplvars:
       $rplvars->{lev} = $self->core->auth_level($context, $nick);
       $resp = rplprintf( $self->core->lang->{AUTH_SUCCESS}, $rplvars );
+      last RETVAL
     }
-    when (E_NOSUCH) {
+    if ($retval == E_NOSUCH) {
       $resp = rplprintf( $self->core->lang->{AUTH_FAIL_NO_SUCH}, $rplvars );
+      last RETVAL
     }
-    when (E_BADPASS) {
+    if ($retval == E_BADPASS) {
       $resp = rplprintf( $self->core->lang->{AUTH_FAIL_BADPASS}, $rplvars );
+      last RETVAL
     }
-    when (E_BADHOST) {
+    if ($retval == E_BADHOST) {
       $resp = rplprintf( $self->core->lang->{AUTH_FAIL_BADHOST}, $rplvars );
+      last RETVAL
     }
   }
 
