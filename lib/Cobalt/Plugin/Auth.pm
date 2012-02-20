@@ -637,8 +637,9 @@ sub _user_add {
   return rplprintf( $core->lang->{AUTH_USER_ADDED},
     { 
       nick => $nick, 
-      user => $target_usr, 
+      user => $target_usr,
       username => $target_usr, 
+      mask => $mask,
       lev => $target_lev
     }
   );
