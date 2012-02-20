@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 ## FIXME handle context 'ALL'
 
@@ -330,7 +330,8 @@ sub Bot_private_msg {
 
 sub _cmd_login {
   ## interact with _do_login and set up response RPLs
-  ## _do_login does the heavy lifting, we just talk to the user.
+  ## _do_login does the heavy lifting, we just talk to the user
+  ## this is stupid, but I'm too lazy to fix
   my ($self, $context, $msg) = @_;
   my $l_user = $msg->{message_array}->[1] // undef;
   my $l_pass = $msg->{message_array}->[2] // undef;
@@ -459,7 +460,7 @@ sub _cmd_user {
   my $resp;
 
   unless ($cmd) {
-    ## FIXME bad syntax rpl
+    return 'No command specified'
   }
 
   ## FIXME method dispatch like the _cmd_ dispatcher above
@@ -814,7 +815,7 @@ sub _user_chmask {
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   ## [+/-]mask syntax so as not to be confused with user del (much)
-  ## FIXME normalize masks before adding ?
+  ## FIXME normalize masks before adding 
   ## call a list sync
 }
 

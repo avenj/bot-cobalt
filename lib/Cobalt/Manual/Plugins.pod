@@ -574,10 +574,8 @@ core's get_irc_obj method. Expects a server context:
     my $irc = $core->get_irc_obj($context);
   }
 
-
-=head4 Frequently useful PoCo::IRC commands
-
-FIXME
+See L<POE::Component::IRC> and L<POE::Component::IRC::State> for details 
+on the methods you can call against C<$irc> -- they are very complete.
 
 
 =head1 USING THE CORE
@@ -964,7 +962,9 @@ L</timer_del_alias>:
 
 Additionally, L<Cobalt::Plugin::PluginMgr> automatically tries to clear 
 plugin timers for unloaded plugins; this only works for Alias-tagged timers.
-Without a specified Alias, a timer is essentially considered ownerless.
+Without a specified Alias, a timer is essentially considered ownerless -- 
+it will happily fire at their scheduled time even if the issuing plugin 
+is gone.
 
 By default, a random timer ID is chosen (and returned).
 
@@ -1424,18 +1424,34 @@ FIXME
 
 =head2 Spawning your own POE::Session
 
-FIXME discussion of plugins that initiate their own sessions
+There's nothing preventing you from spawning your own L<POE::Session>; 
+your session will run within Cobalt's L<POE::Kernel> instance and POE 
+event handlers will work as-normal.
 
-FIXME registering for events from irc...?
+Motivations for doing so include fine-grained timer control, integration 
+with POE bits such as the POE::Component and POE::Wheel namespaces
+. . . and the fact that POE is pretty great ;-)
+
+See L<Cobalt::Plugin::WWW> source for an example of a plugin that uses 
+its own POE::Session and L<POE::Wheel::Run> to manage forked workers 
+asynchronously.
+
 
 =head2 Manipulating plugin pipeline order
 
-FIXME
+L<Object::Pluggable> allows you to manipulate the plugin pipeline order; 
+that is to say, the order in which events will hit plugins.
 
-=head2 Using POE::Component::IRC plugins
+For example, when writing a plugin such as an input filter, it can be useful to move 
+your plugin towards the top of the plugin pipeline
 
-FIXME
+FIXME examples
 
+
+See L<Object::Pluggable::Pipeline> for details.
+
+Plugin managers are not required to take any special consideration of a 
+plugin's previous position in the case of a plugin (re)load.
 
 =head1 IRC CAVEATS
 
@@ -1477,7 +1493,15 @@ See L</get_irc_casemap> and L<IRC::Utils>
 
 =head2 Character encodings
 
-FIXME
+IRC doesn't come with a lot of guarantees regarding character encodings.
+
+Hopefully, you're getting either CP1252 or UTF-8.
+
+The L<IRC::Utils> POD contains an excellent discussion of the general 
+problem; see L<IRC::Utils/ENCODING>. Seriously. You really ought to read 
+it carefully.
+
+L<IRC::Utils/decode_irc> is included if you 'use Cobalt::Common'.
 
 
 =head1 SEE ALSO
