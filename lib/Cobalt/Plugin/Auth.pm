@@ -579,7 +579,7 @@ sub _user_add {
   }
 
   ## user add <username> <lev> <mask> <passwd> ?
-  my @message = $msg->{message_array};
+  my @message = @{ $msg->{message_array} };
   my @args = @message[2 .. $#message];
   my ($target_usr, $target_lev, $mask, $passwd) = @args;
   unless ($target_usr && $target_lev && $mask && $passwd) {
@@ -734,7 +734,38 @@ sub _user_list {
 }
 
 sub _user_info {
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
+  
+  unless ($auth_lev) {
+    return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
+  }
+  
+  my $target_usr = $msg->{message_array}[2];
+  unless ($target_usr) {
+    return 'Usage: user info <username>'
+  }
+  
+  $target_usr = lc_irc($target_usr);
+  
+  my $alist_context = $self->AccessList->{$context};
+  
+  unless (exists $alist_context->{$target_usr}) {
+    return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
+      { nick => $nick, user => $target_usr, username => $target_usr }
+    );
+  }
 
+  my $usr = $alist_context->{$target_usr};
+  my $usr_lev = $usr->{Level};
+#  my $usr_maskref = $usr->{Masks};  ## FIXME
+  ## need more useful info cmd
+  ## needs to handle potentially long mask strings
+  ## also flags
+  return "User $target_usr is level $usr_lev"
 }
 
 sub _user_search {
