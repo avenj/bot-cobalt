@@ -6,7 +6,7 @@
 
 NAME: ebonics
 REV: 1
-SPEC: 1
+SPEC: 2
 
 RPL:
 
@@ -99,6 +99,9 @@ RPL:
 
   ## AUTH_USER_EXISTS, %nick, %username
   AUTH_USER_EXISTS: "we already gots user %username% homie"
+  
+  ## AUTH_NOT_ENOUGH_ACCESS, %nick, %lev
+  AUTH_NOT_ENOUGH_ACCESS: "you aint got the juice fo'dat! (current: %lev)"
 
 ## FIXME
  ## Plugin::Info3:
