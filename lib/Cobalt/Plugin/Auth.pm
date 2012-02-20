@@ -683,11 +683,52 @@ sub _user_del {
   $target_usr = lc_irc($target_usr);
   
   ## check if exists
+  my $this_alist = $self->AccessList->{$context};
+  unless (exists $this_alist->{$target_usr}) {
+    return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
+      { nick => $nick, user => $target_usr, username => $target_usr }
+    );
+  }
   
   ## get target user's auth_level
-  ## check if authed user has a higher identified level
+  ## check if authed user has a higher identified level  
+  my $target_lev = $this_alist->{$target_usr}->{Level};
+  unless ($target_lev < $auth_lev) {
+    $core->log->info(
+      "Failed user del; $nick ($auth_usr) has insufficient perms"
+    );
+    return rplprintf( $core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
 
-  ## delete users from AccessList and call a list sync
+  ## delete users from AccessList
+  delete $this_alist->{$target_usr};
+  $core->log->info("User deleted: $target_usr ($target_lev) on $context");
+  $core->log->info("Deletion issued by $nick ($auth_usr)");
+  
+  ## see if user is logged in, log them out if so
+  my $auth_context = $core->State->{Auth}->{$context};
+  for my $authnick (keys %$auth_context) {
+    my $this_username = $auth_context->{Username};
+    next unless $this_username eq $target_usr;
+    $self->_do_logout($context, $authnick);
+  }
+  
+  ## call a list sync
+  unless ( $self->_write_access_list ) {
+    $core->log->warn("Couldn't _write_access_list in _user_add");
+    $core->log->warn("AuthDB may be broken or inaccessible.");
+    ## notify user also:
+    $core->send_event( 'send_message',
+      $context, $nick,
+      "Failed access list write! Admin should check logs."
+    );
+  }
+
+  return rplprintf( $core->lang->{AUTH_USER_DELETED},
+    { nick => $nick, user => $target_usr, username => $target_usr }
+  );
 }
 
 sub _user_list {
@@ -695,6 +736,11 @@ sub _user_list {
 }
 
 sub _user_search {
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
 
 }
 
@@ -702,21 +748,23 @@ sub _user_chflags {
 
 }
 
-sub _do_chflags {
-
-}
-
 sub _user_chmask {
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
   ## [+/-]mask syntax so as not to be confused with user del (much)
   ## FIXME normalize masks before adding ?
   ## call a list sync
 }
 
-sub _do_chmask {
-
-}
-
 sub _user_chpass {
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
   ## superuser (or configurable level.. ?) chpass ability
   ## return a formatted response to _cmd_user handler
 }
@@ -1022,6 +1070,15 @@ Bot_user_quit
 Bot_nick_changed
 
 =back
+
+
+=head1 CAVEATS
+
+This plugin generally assumes you only have one copy of it loaded.
+
+It is perfectly possible to use either a replacement Auth system, or 
+a supplementary Auth system, etc. Just don't try to load two copies of 
+this particular plugin; there be dragons.
 
 
 =head1 AUTHOR
