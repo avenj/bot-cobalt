@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 ## FIXME handle context 'ALL'
 
@@ -688,10 +688,6 @@ sub _user_del {
   ## check if authed user has a higher identified level
 
   ## delete users from AccessList and call a list sync
-}
-
-sub _do_alist_modify {
-  ## _user_add/del operations
 }
 
 sub _user_list {
