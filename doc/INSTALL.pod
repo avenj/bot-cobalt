@@ -34,6 +34,8 @@ the L<CPAN> module repository.
 
 L<cpan> is the most common Perl install utility.
 
+B<This is the recommended way to install Cobalt.>
+
 CPAN doesn't know how what to do with a tarball; you'll need to untar:
 
   $ tar xvzf Cobalt-2.00.tgz
