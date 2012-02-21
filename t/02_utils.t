@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 14;
 
 BEGIN {
   use_ok( 'Cobalt::Utils', qw/
@@ -53,4 +53,10 @@ GLOBS: {
       );
   }
 
+  my @array = ( "Test array", "Another item" );
+  
+  ok( glob_grep('^Anoth*', @array), "glob_grep against array" );
+  ok( glob_grep('*t+array$', \@array), "glob_grep against arrayref" );
+  ok( !glob_grep('Non*existant', @array), "negative glob_grep against array");
+  ok( !glob_grep('Non*existant', \@array), "negative glob_grep against ref");
 }
