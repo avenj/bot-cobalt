@@ -1033,7 +1033,7 @@ sub _write_access_list {
   }
 
   my $p_cfg = $core->get_plugin_cfg( $self );
-  my $perms = $p_cfg->{Opts}->{AuthDB_Perms} // 0600;
+  my $perms = oct( $p_cfg->{Opts}->{AuthDB_Perms} ) // 0600;
   chmod($perms, $authdb);
 }
 
