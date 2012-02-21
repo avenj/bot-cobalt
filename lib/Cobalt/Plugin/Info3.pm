@@ -996,7 +996,7 @@ In order to pull a randomized response from a B<RDB>, a topic should
 trigger a response starting with '~<rdbname>' -- for example:
 
   bot: add hello ~hi
-  bot: rdbadd hi
+  bot: rdb dbadd hi
   bot: rdb add hi Hello N~! Welcome to C~!
   bot: rdb add hi How goes it, N~?
 

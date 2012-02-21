@@ -1,5 +1,7 @@
 use Test::More tests => 19;
 
+## Cobalt::Utils tests
+
 BEGIN {
   use_ok( 'Cobalt::Utils', qw/
     color
