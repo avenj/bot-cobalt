@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.300';
+our $VERSION = '0.301';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -389,6 +389,9 @@ sub _cmd_rdb {
       
       return 'RDB name must be in the a-z0-9 set'
         unless $rdb =~ /^[a-z0-9]+$/;
+
+      return 'RDB name must be less than 32 characters'
+        unless length $rdb <= 32;
 
       my $retval = $dbmgr->createdb($rdb);
 
