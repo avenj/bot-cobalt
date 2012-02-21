@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 ## FIXME handle context 'ALL'
 
@@ -651,6 +651,9 @@ sub _user_add {
     Level    => $target_lev,
     Flags    => {},
   };
+
+  $core->log->info("New user added by $nick ($auth_usr)");
+  $core->log->info("New user $target_usr ($mask) level $target_lev");
   
   unless ( $self->_write_access_list ) {
     $core->log->warn("Couldn't _write_access_list in _user_add");
