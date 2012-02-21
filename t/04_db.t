@@ -1,5 +1,6 @@
 use Test::More tests => 8;
 
+use Fcntl qw/ :flock /;
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
 
@@ -22,7 +23,7 @@ $db->dbclose;
 
 sub _newtemp {
     my ($fh, $filename) = tempfile( 'tmpdbXXXXX', 
-      DIR => $dir, UNLINK => 1 
+      DIR => $tempdir, UNLINK => 1 
     );
     flock $fh, LOCK_UN;
     return($fh, $filename)
