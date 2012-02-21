@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.299';
+our $VERSION = '0.300';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -387,8 +387,8 @@ sub _cmd_rdb {
       my ($rdb) = @message;
       return 'Syntax: rdb dbadd <RDB>' unless $rdb;
       
-      return 'RDB name must be in the A-Za-z0-9 set'
-        unless $rdb =~ /^[A-Za-z0-9]+$/;
+      return 'RDB name must be in the a-z0-9 set'
+        unless $rdb =~ /^[a-z0-9]+$/;
 
       my $retval = $dbmgr->createdb($rdb);
 
@@ -867,7 +867,7 @@ L<Cobalt::Plugin::Info3> topics), to implement IRC quotebots, or just
 to fill your channel with random chatter.
 
 The "randstuff" db is labelled "main" -- all other RDB names must be 
-in the [A-Za-z0-9] set.
+in the [a-z0-9] set.
 
 =head1 COMMANDS
 
