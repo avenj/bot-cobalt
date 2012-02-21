@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use 5.12.1;
 use strict;
@@ -25,7 +25,7 @@ our @EXPORT_OK = qw{
   glob_to_re_str
   rplprintf
 
-  %colors
+  %COLORS
 };
 
 our %EXPORT_TAGS = (
@@ -34,7 +34,7 @@ our %EXPORT_TAGS = (
 
 
 ## mostly borrowed from IRC::Utils
-my %colors = (
+my %COLORS = (
     NORMAL      => "\x0f",
 
     BOLD        => "\x02",
@@ -81,9 +81,9 @@ sub rplprintf {
   ##   'err'  => $error,
 
   ## %C_* colors / formats :
-  for my $color (keys %colors) {
+  for my $color (keys %COLORS) {
     my $fmtvar = 'C_'.$color;
-    $vars->{$fmtvar} = $colors{$color};
+    $vars->{$fmtvar} = $COLORS{$color};
   }
 
   sub _repl {
@@ -203,11 +203,11 @@ sub color {
 
   my $format = uc(shift || 'normal');
   my $str = shift;
-  my $selected = $colors{$format};
+  my $selected = $COLORS{$format};
 
-  return $selected . $str . $colors{NORMAL} if $str;
+  return $selected . $str . $COLORS{NORMAL} if $str;
 
-  return $selected || $colors{NORMAL};
+  return $selected || $COLORS{NORMAL};
 };
 
 
@@ -569,6 +569,12 @@ supports on your system.
 
 Returns the hash if the cleartext password is a match. 
 Otherwise, returns 0.
+
+=head1 ALSO EXPORTED
+
+The hash B<%COLORS> is exported as part of I<:ALL>.
+
+You should really use C<color()> instead.
 
 =head1 AUTHOR
 
