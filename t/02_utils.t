@@ -1,4 +1,4 @@
-use Test::More tests => 6;
+use Test::More tests => 10;
 
 BEGIN {
   use_ok( 'Cobalt::Utils', qw/
@@ -36,4 +36,21 @@ TIMESTR: {
   ok( timestr_to_secs('2h10m8s') == 7808, 'timestr_to_secs (2h10m8s)' );
 }
 
-# FIXME globs
+GLOBS: {
+  my $globs = {
+    'th*ngs+stuff' => 'th.*ngs\sstuff',
+    '^an?chor$'    => '^an.chor$',
+  };
+
+  for my $glob (keys %$globs) {
+    my $regex;
+    ok( $regex = glob_to_re_str($glob), "Convert glob" )
+      or diag("Could not convert $glob to regex");
+    ok( $regex eq $globs->{$glob}, "Compare glob<->regex" )
+      or diag(
+        "Expected: ".$globs->{$glob},
+        "\nGot: ".$regex,
+      );
+  }
+
+}
