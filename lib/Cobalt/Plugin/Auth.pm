@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 ## FIXME handle context 'ALL'
 
@@ -66,6 +66,8 @@ use namespace::autoclean;
 use Cobalt::Common;
 
 use Cobalt::Serializer;
+
+use Storable qw/dclone/;
 
 
 ### Constants, mostly for internal retvals:
@@ -1010,7 +1012,8 @@ sub _write_access_list {
 
   ## we don't want to write superusers back out
   ## copy from ref to a fresh hash to fuck with:
-  my %hash = %$alist;
+  my $cloned_alist = dclone($alist);
+  my %hash = %$cloned_alist;
   for my $context (keys %hash) {
     for my $user (keys %{ $hash{$context} }) {
       if ( $hash{$context}->{$user}->{Flags}->{SUPERUSER} ) {

@@ -1,2 +1,4 @@
 ##  !die / !restart
-## roll in Rehash.pm?
+##  !join / !part / !cycle
+##  !server < list | connect | disconnect ... >
+## cmd_$cmd required levs setup?
