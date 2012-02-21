@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_22';
+our $VERSION = '2.00_23';
 
 use 5.12.1;
 use Carp;
@@ -290,7 +290,7 @@ sub syndicator_started {
     <=>
     ($self->cfg->{plugins}->{$a}->{Priority}//1)
                 } keys %{ $self->cfg->{plugins} };
-  for my $plugin (sort keys %{ $self->cfg->{plugins} })
+  for my $plugin (@plugins)
   { 
     next if $self->cfg->{plugins}->{$plugin}->{NoAutoLoad};
     

@@ -4,7 +4,8 @@ use Test::More tests => 17;
 use Fcntl qw/ :flock /;
 use File::Temp qw/ tempfile tempdir /;
 
-## Test JSON, YAML (Cobalt::Serializer)
+## Test JSON, YAML::XS (Cobalt::Serializer)
+## (Other formats are 'optional-ish')
 
 BEGIN {
   use_ok( 'Cobalt::Serializer' );
@@ -13,16 +14,16 @@ BEGIN {
 my $hash = {
   Scalar => "A string",
   Int => 3,
-  Array => [ "Item", "Another" ],
+  Array => [ qw/Two Items/ ],
+  Hash  => { Some => { Deep => 'Hash' } },
 };
 
 JSON: {
   my $js_ser = Cobalt::Serializer->new( 'JSON' );
-  can_ok($js_ser, 'freeze');
+  can_ok($js_ser, 'freeze', 'thaw');
   my $json = $js_ser->freeze($hash);
   ok( $json, 'JSON freeze');
 
-  can_ok($js_ser, 'thaw');
   my $json_thawed = $js_ser->thaw($json);
   ok( $json_thawed, 'JSON thaw');
 
@@ -44,6 +45,7 @@ JSONRW: {
 
 YAML: {
   my $yml_ser = Cobalt::Serializer->new();
+  can_ok($yml_ser, 'freeze', 'thaw');
   my $yml = $yml_ser->freeze($hash);
   ok( $yml, 'YAML freeze');
 
