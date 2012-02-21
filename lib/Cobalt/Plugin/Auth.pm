@@ -765,6 +765,10 @@ sub _user_list {
 
 }
 
+sub _user_whois {
+  ## determine user from nickname for authed users
+}
+
 sub _user_info {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
