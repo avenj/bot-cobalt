@@ -1,5 +1,9 @@
 package Cobalt::Plugin::Calc;
 
+## FIXME
+##  move out to external pkg
+##  use Parser::MGC ?
+
 use 5.12.1;
 use strict;
 use warnings;

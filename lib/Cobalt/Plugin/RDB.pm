@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.301';
+our $VERSION = '0.302';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -106,7 +106,7 @@ sub Bot_public_msg {
   $core->log->debug("Dispatching $cmd");
 
   ## dispatcher:
-  my $resp;
+  my ($id, $resp);
   given ($cmd) {
     $resp = $self->_cmd_randstuff(\@message, $msg)
       when "randstuff";
@@ -317,7 +317,7 @@ sub _cmd_randq {
   my $content = $item->{String} // '(undef - broken db!)';
   my $itemkey = $item->{DBKEY}  // '(undef - broken db!)';
   
-  return "[${itemkey}] $content";
+  return "[${itemkey}] $content" ;
 }
 
 
@@ -693,13 +693,13 @@ sub Bot_rdb_broadcast {
     CHAN: for my $channel (@channels) {
       next CHAN if ($chcfg->{$channel}->{rdb_randstuffs}//1) == 0;
  
-      ## action/msg check    
+      ## action/msg check   
       if ( index($random, '+') == 0 ) {
-        $random = substr($random, 1);
+        my $random_action = substr($random, 1);
         $core->log->debug(
           "rdb_broadcast (action) -> $context -> $channel"
         );
-        $core->send_event( 'send_action', $context, $channel, $random );
+        $core->send_event( 'send_action', $context, $channel, $random_action );
       } else {
         $core->log->debug("rdb_broadcast -> $context -> $channel");
         $core->send_event( 'send_message', $context, $channel, $random );
