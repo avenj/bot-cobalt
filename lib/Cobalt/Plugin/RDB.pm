@@ -119,15 +119,9 @@ sub Bot_public_msg {
   $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->{channel};
-  if ( $cmd eq 'randq' && index($resp, '+') == 0 ) {
-    $resp = substr($resp, 1);
-    $core->log->debug("dispatching action -> $channel");
-    $core->send_event( 'send_action', $context, $channel, $resp );
-  } else {
-    $core->log->debug("dispatching msg -> $channel");
-    $core->send_event( 'send_message', $context, $channel, $resp );
-  }
-  
+  $core->log->debug("dispatching msg -> $channel");
+  $core->send_event( 'send_message', $context, $channel, $resp );
+
   return PLUGIN_EAT_NONE
 }
 
