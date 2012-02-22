@@ -112,8 +112,8 @@ sub Bot_public_msg {
       $resp = rplprintf( $core->lang->{RPL_VERSION},
         {
           version => 'cobalt '.$core->version,
-          perl_v => $^V,
-          poe_v => $POE::VERSION,
+          perl_v  => sprintf("%vd", $^V),
+          poe_v   => $POE::VERSION,
           pocoirc_v => $POE::Component::IRC::VERSION,
         }
       );
