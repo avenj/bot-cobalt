@@ -373,7 +373,7 @@ sub _core_timer_check_pool {
     if ( $execute_ts <= time ) {
       my $event = $timer->{Event};
       my @args = @{ $timer->{Args} };
-      $self->log->debug("timer execute: $id (ev: $event)");
+#      $self->log->debug("timer execute: $id (ev: $event)");
       ## dispatch this event:
       $self->send_event( $event, @args ) if $event;
       ## send executed_timer to indicate this timer's done:
@@ -486,7 +486,7 @@ sub timer_set {
       Args    => [ @event_args ],
       AddedBy => $addedby,
     };
-    $self->log->debug("timer_set; $id $delay $event_name");
+#    $self->log->debug("timer_set; $id $delay $event_name");
     return $id
   } else {
     $self->log->debug("timer_set called but no timer added; bad type?");
