@@ -107,14 +107,6 @@ sub Bot_public_cmd_part {
   
   my $channel = $msg->{message_array}->[0] // $msg->{channel};
   
-  my $irc = $core->get_irc_obj($context);
-  unless ($irc->channels->{$channel}) {
-    $core->send_event( 'send_message', $context, $msg->{channel},
-      "Not currently on $channel"
-    );
-    return PLUGIN_EAT_ALL
-  }
-  
   $core->log->info("PART ($channel) issued by $src_nick");
   
   $core->send_event( 'send_message', $context, $msg->{channel},
