@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_23';
+our $VERSION = '2.00_24';
 
 use 5.12.1;
 use Carp;
@@ -559,7 +559,6 @@ sub timer_del_pkg {
 sub auth_level {
   ## retrieve an auth level for $nickname in $context
   ## unidentified users get access level 0 by default
-  ## FIXME: configurable default access level
   my ($self, $context, $nickname) = @_;
 
   if (! $context) {
@@ -752,7 +751,8 @@ sub get_plugin_cfg {
     return undef
   }
   
-  my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return;
+  ## Return empty hash if there is no loaded config for this alias
+  my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return {};
   
   unless (ref $plugin_cf eq 'HASH') {
     $self->log->debug("get_plugin_cfg; $alias cfg not a HASH");
