@@ -2,8 +2,9 @@ package Cobalt::Plugin::Master;
 our $VERSION = '0.01';
 ##  !die / !restart
 ##  !join / !part / !cycle
+## FIXME:
 ##  !server < list | connect | disconnect ... >
-## cmd_$cmd required levs setup?
+##  !restart(?) / !die
 
 use Cobalt::Common;
 
@@ -55,6 +56,8 @@ sub Bot_public_cmd_cycle {
   
   ## fail quietly for unauthed users
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
+
+  $core->log->info("CYCLE issued by $src_nick");
   
   my $channel = $msg->{channel};  
   $core->send_event( 'part', $context, $channel );
@@ -78,6 +81,8 @@ sub Bot_public_cmd_join {
   
   my $channel = $msg->{message_array}->[0];
   return PLUGIN_EAT_ALL unless $channel;
+  
+  $core->log->info("JOIN ($channel) issued by $src_nick");
   
   $core->send_event( 'send_message', $context, $msg->{channel},
     "Joining $channel"
@@ -109,6 +114,8 @@ sub Bot_public_cmd_part {
     );
     return PLUGIN_EAT_ALL
   }
+  
+  $core->log->info("PART ($channel) issued by $src_nick");
   
   $core->send_event( 'send_message', $context, $msg->{channel},
     "Leaving $channel"
