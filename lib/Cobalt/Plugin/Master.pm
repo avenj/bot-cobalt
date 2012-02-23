@@ -112,7 +112,7 @@ sub Bot_public_cmd_part {
   $core->send_event( 'send_message', $context, $msg->{channel},
     "Leaving $channel"
   );
-  $core->send_event( 'part', $context, $channel );
+  $core->send_event( 'part', $context, $channel, "Requested by $src_nick" );
   
   return PLUGIN_EAT_ALL
 }
