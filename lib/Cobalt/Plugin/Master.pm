@@ -49,7 +49,7 @@ sub Bot_public_cmd_cycle {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -72,7 +72,7 @@ sub Bot_public_cmd_join {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -98,7 +98,7 @@ sub Bot_public_cmd_part {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -125,7 +125,7 @@ sub Bot_public_cmd_op {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_op} // 3;
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -145,7 +145,7 @@ sub Bot_public_cmd_deop {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_op} // 3;
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -168,7 +168,7 @@ sub Bot_public_cmd_voice {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_voice} // 2;
   my $authed_lev  = $core->auth_level($context, $src_nick);
@@ -189,7 +189,7 @@ sub Bot_public_cmd_devoice {
   my $msg     = ${ $_[1] };
   my $src_nick = $msg->{src_nick};
 
-  my $pcfg = $core->get_plugin_cfg || {};
+  my $pcfg = $core->get_plugin_cfg($self) || {};
 
   my $requiredlev = $pcfg->{Opts}->{Level_voice} // 2;
   my $authed_lev  = $core->auth_level($context, $src_nick);

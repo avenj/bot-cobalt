@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.204';
+our $VERSION = '0.205';
 
 use Cobalt::Common;
 
@@ -842,7 +842,7 @@ sub Bot_topic {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
-  my $topic   = ${$_[2] || \''};
+  my $topic   = defined $_[2] ? ${$_[2]} : "" ;
 
   unless ( $context
            && $self->{IRCs}->{$context}
@@ -886,7 +886,7 @@ sub Bot_kick {
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $target  = ${$_[2]};
-  my $reason  = ${$_[3] // \'Kicked'};
+  my $reason  = defined $_[3] ? ${$_[3]} : 'Kicked';
 
   unless ( $context
            && $self->{IRCs}->{$context}
@@ -926,7 +926,7 @@ sub Bot_part {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
-  my $reason  = ${$_[2] // \'Leaving' };
+  my $reason  = defined $_[2] ? ${$_[2]} : 'Leaving' ;
 
   unless ( $context
            && $self->{IRCs}->{$context}
