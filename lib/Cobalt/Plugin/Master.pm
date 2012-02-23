@@ -60,7 +60,7 @@ sub Bot_public_cmd_cycle {
   $core->log->info("CYCLE issued by $src_nick");
   
   my $channel = $msg->{channel};  
-  $core->send_event( 'part', $context, $channel );
+  $core->send_event( 'part', $context, $channel, "Cycling $channel" );
   $core->send_event( 'join', $context, $channel );
 
   return PLUGIN_EAT_ALL
