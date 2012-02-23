@@ -207,3 +207,44 @@ sub Bot_public_cmd_devoice {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Master - basic bot control commands
+
+=head1 SYNOPSIS
+
+  !cycle
+  !join <channel>
+  !part [channel]
+  
+  !op   [nickname]
+  !deop [nickname]
+  
+  !voice   [nickname]
+  !devoice [nickname]
+
+=head1 DESCRIPTION
+
+This plugin provides basic bot/channel control commands.
+
+Levels for each command are specified in C<plugins.conf>:
+
+  ## Defaults:
+  Module: Cobalt::Plugin::Master
+  Opts:
+    Level_die: 9999
+    Level_server: 9999
+    Level_joinpart: 3
+    Level_voice: 2
+    Level_op: 3
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
