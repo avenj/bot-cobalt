@@ -75,7 +75,7 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_23"
+         "version" : "2.00_24"
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
@@ -87,7 +87,7 @@
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.204"
+         "version" : "0.205"
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
@@ -115,7 +115,7 @@
       },
       "Cobalt::Plugin::Extras::Money" : {
          "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "Cobalt::Plugin::Extras::Relay" : {
          "file" : "lib/Cobalt/Plugin/Extras/Relay.pm",
@@ -151,7 +151,11 @@
       },
       "Cobalt::Plugin::Info3" : {
          "file" : "lib/Cobalt/Plugin/Info3.pm",
-         "version" : "0.213"
+         "version" : "0.214"
+      },
+      "Cobalt::Plugin::Master" : {
+         "file" : "lib/Cobalt/Plugin/Master.pm",
+         "version" : "0.01"
       },
       "Cobalt::Plugin::OutputFilters::StripColor" : {
          "file" : "lib/Cobalt/Plugin/OutputFilters/StripColor.pm",
@@ -204,5 +208,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_23"
+   "version" : "2.00_24"
 }

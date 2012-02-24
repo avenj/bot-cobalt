@@ -746,7 +746,7 @@ Either the plugin's C<$self> object or its current alias must be
 specified.
 
 Returns a hashref that is a copy of the plugin's config, as found 
-in I<<$core->cfg->{plugin_cf}->{$alias}>>
+in I<< $core->cfg->{plugin_cf}->{$alias} >>
 
 Returns undef if there is no plugin configuration stored for this 
 plugin:
