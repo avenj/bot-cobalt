@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.213';
+our $VERSION = '0.214';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -100,6 +100,12 @@ sub Bot_ctcp_action {
   return PLUGIN_EAT_NONE 
     unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
 
+  ## should we be sending info3 responses anyway?
+  my $chcfg = $core->get_channels_cfg($context) || {};
+  return PLUGIN_EAT_NONE
+    if defined $chcfg->{$channel}->{info3_response}
+    and $chcfg->{$channel}->{info3_response} == 0;
+
   return PLUGIN_EAT_NONE
     if $self->_over_max_triggered($context, $channel, $str);
 
@@ -188,14 +194,19 @@ sub Bot_public_msg {
   ## rejoin message
   my $str = join ' ', @message;
 
-  ## check for matches
-  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
-
   my $nick = $msg->{src_nick};
   my $channel = $msg->{channel};
 
+  my $chcfg = $core->get_channels_cfg($context) || {};
+  return PLUGIN_EAT_NONE
+    if defined $chcfg->{$channel}->{info3_response}
+    and $chcfg->{$channel}->{info3_response} == 0;
+
   return PLUGIN_EAT_NONE
     if $self->_over_max_triggered($context, $channel, $str);
+
+  ## check for matches
+  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
 
   ## ~rdb, maybe? hand off to RDB.pm
   if ( index($match, '~') == 0) {
