@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.214';
+our $VERSION = '0.215';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -91,7 +91,6 @@ sub Bot_ctcp_action {
   return PLUGIN_EAT_NONE unless @message;
 
   my $str = join ' ', '~action', @message;
-  my $match = $self->_info_match($str, 'ACTION') || return PLUGIN_EAT_NONE;
 
   my $nick = $msg->{src_nick};
   my $channel = $msg->{target};
@@ -108,6 +107,8 @@ sub Bot_ctcp_action {
 
   return PLUGIN_EAT_NONE
     if $self->_over_max_triggered($context, $channel, $str);
+
+  my $match = $self->_info_match($str, 'ACTION') || return PLUGIN_EAT_NONE;
 
   if ( index($match, '~') == 0) {
     my $rdb = (split ' ', $match)[0];
