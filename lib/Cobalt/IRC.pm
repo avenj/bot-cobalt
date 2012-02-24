@@ -168,7 +168,7 @@ sub _start {
 
   my $core = $self->{core};
   my $cfg  = $core->get_core_cfg;
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = $core->get_plugin_cfg($self);
 
   $core->log->debug("pocoirc plugin load");
 
@@ -191,10 +191,10 @@ sub _start {
       ), 
     );
 
-  if (defined $cfg->{Networks}->{$context}->{NickServPass}) {
+  if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
-        Password => $cfg->{Networks}->{$context}->{NickServPass},
+        Password => $pcfg->{Networks}->{$context}->{NickServPass},
       ),
     );
   }
