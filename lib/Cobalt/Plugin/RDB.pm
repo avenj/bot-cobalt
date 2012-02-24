@@ -356,9 +356,9 @@ sub _cmd_rdb {
 
   my @handled = keys %access_levs;
   unless ($cmd && $cmd ~~ @handled) {
-    return "Commands: add <rdb>, del <rdb> <idx>, info <rdb> <idx>, "
-           ."get <rdb> <idx>, search(idx) <rdb> <str>, dbadd <rdb>, "
-           ."dbdel <rdb>";
+    return "Commands: add <rdb> <item> ; del <rdb> <idx>, info <rdb> <idx> ; "
+           ."get <rdb> <idx> ; search(idx) <rdb> <str> ; count <rdb> <str>, 
+           ."dbadd <rdb> ; dbdel <rdb>";
   }
     
   my $context  = $msg_h->{context};
