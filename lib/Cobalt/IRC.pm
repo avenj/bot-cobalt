@@ -170,6 +170,8 @@ sub _start {
   my $cfg  = $core->get_core_cfg;
   my $pcfg = $core->get_plugin_cfg($self);
 
+  $pcfg->{Networks}->{Main} = $cfg->{IRC};
+
   $core->log->debug("pocoirc plugin load");
 
   ## autoreconn plugin:
@@ -192,6 +194,7 @@ sub _start {
     );
 
   if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
+    $core->log->debug("Adding NickServ ID for $context");
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
         Password => $pcfg->{Networks}->{$context}->{NickServPass},
