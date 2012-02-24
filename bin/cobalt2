@@ -8,7 +8,7 @@ use Carp;
 
 my $rcfile = $ENV{HOME}."/.cobalt2rc";
 my $opt_debug = 0;
-my $opt_detach = 0;
+my $opt_detach = 1;
 my $loglevel = 'info';
 my $basedir;
 

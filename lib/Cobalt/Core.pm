@@ -172,16 +172,7 @@ sub init {
   my $language = ($self->cfg->{core}->{Language} //= 'english');
   $self->lang( $self->load_langset($language) );
 
-  if ($self->detached)
-  {
-    close(STDERR);
-    close(STDOUT);
-    open(STDERR,'>>', $logfile)
-      or $self->log->warn("Could not redirect STDERR");
-    open(STDOUT,'>>', $logfile)
-      or $self->log->warn("Could not redirect STDOUT");
-  }
-  else
+  unless ($self->detached)
   {
     $logger->add(
      screen => {

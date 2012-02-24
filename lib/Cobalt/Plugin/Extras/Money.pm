@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 use Cobalt::Common;
 
@@ -81,7 +81,7 @@ sub Bot_public_cmd_currency {
   }
   
   my $valid_val    = qr/^(\d+)?\.?(\d+)?$/;
-  my $valid_abbrev = qr/^[A-Z]{3}$/;
+  my $valid_abbrev = qr/^[a-zA-Z]{3}$/;
 
   unless ($value =~ $valid_val) {
     $core->send_event( 'send_message', $context, $channel,
@@ -98,7 +98,7 @@ sub Bot_public_cmd_currency {
   }
 
   $self->_request_conversion_rate(
-    $from, $to, $value, $context, $channel
+    uc($from), uc($to), $value, $context, $channel
   );
   
   return PLUGIN_EAT_ALL
