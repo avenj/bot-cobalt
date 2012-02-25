@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.207';
+our $VERSION = '0.208';
 
 use Cobalt::Common;
 
@@ -765,7 +765,7 @@ sub Bot_send_message {
   unless ( $context
            && $self->{IRCs}->{$context}
            && $target
-           && $txt
+           && defined $txt
   ) { 
     return PLUGIN_EAT_NONE 
   }
@@ -796,7 +796,7 @@ sub Bot_send_notice {
   unless ( $context
            && $self->{IRCs}->{$context}
            && $target
-           && $txt
+           && defined $txt
   ) { 
     return PLUGIN_EAT_NONE 
   }
@@ -826,7 +826,7 @@ sub Bot_send_action {
   unless ( $context
            && $self->{IRCs}->{$context}
            && $target
-           && $txt
+           && defined $txt
   ) { 
     return PLUGIN_EAT_NONE 
   }
@@ -874,7 +874,7 @@ sub Bot_mode {
   unless ( $context
            && $self->{IRCs}->{$context}
            && $target
-           && $modestr
+           && defined $modestr
   ) { 
     return PLUGIN_EAT_NONE 
   }
