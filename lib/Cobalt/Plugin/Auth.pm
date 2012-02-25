@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 ## FIXME handle context 'ALL'
 
@@ -81,25 +81,14 @@ use constant {
 };
 
 
-### Attributes
-has 'core' => (
-  is => 'rw',
-  isa => 'Object',
-);
+has 'core' => ( is => 'rw', isa => 'Object' );
+has 'DB_Path' => ( is => 'rw', isa => 'Str' );
 
-has 'AccessList' => (
-  is => 'rw',
-  isa => 'HashRef',
+has 'AccessList' => ( is => 'rw', isa => 'HashRef', 
   default => sub { {} },
 );
 
-has 'DB_Path' => (
-  is => 'rw',
-  isa => 'Str',
-);
 
-
-### Load/unload:
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   ## Set $self->core to make life easier on our internals:
@@ -205,7 +194,6 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering core IRC plugin");
-  ## FIXME save authdb?
   $self->_clear_all;
   return PLUGIN_EAT_NONE
 }
@@ -223,11 +211,8 @@ sub Bot_connected {
 
 sub Bot_disconnected {
   my ($self, $core) = splice @_, 0, 2;
-  ## disconnect event
   my $context = ${$_[0]};
-
   $self->_clear_context($context);
-
   return PLUGIN_EAT_NONE
 }
 
@@ -318,7 +303,7 @@ sub Bot_private_msg {
     $resp = $self->$method($context, $msg);
   }
 
-  if ($resp) {
+  if (defined $resp) {
     my $target = $msg->{src_nick};
     $core->log->debug("dispatching send_notice to $target");
     $core->send_event( 'send_notice', $context, $target, $resp );
@@ -762,11 +747,43 @@ sub _user_del {
 }
 
 sub _user_list {
-
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
+  
+  return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } )
+    unless $auth_lev;
+  
+  my $alist = $self->AccessList->{$context} // {};
+  
+  my $respstr = "Users ($context): ";
+  USER: for my $username (keys %$alist) {
+    my $lev = $alist->{$username}->{Level};
+    $respstr .= "$username ($lev) ; ";
+    
+    if ( length($respstr) > 250 ) {
+      $core->send_event( 'send_message',
+        $context,
+        $nick,
+        $respstr
+      );
+      $respstr = '';
+    }
+    
+  } ## USER
+  return $respstr || undef;
 }
 
 sub _user_whois {
-  ## determine user from nickname for authed users
+  my ($self, $context, $msg) = @_;
+  my $core = $self->core;
+  my $nick = $msg->{src_nick};
+  my $auth_lev = $core->auth_level($context, $nick);
+  my $auth_usr = $core->auth_username($context, $nick);
+  
+  
 }
 
 sub _user_info {
