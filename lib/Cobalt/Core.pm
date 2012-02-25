@@ -596,7 +596,7 @@ sub auth_pkg {
   return $pkg ? $pkg : ();
 }
 
-## FIXME
+## FIXME finish out and document ignore_*
 ## ->State->{Ignored}
 
 sub ignore_add {
@@ -618,7 +618,9 @@ sub ignore_del {
 
 sub ignore_list {
   my ($self, $context) = @_;
-  return $self->State->{Ignored}->{$context} // {};
+  ## apply scalar context if you want the hashref for this context
+  my $ignorelist = $self->State->{Ignored}->{$context} // {};
+  return wantarray ? keys %$ignorelist : $ignorelist ;
 }
 
 
