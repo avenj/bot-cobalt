@@ -102,7 +102,13 @@ distribution. L<Module::Build> can do this for you:
    # build META files:
   $ ./Build distmeta
 
-Users of your plugin can install the distribution like so:
+Users of your plugin can install the distribution (and dependencies) via 
+C<cpan> by unpacking your plugin dist and specifying the local directory:
+
+  $ cd Cobalt-Plugin-User-MyPlugin
+  $ cpan .
+
+...or via Module::Build directly:
 
   $ perl Build.PL
   $ ./Build

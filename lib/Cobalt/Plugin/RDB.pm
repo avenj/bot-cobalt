@@ -937,7 +937,7 @@ Creates a new, empty RDB.
 Deletes the specified RDB entirely.
 
 Deletion may be disabled in the plugin's configuration file via the 
-B<<Opts->AllowDelete>> directive.
+B<< Opts->AllowDelete >> directive.
 
 =head3 rdb search
 

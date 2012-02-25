@@ -271,8 +271,7 @@ the database file itself.
 The attempt to gain a lock will time out after ten seconds; this is 
 one reason it is important to check dbopen exit status.
 
-B<The lock file is cleared on dbclose. Be sure to always dbclose!>
-
+The lock file is cleared on dbclose.
 If the Cobalt::DB object is destroyed, it will attempt to dbclose 
 for you, but it is good practice to keep track of your open/close 
 calls and attempt to close as quickly as possible.
@@ -303,7 +302,7 @@ The B<put> method adds an entry to the database:
 The value can be any data structure serializable by JSON::XS; that is to 
 say, any shallow or deep data structure NOT including blessed references.
 
-(Yes, Storable is probably faster. JSON is used because it is trivially 
+(Yes, Storable is faster. JSON is used because it is trivially 
 portable to any language that can interface with BerkDB.)
 
 
