@@ -111,3 +111,30 @@ sub _write_karma {
 
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::Karma - simple karma bot plugin
+
+=head1 SYNOPSIS
+
+  !karma
+  !karma <word>
+  <JoeUser> someone++
+  <JoeUser> someone--
+
+=head1 DESCRIPTION
+
+A simple 'karma bot' plugin for Cobalt.
+
+Saves karma in JSON format for easy sharing; only syncs to disk 
+when the plugin is unloaded.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
