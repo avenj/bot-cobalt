@@ -30,7 +30,7 @@ provides:
     version: 0.04
   Cobalt::IRC:
     file: lib/Cobalt/IRC.pm
-    version: 0.205
+    version: 0.206
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.14
@@ -78,7 +78,7 @@ provides:
     version: 0.005
   Cobalt::Plugin::Info3:
     file: lib/Cobalt/Plugin/Info3.pm
-    version: 0.214
+    version: 0.215
   Cobalt::Plugin::Master:
     file: lib/Cobalt/Plugin/Master.pm
     version: 0.01
@@ -93,7 +93,7 @@ provides:
     version: 1.07
   Cobalt::Plugin::RDB:
     file: lib/Cobalt/Plugin/RDB.pm
-    version: 0.302
+    version: 0.303
   Cobalt::Plugin::RDB::Database:
     file: lib/Cobalt/Plugin/RDB/Database.pm
     version: 0.31

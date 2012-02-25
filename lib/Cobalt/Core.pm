@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_24';
+our $VERSION = '2.00_25';
 
 use 5.12.1;
 use Carp;
@@ -19,63 +19,33 @@ use Cobalt::IRC;
 
 use Storable qw/dclone/;
 
-## a whole bunch of attributes ...
+### a whole bunch of attributes ...
 
-has 'cfg' => (
-  is => 'rw',
-  isa => 'HashRef',
-  required => 1,
-);
+## usually a hashref from Cobalt::Conf created via frontend:
+has 'cfg' => ( is => 'rw', isa => 'HashRef', required => 1 );
+## path to our var/ :
+has 'var' => ( is => 'ro', isa => 'Str',     required => 1 );
 
-has 'var' => (
-  ## path to our var/
-  is => 'ro',
-  isa => 'Str',
-  required => 1,
-);
+## the Log::Handler instance:
+has 'log'      => ( is => 'rw', isa => 'Object' );
+has 'loglevel' => ( is => 'rw', isa => 'Str', default => 'info' );
 
-has 'log' => (
-  ## the Log::Handler instance
-  is => 'rw',
-  isa => 'Object',
-);
+## passed in via frontend, typically:
+has 'debug'    => ( is => 'rw', isa => 'Int', default => 0 );
+has 'detached' => ( is => 'ro', isa => 'Int', required => 1 );
 
-has 'loglevel' => (
-  is => 'rw',
-  isa => 'Str',
-  default => 'info',
-);
+## pure convenience, ->VERSION is a better idea:
+has 'version' => ( is => 'ro', isa => 'Str', default => $VERSION );
 
-has 'debug' => (
-  is => 'rw',
-  isa => 'Int',
-  default => 0,
-);
-
-has 'detached' => (
-  is => 'ro',
-  isa => 'Int',
-  required => 1,
-);
-
-has 'version' => (
-  is => 'ro',
-  isa => 'Str',
-  default => $VERSION,
-);
-
-has 'url' => (
-  is  => 'ro',
-  isa => 'Str',
+## frontends can specify a bot url if they like
+## (mostly used for W~ in Plugin::Info3 str formatting)
+has 'url' => ( is => 'ro', isa => 'Str',
   default => "http://www.cobaltirc.org",
 );
 
-has 'lang' => (
-  ## pull hash from Conf->load_langset
-  ## see Cobalt::Lang POD
-  is => 'rw',
-  isa => 'HashRef',
-);
+## pulls hash from Conf->load_langset later
+## see Cobalt::Lang POD
+has 'lang' => ( is => 'rw', isa => 'HashRef' );
 
 has 'State' => (
   ## global 'heap' of sorts
@@ -83,21 +53,21 @@ has 'State' => (
   isa => 'HashRef',
   default => sub {
     {
-      ## non-core plugins can make use of State->{HEAP}
-      ## care should be taken to use specific naming..
-      ## this is here for convenience with no guarantee regarding 
+      ## {HEAP} is here for convenience with no guarantee regarding 
       ## collisions
+      ## may be useful for plugins to share some info bits
+      ## . . . better to interact strictly via events
       HEAP => { },
     
       StartedTS => time(),
       Counters => {
         Sent => 0,
       },
-     # each server context should set up its own Auth->{$context} hash:
-      Auth => { },   ## ->{$context}->{$nickname} = {}
-      Ignored => { },
+      # each server context should set up its own Auth->{$context} hash:
+      Auth => { },    ## ->{$context}->{$nickname} = { . . .}
+      Ignored => { }, ##             ->{$mask} = { . . . }
       
-     # nonreloadable plugin list keyed on alias for plugin mgrs
+      # nonreloadable plugin list keyed on alias for plugin mgrs:
       NonReloadable => { },
     } 
   },
@@ -114,9 +84,9 @@ has 'TimerPool' => (
   },
 );
 
+## alias -> object:
 has 'PluginObjects' => (
-  is  => 'rw',
-  isa => 'HashRef',
+  is  => 'rw',  isa => 'HashRef',
   default => sub { {} },
 );
 
@@ -131,16 +101,14 @@ has 'PluginObjects' => (
 ##   ConnectedAt => time(),
 ## }
 has 'Servers' => (
-  is  => 'rw',
-  isa => 'HashRef',
+  is  => 'rw',  isa => 'HashRef',
   default => sub { {} },
 );
 
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is  => 'rw',
-  isa => 'HashRef',
+  is  => 'rw',  isa => 'HashRef',
   default => sub { {} },
 );
 
@@ -261,17 +229,12 @@ sub syndicator_started {
 
   $kernel->sig('INT'  => 'shutdown');
   $kernel->sig('TERM' => 'shutdown');
+  ## FIXME: do something smarter with HUP
   $kernel->sig('HUP'  => 'shutdown');
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
   $self->log->info("-> Loading Core IRC module");
  
- ## FIXME: kill this, load Cobalt::IRC out of plugins.conf   
-#  my $irc_obj = Cobalt::IRC->new();
-#  $self->plugin_add('IRC', $irc_obj) 
-#    or croak "Core IRC plugin could not be loaded!";
-#  $self->is_reloadable('IRC', $irc_obj);
-
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");
 
@@ -632,6 +595,32 @@ sub auth_pkg {
 
   return $pkg ? $pkg : ();
 }
+
+## FIXME
+## ->State->{Ignored}
+
+sub ignore_add {
+  my ($self, $context, $username, $mask, $reason) = @_;
+  my $ignore = $self->State->{Ignored}->{$context} //= {};
+  
+  ## FIXME
+  ## $ignore->{$mask} = {
+  ##   AddedBy =>
+  ##   AddedAt =>
+  ##   Reason  =>
+  ## }
+}
+
+sub ignore_del {
+  my ($self, $context, $mask) = @_;
+  
+}
+
+sub ignore_list {
+  my ($self, $context) = @_;
+  return $self->State->{Ignored}->{$context} // {};
+}
+
 
 
 ### Accessors acting on ->Servers:
