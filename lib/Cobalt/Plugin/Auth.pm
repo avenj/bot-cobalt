@@ -725,7 +725,7 @@ sub _user_del {
   ## see if user is logged in, log them out if so
   my $auth_context = $core->State->{Auth}->{$context};
   for my $authnick (keys %$auth_context) {
-    my $this_username = $auth_context->{Username};
+    my $this_username = $auth_context->{$authnick}->{Username};
     next unless $this_username eq $target_usr;
     $self->_do_logout($context, $authnick);
   }
