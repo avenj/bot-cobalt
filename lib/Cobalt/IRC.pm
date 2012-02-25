@@ -43,8 +43,11 @@ sub Cobalt_unregister {
   ## shutdown IRCs
   for my $context ( keys %{ $self->{IRCs} } ) {
     $core->log->debug("shutting down irc: $context");
+    ## FIXME: Cobalt::Core needs methods for these:
     ## clear auths for this context
     delete $core->State->{Auth}->{$context};
+    ## and ignores:
+    delete $core->State->{Ignored}->{$context};
     my $irc = $self->{IRCs}->{$context};
     $irc->shutdown("IRC component shut down");
     $core->Servers->{$context}->{Connected} = 0;
@@ -87,7 +90,9 @@ sub _start_irc {
     my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
     my $use_v6 = $thiscfg->{IPv6}   ? 1 : 0;
     
-    $core->log->info("Spawning IRC for $context ($nick on ${server}:${port})");
+    $core->log->info(
+      "Spawning IRC for $context ($nick on ${server}:${port})"
+    );
 
     my %spawn_opts = (
       alias    => $context,

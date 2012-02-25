@@ -1332,7 +1332,7 @@ a useful inheritance structure.
 You will probably want to read the L<Moose::Manual> if you are not 
 previously familiar with Moose.
 
-B<A reloadable plugin cannot call meta->make_immutable> -- attempting to 
+B<< A reloadable plugin cannot call meta->make_immutable >> -- attempting to 
 reload a plugin that has been made immutable will break spectacularly.
 Mark the plugin as NON_RELOADABLE or skip the immutable call.
 
