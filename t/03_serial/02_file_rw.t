@@ -1,11 +1,8 @@
 use 5.12.1;
-use Test::More tests => 17;
+use Test::More tests => 9;
 
 use Fcntl qw/ :flock /;
 use File::Temp qw/ tempfile tempdir /;
-
-## Test JSON, YAML::XS (Cobalt::Serializer)
-## (Other formats are 'optional-ish')
 
 BEGIN {
   use_ok( 'Cobalt::Serializer' );
@@ -18,18 +15,6 @@ my $hash = {
   Hash  => { Some => { Deep => 'Hash' } },
 };
 
-JSON: {
-  my $js_ser = Cobalt::Serializer->new( 'JSON' );
-  can_ok($js_ser, 'freeze', 'thaw');
-  my $json = $js_ser->freeze($hash);
-  ok( $json, 'JSON freeze');
-
-  my $json_thawed = $js_ser->thaw($json);
-  ok( $json_thawed, 'JSON thaw');
-
-  is_deeply($hash, $json_thawed, 'JSON comparison' );
-}
-
 JSONRW: {
   my $js_ser = Cobalt::Serializer->new( 'JSON' );
   can_ok($js_ser, 'readfile', 'writefile' );
@@ -41,18 +26,6 @@ JSONRW: {
   ok( $jsref = $js_ser->readfile($fname), 'JSON file read');
   
   is_deeply($hash, $jsref, 'JSON file read-write compare' );
-}
-
-YAML: {
-  my $yml_ser = Cobalt::Serializer->new();
-  can_ok($yml_ser, 'freeze', 'thaw');
-  my $yml = $yml_ser->freeze($hash);
-  ok( $yml, 'YAML freeze');
-
-  my $yml_thawed = $yml_ser->thaw($yml);
-  ok( $yml_thawed, 'YAML thaw');
-
-  is_deeply($hash, $yml_thawed, 'YAML comparison' );
 }
 
 YAMLRW: {
