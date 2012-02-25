@@ -46,6 +46,8 @@ my $build = $class->new(
   dist_version_from => 'lib/Cobalt/Core.pm',
   license => 'perl',
 
+  recursive_test_files => 1,
+
   ## A passthru-to-build makefile:
   create_makefile_pl => 'small',
   

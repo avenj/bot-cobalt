@@ -38,7 +38,6 @@ lib/Cobalt/Plugin/Alarmclock.pm
 lib/Cobalt/Plugin/Auth.pm
 lib/Cobalt/Plugin/ChanMgr.pm
 lib/Cobalt/Plugin/Extras/BanMgr.pm
-lib/Cobalt/Plugin/Extras/Calc.pm
 lib/Cobalt/Plugin/Extras/Debug.pm
 lib/Cobalt/Plugin/Extras/Ignore.pm
 lib/Cobalt/Plugin/Extras/Karma.pm

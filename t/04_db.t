@@ -23,7 +23,6 @@ $db->dbclose;
 undef $ref;
 
 ok( $db->dbopen, 'Temp database reopen' );
-my $ref;
 ok( $ref = $db->get('testkey'), 'Database get() 2' );
 ok( $ref->{Deep}->{Hash}, 'Database put() vs get() 2' );
 
