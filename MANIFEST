@@ -80,3 +80,4 @@ t/02_utils/05_color.t
 t/03_serial/01_freezethaw.t
 t/03_serial/02_file_rw.t
 t/04_db/01_db.t
+t/04_db/02_dbdump.t

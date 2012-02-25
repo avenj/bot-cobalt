@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_25';
+our $VERSION = '2.00_26';
 
 use 5.12.1;
 use Carp;
@@ -525,11 +525,10 @@ sub auth_level {
     return undef
   }
 
-  ## We might have proper args but no auth for this user:
-
+  ## We might have proper args but no auth for this user
+  ## That makes them level 0:
   return 0 unless exists $self->State->{Auth}->{$context};
   my $context_rec = $self->State->{Auth}->{$context};
-
   return 0 unless exists $context_rec->{$nickname};
   my $level = $context_rec->{$nickname}->{Level} // 0;
 
@@ -558,7 +557,7 @@ sub auth_username {
   return undef unless exists $context_rec->{$nickname};
   my $username = $context_rec->{$nickname}->{Username};
 
-  return $username ? $username : undef;
+  return $username
 }
 
 sub auth_flags {
@@ -721,7 +720,7 @@ sub get_plugin_cfg {
     $alias = $self->PluginObjects->{$plugin};
     unless ($alias) {
       $self->log->error("No alias for $plugin");
-      return undef
+      return
     }
   } else {
     ## string alias specified
@@ -730,7 +729,7 @@ sub get_plugin_cfg {
 
   unless ($alias) {
     $self->log->error("get_plugin_cfg: no plugin alias? ".scalar caller);
-    return undef
+    return
   }
   
   ## Return empty hash if there is no loaded config for this alias
@@ -738,7 +737,7 @@ sub get_plugin_cfg {
   
   unless (ref $plugin_cf eq 'HASH') {
     $self->log->debug("get_plugin_cfg; $alias cfg not a HASH");
-    return undef
+    return
   }
   
   ## return a copy, not a ref to the original.
