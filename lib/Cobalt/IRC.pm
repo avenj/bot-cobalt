@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.206';
+our $VERSION = '0.207';
 
 use Cobalt::Common;
 
@@ -284,8 +284,7 @@ sub irc_public {
   my $channel = $where->[0];
 
   my $casemap = $core->get_irc_casemap( $context );
-  ## FIXME: per-context Ignores
-  for my $mask (keys %{ $core->State->{Ignored} }) {
+  for my $mask ( $core->ignore_list($context) ) {
     ## Check against ignore list
     ## (Ignore list should be keyed by hostmask)
     return if matches_mask( $mask, $src, $casemap );
@@ -360,8 +359,7 @@ sub irc_msg {
   ## similar to irc_public
 
   my $casemap = $core->get_irc_casemap( $context );
-  for my $mask (keys %{ $self->{core}->State->{Ignored} }) {
-    ## FIXME per-context ignorelist
+  for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -399,7 +397,8 @@ sub irc_notice {
   my ($nick, $user, $host) = parse_user($src);
 
   my $casemap = $core->get_irc_casemap($context) // 'rfc1459';
-  for my $mask (keys %{ $self->{core}->State->{Ignored} }) {
+  
+  for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -434,7 +433,7 @@ sub irc_ctcp_action {
   $txt = strip_color( strip_formatting($txt) );
   my ($nick, $user, $host) = parse_user($src);
 
-  for my $mask (keys %{ $self->{core}->State->{Ignored} }) {
+  for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src );
   }
 
