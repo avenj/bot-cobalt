@@ -71,7 +71,12 @@ META.yml
 tools/cobalt2-installer.in
 var/.keep
 var/db/.keep
-t/01_core.t
-t/02_utils.t
-t/03_serialize.t
-t/04_db.t
+t/01_core/01_loadable.t
+t/02_utils/01_mkpasswd.t
+t/02_utils/02_rplprintf.t
+t/02_utils/03_timestr.t
+t/02_utils/04_glob.t
+t/02_utils/05_color.t
+t/03_serial/01_freezethaw.t
+t/03_serial/02_file_rw.t
+t/04_db/01_db.t

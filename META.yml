@@ -21,7 +21,7 @@ provides:
     version: 1.01
   Cobalt::Core:
     file: lib/Cobalt/Core.pm
-    version: 2.00_24
+    version: 2.00_25
   Cobalt::DB:
     file: lib/Cobalt/DB.pm
     version: 0.18
@@ -30,16 +30,13 @@ provides:
     version: 0.04
   Cobalt::IRC:
     file: lib/Cobalt/IRC.pm
-    version: 0.206
+    version: 0.207
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.14
   Cobalt::Plugin::Auth:
     file: lib/Cobalt/Plugin/Auth.pm
     version: 0.20
-  Cobalt::Plugin::Calc:
-    file: lib/Cobalt/Plugin/Extras/Calc.pm
-    version: 0
   Cobalt::Plugin::Extras::Debug:
     file: lib/Cobalt/Plugin/Extras/Debug.pm
     version: 0.001
@@ -157,4 +154,4 @@ requires:
   perl: v5.12.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 2.00_24
+version: 2.00_25
