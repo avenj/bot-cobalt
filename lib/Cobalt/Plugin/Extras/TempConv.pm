@@ -84,6 +84,13 @@ __END__
 
 Cobalt::Plugin::Extras::TempConv - temperature conversion plugin
 
+=head1 SYNOPSIS
+
+  !tempconv 27F
+  !temp 27F
+  !temp 3C
+  !temp 270K
+
 =head1 DESCRIPTION
 
 Simple temperature conversion plugin for Cobalt.

@@ -50,3 +50,31 @@ sub Outgoing_ctcp {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::OutputFilters::StripFormat - strip bold/underline/italics
+
+=head1 SYNOPSIS
+
+  !plugin load StripFormat Cobalt::Plugin::OutputFilters::StripFormat
+
+=head1 DESCRIPTION
+
+Cobalt output filter plugin.
+
+Strips any formatting codes from outgoing messages, such as bold, underline, 
+reverse, etc.
+
+Does not strip color codes; see L<Cobalt::Plugin::OutputFilters::StripColor>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

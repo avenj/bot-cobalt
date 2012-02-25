@@ -496,3 +496,4 @@ sub _rdb_switch {
 }
 
 1;
+__END__

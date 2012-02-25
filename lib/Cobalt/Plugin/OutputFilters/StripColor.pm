@@ -50,3 +50,32 @@ sub Outgoing_ctcp {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::OutputFilters::StripColor - strip outgoing color codes
+
+=head1 SYNOPSIS
+
+  !plugin load StripColor Cobalt::Plugin::OutputFilters::StripColor
+
+=head1 DESCRIPTION
+
+Cobalt output filter plugin.
+
+Strips color codes from any outgoing IRC messages (including actions and 
+notices).
+
+Does not strip formatting (bold, underline, ...); see 
+L<Cobalt::Plugin::OutputFilters::StripFormat>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

@@ -854,6 +854,12 @@ __END__
 
 Cobalt::Plugin::Info3 - enhanced text-triggered responses
 
+=head1 SYNOPSIS
+
+  <JoeUser> cobaltbot: add hi Howdy N~!
+  <Bob> hi
+  <cobaltbot> Howdy Bob!
+
 =head1 DESCRIPTION
 
 B<darkbot6> came with built-in I<info2> functionality; text responses 

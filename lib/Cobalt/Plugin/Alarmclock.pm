@@ -102,6 +102,11 @@ __END__
 
 Cobalt::Plugin::Alarmclock - simple timed highlights
 
+=head1 SYNOPSIS
+
+  !alarmclock 20m go do some something
+  !alarmclock 1h30m stop staring at irc
+
 =head1 DESCRIPTION
 
 This plugin allows authorized users to set a time via either a time string 

@@ -314,6 +314,14 @@ __END__
 
 Cobalt::Plugin::PluginMgr - IRC plugin manager
 
+=head1 SYNOPSIS
+
+  !plugin list
+  !plugin load MyPlugin
+  !plugin load MyPlugin Cobalt::Plugin::User::MyPlugin
+  !plugin reload MyPlugin
+  !plugin unload MyPlugin
+
 =head1 DESCRIPTION
 
 This is a fairly simplistic online plugin manager.

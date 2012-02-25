@@ -354,7 +354,7 @@ See L<Cobalt::Plugin::Extras::Shorten> for an example.
 =head2 Why not POE::Component::Client::HTTP?
 
 L<POE::Component::Client::HTTP> is B<great>. Seriously. An acquaintance 
-recently managed 13k concurrent proxy requests while stress-testing an 
+recently managed 13k B<concurrent> proxy requests while stress-testing an 
 internal proxy using L<POE::Wheel::Run> and L<POE::Component::Client::HTTP>.
 
 That's a lot.
