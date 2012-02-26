@@ -1,13 +1,11 @@
 bin/cobalt2
+bin/cobalt2-dbdump
 bin/cobalt2-import-info2
 bin/cobalt2-import-rdb
 bin/cobalt2-installer.PL
 bin/cobalt2-mkpasswd
 Build.PL
 Changes
-doc/INSTALL.pod
-doc/README.pod
-doc/TODO
 etc/auth.conf
 etc/channels.conf
 etc/cobalt.conf
@@ -29,6 +27,8 @@ lib/Cobalt/IRC.pm
 lib/Cobalt/Lang.pm.in
 lib/Cobalt/Lang.pm.PL
 lib/Cobalt/Lang.pod
+lib/Cobalt/Manual/INSTALL.pod
+lib/Cobalt/Manual/README.pod
 lib/Cobalt/Manual/PluginConf.pod
 lib/Cobalt/Manual/PluginDist.pod
 lib/Cobalt/Manual/PluginTutorial.pod

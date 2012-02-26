@@ -228,10 +228,10 @@ sub _start_cobalt {
   my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
   Cobalt::Core->new(
     cfg => $cfg,
-    loglevel => $loglevel, 
-    debug => $opt_debug,
-    detached => $opt_detach,
     var => $vardir,
+    loglevel => $loglevel, 
+    debug    => $opt_debug,
+    detached => $opt_detach,
   )->init;
 
   POE::Kernel->run;

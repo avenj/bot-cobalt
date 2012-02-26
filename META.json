@@ -75,7 +75,7 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_25"
+         "version" : "2.00_26"
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
@@ -87,7 +87,7 @@
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.207"
+         "version" : "0.208"
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
@@ -95,7 +95,7 @@
       },
       "Cobalt::Plugin::Auth" : {
          "file" : "lib/Cobalt/Plugin/Auth.pm",
-         "version" : "0.20"
+         "version" : "0.22"
       },
       "Cobalt::Plugin::Extras::Debug" : {
          "file" : "lib/Cobalt/Plugin/Extras/Debug.pm",
@@ -204,5 +204,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_25"
+   "version" : "2.00_26"
 }
