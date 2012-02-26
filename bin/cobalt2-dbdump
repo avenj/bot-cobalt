@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Carp;
 
+STDOUT->autoflush(1);
+
 use Cobalt::DB;
 
 my($dbpath, $outpath);
