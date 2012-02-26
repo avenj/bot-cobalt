@@ -55,8 +55,33 @@ $db->dbclose;
 
 say "Writing YAML to $outpath";
 
-open my $outfh, '>', $outpath or croak "open failed: $!";
+open my $outfh, '>:encoding(UTF-8)', $outpath or croak "open failed: $!";
 print $outfh $yaml;
 close $outfh;
 
 say "Done.";
+
+__END__
+=pod
+
+=head1 NAME
+
+cobalt2-dbdump - export Cobalt::DB databases to YAML
+
+=head1 SYNOPSIS
+
+  cobalt2-dbdump --database=/path/to/db --output=exported.yml
+
+=head1 DESCRIPTION
+
+A simple frontend to the dbdump functionality found in L<Cobalt::DB>.
+
+Exports specified Cobalt::DB databases to YAML.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
