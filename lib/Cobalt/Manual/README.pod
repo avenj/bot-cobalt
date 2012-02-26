@@ -1,8 +1,5 @@
 =pod
 
-=for comment
-This POD used to generate dist's 'README'
-
 =head1 NAME
 
 README - Getting started with Cobalt

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 ## FIXME handle context 'ALL'
 
@@ -50,7 +50,6 @@ our $VERSION = '0.21';
 ##   Package => __PACKAGE__,
 ##   Username => STRING (identified username),
 ##    # 'Host' may not be reliable due to stupid cloaking cmds
-##    # FIXME: query to check nicknames and update Host ?
 ##   Host => STRING (nick!user@host),
 ##   Level => INT (numeric level),
 ##   Flags => HASH (f.ex {SUPERUSER=>1} or other flags)
@@ -761,7 +760,7 @@ sub _user_list {
   my $respstr = "Users ($context): ";
   USER: for my $username (keys %$alist) {
     my $lev = $alist->{$username}->{Level};
-    $respstr .= "$username ($lev) ; ";
+    $respstr .= "$username ($lev)   ";
     
     if ( length($respstr) > 250 ) {
       $core->send_event( 'send_message',
@@ -840,7 +839,7 @@ sub _user_chmask {
   my $nick = $msg->{src_nick};
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
-  ## [+/-]mask syntax so as not to be confused with user del (much)
+  ## [+/-]mask syntax
   ## FIXME normalize masks before adding 
   ## call a list sync
 }
@@ -1092,6 +1091,17 @@ functionality for B<Cobalt>.
 
 =head3 user chpass
 
+=head3 user chmask
+
+=head3 user whoami
+
+=head3 user whois
+
+=head3 user info
+
+=head3 user list
+
+=head3 user search
 
 
 
