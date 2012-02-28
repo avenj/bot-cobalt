@@ -93,7 +93,7 @@ provides:
     version: 0.303
   Cobalt::Plugin::RDB::Database:
     file: lib/Cobalt/Plugin/RDB/Database.pm
-    version: 0.31
+    version: 0.32
   Cobalt::Plugin::RDB::SearchCache:
     file: lib/Cobalt/Plugin/RDB/SearchCache.pm
     version: 0.21
@@ -124,7 +124,7 @@ requires:
   DB_File: 0
   Data::Dumper: 0
   DateTime: 0
-  Digest::SHA1: 0
+  Digest::SHA: 0
   File::Basename: 0
   File::Find: 0
   File::Path: 2.00
