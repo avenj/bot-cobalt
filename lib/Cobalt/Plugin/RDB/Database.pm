@@ -39,7 +39,7 @@ use Cobalt::Utils qw/ glob_to_re_str /;
 
 use Cwd qw/ abs_path /;
 
-use Digest::SHA1 qw/sha256_hex/;
+use Digest::SHA qw/sha256_hex/;
 
 use File::Basename qw/fileparse/;
 use File::Find;
@@ -471,7 +471,8 @@ sub search {
 
 sub _gen_unique_key {
   my ($self, $ref) = @_;
-  my $db = $self->{CURRENT} || return;
+  my $db = $self->{CURRENT} 
+           || croak "_gen_unique_key called but no db to check";
   my $stringified = $ref->{String}.rand.Time::HiRes::time();
   my $digest = sha256_hex($stringified);
   my @splitd = split //, $digest;
