@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 ## Frontend to managing RDB-style Cobalt::DB instances
 ##
@@ -39,7 +39,7 @@ use Cobalt::Utils qw/ glob_to_re_str /;
 
 use Cwd qw/ abs_path /;
 
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA1 qw/sha256_hex/;
 
 use File::Basename qw/fileparse/;
 use File::Find;
@@ -473,7 +473,7 @@ sub _gen_unique_key {
   my ($self, $ref) = @_;
   my $db = $self->{CURRENT} || return;
   my $stringified = $ref->{String}.rand.Time::HiRes::time();
-  my $digest = sha1_hex($stringified);
+  my $digest = sha256_hex($stringified);
   my @splitd = split //, $digest;
   my $newkey = join '', splice(@splitd, -4);
   $newkey .= pop @splitd while exists $db->{Tied}{$newkey} and @splitd;
