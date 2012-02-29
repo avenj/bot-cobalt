@@ -1009,7 +1009,10 @@ broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
 are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
 
-  require IRC::Utils;  ## for eq_irc
+  ## grab eq_irc() from IRC::Utils
+  ## also available if you "use Cobalt::Common;"
+  ## see perldoc Cobalt::Common and Cobalt::Manual::Plugins
+  use IRC::Utils qw/ eq_irc /;
   my $context = ${$_[0]};
   ## most servers are 'rfc1459', some may be ascii or -strict
   ## (some return totally fubar values, and we'll default to rfc1459)

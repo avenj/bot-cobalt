@@ -12,10 +12,7 @@ our $VERSION = '0.10';
 ##
 ## Also doesn't make very many guarantees regarding consequences ...
 
-use 5.12.1;
-use strict;
-use warnings;
-
+use Cobalt::Common;
 use Cobalt::Conf;
 
 sub new { bless {}, shift }
@@ -49,5 +46,87 @@ sub Bot_public_cmd_rehash {
 
   return PLUGIN_EAT_ALL
 }
+
+
+sub _rehash_all_plugins {
+  ## FIXME
+}
+
+sub _rehash_plugins_cf {
+  my ($self) = @_;
+  my $core = $self->{core};
+  
+  my $newcfg = $self->_get_new_cfg || return;
+  
+  unless ($newcfg->{plugins} and ref $newcfg->{plugins} eq 'HASH') {
+    $core->log->warn("Rehashed conf appears to be missing plugins conf");
+    $core->log->warn("Is your plugins.conf broken?");
+    my $etcdir = $core->etc;
+    $core->log->warn("(Path to etc/: $etcdir)");
+    return
+  }
+  
+  $core->cfg->{plugins} = $newcfg->{plugins};
+  $core->log->info("Reloaded plugins.conf");
+  $core->send_event( 'rehash', 'plugins' );
+  return 1
+}
+
+sub _rehash_core_cf {
+  my ($self) = @_;
+  my $core = $self->{core};
+
+  my $newcfg = $self->_get_new_cfg || return;
+  
+  unless ($newcfg->{core} and ref $newcfg->{core} eq 'HASH') {
+    $core->log->warn("Rehashed conf appears to be missing core conf");
+    $core->log->warn("Is your cobalt.conf broken?");
+    my $etcdir = $core->etc;
+    $core->log->warn("(Path to etc/: $etcdir)");
+    return
+  }
+
+  $core->cfg->{core} = $newcfg->{core};
+  $core->log->info("Reloaded core config.");
+  ## Bot_rehash ($type) :
+  $core->send_event( 'rehash', 'core' );
+  return 1
+}
+
+sub _rehash_channels_cf {
+  my ($self) = @_;
+  my $core = $self->{core};
+  
+  my $newcfg = $self->_get_new_cfg || return;
+  
+  unless ($newcfg->{channels} and ref $newcfg->{channels} eq 'HASH') {
+    $core->log->warn("Rehashed conf appears to be missing channels conf");
+    $core->log->warn("Is your channels.conf broken?");
+    my $etcdir = $core->etc;
+    $core->log->warn("(Path to etc/: $etcdir)");
+    return
+  }
+  
+  $core->cfg->{channels} = $newcfg->{channels};
+  $core->log->info("Reloaded channels config.");
+  $core->send_event( 'rehash', 'channels' );
+  return 1
+}
+
+sub _get_new_cfg {
+  my ($self) = @_;
+  my $core = $self->{core};
+  my $etcdir = $core->etc;
+  my $ccf = Cobalt::Conf->new(etc=>$etcdir);
+  my $newcfg = $ccf->read_cfg;
+  
+  unless (ref $newcfg eq 'HASH') {
+    $core->log->warn("_get_new_cfg; Cobalt::Conf did not return a hash");
+    $core->log->warn("(Path to etc/: $etcdir)");
+    return
+  }
+  return $newcfg
+}
+
 
 1;

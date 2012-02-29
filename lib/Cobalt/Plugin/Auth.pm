@@ -449,9 +449,6 @@ sub _cmd_user {
     return 'No command specified'
   }
 
-  ## FIXME method dispatch like the _cmd_ dispatcher above
-  ##   pass args unmolested?
-  ##
   my $method = "_user_".$cmd;
   if ( $self->can($method) ) {
     $self->core->log->debug("dispatching $method for ".$msg->{src_nick});
