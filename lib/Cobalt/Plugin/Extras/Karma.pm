@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 ## simple karma++/-- tracking
 
@@ -66,8 +66,7 @@ sub Bot_public_cmd_karma {
   my $msg     = ${$_[1]};
 
   my @message = @{ $msg->{message_array} };
-  my $karma_for = lc(shift @message || '');
-  $karma_for = lc($msg->{src_nick}) unless $karma_for;
+  my $karma_for = lc(shift @message || $msg->{src_nick});
 
   my $resp;
 

@@ -15,6 +15,8 @@ our $VERSION = '0.10';
 use Cobalt::Common;
 use Cobalt::Conf;
 
+use Storable qw/dclone/;
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -66,7 +68,7 @@ sub _rehash_plugins_cf {
     return
   }
   
-  $core->cfg->{plugins} = $newcfg->{plugins};
+  $core->cfg->{plugins} = dclone($newcfg->{plugins});
   $core->log->info("Reloaded plugins.conf");
   $core->send_event( 'rehash', 'plugins' );
   return 1
@@ -86,7 +88,7 @@ sub _rehash_core_cf {
     return
   }
 
-  $core->cfg->{core} = $newcfg->{core};
+  $core->cfg->{core} = dclone($newcfg->{core});
   $core->log->info("Reloaded core config.");
   ## Bot_rehash ($type) :
   $core->send_event( 'rehash', 'core' );
@@ -106,8 +108,8 @@ sub _rehash_channels_cf {
     $core->log->warn("(Path to etc/: $etcdir)");
     return
   }
-  
-  $core->cfg->{channels} = $newcfg->{channels};
+
+  $core->cfg->{channels} = dclone($newcfg->{channels});
   $core->log->info("Reloaded channels config.");
   $core->send_event( 'rehash', 'channels' );
   return 1

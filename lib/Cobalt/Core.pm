@@ -233,7 +233,6 @@ sub syndicator_started {
   $kernel->sig('HUP'  => 'shutdown');
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
-  $self->log->info("-> Loading Core IRC module");
  
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");

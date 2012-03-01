@@ -1392,7 +1392,7 @@ items back to the 'worker' event handler after iterating 100 items.
  
      ## work until there's no items left or we hit the max:
     my $counter = 0;
-    while (@items && $counter++ < $max_per_run) {
+    while (@items && ++$counter < $max_per_run) {
       my $item = shift @items;
       ## ... do some work on $item ...
     }
