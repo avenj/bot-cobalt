@@ -67,7 +67,7 @@ sub Bot_public_cmd_karma {
 
   my @message = @{ $msg->{message_array} };
   my $karma_for = lc(shift @message || '');
-  $karma_for = $msg->{src_nick} unless $karma_for;
+  $karma_for = lc($msg->{src_nick}) unless $karma_for;
 
   my $resp;
 
