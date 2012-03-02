@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.208';
+our $VERSION = '0.209';
 
 use Cobalt::Common;
 
@@ -149,7 +149,8 @@ sub _start_irc {
           'irc_kick',
           'irc_mode',
           'irc_topic',
-  
+          'irc_invite',
+
           'irc_nick',
           'irc_join',
           'irc_part',
@@ -749,6 +750,27 @@ sub irc_quit {
 
   ## Bot_user_quit
   $core->send_event( 'user_quit', $context, $quit );
+}
+
+sub irc_invite {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($src, $channel) = @_[ARG0, ARG1];
+  my ($nick, $user, $host) = parse_user($src);
+  
+  my $context = $heap->{Context};
+  my $irc     = $heap->{Object};
+  my $core    = $self->{core};
+  
+  my $invite = {
+    src => $src,
+    src_nick => $nick,
+    src_user => $user,
+    src_host => $host,
+    channel  => $channel,
+  };
+  
+  ## Bot_invited
+  $core->send_event( 'invited', $context, $invite );
 }
 
 
@@ -1381,9 +1403,22 @@ ${$_[1]} is a hash with the following keys:
   }
 
 
+=head3 Bot_invited
+
+Broadcast when the bot has been invited to a channel.
+
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $invite  = ${$_[1]};
+
+The hash in ${$_[1]} has the normal B<src>, B<src_nick>, B<src_user>, 
+B<src_host> keys.
+
+The B<channel> key contains the name of the channel the bot was invited to.
+
+
 
 =head2 User state events
-
 
 =head3 Bot_umode_changed
 
