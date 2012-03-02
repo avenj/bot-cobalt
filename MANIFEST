@@ -4,6 +4,7 @@ bin/cobalt2-import-info2
 bin/cobalt2-import-rdb
 bin/cobalt2-installer.PL
 bin/cobalt2-mkpasswd
+bin/cobalt2-plugin-installconf
 Build.PL
 Changes
 etc/auth.conf
