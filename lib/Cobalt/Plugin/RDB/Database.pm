@@ -473,7 +473,7 @@ sub _gen_unique_key {
   my ($self, $ref) = @_;
   my $db = $self->{CURRENT} 
            || croak "_gen_unique_key called but no db to check";
-  my $stringified = $ref->{String}.rand.Time::HiRes::time();
+  my $stringified = $ref->{String}.Time::HiRes::time();
   my $digest = sha256_hex($stringified);
   my @splitd = split //, $digest;
   my $newkey = join '', splice(@splitd, -4);
