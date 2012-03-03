@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB::SearchCache;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 ## This is a fairly generic in-memory cache object.
 ##
@@ -23,53 +23,58 @@ sub new {
   my $self = {};
   my $class = shift;
   bless $self, $class;
-    
-  my %opts = @_;
   
   $self->{Cache} = { };
-  
+    
+  my %opts = @_;
   $self->{MAX_KEYS} = $opts{MaxKeys} || 30;
   
   return $self
 }
 
 sub cache {
-  my ($self, $rdb, $match, $resultset) = @_;
+  my ($self, $ckey, $match, $resultset) = @_;
   ## should be passed rdb, search str, and array of matching indices
   
-  return unless $rdb and $match;
+  return unless $ckey and $match;
   $resultset = [ ] unless $resultset and ref $resultset eq 'ARRAY';
 
   ## _shrink will do the right thing depending on size of cache
   ## (MaxKeys can be used to adjust cachesize per-rdb 'on the fly')
-  $self->_shrink($rdb);
+  $self->_shrink($ckey);
   
-  $self->{Cache}->{$rdb}->{$match} = {
+  $self->{Cache}->{$ckey}->{$match} = {
     TS => Time::HiRes::time(),
     Results => $resultset,
   };
 }
 
 sub fetch {
-  my ($self, $rdb, $match) = @_;
+  my ($self, $ckey, $match) = @_;
   
-  return unless $rdb and $match;
-  return unless $self->{Cache}->{$rdb} 
-         and $self->{Cache}->{$rdb}->{$match};
+  return unless $ckey and $match;
+  return unless $self->{Cache}->{$ckey} 
+         and $self->{Cache}->{$ckey}->{$match};
 
-  my $ref = $self->{Cache}->{$rdb}->{$match};
+  my $ref = $self->{Cache}->{$ckey}->{$match};
   wantarray ? return @{ $ref->{Results} } 
             : return $ref->{Results}  ;
 }
 
 sub invalidate {
-  my ($self, $rdb) = @_;
+  my ($self, $ckey) = @_;
   ## should be called on add/del operations 
-  ## invalidate all
-  $self->{Cache} = { } unless $rdb;
-  return unless $self->{Cache}->{$rdb};
-  return unless scalar keys %{ $self->{Cache}->{$rdb} };  
-  return delete $self->{Cache}->{$rdb};
+
+  unless ($ckey) {
+    ## invalidate all by not passing an arg
+    $self->{Cache} = { };
+    return
+  }
+
+  return unless $self->{Cache}->{$ckey};
+         and scalar keys %{ $self->{Cache}->{$ckey} } ;
+
+  return delete $self->{Cache}->{$ckey};
 }
 
 sub MaxKeys {
@@ -79,23 +84,23 @@ sub MaxKeys {
 }
 
 sub _shrink {
-  my ($self, $rdb) = @_;
+  my ($self, $ckey) = @_;
   
-  return unless $rdb and ref $self->{Cache}->{$rdb};
+  return unless $ckey and ref $self->{Cache}->{$ckey};
 
-  my $cacheref = $self->{Cache}->{$rdb};
+  my $cacheref = $self->{Cache}->{$ckey};
   return unless scalar keys %$cacheref > $self->MaxKeys;
 
   my @cached = sort { 
       $cacheref->{$a}->{TS} <=> $cacheref->{$b}->{TS}
     } keys %$cacheref;
   
-  my $deleted;
+  my $deleted = 0;
   while (scalar keys %$cacheref > $self->MaxKeys) {
     my $nextkey = shift @cached;
     ++$deleted if delete $cacheref->{$nextkey};
   }
-  return $deleted || -1
+  return $deleted
 }
 
 1;
@@ -114,16 +119,22 @@ Cobalt::Plugin::RDB::SearchCache - generic limited-key memory caching
     MaxKeys => 30,
   );
   
-  ## Push some array of results/indexes to the cache obj:
+  ## Save some array of results/indexes to the cache obj:
   my $cache = $self->{CacheObj};
   $cache->cache('MyCache', $key, [ @results ] );
   
   ## Get it back later:
   my @results = $cache->fetch('MyCache', $key);
+  ## ...or get the reference to the actual array:
+  my $resultset = $cache->fetch('MyCache', $key);
   
   ## Data changed, invalidate this cache:
   $cache->invalidate('MyCache');
-  
+
+  ## Change the maximum number of keys on the fly:
+  $cache->MaxKeys('40');
+  ## ...or find out what the current max is:
+  my $current_max = $cache->MaxKeys;
 
 =head1 DESCRIPTION
 
