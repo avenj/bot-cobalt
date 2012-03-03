@@ -75,9 +75,6 @@ my $build = $class->new(
      # Crypt
       'Crypt::Eksblowfish' => '0.003',
 
-     # Files
-      'File::Slurp' => '9999',
-
      # HTTP
       'HTTP::Request'  => 0,
       'HTTP::Response' => 0,

@@ -30,7 +30,7 @@ provides:
     version: 0.04
   Cobalt::IRC:
     file: lib/Cobalt/IRC.pm
-    version: 0.208
+    version: 0.209
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.14
@@ -45,7 +45,7 @@ provides:
     version: 0.10
   Cobalt::Plugin::Extras::Karma:
     file: lib/Cobalt/Plugin/Extras/Karma.pm
-    version: 0.02
+    version: 0.03
   Cobalt::Plugin::Extras::Money:
     file: lib/Cobalt/Plugin/Extras/Money.pm
     version: 0.06
@@ -96,7 +96,7 @@ provides:
     version: 0.32
   Cobalt::Plugin::RDB::SearchCache:
     file: lib/Cobalt/Plugin/RDB/SearchCache.pm
-    version: 0.21
+    version: 0.22
   Cobalt::Plugin::Rehash:
     file: lib/Cobalt/Plugin/Rehash.pm
     version: 0.10
@@ -128,7 +128,6 @@ requires:
   File::Basename: 0
   File::Find: 0
   File::Path: 2.00
-  File::Slurp: 9999
   File::Spec: 0
   Getopt::Long: 0
   HTTP::Request: 0

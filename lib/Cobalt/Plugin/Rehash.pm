@@ -15,6 +15,7 @@ our $VERSION = '0.10';
 use Cobalt::Common;
 use Cobalt::Conf;
 
+## dclone used so we can easily throw away unwanted Cobalt::Conf hashes:
 use Storable qw/dclone/;
 
 sub new { bless {}, shift }

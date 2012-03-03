@@ -37,7 +37,6 @@
             "File::Basename" : 0,
             "File::Find" : 0,
             "File::Path" : "2.00",
-            "File::Slurp" : "9999",
             "File::Spec" : 0,
             "Getopt::Long" : 0,
             "HTTP::Request" : 0,
@@ -87,7 +86,7 @@
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.208"
+         "version" : "0.209"
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
@@ -107,7 +106,7 @@
       },
       "Cobalt::Plugin::Extras::Karma" : {
          "file" : "lib/Cobalt/Plugin/Extras/Karma.pm",
-         "version" : "0.02"
+         "version" : "0.03"
       },
       "Cobalt::Plugin::Extras::Money" : {
          "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
@@ -175,7 +174,7 @@
       },
       "Cobalt::Plugin::RDB::SearchCache" : {
          "file" : "lib/Cobalt/Plugin/RDB/SearchCache.pm",
-         "version" : "0.21"
+         "version" : "0.22"
       },
       "Cobalt::Plugin::Rehash" : {
          "file" : "lib/Cobalt/Plugin/Rehash.pm",
