@@ -10,7 +10,7 @@ my $rcfile = $ENV{HOME}."/.cobalt2rc";
 my $opt_debug = 0;
 my $opt_detach = 1;
 my $loglevel = 'info';
-my $basedir;
+my ($etcdir, $vardir, $basedir);
 
 use Proc::PID::File;
 
@@ -42,8 +42,7 @@ GetOptions(
 
 sub show_help {
   print(
-    "cobalt2 invocation help \n\n",
-    "  Information:\n",
+    "cobalt2 invocation help \n",
     "   --version \n",
     "     Display current Cobalt::Core version \n",
 
@@ -55,8 +54,11 @@ sub show_help {
     "     Specify log verbosity. Defaults to 'info' \n",
     "     Valid levels, most verbose to least: \n",
     "       debug info notice warn err crit alert emerg \n",
-    "   --debug \n",
+    "   --debug / --nodebug / --debug=LEVEL\n",
     "     Enable debug output. Overrides loglevel. \n",
+    "     Higher levels offer more verbosity. \n",
+
+    ## FIXME; note on POCOIRC_DEBUG and POE debug opts ?
 
     "\n",
     "  Paths:\n",
@@ -64,55 +66,11 @@ sub show_help {
     "     Specify a rcfile. Defaults to \$HOME/.cobalt2rc \n",
     "   --base=/path/to/basedir \n",
     "     Specify base path for 'etc/' and 'var/' for this instance\n",
-    "     Overrides rcfile. \n\n",
-    ## FIXME; note on POCOIRC_DEBUG and POE debug opts ?
+    "     Overrides rcfile. \n",
   );
 
   exit 0
 }
-
-
-say "-> debug ON, overrides loglevel" if $opt_debug;
-## Cobalt::Core does this anyway, but just for the validator:
-$loglevel = $opt_debug ? 'debug' : lc $loglevel ;
-## Check specified loglevel
-my @loglevels = qw/debug info notice warn warning
-                   err error crit critical alert
-                   emerg emergency/;
-
-unless ($loglevel ~~ @loglevels)
-{ 
-  say("Invalid loglevel ($loglevel)");
-  say("Possible loglevels, most verbose to least: ".join(' ',@loglevels));
-  say("Setting loglevel to INFO");
-  $loglevel = 'info';
-}
-
-my ($etcdir, $vardir);
-
-if ($basedir) {
-  say ">! Using --basedir=${basedir}";
-  ## A basedir was specified, disregard cobalt2rc
-  unless (-e $basedir) {
-    croak "basedir $basedir specified but nonexistant";
-  }
-
-  $etcdir = $basedir . "/etc";
-  $vardir = $basedir . "/var";
-
-} else {
-  ## no basedir specified, try rcfile
-  _rc_check();
-  ($basedir, $etcdir, $vardir) = _rc_read();
-}
-
-_check_dirs();
-_check_cfs();
-_dumpcfg() if $ENV{COBALT_DUMP_CONFIG};
-_start_cobalt();
-
-
-## Functions
 
 sub _rc_check {
   unless (-e $rcfile) {
@@ -250,7 +208,45 @@ sub _dumpcfg {
   exit 0
 }
 
+say "-> debug ON, overrides loglevel" if $opt_debug;
+## Cobalt::Core does this anyway, but just for the validator:
+$loglevel = $opt_debug ? 'debug' : lc $loglevel ;
+## Check specified loglevel
+my @loglevels = qw/debug info notice warn warning
+                   err error crit critical alert
+                   emerg emergency/;
 
+unless ($loglevel ~~ @loglevels)
+{ 
+  say("Invalid loglevel ($loglevel)");
+  say("Possible loglevels, most verbose to least: ".join(' ',@loglevels));
+  say("Setting loglevel to INFO");
+  $loglevel = 'info';
+}
+
+
+if ($basedir) {
+  say ">! Using --basedir=${basedir}";
+  ## A basedir was specified, disregard cobalt2rc
+  unless (-e $basedir) {
+    croak "basedir $basedir specified but nonexistant";
+  }
+
+  $etcdir = $basedir . "/etc";
+  $vardir = $basedir . "/var";
+
+} else {
+  ## no basedir specified, try rcfile
+  _rc_check();
+  ($basedir, $etcdir, $vardir) = _rc_read();
+}
+
+_check_dirs();
+_check_cfs();
+_dumpcfg() if $ENV{COBALT_DUMP_CONFIG};
+_start_cobalt();
+
+__END__
 =pod
 
 =head1 NAME
@@ -269,6 +265,9 @@ cobalt2 - Cobalt IRC bot
 
   # Start in the foreground in debug mode
   cobalt2 --debug --nodetach
+  
+  # Higher debug verbosity modes:
+  cobalt2 --debug=2
 
   # Start cobalt2 using a specified rcfile
   cobalt2 --rcfile=/path/to/cobalt2rc
@@ -276,19 +275,36 @@ cobalt2 - Cobalt IRC bot
   # Start cobalt2, only log warnings and above
   cobalt2 --loglevel=warn
 
+  # Dump current configuration
+  COBALT_DUMP_CONFIG=1 cobalt2
 
-=head1 OPTIONS
+=head1 DESCRIPTION
 
-FIXME
+Cobalt is a pluggable IRC bot framework coupled with a core set of plugins 
+vaguely replicating classic B<darkbot> behavior and a great deal more.
 
+See L<http://www.cobaltirc.org/dev/bots> for more information on 
+Cobalt and the complete documentation.
+
+This is the core frontend; it uses C<.cobalt2rc> files to find the 
+relevant configuration & data directories to start a particular 
+Cobalt instance.
+
+See L</SYNOPSIS> for usage information.
 
 =head1 SEE ALSO
 
+=head2 Getting started
+
+L<Cobalt::Manual::README>
+
+L<Cobalt::Manual::INSTALL>
+
+=head2 Plugin authoring
 
 L<Cobalt::Manual::Plugins>
 
 L<Cobalt::IRC>
-
 
 =head1 AUTHOR
 
