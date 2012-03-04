@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.03';
+our $VERSION = '0.10';
 
 ## simple karma++/-- tracking
 
@@ -9,7 +9,7 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-use Cobalt::Serializer;
+use Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
 
@@ -18,7 +18,12 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
-  $self->{Karma} = $self->_read_karma;
+
+  my $dbpath = $core->var ."/karma.db";
+  $self->{karmadb} = Cobalt::DB->new(
+    File => $dbpath,
+  );
+
   $self->{karma_regex} = qr/^(\S+)(\+{2}|\-{2})$/;
   $core->plugin_register( $self, 'SERVER',
     [
@@ -32,8 +37,6 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->debug("serializing karmadb to disk");
-  $self->_write_karma;
   $core->log->info("Unregistering");
   return PLUGIN_EAT_NONE
 }
@@ -48,13 +51,25 @@ sub Bot_public_msg {
 
   my $first_word = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
   $first_word = decode_irc($first_word);
+
   if ($first_word =~ $self->{karma_regex}) {
-    my ($karma_for, $karma) = (lc($1), $2);
-    if      ($karma eq '--') {
-      $self->{Karma}->{$karma_for}-- ;
-    } elsif ($karma eq '++') {
-      $self->{Karma}->{$karma_for}++ ;
+    
+    unless ( $self->{karmadb}->dbopen ) {
+      $core->log->warn("dbopen failure for karmadb");
+      return
     }
+    
+    my ($karma_for, $karma) = (lc($1), $2);
+
+    my $current = $self->{karmadb}->get($karma_for) || 0;
+
+    if      ($karma eq '--') {
+      $self->{karmadb}->put($karma_for, --$current);
+    } elsif ($karma eq '++') {
+      $self->{karmadb}->put($karma_for, ++$current);
+    }
+
+    $self->{karmadb}->dbclose;
   }
 
   return PLUGIN_EAT_NONE
@@ -70,8 +85,7 @@ sub Bot_public_cmd_karma {
 
   my $resp;
 
-  if (exists $self->{Karma}->{$karma_for}) {
-    my $karma = $self->{Karma}->{$karma_for};
+  if ( my $karma = $self->{karmadb}->get($karma_for) ) {
     $resp = "Karma for $karma_for: $karma";
   } else {
     $resp = "$karma_for currently has no karma, good or bad.";
@@ -81,31 +95,6 @@ sub Bot_public_cmd_karma {
   $core->send_event( 'send_message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
-}
-
-sub _read_karma {
-  my ($self) = @_;
-  my $core = $self->{core};
-  my $path = $core->var ."/karma.json";
-  unless (-e $path) {
-    $core->log->info("No karmadb found, creating a new one");
-    return { }
-  }
-  my $serializer = Cobalt::Serializer->new(Format => 'JSON');
-  my $karma = $serializer->readfile( $path ) || { };
-  return $karma
-}
-
-sub _write_karma {
-  my ($self) = @_;
-  my $core = $self->{core};
-  my $path = $core->var ."/karma.json";
-  my $serializer = Cobalt::Serializer->new(Format => 'JSON');
-  my $karma = $self->{Karma};
-  unless ( $serializer->writefile( $path, $karma ) ) {
-    $core->log->warn("Serializer writefile called failed");
-    return
-  } else { return 1 }
 }
 
 
@@ -129,8 +118,8 @@ Cobalt::Plugin::Extras::Karma - simple karma bot plugin
 
 A simple 'karma bot' plugin for Cobalt.
 
-Saves karma in JSON format for easy sharing; only syncs to disk 
-when the plugin is unloaded.
+Uses L<Cobalt::DB> for storage, saving to B<karma.db> in the instance's 
+C<var/> directory.
 
 =head1 AUTHOR
 
