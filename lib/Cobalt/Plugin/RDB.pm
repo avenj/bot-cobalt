@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.303';
+our $VERSION = '0.304';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -40,11 +40,14 @@ sub Cobalt_register {
 
   my $cfg = $core->get_plugin_cfg( $self );
 
+  my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
+
   my $rdbdir = $core->var ."/". ($cfg->{Opts}->{RDBDir} || "db/rdb");
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = Cobalt::Plugin::RDB::Database->new(
-    RDBDir => $rdbdir,
+    CacheKeys => $cachekeys,
+    RDBDir    => $rdbdir,
     core => $core,
   );
   $core->log->debug("Created RDB manager instance");
