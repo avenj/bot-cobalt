@@ -145,7 +145,7 @@ sub get {
   my ($self, $key) = @_;
   croak "attempted 'get' on unopened db"
     unless $self->{DB_IS_OPEN};
-  my $value = $self->{Tied}{$key} // undef;
+  my $value = $self->{Tied}{$key};
   return $value
 }
 
