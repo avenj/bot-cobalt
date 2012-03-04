@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_26';
+our $VERSION = '2.00_27';
 
 use 5.12.1;
 use Carp;
@@ -326,7 +326,8 @@ sub _core_timer_check_pool {
     if ( $execute_ts <= time ) {
       my $event = $timer->{Event};
       my @args = @{ $timer->{Args} };
-#      $self->log->debug("timer execute: $id (ev: $event)");
+      $self->log->debug("timer execute: $id (ev: $event)")
+        if $self->debug > 1;
       ## dispatch this event:
       $self->send_event( $event, @args ) if $event;
       ## send executed_timer to indicate this timer's done:
@@ -439,7 +440,8 @@ sub timer_set {
       Args    => [ @event_args ],
       AddedBy => $addedby,
     };
-#    $self->log->debug("timer_set; $id $delay $event_name");
+    $self->log->debug("timer_set; $id $delay $event_name")
+      if $self->debug > 1;
     return $id
   } else {
     $self->log->debug("timer_set called but no timer added; bad type?");
@@ -594,29 +596,53 @@ sub auth_pkg {
   return $pkg ? $pkg : ();
 }
 
-## FIXME finish out and document ignore_*
-## ->State->{Ignored}
+### Ignores (->State->{Ignored})
 
+## FIXME documentation
 sub ignore_add {
   my ($self, $context, $username, $mask, $reason) = @_;
-  my $ignore = $self->State->{Ignored}->{$context} //= {};
   
-  ## FIXME
-  ## $ignore->{$mask} = {
-  ##   AddedBy =>
-  ##   AddedAt =>
-  ##   Reason  =>
-  ## }
+  my ($pkg, $line) = (caller)[0,2];
+  unless (defined $context && defined $username && defined $mask) {
+    $self->log->debug("ignore_add missing arguments in $pkg ($line)");
+    return
+  }
+
+  my $ignore = $self->State->{Ignored}->{$context} //= {};
+
+  $mask   = normalize_mask($mask);
+  $reason = "added by $pkg" unless $reason;
+
+  $ignore->{$mask} = {
+    AddedBy => $username,
+    AddedAt => time(),
+    Reason  => $reason,
+  };
 }
 
 sub ignore_del {
   my ($self, $context, $mask) = @_;
+
+  unless (defined $context && defined $mask) {
+    my ($pkg, $line) = (caller)[0,2];
+    $self->log->debug("ignore_del missing arguments in $pkg ($line)");
+    return  
+  }
+
+  my $ignore = $self->State->{Ignored}->{$context} // return;
   
+  unless (exists $ignore->{$mask}) {
+    my ($pkg, $line) = (caller)[0,2];
+    $self->log->debug("ignore_del; no such mask in $pkg ($line)");
+    return
+  }
+  
+  return delete $ignore->{$mask};
 }
 
 sub ignore_list {
   my ($self, $context) = @_;
-  ## apply scalar context if you want the hashref for this context
+  ## apply scalar context if you want the hashref for this context:
   my $ignorelist = $self->State->{Ignored}->{$context} // {};
   return wantarray ? keys %$ignorelist : $ignorelist ;
 }
@@ -763,6 +789,8 @@ This module is the core of B<Cobalt2>, tying an event syndicator (via
 L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
 L<Log::Handler> instance and other useful tools.
 
+Public methods are documented in L<Cobalt::Manual::Plugins/"Core methods">
+
 You probably want to consult the following documentation:
 
 =over
@@ -783,7 +811,34 @@ L<Cobalt::Manual::PluginDist> - Distributing Cobalt plugins
 
 =head1 Custom frontends
 
-FIXME
+It's actually possible to write custom frontends to spawn a Cobalt 
+instance; Cobalt::Core just needs to be initialized with a valid 
+configuration hash and spawned via L<POE::Kernel>'s run() method.
+
+A configuration hash is typically created by L<Cobalt::Conf>:
+
+  my $cconf = Cobalt::Conf->new(
+    etc => $path_to_etc_dir,
+  );
+  my $cfg_hash = $cconf->read_cfg;
+
+. . . then passed to Cobalt::Core before the POE kernel is started:
+
+  ## Set up Cobalt::Core's POE session:
+  Cobalt::Core->new(
+    cfg => $cfg_hash,
+    var => $path_to_var_dir,
+    
+    ## See perldoc Log::Handler regarding log levels:
+    loglevel => $loglevel,
+    
+    ## Debug levels:
+    debug => $debug,
+    
+    ## Indicate whether or not we're forked to the background:
+    detached => $detached,
+  )->init;
+
 
 =head1 AUTHOR
 
