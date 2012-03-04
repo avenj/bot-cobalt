@@ -839,6 +839,7 @@ A configuration hash is typically created by L<Cobalt::Conf>:
     detached => $detached,
   )->init;
 
+Frontends have to worry about fork()/exec() on their own.
 
 =head1 AUTHOR
 

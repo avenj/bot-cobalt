@@ -1,5 +1,5 @@
 #!perl
-## cobalt2 Cobalt::Core frontend
+## simplistic cobalt2 Cobalt::Core frontend
 
 use 5.12.1;
 use strict;
@@ -7,9 +7,9 @@ use warnings;
 use Carp;
 
 my $rcfile = $ENV{HOME}."/.cobalt2rc";
-my $opt_debug = 0;
+my $opt_debug  = 0;
 my $opt_detach = 1;
-my $loglevel = 'info';
+my $loglevel   = 'info';
 my ($etcdir, $vardir, $basedir);
 
 use Proc::PID::File;
@@ -156,10 +156,8 @@ sub _start_cobalt {
     dir => $vardir,
     name => 'cobalt',
   );
-  if ($pid->alive) {
-    say "cobalt appears to be already running";
-    exit 1
-  }
+  die "cobalt appears to be already running\n"
+    if $pid->alive;
 
   ## POSIX fork dance
   use POSIX ();
