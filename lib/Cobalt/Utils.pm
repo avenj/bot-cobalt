@@ -324,7 +324,7 @@ sub mkpasswd {
 
 
 1;
-
+__END__
 =pod
 
 =head1 NAME
@@ -340,6 +340,9 @@ Plugin authors may wish to make use of these; simply importing the
 B<:ALL> set from Cobalt::Utils will give you access to the entirety of
 this utility module, including useful string formatting tools, safe 
 password hashing functions, etc. See L</USAGE>, below.
+
+You may also want to look at L<Cobalt::Common>, which exports most 
+of this module.
 
 =head1 USAGE
 

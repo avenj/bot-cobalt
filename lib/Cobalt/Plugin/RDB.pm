@@ -753,7 +753,7 @@ sub _add_item {
   my $itemref = {
     AddedBy => $username,
     AddedAt => time,
-    String => $item,
+    String  => $item,
     Votes => { Up => 0, Down => 0 },
   };
 
