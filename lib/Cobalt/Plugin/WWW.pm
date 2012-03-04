@@ -1,5 +1,5 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 use 5.12.1;
 use strict;
@@ -82,8 +82,8 @@ sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->debug("www_request received");
   my $request = ${ $_[0] };
-  my $event   = ${ $_[1] // \undef };
-  my $ev_arg  = ${ $_[2] // \undef };
+  my $event  = defined $_[1] ? ${$_[1]} : undef ;
+  my $ev_arg = defined $_[2] ? ${$_[2]} : undef ;
  
   unless ($request) {
     $core->log->debug("www_request received but no request");
