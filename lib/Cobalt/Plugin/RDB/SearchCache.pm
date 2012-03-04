@@ -71,7 +71,7 @@ sub invalidate {
     return
   }
 
-  return unless $self->{Cache}->{$ckey};
+  return unless $self->{Cache}->{$ckey}
          and scalar keys %{ $self->{Cache}->{$ckey} } ;
 
   return delete $self->{Cache}->{$ckey};
