@@ -25,7 +25,7 @@ GetOptions(
   'base=s'   => \$basedir,
 
   ## Invocation opts
-  'debug!'  => \$opt_debug,   ## Overrides loglevel=
+  'debug:+' => \$opt_debug,   ## Overrides loglevel=
   'detach!' => \$opt_detach,
   'daemon!' => \$opt_detach,
   'loglevel=s' => \$loglevel,
