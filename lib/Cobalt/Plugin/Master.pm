@@ -1,7 +1,5 @@
 package Cobalt::Plugin::Master;
 our $VERSION = '0.01';
-##  !die / !restart
-##  !join / !part / !cycle
 ## FIXME:
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die
@@ -21,7 +19,6 @@ sub Cobalt_register {
 
 #      'public_cmd_server',
 #      'public_cmd_die',
-#      'public_cmd_restart',
 
       'public_cmd_op',
       'public_cmd_deop',

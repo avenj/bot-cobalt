@@ -164,7 +164,7 @@ sub init {
         'syndicator_started',
         'syndicator_stopped',
         'shutdown',
-        'sighup'
+        'sighup',
         'ev_plugin_error',
 
         '_core_timer_check_pool',
