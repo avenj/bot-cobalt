@@ -5,8 +5,8 @@
 ## Loosely based on the original darkbot6 ebonics.h by rapsux
 
 NAME: ebonics
-REV: 2
-SPEC: 3
+REV: 3
+SPEC: 4
 
 RPL:
 
@@ -172,7 +172,6 @@ RPL:
   RDB_ITEM_DELETED: "Deleted item %index from %rdb per request of %nick"
 
   ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
-  ##                %votedup, %voteddown
   RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"
 
   ## RDB_UNLINK_FAILED, %nick, %rdb

@@ -14,11 +14,12 @@
 ## Variables with trailing characters can be terminated with %
 ## e.g. "Running %version%."  -> "Running cobalt 2.00."
 
+### Names must be lowercase:
 NAME: english
-  ## bump +1 on significant revisions please:
-REV: 10
-  ## compare to core english.yml set:
-SPEC: 3
+### Bump +1 on significant revisions:
+REV: 11
+### english.yml set is authoritative:
+SPEC: 4
 
 RPL:
 
@@ -183,7 +184,6 @@ RPL:
   RDB_ITEM_DELETED: "Deleted item %index from %rdb per request of %nick"
 
   ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
-  ##                %votedup, %voteddown
   RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"
 
   ## RDB_UNLINK_FAILED, %nick, %rdb

@@ -43,7 +43,6 @@ for my $item (@randstuff_ini) {
     AddedBy => '-Imported',
     AddedAt => time,
     String => $item,
-    Votes  => { Up => 0, Down => 0 },
   };
 }
 
@@ -90,7 +89,6 @@ if ($rdb_dir_path) {
         AddedBy => '-Imported',
         AddedAt => time,
         String => $item,
-        Votes => { Up => 0, Down => 0 },
       };
       
     }

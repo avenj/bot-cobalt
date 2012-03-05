@@ -11,12 +11,7 @@ our $VERSION = '0.304';
 ##   String => "string",
 ##   AddedAt => time(),
 ##   AddedBy => $username,
-##   Votes => {
-##     Up   => 0,
-##     Down => 0,
 ##   },
-
-## FIXME: voting
 
 use Cobalt::Common;
 
@@ -329,7 +324,6 @@ sub _cmd_rdb {
   ##   rdb search
   ##   rdb searchidx
   ## FIXME rdb dblist
-  ## FIXME handle voting here ... ?
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg_h) = @_;
@@ -573,7 +567,6 @@ sub _cmd_rdb {
       my $added_dt = DateTime->from_epoch(
         epoch => $item->{AddedAt} // 0
       );
-      my $votes_r = $item->{Votes} // {};
       my $added_by = $item->{AddedBy} // '(undef)';
   
       $rplvars = {
@@ -583,8 +576,6 @@ sub _cmd_rdb {
         date  => $added_dt->date,
         time  => $added_dt->time,
         addedby => $added_by,
-        votedup   => $votes_r->{Up} // 0,
-        voteddown => $votes_r->{Down} // 0,
       };
 
       $resp = rplprintf( $core->lang->{RDB_ITEM_INFO}, $rplvars );
@@ -754,7 +745,6 @@ sub _add_item {
     AddedBy => $username,
     AddedAt => time,
     String  => $item,
-    Votes => { Up => 0, Down => 0 },
   };
 
   my $status = $dbmgr->put($rdb, $itemref);
