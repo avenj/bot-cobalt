@@ -343,6 +343,16 @@ You can serialize/export the entirety of the DB via B<dbdump>.
 
 See L<Cobalt::Serializer> for more on C<freeze()> and valid formats.
 
+As of B<2.00_24>, a tool called B<cobalt2-dbdump> is available as a 
+simple frontend to this functionality. See C<cobalt2-dbdump --help>
+
+=head1 FORMAT
+
+B<Cobalt::DB> databases are Berkeley DB 1.x, with NULL-terminated records 
+and values stored as JSON.
+
+They should be fairly easy to parse in a language of your choice.
+
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
