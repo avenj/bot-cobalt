@@ -1,10 +1,10 @@
 package Cobalt::Plugin::Extras::Debug;
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 ## Simple 'dump to stdout' debug functions
 ##
 ## IMPORTANT: NO ACCESS CONTROLS!
-## Intended for debugging, you probably don't want to load on a live bot.
+## Intended for debugging, you don't want to load on a live bot.
 ##
 ## Dumps to STDOUT, there is no IRC output.
 ##
@@ -13,6 +13,7 @@ our $VERSION = '0.001';
 ##  !dumpstate
 ##  !dumptimers
 ##  !dumpservers
+##  !dumplangset
 ##
 ##  - avenj@cobaltirc.org
 
@@ -25,7 +26,13 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   my @events = map { 'public_cmd_'.$_ } 
-    qw/dumpcfg dumpstate dumptimers dumpservers/ ;
+    qw/
+      dumpcfg 
+      dumpstate 
+      dumptimers 
+      dumpservers
+      dumplangset
+    / ;
   $core->plugin_register( $self, SERVER,
     [ @events ] 
   );
@@ -45,28 +52,35 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_dumpcfg {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpcfg called (debugger)");
-  print Dumper $core->cfg;
+  print(Dumper $core->cfg);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpstate {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpstate called (debugger)");
-  print Dumper $core->State;
+  print(Dumper $core->State);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumptimers {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumptimers called (debugger)");
-  print Dumper $core->TimerPool;
+  print(Dumper $core->TimerPool);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpservers {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpservers called (debugger)");
-  print Dumper $core->Servers;
+  print(Dumper $core->Servers);
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_public_cmd_dumplangset {
+  my ($self, $core) = splice @_, 0, 2;
+  $core->log->warn("dumplangset called (debugger)");
+  print(Dumper $core->lang);
   return PLUGIN_EAT_NONE
 }
 
