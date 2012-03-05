@@ -283,14 +283,15 @@ sub sighup {
   $self->log->warn("SIGHUP received");
   
   if ($self->detached) {
-    $self->log->info("sending Bot_rehash (SIGHUP)");
     ## Caught by Plugin::Rehash if present
     ## Not documented because you should be using the IRC interface
     ## (...and if the bot was run with --nodetach it will die, below)
+    $self->log->info("sending Bot_rehash (SIGHUP)");
     $self->send_event( 'Bot_rehash' );
   } else {
-    ## we were attached to a terminal and it's presumably gone
+    ## we were (we think) attached to a terminal and it's (we think) gone
     ## shut down soon as we can:
+    $self->log->warn("Lost terminal; shutting down");
     $_[KERNEL]->yield('shutdown');
   }
 }
