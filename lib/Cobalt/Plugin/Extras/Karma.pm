@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 ## simple karma++/-- tracking
 
@@ -56,18 +56,20 @@ sub Bot_public_msg {
     
     unless ( $self->{karmadb}->dbopen ) {
       $core->log->warn("dbopen failure for karmadb");
-      return
+      return PLUGIN_EAT_NONE
     }
     
     my ($karma_for, $karma) = (lc($1), $2);
 
-    my $current = $self->{karmadb}->get($karma_for) || 0;
+    my $current = $self->{karmadb}->get($karma_for) // 0;
 
     if      ($karma eq '--') {
-      $self->{karmadb}->put($karma_for, --$current);
+      --$current;
     } elsif ($karma eq '++') {
-      $self->{karmadb}->put($karma_for, ++$current);
+      ++$current;
     }
+
+    $self->{karmadb}->put($karma_for, $current);
 
     $self->{karmadb}->dbclose;
   }
@@ -91,7 +93,7 @@ sub Bot_public_cmd_karma {
     $core->send_event( 'send_message', $context, $channel, 
       "Failed to open karmadb",
     );
-    return
+    return PLUGIN_EAT_ALL
   }
 
   if ( my $karma = $self->{karmadb}->get($karma_for) ) {

@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -145,6 +145,7 @@ sub get {
   my ($self, $key) = @_;
   croak "attempted 'get' on unopened db"
     unless $self->{DB_IS_OPEN};
+  return undef unless exists $self->{Tied}{$key};
   my $value = $self->{Tied}{$key};
   return $value
 }
