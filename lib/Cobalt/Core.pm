@@ -295,6 +295,7 @@ sub sighup {
     $self->log->warn("Lost terminal; shutting down");
     $_[KERNEL]->yield('shutdown');
   }
+  $_[KERNEL]->sig_handled();
 }
 
 sub shutdown {
