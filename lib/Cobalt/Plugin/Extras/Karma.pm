@@ -25,6 +25,7 @@ sub Cobalt_register {
   );
 
   $self->{karma_regex} = qr/^(\S+)(\+{2}|\-{2})$/;
+
   $core->plugin_register( $self, 'SERVER',
     [
       'public_msg',

@@ -24,7 +24,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   $core->plugin_register( $self, 'SERVER',
-    [ 'public_cmd_rehash' ]
+    [ 'rehash', 'public_cmd_rehash' ]
   );
   $core->log->info("Registered, commands: !rehash");
   return PLUGIN_EAT_NONE
@@ -34,6 +34,14 @@ sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
   $core->log->info("Unregistered");
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_rehash {
+  my ($self, $core) = splice @_, 0, 2;
+  $self->_rehash_core_cf;
+  $self->_rehash_channels_cf;
+  $self->_rehash_plugins_cf;
   return PLUGIN_EAT_NONE
 }
 

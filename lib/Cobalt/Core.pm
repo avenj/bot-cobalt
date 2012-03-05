@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_28';
+our $VERSION = '2.00_30';
 
 use 5.12.1;
 use Carp;
@@ -229,8 +229,7 @@ sub syndicator_started {
 
   $kernel->sig('INT'  => 'shutdown');
   $kernel->sig('TERM' => 'shutdown');
-  ## FIXME: do something smarter with HUP
-  $kernel->sig('HUP'  => 'shutdown');
+  $kernel->sig('HUP'  => 'sighup');
 
   $self->log->info('-> '.__PACKAGE__.' '.$self->version);
  
@@ -277,6 +276,23 @@ sub syndicator_started {
 
   ## kickstart timer pool
   $kernel->yield('_core_timer_check_pool');
+}
+
+sub sighup {
+  my $self = $_[OBJECT];
+  $self->log->warn("SIGHUP received");
+  
+  if ($self->detached) {
+    $self->log->info("sending Bot_rehash (SIGHUP)");
+    ## Caught by Plugin::Rehash if present
+    ## Not documented because you should be using the IRC interface
+    ## (...and if the bot was run with --nodetach it will die, below)
+    $self->send_event( 'Bot_rehash' );
+  } else {
+    ## we were attached to a terminal and it's presumably gone
+    ## shut down soon as we can:
+    $_[KERNEL]->yield('shutdown');
+  }
 }
 
 sub shutdown {
