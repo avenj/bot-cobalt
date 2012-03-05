@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 ## simple karma++/-- tracking
 
@@ -85,11 +85,21 @@ sub Bot_public_cmd_karma {
 
   my $resp;
 
+  unless ( $self->{karmadb}->dbopen ) {
+    $core->log->warn("dbopen failure for karmadb");
+    $core->send_event( 'send_message', $context, $channel, 
+      "Failed to open karmadb",
+    );
+    return
+  }
+
   if ( my $karma = $self->{karmadb}->get($karma_for) ) {
     $resp = "Karma for $karma_for: $karma";
   } else {
     $resp = "$karma_for currently has no karma, good or bad.";
   }
+
+  $self->{karmadb}->dbclose;
 
   my $channel = $msg->{target};
   $core->send_event( 'send_message', $context, $channel, $resp );
