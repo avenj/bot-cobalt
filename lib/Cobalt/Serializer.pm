@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.16';
+our $VERSION = '0.18';
 
 use 5.12.1;
 use strict;
@@ -210,14 +210,18 @@ sub _load_yamlxs {
 sub _dump_json {
   my ($self, $data) = @_;
   require JSON;
-  my $json = JSON::encode_json($data);
+  my $jsify = JSON->new->allow_nonref;
+  $jsify->utf8(1);
+  my $json = $jsify->encode($data);
   return $json;
 }
 
 sub _load_json {
   my ($self, $json) = @_;
   require JSON;
-  my $data = JSON::decode_json($json);
+  my $jsify = JSON->new->allow_nonref;
+  $jsify->utf8(1);
+  my $data = $jsify->decode($json);
   return $data;
 }
 
