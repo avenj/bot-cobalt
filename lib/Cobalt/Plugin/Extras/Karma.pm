@@ -80,6 +80,7 @@ sub Bot_public_cmd_karma {
   my $context = ${$_[0]};
   my $msg     = ${$_[1]};
 
+  my $channel = $msg->{target};
   my @message = @{ $msg->{message_array} };
   my $karma_for = lc(shift @message || $msg->{src_nick});
 
@@ -101,7 +102,6 @@ sub Bot_public_cmd_karma {
 
   $self->{karmadb}->dbclose;
 
-  my $channel = $msg->{target};
   $core->send_event( 'send_message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
