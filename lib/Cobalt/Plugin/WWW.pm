@@ -29,9 +29,9 @@ sub Cobalt_register {
 
   my $pcfg = $core->get_plugin_cfg( $self );
   $self->{MAX_WORKERS} = $pcfg->{Opts}->{MaxWorkers} || 5;
-  $self->{PROXY_ADDR}  = $pcfg->{Opts}->{Proxy} || undef;
-  $self->{LWP_TIMEOUT} = $pcfg->{Opts}->{Timeout} || 60;
-  $self->{LOCAL_ADDR}  = $pcfg->{Opts}->{BindAddr} || undef;
+  $self->{LOCAL_ADDR}  = $pcfg->{Opts}->{BindAddr}   || undef;
+  $self->{PROXY_ADDR}  = $pcfg->{Opts}->{Proxy}      || undef;
+  $self->{LWP_TIMEOUT} = $pcfg->{Opts}->{Timeout}    || 60;
   
   ## Hashref mapping tags to pipeline events/args
   $self->{EventMap} = { };
@@ -40,9 +40,7 @@ sub Cobalt_register {
   $self->{PendingReqs} = [ ];
 
   $core->plugin_register($self, 'SERVER',
-    [
-      'www_request',
-    ],
+    [ 'www_request', ],
   );
   
   $core->log->info("$VERSION loaded");
@@ -361,9 +359,10 @@ L<POE::Component::Client::HTTP>.
 That's not too shabby.
 
 Why not use it for async HTTP here? Well, unfortunately, the HTTP component 
-also needs L<POE::Component::Resolver>, which has a small bug that results in 
+also needs L<POE::Component::Resolver>, which had a small bug that results in 
 L<POE::Component::Resolver::Sidecar> instances sticking around as long as the 
-HTTP component does -- which in our case is the lifetime of the bot.
+HTTP component does -- which in our case is the lifetime of the bot. This has 
+been fixed as of POE::Component::Resolver-0.915.
 
 Rather than start a new useragent session every time there are pending HTTP 
 requests, L<LWP::UserAgent> instances are forked off and die when they're 
