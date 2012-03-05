@@ -74,11 +74,11 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_26"
+         "version" : "2.00_30"
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
-         "version" : "0.18"
+         "version" : "0.20"
       },
       "Cobalt::HTTP" : {
          "file" : "lib/Cobalt/HTTP.pm",
@@ -106,7 +106,7 @@
       },
       "Cobalt::Plugin::Extras::Karma" : {
          "file" : "lib/Cobalt/Plugin/Extras/Karma.pm",
-         "version" : "0.03"
+         "version" : "0.12"
       },
       "Cobalt::Plugin::Extras::Money" : {
          "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
@@ -166,7 +166,7 @@
       },
       "Cobalt::Plugin::RDB" : {
          "file" : "lib/Cobalt/Plugin/RDB.pm",
-         "version" : "0.303"
+         "version" : "0.304"
       },
       "Cobalt::Plugin::RDB::Database" : {
          "file" : "lib/Cobalt/Plugin/RDB/Database.pm",
@@ -186,11 +186,11 @@
       },
       "Cobalt::Plugin::WWW" : {
          "file" : "lib/Cobalt/Plugin/WWW.pm",
-         "version" : "0.006"
+         "version" : "0.007"
       },
       "Cobalt::Serializer" : {
          "file" : "lib/Cobalt/Serializer.pm",
-         "version" : "0.16"
+         "version" : "0.18"
       },
       "Cobalt::Utils" : {
          "file" : "lib/Cobalt/Utils.pm",
@@ -203,5 +203,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_26"
+   "version" : "2.00_30"
 }
