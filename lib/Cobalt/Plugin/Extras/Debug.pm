@@ -14,10 +14,12 @@ our $VERSION = '0.002';
 ##  !dumptimers
 ##  !dumpservers
 ##  !dumplangset
-##
-##  - avenj@cobaltirc.org
+use 5.12.1;
+use strict;
+use warnings;
 
 use Data::Dumper;
+
 use Object::Pluggable::Constants qw/ PLUGIN_EAT_NONE /;
 
 sub new { bless {}, shift }
@@ -33,12 +35,14 @@ sub Cobalt_register {
       dumpservers
       dumplangset
     / ;
-  $core->plugin_register( $self, SERVER,
+  $core->plugin_register( $self, 'SERVER',
     [ @events ] 
   );
   $core->log->info("Loaded DEBUG");
   $core->log->warn(
-    "You probably don't want to use this plugin on a live bot."
+    "THIS PLUGIN IS FOR DEVELOPMENT PURPOSES",
+    "You do not want to run this plugin on a live bot;",
+    "it has no access controls!"
   );
   return PLUGIN_EAT_NONE
 }
@@ -85,3 +89,43 @@ sub Bot_public_cmd_dumplangset {
 }
 
 1;
+__END__
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::Debug - dump internal state information
+
+=head1 SYNOPSIS
+
+  !plugin load Cobalt::Plugin::Extras::Debug
+  !dumpcfg
+  !dumplangset
+  !dumpservers  
+  !dumpstate
+  !dumptimers
+
+=head1 IMPORTANT
+
+B<
+This plugin has no access controls!
+
+It is intended to be used strictly for debugging during development.
+
+If it is loaded, anyone can flood STDOUT using the dump commands.
+>
+
+=head1 DESCRIPTION
+
+This is a simple development tool allowing developers to dump the 
+current contents of various core attributes to STDOUT for inspection.
+
+References are displayed using L<Data::Dumper>.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
