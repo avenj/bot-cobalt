@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.22';
+our $VERSION = '0.241';
 
 ## "Standard" Auth module
 ##
@@ -406,6 +406,16 @@ sub _cmd_chpass {
   
   my $new_hashed = $self->_mkpasswd($passwd_new);
   $user_rec->{Password} = $new_hashed;
+
+  unless ( $self->_write_access_list ) {
+    $self->core->log->warn("Couldn't _write_access_list in _cmd_chpass");
+    $self->core->log->warn("AuthDB may be broken or inaccessible.");
+    $self->core->send_event( 'send_message',
+      $context, $nick,
+      "Failed access list write! Admin should check logs."
+    );
+  }
+
   return rplprintf( $self->core->lang->{AUTH_CHPASS_SUCCESS},
     {
       context => $context,
@@ -504,7 +514,7 @@ sub _do_login {
   }
 
   unless (@matched_masks) {
-    $self->core->log->debug("[$context] authfail; no host match: $username ($host)");
+    $self->core->log->info("[$context] authfail; no host match: $username ($host)");
     $self->core->send_event( 'auth_failed_login',
       $context,
       $nick,
@@ -516,7 +526,7 @@ sub _do_login {
   }
 
   unless ( passwdcmp($passwd, $user_record->{Password}) ) {
-    $self->core->log->debug("[$context] authfail; bad passwd: $username ($host)");
+    $self->core->log->info("[$context] authfail; bad passwd: $username ($host)");
     $self->core->send_event( 'auth_failed_login',
       $context,
       $nick,
@@ -538,7 +548,7 @@ sub _do_login {
     Flags => \%flags,
   };
 
-  $self->core->log->debug(
+  $self->core->log->info(
     "[$context] successful auth: $username (lev $level) ($host)"
   );
 
