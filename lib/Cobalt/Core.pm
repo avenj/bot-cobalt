@@ -140,8 +140,10 @@ sub init {
   my $language = ($self->cfg->{core}->{Language} //= 'english');
   $self->lang( $self->load_langset($language) );
 
-  unless ($self->detached)
-  {
+  if ($self->detached) {
+    open STDERR, '>&', $logfile
+      or croak "Could not dup() STDERR: $!";
+  } else {
     $logger->add(
      screen => {
        log_to => "STDOUT",
@@ -151,7 +153,6 @@ sub init {
      },
     );
   }
-
 
   $self->_syndicator_init(
 #    debug => 1,  ## shouldfix; enable on higher debug level?
