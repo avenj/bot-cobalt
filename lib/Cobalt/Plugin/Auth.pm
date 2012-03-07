@@ -408,8 +408,9 @@ sub _cmd_chpass {
   $user_rec->{Password} = $new_hashed;
 
   unless ( $self->_write_access_list ) {
-    $self->core->log->warn("Couldn't _write_access_list in _cmd_chpass");
-    $self->core->log->warn("AuthDB may be broken or inaccessible.");
+    $self->core->log->warn(
+      "Couldn't _write_access_list in _cmd_chpass",
+    );
     $self->core->send_event( 'send_message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
@@ -646,8 +647,6 @@ sub _user_add {
   
   unless ( $self->_write_access_list ) {
     $core->log->warn("Couldn't _write_access_list in _user_add");
-    $core->log->warn("AuthDB may be broken or inaccessible.");
-    ## notify user also:
     $core->send_event( 'send_message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
@@ -737,8 +736,6 @@ sub _user_del {
   ## call a list sync
   unless ( $self->_write_access_list ) {
     $core->log->warn("Couldn't _write_access_list in _user_add");
-    $core->log->warn("AuthDB may be broken or inaccessible.");
-    ## notify user also:
     $core->send_event( 'send_message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
