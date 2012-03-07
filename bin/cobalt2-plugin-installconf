@@ -1,0 +1,21 @@
+#!perl
+
+use 5.12.1;
+use strict;
+use warnings;
+use Carp;
+
+use Getopt::Long;
+GetOptions(
+  help => sub {
+  
+    exit 0
+  },
+  
+  ## FIXME
+);
+
+## FIXME
+## try to install .conf files from 'confs/' in either specified libdir
+## or found libdir
+## if the .conf already exists, show diff, offer to exit or backup+replace

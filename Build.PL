@@ -102,9 +102,7 @@ my $build = $class->new(
       'POE::Wheel::Run'        => 0,
       'POE::Filter::Reference' => 0,
 
-      # pocoirc6.75 contained bugfix fixing use of LocalAddr
-      'POE::Component::IRC'        => '6.75',
-      'POE::Component::IRC::State' => 0,
+      'POE::Component::IRC::State' => '6.78',
       'POE::Component::Syndicator' => '0.06',
       'Object::Pluggable'          => '1.27',
 
