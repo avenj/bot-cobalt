@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.18';
+our $VERSION = '0.19';
 
 use 5.12.1;
 use strict;
@@ -211,8 +211,7 @@ sub _dump_json {
   my ($self, $data) = @_;
   require JSON;
   my $jsify = JSON->new->allow_nonref;
-  $jsify->utf8(1);
-  my $json = $jsify->encode($data);
+  my $json = $jsify->utf8->encode($data);
   return $json;
 }
 
@@ -221,7 +220,7 @@ sub _load_json {
   require JSON;
   my $jsify = JSON->new->allow_nonref;
   $jsify->utf8(1);
-  my $data = $jsify->decode($json);
+  my $data = $jsify->utf8->decode($json);
   return $data;
 }
 
