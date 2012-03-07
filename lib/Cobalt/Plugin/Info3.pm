@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.215';
+our $VERSION = '0.216';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -146,10 +146,8 @@ sub Bot_public_msg {
   my @message = @{ $msg->{message_array} };
   return PLUGIN_EAT_NONE unless @message;
 
-  if ($msg->{highlight}) {
-    ## return if it's just the botnick
-    return PLUGIN_EAT_NONE unless $message[1];
-  
+  my $with_highlight;
+  if ($msg->{highlight}) { 
     ## we were highlighted -- might be an info3 cmd
     my %handlers = (
       'add' => '_info_add',
@@ -187,6 +185,8 @@ sub Bot_public_msg {
       default {
         ## not an info3 cmd
         ## shift the highlight off and see if it's a match, below
+        ## save the highlighted version, it might still be a valid match
+        $with_highlight = join ' ', @message;
         shift @message;
       }
     }
@@ -207,7 +207,11 @@ sub Bot_public_msg {
     if $self->_over_max_triggered($context, $channel, $str);
 
   ## check for matches
-  my $match = $self->_info_match($str) || return PLUGIN_EAT_NONE;
+  my $match = $self->_info_match($str);
+  if ($with_highlight && ! defined $match) {
+    $match = $self->_info_match($with_highlight);
+  }
+  return PLUGIN_EAT_NONE unless $match;
 
   ## ~rdb, maybe? hand off to RDB.pm
   if ( index($match, '~') == 0) {
