@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.216';
+our $VERSION = '0.217';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -350,7 +350,7 @@ sub _info_add {
   }
   
   ## lowercase
-  $glob = lc $glob;
+  $glob = decode_irc(lc $glob);
 
   if (exists $self->{Globs}->{$glob}) {
     ## topic already exists, use replace instead!
@@ -377,7 +377,7 @@ sub _info_add {
       AddedAt => time(),
       AddedBy => $auth_user,
       Regex => $re,
-      Response => $string,
+      Response => decode_irc($string),
     }
   );
   $self->{DB}->dbclose;

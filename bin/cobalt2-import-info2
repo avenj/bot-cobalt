@@ -50,7 +50,7 @@ die "Empty info2db at $info2_path?\n" unless @info2db;
 my $info3ref;
 
 for my $line (@info2db) {
-  my @split = split ' ', $line;
+  my @split = split ' ', decode_irc($line);
   my $glob  = lc ( shift @split );
   
   ## Convert ?action -> ~action
