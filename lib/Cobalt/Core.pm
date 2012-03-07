@@ -213,14 +213,16 @@ sub unloader_cleanup {
   $self->log->debug("removing from INC: $included");
   delete $INC{$included};
   
-  no strict 'refs';
-  @{$module.'::ISA'} = ();
-  my $s_table = $module.'::';
-  for my $symbol (keys %$s_table) {
-    next if $symbol =~ /\A[^:]+::\z/;
-    delete $s_table->{$symbol};
+  { no strict 'refs';
+
+    @{$module.'::ISA'} = ();
+    my $s_table = $module.'::';
+    for my $symbol (keys %$s_table) {
+      next if $symbol =~ /\A[^:]+::\z/;
+      delete $s_table->{$symbol};
+    }
+  
   }
-  use strict;
   
   $self->log->debug("finished module cleanup");
   return 1
