@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.06';
+our $VERSION = '0.071';
 
 use Cobalt::Common;
 
@@ -114,9 +114,15 @@ sub Bot_currencyconv_rate_recv {
   my ($value, $context, $channel, $from, $to) = @$args;
   
   unless ($response->is_success) {
-    $core->send_event( 'send_message', $context, $channel,
-      "HTTP failed: ".$response->code
-    );
+    if ($response->code == 500) {
+      $core->send_event( 'send_message', $context, $channel,
+        "Received error 500; is your currency code valid?"
+      );
+    } else {
+      $core->send_event( 'send_message', $context, $channel,
+        "HTTP failed: ".$response->code
+      );
+    }
     return PLUGIN_EAT_ALL
   }
 
