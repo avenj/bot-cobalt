@@ -140,10 +140,7 @@ sub init {
   my $language = ($self->cfg->{core}->{Language} //= 'english');
   $self->lang( $self->load_langset($language) );
 
-  if ($self->detached) {
-    open STDERR, '>&', $logfile
-      or croak "Could not dup() STDERR: $!";
-  } else {
+  unless ($self->detached) {
     $logger->add(
      screen => {
        log_to => "STDOUT",
