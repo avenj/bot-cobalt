@@ -48,8 +48,8 @@ sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $msg     = ${$_[1]};
-  return PLUGIN_EAT_NONE if $msg->{highlighted};
-  return PLUGIN_EAT_NONE if $msg->{cmdprefix};
+  return PLUGIN_EAT_NONE if $msg->{highlighted}
+                         or $msg->{cmdprefix};
 
   my $first_word = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
   $first_word = decode_irc($first_word);

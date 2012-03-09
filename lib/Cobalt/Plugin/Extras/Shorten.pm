@@ -79,7 +79,7 @@ sub Bot_public_cmd_lengthen {
 sub Bot_shorten_response_recv {
   my ($self, $core) = splice @_, 0, 2;
   ## handler for received shorturls
-  my $url = ${ $_[0] }; 
+  my $url  = ${ $_[0] }; 
   my $args = ${ $_[2] };
   my ($context, $channel, $nick) = @$args;
 
@@ -115,13 +115,16 @@ sub _request_shorturl {
       max_redirect => 0,
       agent => 'cobalt2',
     );
+
     my $shorturl = $ua->post('http://metamark.net/api/rest/simple',
       [ long_url => $url ] )->content;
+
     if ($shorturl) {
       $shorturl = "shorturl for ${nick}: $shorturl";
     } else {
       $shorturl = "${nick}: shortener timed out";
     }
+
     $core->send_event( 'send_message', $context, $channel, $shorturl );
   }
 }
@@ -151,13 +154,16 @@ sub _request_longurl {
       max_redirect => 0,
       agent => 'cobalt2',
     );
+
     my $longurl = $ua->post('http://metamark.net/api/rest/simple',
       [ short_url => $url ] )->content;
+
     if ($longurl) {
       $longurl = "longurl for ${nick}: $longurl";
     } else {
       $longurl = "${nick}: shortener timed out";
     }
+
     $core->send_event( 'send_message', $context, $channel, $longurl );
   }
 }
@@ -169,7 +175,7 @@ __END__
 
 =head1 NAME
 
-Cobalt::Plugin::Extras::Shorten - IRC interface to metamark
+Cobalt::Plugin::Extras::Shorten - Shorten URLs via Metamark
 
 =head1 SYNOPSIS
 
