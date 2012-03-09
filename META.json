@@ -49,8 +49,7 @@
             "MooseX::NonMoose" : "0.18",
             "Object::Pluggable" : "1.27",
             "POE" : "1.311",
-            "POE::Component::IRC" : "6.75",
-            "POE::Component::IRC::State" : 0,
+            "POE::Component::IRC::State" : "6.78",
             "POE::Component::Syndicator" : "0.06",
             "POE::Filter::Reference" : 0,
             "POE::Wheel::Run" : 0,
@@ -74,7 +73,7 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_30"
+         "version" : "2.00_31"
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
@@ -90,15 +89,15 @@
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
-         "version" : "0.14"
+         "version" : "0.142"
       },
       "Cobalt::Plugin::Auth" : {
          "file" : "lib/Cobalt/Plugin/Auth.pm",
-         "version" : "0.22"
+         "version" : "0.241"
       },
       "Cobalt::Plugin::Extras::Debug" : {
          "file" : "lib/Cobalt/Plugin/Extras/Debug.pm",
-         "version" : "0.001"
+         "version" : "0.002"
       },
       "Cobalt::Plugin::Extras::Ignore" : {
          "file" : "lib/Cobalt/Plugin/Extras/Ignore.pm",
@@ -106,7 +105,7 @@
       },
       "Cobalt::Plugin::Extras::Karma" : {
          "file" : "lib/Cobalt/Plugin/Extras/Karma.pm",
-         "version" : "0.12"
+         "version" : "0.131"
       },
       "Cobalt::Plugin::Extras::Money" : {
          "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
@@ -146,7 +145,7 @@
       },
       "Cobalt::Plugin::Info3" : {
          "file" : "lib/Cobalt/Plugin/Info3.pm",
-         "version" : "0.215"
+         "version" : "0.218"
       },
       "Cobalt::Plugin::Master" : {
          "file" : "lib/Cobalt/Plugin/Master.pm",
@@ -154,11 +153,11 @@
       },
       "Cobalt::Plugin::OutputFilters::StripColor" : {
          "file" : "lib/Cobalt/Plugin/OutputFilters/StripColor.pm",
-         "version" : "0.11"
+         "version" : "0.12"
       },
       "Cobalt::Plugin::OutputFilters::StripFormat" : {
          "file" : "lib/Cobalt/Plugin/OutputFilters/StripFormat.pm",
-         "version" : "0.11"
+         "version" : "0.12"
       },
       "Cobalt::Plugin::PluginMgr" : {
          "file" : "lib/Cobalt/Plugin/PluginMgr.pm",
@@ -190,7 +189,7 @@
       },
       "Cobalt::Serializer" : {
          "file" : "lib/Cobalt/Serializer.pm",
-         "version" : "0.18"
+         "version" : "0.19"
       },
       "Cobalt::Utils" : {
          "file" : "lib/Cobalt/Utils.pm",
@@ -203,5 +202,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_30"
+   "version" : "2.00_31"
 }
