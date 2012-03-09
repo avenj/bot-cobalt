@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.217';
+our $VERSION = '0.218';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -752,7 +752,7 @@ sub _info_match {
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
   for my $re (keys %{ $self->{Regexes} }) {
-    if ($txt =~ /$re/) {
+    if ($txt =~ /$re/i) {
       my $glob = $self->{Regexes}->{$re};
       ## is this glob an action response?
       if ( index($glob, '~action') == 0 ) {
@@ -779,7 +779,7 @@ sub _info_varhelp {
   
   my $help =
      ' !~ = CmdChar, B~ = BotNick, C = Channel, H = UserHost, N = Nick,'
-    .' P~ = Port, Q =~ Question, R~ = RandomNick, S~ = Server'
+    .' P~ = Port, Q~ = Question, R~ = RandomNick, S~ = Server'
     .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
   ;
   
