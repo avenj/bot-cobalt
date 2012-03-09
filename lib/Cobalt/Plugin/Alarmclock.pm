@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.14';
+our $VERSION = '0.142';
 
 use 5.12.1;
 use strict;
@@ -12,13 +12,21 @@ use Object::Pluggable::Constants qw/ :ALL /;
 ## Commands:
 ##  !alarmclock
 
-sub new { bless ( {}, shift ); }
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
+  ## {Active}->{$timerid} = [ $context, $username ]
+  $self->{Active} = {};
+
   $core->plugin_register($self, 'SERVER', 
-    [ 'public_cmd_alarmclock' ] 
+    [ 
+      'public_cmd_alarmclock',
+      'public_cmd_alarmdelete',
+      'public_cmd_alarmdel',
+      'executed_timer',
+    ] 
   );
 
   $core->log->info("Registered");
@@ -31,13 +39,74 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_executed_timer {
+  my ($self, $core) = splice @_, 0, 2;
+  my $timerid = ${$_[0]};
+  return PLUGIN_EAT_NONE
+    unless exists $self->{Active}->{$timerid};
+  
+  $core->log->debug("clearing timer state for $timerid")
+    if $core->debug > 1;  
+  delete $self->{Active}->{$timerid};
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_public_cmd_alarmdelete { Bot_public_cmd_alarmdel(@_) }
+
+sub Bot_public_cmd_alarmdel {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $msg     = ${$_[1]};
+  my $nick    = $msg->{src_nick};
+  
+  my $auth_usr = $core->auth_username($context, $nick);
+  return PLUGIN_EAT_NONE unless $auth_usr;
+
+  my $timerid = $msg->{message_array}->[0];  
+  return PLUGIN_EAT_ALL unless $timerid;
+  
+  my $channel = $msg->{channel};
+  
+  unless (exists $self->{Active}->{$timerid}) {
+    $core->send_event( 'send_message', $context, $channel,
+      rplprintf( $core->lang->{ALARMCLOCK_NOSUCH},
+        { nick => $nick, timerid => $timerid },
+      )
+    );
+    return PLUGIN_EAT_ALL
+  }
+  
+  my $thistimer = $self->{Active}->{$timerid};
+  my ($ctxt_set, $ctxt_by) = @$thistimer;
+  unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
+    my $auth_lev = $core->auth_level($context, $nick);
+    ## superusers can override:
+    unless ($auth_lev == 9999) {
+      $core->send_event( 'send_message', $context, $channel,
+        rplprintf( $core->lang->{ALARMCLOCK_NOTYOURS},
+          { nick => $nick, timerid => $timerid },
+        )
+      );
+      return PLUGIN_EAT_ALL
+    }
+  }
+  
+  $core->timer_del($timerid);
+  delete $self->{Active}->{$timerid};
+  
+  $core->send_event( 'send_message', $context, $channel,
+    rplprintf( $core->lang->{ALARMCLOCK_DELETED},
+      { nick => $nick, timerid => $timerid },
+    )
+  );
+  return PLUGIN_EAT_ALL
+}
+
 
 sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
-
-  my $me = $msg->{myself};
+  my $msg     = ${$_[1]};
 
   my $resp;
 
@@ -48,6 +117,7 @@ sub Bot_public_cmd_alarmclock {
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE 
     unless $core->auth_level($context, $setter) >= $minlevel;
+  my $auth_usr = $core->auth_username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my @args = @{ $msg->{message_array} };  
@@ -73,6 +143,7 @@ sub Bot_public_cmd_alarmclock {
   );
 
   if ($id) {
+    $self->{Active}->{$id} = [ $context, $auth_usr ];
     $resp = rplprintf( $core->lang->{ALARMCLOCK_SET},
       {
         nick => $setter,

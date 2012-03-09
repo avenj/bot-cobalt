@@ -17,9 +17,9 @@
 ### Names must be lowercase:
 NAME: english
 ### Bump +1 on significant revisions:
-REV: 11
+REV: 12
 ### english.yml set is authoritative:
-SPEC: 4
+SPEC: 5
 
 RPL:
 
@@ -69,6 +69,15 @@ RPL:
 
   ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
   ALARMCLOCK_SET: "Alarm set to trigger in %secs%s (%nick%) [timerID: %timerid%]"
+  
+  ## ALARMCLOCK_NOSUCH: %nick, %timerid
+  ALARMCLOCK_NOSUCH: "No such alarmID: %timerid"
+  
+  ## ALARMCLOCK_NOTYOURS: %nick, %timerid
+  ALARMCLOCK_NOTYOURS: "%nick%: alarmID %timerid doesn't appear to belong to you!"
+  
+  ## ALARMCLOCK_DELETED: %nick, %timerid
+  ALARMCLOCK_DELETED: "%nick%: alarmID %timerid has been cleared."
 
 
  ## Plugin::Auth:

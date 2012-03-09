@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_30';
+our $VERSION = '2.00_31';
 
 use 5.12.1;
 use Carp;
@@ -412,7 +412,7 @@ sub timer_set {
 
   ## automatically pick a unique id unless specified
   unless ($id) {
-    my @p = ('a' .. 'z', 'A' .. 'Z', 0 .. 9);
+    my @p = ( 'a'..'z', 0..9 );
     do {
       $id = join '', map { $p[rand@p] } 1 .. 8;
     } while exists $self->TimerPool->{TIMERS}->{$id};    

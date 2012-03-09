@@ -6,7 +6,7 @@
 
 NAME: ebonics
 REV: 3
-SPEC: 4
+SPEC: 5
 
 RPL:
 
@@ -56,6 +56,15 @@ RPL:
 
   ## ALARMCLOCK_SET: %nick, %secs, %timestr, %timerid
   ALARMCLOCK_SET: "Alarm set to trigger in %secs%s (%nick%) [timerID: %timerid%]"
+  
+  ## ALARMCLOCK_NOSUCH: %nick, %timerid
+  ALARMCLOCK_NOSUCH: "I ain't know about alarm %timerid"
+  
+  ## ALARMCLOCK_NOTYOURS: %nick, %timerid
+  ALARMCLOCK_NOTYOURS: "yo %nick i ain't think %timerid be yours"
+  
+  ## ALARMCLOCK_DELETED: %nick, %timerid
+  ALARMCLOCK_DELETED: "%nick i done forgot about %timerid"
 
 
  ## Plugin::Auth:
