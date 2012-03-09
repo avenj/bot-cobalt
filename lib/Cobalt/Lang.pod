@@ -57,11 +57,10 @@ Plugins can use this to read in a langset file, if they like:
 
   ## using Cobalt::Lang outside of $core
   require Cobalt::Lang;
-  my $lang = Cobalt::Lang->new;
   my $etc = $core->cfg->{path};  ## location of our etc/
   ## read in etc/langs/plugin/myplugin-english.yml:
   my $prefix = $etc . "/langs/plugin/myplugin-";
-  my $rpl_hash = $lang->load_langset('english', $prefix);
+  my $rpl_hash = Cobalt::Lang->load_langset('english', $prefix);
 
 It is generally advisable that plugins don't modify the $core->lang 
 hash unless they are also part of the core distribution.

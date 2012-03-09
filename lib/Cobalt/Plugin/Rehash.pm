@@ -198,6 +198,13 @@ sub _rehash_channels_cf {
   return 1
 }
 
+sub _rehash_langsets {
+  ## FIXME
+  ## call Cobalt::Lang
+  ## iterate and replace keys in $core->lang
+  ## shouldn't overwrite in case plugins modified for some reason
+}
+
 sub _get_new_cfg {
   my ($self) = @_;
   my $core = $self->{core};
