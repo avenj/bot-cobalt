@@ -77,7 +77,7 @@ sub Bot_public_msg {
   ## Arguments are provided as references
   ## deref:
   my $context = ${$_[0]};  ## our server context
-  my $msg = ${$_[1]};      ## our msg hash
+  my $msg     = ${$_[1]};  ## our msg hash
 
   ## return unless bot is addressed:
   return PLUGIN_EAT_NONE unless $msg->{highlight};
@@ -138,3 +138,42 @@ sub Bot_public_msg {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Version - retrieve bot version & information
+
+=head1 SYNOPSIS
+
+  ## Get uptime and other info:
+  <JoeUser> botnick: info
+  
+  ## Get version information:
+  <JoeUser> botnick: version
+  
+  ## Find out what OS we're using:
+  <JoeUser> botnick: os
+
+=head1 DESCRIPTION
+
+Retrieves information about the running Cobalt instance.
+
+If L<Cobalt::Plugin::Info3> is available, the number of Info3 topics 
+is included.
+
+If L<Cobalt::Plugin::RDB> is available, the number of items in the 'main' 
+RDB will be reported.
+
+The source code for this plugin is overly-commented for the sake of 
+new plugin authors looking for a working example plugin. Try:
+
+  perldoc -m Cobalt::Plugin::Version
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
