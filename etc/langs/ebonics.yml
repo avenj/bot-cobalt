@@ -5,7 +5,7 @@
 ## Loosely based on the original darkbot6 ebonics.h by rapsux
 
 NAME: ebonics
-REV: 3
+REV: 4
 SPEC: 5
 
 RPL:
@@ -80,7 +80,7 @@ RPL:
   AUTH_FAIL_BADHOST: "no luck homie; host mismatch for %user [%src%]"
   AUTH_FAIL_BADPASS: "no luck homie; passwd mismatch (%user%)"
   AUTH_FAIL_NO_SUCH: "no luck homie; no such user (%user%)"
-  AUTH_FAIL_NO_CHANS: "yo dawg you aint on my corner (no shared channel!)"
+  AUTH_FAIL_NO_CHANS: "yo dawg I aint know you cuz you aint on my corner!"
   
   ## AUTH_CHPASS_*: %context, %src, %nick, %user 
   AUTH_CHPASS_BADPASS: "yo that nickname aint a match son (%user%)"
@@ -113,38 +113,38 @@ RPL:
   ## AUTH_NOT_ENOUGH_ACCESS, %nick, %lev
   AUTH_NOT_ENOUGH_ACCESS: "you aint got the juice fo'dat! (current: %lev)"
 
-## FIXME
+
  ## Plugin::Info3:
 
   ## INFO_DONTKNOW, %nick, %topic
-  INFO_DONTKNOW: "%nick%, I don't know anything about %topic"
+  INFO_DONTKNOW: "%nick%, I ain't know about %topic"
 
   ## INFO_WHAT, %nick
-  INFO_WHAT: "%nick%, what?"
+  INFO_WHAT: "%nick%, whut?"
   
   ## INFO_TELL_WHO, %nick
-  INFO_TELL_WHO: "Tell who what, %nick%?"
+  INFO_TELL_WHO: "you aint told me what to say, %nick%"
   
   ## INFO_TELL_WHAT, %nick, %target
-  INFO_TELL_WHAT: "Tell %target% about what, %nick%?"
+  INFO_TELL_WHAT: "yo %nick what i be tellin' %target%?"
 
   ## INFO_ADD, %nick, %topic
-  INFO_ADD: "%nick%, %topic has been added."
+  INFO_ADD: "aight %nick%, I gots %topic"
 
   ## INFO_DEL, %nick, %topic
-  INFO_DEL: "%nick%, %topic has been removed."
+  INFO_DEL: "aight %nick%, I be forgettin' %topic"
 
   ## INFO_ABOUT, %nick, %topic, %author, %date, %length
   INFO_ABOUT: "(%topic%) added by %author% at %date%. Response is %length% characters"
 
   ## INFO_REPLACE, %nick, %topic
-  INFO_REPLACE: "Alright, %nick%, I just replaced %topic"
+  INFO_REPLACE: "aight %nick% I gots a new %topic"
 
   # INFO_ERR_NOSUCH, %nick, %topic
-  INFO_ERR_NOSUCH: "Could not find topic %topic%, %nick%."
+  INFO_ERR_NOSUCH: "yo %nick i aint know nothin about %topic"
 
   # INFO_ERR_EXISTS, %nick, %topic
-  INFO_ERR_EXISTS: "%nick%, %topic already exists; perhaps you meant replace?"
+  INFO_ERR_EXISTS: "%nick%, I aint be doin' that cuz I already gots %topic"
   
   INFO_BADSYNTAX_ADD: "Usage: <bot> ADD <topic> <response>"
   INFO_BADSYNTAX_DEL: "Usage: <bot> DEL <topic>"
@@ -154,34 +154,34 @@ RPL:
  ## Plugin::RDB:
 
   ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb
-  RDB_ERR_NO_SUCH_RDB: "%nick%, RDB %rdb% doesn't appear to exist."
+  RDB_ERR_NO_SUCH_RDB: "yo %nick%, I aint got RDB %rdb%"
   
   ## RDB_ERR_NO_SUCH_ITEM, %nick, %rdb, %index
-  RDB_ERR_NO_SUCH_ITEM: "%nick%, RDB %rdb doesn't appear to have item %index"
+  RDB_ERR_NO_SUCH_ITEM: "yo %nick%, RDB %rdb aint got item %index"
   
   ## RDB_ERR_NO_STRING, %nick, %rdb
-  RDB_ERR_NO_STRING: "What would you like to add to RDB %rdb%, %nick%?"
+  RDB_ERR_NO_STRING: "yo %nick% what i be addin to %rdb%?"
   
   ## RDB_ERR_RDB_EXISTS, %nick, %rdb
-  RDB_ERR_RDB_EXISTS: "RDB %rdb already exists, %nick%!"
+  RDB_ERR_RDB_EXISTS: "RDB %rdb already be on lock, %nick%!"
   
   ## RDB_ERR_NOTPERMITTED, %nick, %rdb, %op
-  RDB_ERR_NOTPERMITTED: "Operation %op appears to be disallowed."
+  RDB_ERR_NOTPERMITTED: "yo I cant be doin %op cuz it be illegal and I be on probation already!"
 
   ## RDB_CREATED, %nick, %rdb
-  RDB_CREATED: "Created RDB %rdb per request of %nick"
+  RDB_CREATED: "now I gots RDB %rdb cuz I was told by %nick"
 
   ## RDB_DELETED, %nick, %rdb
-  RDB_DELETED: "Deleted RDB %rdb%, %nick"
+  RDB_DELETED: "I dropped RDB %rdb% cuz I was told by %nick"
 
   ## RDB_ITEM_ADDED, %nick, %rdb, %index
-  RDB_ITEM_ADDED: "Added item %index to %rdb for %nick"
+  RDB_ITEM_ADDED: "I be addin item %index to %rdb fo' %nick"
 
   ## RDB_ITEM_DELETED, %nick, %rdb, %index
-  RDB_ITEM_DELETED: "Deleted item %index from %rdb per request of %nick"
+  RDB_ITEM_DELETED: "I be losin item %index outta %rdb cuz I was told by %nick"
 
   ## RDB_ITEM_INFO, %nick, %rdb, %index, %date, %time, %addedby
   RDB_ITEM_INFO: "[rdb: %rdb%] %index%: added by %addedby at %time %date"
 
   ## RDB_UNLINK_FAILED, %nick, %rdb
-  RDB_UNLINK_FAILED: "Failed to unlink RDB for %rdb"
+  RDB_UNLINK_FAILED: "I aint able to unlink RDB %rdb"
