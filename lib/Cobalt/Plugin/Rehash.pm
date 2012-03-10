@@ -110,6 +110,8 @@ sub Bot_public_cmd_rehash {
         $resp = "Rehash failed; administrator should check logs.";
       }
     }
+    
+    ## FIXME langsets
   }
 
   $core->send_event( 'send_message', $context, $channel, $resp ) if $resp;
@@ -198,11 +200,34 @@ sub _rehash_channels_cf {
   return 1
 }
 
-sub _rehash_langsets {
-  ## FIXME
-  ## call Cobalt::Lang
-  ## iterate and replace keys in $core->lang
-  ## shouldn't overwrite in case plugins modified for some reason
+sub _rehash_langset {
+  my ($self) = @_;
+  my $core = $self->{core};
+  
+  my $newcfg  = $self->_get_new_cfg || return;
+  my $lang = $newcfg->{core}->{Language} // 'english' ;
+  my $prefix = $core->etc ."/langs/" ;
+  
+  my $new_rpl = Cobalt::Lang->load_langset($lang, $prefix);
+  
+  unless ($new_rpl && ref $new_rpl eq 'HASH') {
+    $core->log->warn("Cobalt::Lang did not return a hash.");
+    $core->log->warn("Failed to load langset $lang from $prefix");
+    return
+  }
+  
+  unless (scalar keys %$new_rpl) {
+    $core->log->warn("Cobalt::Lang returned a hash with no keys.");
+    $core->log->warn("Failed to load langset $lang from $prefix");
+    return
+  }
+  
+  for my $this_rpl (keys %$new_rpl) {
+    $core->log->debug("Updated: $this_rpl")
+      if $core->debug > 2;
+    $core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
+  }
+  return 1
 }
 
 sub _get_new_cfg {
