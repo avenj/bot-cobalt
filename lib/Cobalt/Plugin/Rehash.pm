@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Rehash;
-our $VERSION = '0.10';
+our $VERSION = '0.101';
 
 ## HANDLES AND EATS:
 ##  !rehash
@@ -101,13 +101,21 @@ sub Bot_public_cmd_rehash {
       
     }
     
+    when ("langset") {
+      if ($self->_rehash_langset) {
+        $resp = "Reloaded core language set.";
+      } else {
+        $resp = "Rehashing langset failed; administrator should check logs.";
+      }
+    }
+    
     when ("channels") {
       if ($self->_rehash_channels_cf) {
         $resp = "Rehashed channels configuration.";
         ## FIXME catch rehash event in ::IRC so we can unload and reload AutoJoin plugin w/ new 
         ##  channels
       } else {
-        $resp = "Rehash failed; administrator should check logs.";
+        $resp = "Rehashing channels failed; administrator should check logs.";
       }
     }
     
@@ -227,6 +235,8 @@ sub _rehash_langset {
       if $core->debug > 2;
     $core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
   }
+  $core->log->info("Reloaded core langset ($lang)");
+  $core->send_event( 'rehashed', 'langset' );
   return 1
 }
 
@@ -283,7 +293,7 @@ Every rehash triggers a B<Bot_rehashed> event, informing the plugin pipeline
 of the newly reloaded configuration values.
 
 The first event argument is the type of rehash that was performed; it 
-will be one of I<core>, I<channels>, or I<plugins>.
+will be one of I<core>, I<channels>, I<langset>, or I<plugins>.
 
 =head1 AUTHOR
 
