@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.218';
+our $VERSION = '0.221';
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -55,8 +55,9 @@ sub Cobalt_register {
     ++$core->Provided->{info_topics};
     my $ref = $self->{DB}->get($glob);
     my $regex = $ref->{Regex};
-    $self->{Globs}->{$glob} = $regex;
-    $self->{Regexes}->{$regex} = $glob;
+    my $compiled_re = qr/$regex/i;
+    $self->{Globs}->{$glob} = $compiled_re;
+    $self->{Regexes}->{$compiled_re} = $glob;
   }
   $self->{DB}->dbclose;
 
@@ -386,8 +387,9 @@ sub _info_add {
   $self->{Cache}->invalidate('info3');
   
   ## add to internal hashes:
-  $self->{Regexes}->{$re} = $glob;
-  $self->{Globs}->{$glob} = $re;
+  my $compiled_re = qr/$re/i;
+  $self->{Regexes}->{$compiled_re} = $glob;
+  $self->{Globs}->{$glob} = $compiled_re;
 
   ++$core->Provided->{info_topics};
 
@@ -530,8 +532,9 @@ sub _info_replace {
   );
   $self->{DB}->dbclose;
 
-  $self->{Regexes}->{$re} = $glob;
-  $self->{Globs}->{$glob} = $re;
+  my $compiled_re = qr/$re/;
+  $self->{Regexes}->{$compiled_re} = $glob;
+  $self->{Globs}->{$glob} = $compiled_re;
   ++$core->Provided->{info_topics};
 
   $core->log->debug("topic add (replace): $glob ($re)");
@@ -752,7 +755,7 @@ sub _info_match {
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
   for my $re (keys %{ $self->{Regexes} }) {
-    if ($txt =~ /$re/i) {
+    if ($txt =~ $re) {
       my $glob = $self->{Regexes}->{$re};
       ## is this glob an action response?
       if ( index($glob, '~action') == 0 ) {
