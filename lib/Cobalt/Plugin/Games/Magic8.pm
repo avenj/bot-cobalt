@@ -24,6 +24,27 @@ sub execute {
 
 1;
 
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Games::Magic8 - Ask the Magic 8-ball
+
+=head1 SYNOPSIS
+
+  !magic8 Will today be a good day?
+
+=head1 DESCRIPTION
+
+Ask the magic 8-ball; it knows the answer to all the big questions in 
+life.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
+
 __DATA__
 Outlook is grim.
 It seems unlikely.

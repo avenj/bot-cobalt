@@ -60,3 +60,34 @@ sub execute {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Games::Roulette - IRC Russian Roulette
+
+=head1 SYNOPSIS
+
+  !rr      # Pull the trigger
+  !rr spin # Spin the cylinders
+
+=head1 DESCRIPTION
+
+IRC Russian Roulette.
+
+Each user gets their own gun; multiple users can play at the same time 
+without interfering with each other.
+
+If the bot has operator status, a losing try will result in a kick.
+
+Cylinders are automatically reloaded after losing; they can also be 
+manually reset via I<spin>.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+Significant assistance from I<Schroedingers_hat> @ B<irc.cobaltirc.org>
+
+=cut

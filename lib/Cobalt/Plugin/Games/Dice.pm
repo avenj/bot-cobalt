@@ -82,3 +82,27 @@ sub execute {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Games::Dice - IRC dice roller
+
+=head1 SYNOPSIS
+
+  !roll 6     # Roll a six-sided die
+  !roll 2d6   # Roll a pair of them
+  !roll 6d10  # Roll weird dice
+
+=head1 DESCRIPTION
+
+Simple dice bot; accepts either the number of sides as a simple integer 
+or XdY syntax.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut

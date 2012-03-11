@@ -34,3 +34,26 @@ sub execute {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Games::RockPaperScissors - IRC rock-paper-scissors
+
+=head1 SYNOPSIS
+
+  !rps rock
+  !rps scissors
+  !rps paper
+
+=head1 DESCRIPTION
+
+Play rock-paper-scissors against the bot.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
