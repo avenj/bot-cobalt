@@ -532,7 +532,7 @@ sub _info_replace {
   );
   $self->{DB}->dbclose;
 
-  my $compiled_re = qr/$re/;
+  my $compiled_re = qr/$re/i;
   $self->{Regexes}->{$compiled_re} = $glob;
   $self->{Globs}->{$glob} = $compiled_re;
   ++$core->Provided->{info_topics};
