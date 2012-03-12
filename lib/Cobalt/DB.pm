@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -29,15 +29,16 @@ sub new {
     croak "Constructor requires a specified File";
   }
 
+  $self->{Serializer} = Cobalt::Serializer->new(Format => 'JSON');
+
   my $path = $args{File};
 
   $self->{DatabasePath} = $path;
  
   $self->{LockFile} = $args{LockFile} // $path . ".lock";
 
-  $self->{Serializer} = Cobalt::Serializer->new(Format => 'JSON');
-  
-  $self->{Perms} = $args{Perms} ? $args{Perms} : 0644 ;
+  $self->{Perms}   = $args{Perms}   ? $args{Perms}   : 0644 ;
+  $self->{Timeout} = $args{Timeout} ? $args{Timeout} : 5 ;
 
   return $self
 }
@@ -51,9 +52,10 @@ sub dbopen {
     and return;
 
   my $timer = 0;
+  my $timeout = $self->{Timeout} || 5;
   until ( flock $lockf_fh, LOCK_EX | LOCK_NB ) {
-    if ($timer > 10) {   ## 10s lock timeout
-      warn "failed lock for db $path, timeout (10s)\n";
+    if ($timer > $timeout) {
+      warn "failed lock for db $path, timeout (${timeout}s)\n";
       return
     }
     select undef, undef, undef, 0.25;
@@ -240,10 +242,17 @@ Berkeley DB:
     File => $path_to_db,
 
    ## Optional arguments:
+   
+    # Database file mode
     Perms => $octal_mode,
+
     # Locking is enabled regardless
     # but you can change the location:
     LockFile => "/tmp/sharedlock",
+    
+    ## Locking timeout in seconds
+    ## Defaults to 5s:
+    Timeout => 10,
   );
 
 =head2 Opening and closing
