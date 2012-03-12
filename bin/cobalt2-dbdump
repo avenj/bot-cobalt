@@ -8,13 +8,16 @@ use Carp;
 STDOUT->autoflush(1);
 
 use Cobalt::DB;
+use Cobalt::Serializer;
 
 my($dbpath, $outpath);
+
+my $format = 'YAML';
 
 use Getopt::Long;
 GetOptions(
   help => sub {
-    say "Usage: $0 --database=PATH --output=PATH"; 
+    say "Usage: $0 --database=PATH --output=PATH [ --format=TYPE ]";
     exit 0
   },
   
@@ -22,7 +25,13 @@ GetOptions(
   'input=s'    => \$dbpath,
   
   'output=s'   => \$outpath,
+  
+  'format=s'   => \$format,
 );
+
+## Format check
+croak "$format is not a valid export format; see perldoc Cobalt::Serializer"
+  unless Cobalt::Serializer->_check_if_avail($format);
 
 unless ($dbpath) {
   print "Path to database to be exported: \n > ";
@@ -52,10 +61,10 @@ my $db = Cobalt::DB->new(
 );
 
 $db->dbopen or croak "dbopen failure";
-my $yaml = $db->dbdump or croak "dbdump failure";
+my $yaml = $db->dbdump($format) or croak "dbdump failure";
 $db->dbclose;
 
-say "Writing YAML to $outpath";
+say "Writing $format to $outpath";
 
 open my $outfh, '>:encoding(UTF-8)', $outpath or croak "open failed: $!";
 print $outfh $yaml;
@@ -78,7 +87,15 @@ cobalt2-dbdump - export Cobalt::DB databases to YAML
 
 A simple frontend to the dbdump functionality found in L<Cobalt::DB>.
 
-Exports specified Cobalt::DB databases to YAML.
+Exports specified Cobalt::DB databases to YAML by default; the 
+B<--format> option can be used to specify any other format supported by 
+L<Cobalt::Serializer>:
+
+  cobalt2-dbdump --format=XML
+  cobalt2-dbdump --format=JSON --database=/path/to/db --output=out.json
+
+If the B<database> and/or B<output> options are not specified, the 
+user is prompted for appropriate paths.
 
 =head1 AUTHOR
 
