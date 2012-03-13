@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -39,6 +39,7 @@ sub new {
 
   $self->{Perms}   = $args{Perms}   ? $args{Perms}   : 0644 ;
   $self->{Timeout} = $args{Timeout} ? $args{Timeout} : 5 ;
+  $self->{RawDB}   = $args{Raw}     ? $args{Raw}     : 0 ;
 
   return $self
 }
@@ -82,12 +83,12 @@ sub dbopen {
   $self->{DB}->filter_fetch_value(
     sub {
       s/\0$//;
-      $_ = $self->{Serializer}->thaw($_);
+      $_ = $self->{Serializer}->thaw($_) unless $self->{RawDB};
     }
   );
   $self->{DB}->filter_store_value(
     sub {
-      $_ = $self->{Serializer}->freeze($_);
+      $_ = $self->{Serializer}->freeze($_) unless $self->{RawDB};
       $_ .= "\0";
     }
   );
@@ -253,6 +254,11 @@ Berkeley DB:
     ## Locking timeout in seconds
     ## Defaults to 5s:
     Timeout => 10,
+    
+    ## Normally, references are serialized transparently.
+    ## If Raw is enabled, no serialization filter is used and you're 
+    ## on your own.
+    Raw => 0,
   );
 
 =head2 Opening and closing
