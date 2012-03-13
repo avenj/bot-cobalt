@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.211';
+our $VERSION = '0.212';
 
 use Cobalt::Common;
 
@@ -30,6 +30,8 @@ sub Cobalt_register {
     [ 'all' ],
   );
 
+  $core->send_event( 'initialize_irc' );
+
   $core->log->info("$VERSION registered");
   return PLUGIN_EAT_NONE
 }
@@ -56,17 +58,9 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_plugins_initialized {
+sub Bot_initialize_irc {
   my ($self, $core) = splice @_, 0, 2;
-  ## wait until plugins are all loaded, start IRC session
-  $self->_start_irc();
-  return PLUGIN_EAT_NONE
-}
 
-sub _start_irc {
-  my ($self) = @_;
-  
-  my $core = $self->{core};
   my $cfg  = $core->get_plugin_cfg( $self );
 
   ## The IRC: directive in cobalt.conf provides context 'Main'
@@ -161,6 +155,8 @@ sub _start_irc {
   
     $core->log->debug("IRC Session created");
   } ## SERVER
+
+  return PLUGIN_EAT_ALL
 }
 
 
