@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.210';
+our $VERSION = '0.211';
 
 use Cobalt::Common;
 
@@ -973,10 +973,20 @@ sub Bot_part {
 
 sub Bot_send_raw {
   my ($self, $core) = splice @_, 0, 2;
-  ## FIXME
+  my $context = ${$_[0]};
+  my $raw     = ${$_[1]};
+
+  unless ( $context && $self->{IRCs}->{$context} && $raw ) {
+    return PLUGIN_EAT_NONE
+  }
+  
+  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  
+  $self->{IRCs}->{$context}->yield( 'quote', $raw );
+
+  $core->send_event( 'raw_sent', $context, $raw );
 
   return PLUGIN_EAT_NONE
-
 }
 
 sub Bot_rehash {
@@ -988,6 +998,8 @@ sub Bot_rehash {
     $core->log->info("Rehash received, resetting autojoins");
     $self->_reset_ajoins;
   }
+
+  ## FIXME rehash nickservids if needed?
   
   return PLUGIN_EAT_NONE
 }
@@ -1631,7 +1643,13 @@ Upon completion a L</Bot_ctcp_sent> event will be broadcast.
 
 =head3 send_raw
 
-FIXME
+Quote a raw string to the IRC server.
+
+Does no parsing or sanity checking.
+
+  $core->send_event( 'quote', $raw );
+
+A L</Bot_raw_sent> will be broadcast.
 
 =head3 mode
 
