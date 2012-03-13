@@ -77,7 +77,7 @@
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
-         "version" : "0.20"
+         "version" : "0.21"
       },
       "Cobalt::HTTP" : {
          "file" : "lib/Cobalt/HTTP.pm",
@@ -85,7 +85,7 @@
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.209"
+         "version" : "0.211"
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
@@ -109,7 +109,7 @@
       },
       "Cobalt::Plugin::Extras::Money" : {
          "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
-         "version" : "0.06"
+         "version" : "0.071"
       },
       "Cobalt::Plugin::Extras::Relay" : {
          "file" : "lib/Cobalt/Plugin/Extras/Relay.pm",
@@ -145,7 +145,7 @@
       },
       "Cobalt::Plugin::Info3" : {
          "file" : "lib/Cobalt/Plugin/Info3.pm",
-         "version" : "0.218"
+         "version" : "0.221"
       },
       "Cobalt::Plugin::Master" : {
          "file" : "lib/Cobalt/Plugin/Master.pm",
@@ -161,7 +161,7 @@
       },
       "Cobalt::Plugin::PluginMgr" : {
          "file" : "lib/Cobalt/Plugin/PluginMgr.pm",
-         "version" : "1.07"
+         "version" : "1.08"
       },
       "Cobalt::Plugin::RDB" : {
          "file" : "lib/Cobalt/Plugin/RDB.pm",
@@ -177,7 +177,7 @@
       },
       "Cobalt::Plugin::Rehash" : {
          "file" : "lib/Cobalt/Plugin/Rehash.pm",
-         "version" : "0.10"
+         "version" : "0.101"
       },
       "Cobalt::Plugin::Version" : {
          "file" : "lib/Cobalt/Plugin/Version.pm",
