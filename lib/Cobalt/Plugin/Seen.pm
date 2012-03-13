@@ -1,6 +1,8 @@
 package Cobalt::Plugin::Seen;
 our $VERSION = '0.001';
 
+## FIXME nick changes?
+
 use Cobalt::Common;
 use Cobalt::DB;
 
@@ -13,6 +15,13 @@ use constant {
 };
 
 sub new { bless {}, shift }
+
+sub parse_nick {
+  my ($self, $context, $nickname) = @_;
+  my $core = $self->{core};
+  my $casemap = $core->get_irc_casemap($context) || 'rfc1459';
+  return lc_irc($nickname, $casemap)
+}
 
 sub retrieve {
   my ($self, $context, $nickname) = @_;
@@ -54,11 +63,34 @@ sub retrieve {
   return($last_ts, $last_act, $last_chan, $last_user, $last_host)
 }
 
-sub update {
+sub updatedb {
   my ($self) = @_;
   ## called by seendb_update timer
   ## update db from hashes and trim hashes appropriately
+  my $buf  = $self->{Buf};
+  my $db   = $self->{SDB};
+  my $core = $self->{core};
+
+  unless ($db->dbopen) {
+    $core->log->warn("dbopen failed in update; cannot update SeenDB");
+    return
+  }  
+  
+  CONTEXT: for my $context (keys %$buf) {
+    NICK: for my $nickname (keys %{ $buf->{$context} }) {
+      ## pull this one out:
+      my $thisbuf = delete $buf->{$context}->{$nickname};
+      next NICK unless ref $thisbuf;
+      ## write it to db:
+      my $thiskey = $context .'%'. $nickname;
+      $db->put($thiskey, $thisbuf);
+    }
+  } ## CONTEXT
+  
+  $db->dbclose;
+  return 1
 }
+
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -72,6 +104,8 @@ sub Cobalt_register {
   $core->log->debug("Opening SeenDB at $seendb_path");
 
   $self->{Buf} = { };
+  
+  $self->{BufDirty} = { };
   
   $self->{SDB} = Cobalt::DB->new(
     File => $seendb_path,
@@ -115,11 +149,21 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-sub parse_nick {
-  my ($self, $context, $nickname) = @_;
-  my $core = $self->{core};
-  my $casemap = $core->get_irc_casemap($context) || 'rfc1459';
-  return lc_irc($nickname, $casemap)
+sub Bot_seendb_update {
+  my ($self, $core) = splice @_, 0, 2;
+
+  return PLUGIN_EAT_ALL unless $self->{BufDirty};
+
+  $self->updatedb;
+
+  $self->{BufDirty} = 0;
+
+  $core->timer_set( 6,
+    {
+      Event => 'seendb_update',
+    },
+  );  
+  return PLUGIN_EAT_ALL
 }
 
 sub Bot_user_joined {
@@ -132,23 +176,125 @@ sub Bot_user_joined {
   my $host = $join->{src_host};
   my $chan = $join->{channel};
   
-  ## FIXME buffer and write on a timer
+  $self->{BufDirty} = 1;
+  
+  $nick = $self->parse_nick($nick);
+  $self->{Buf}->{$context}->{$nick} = {
+    TS => time(),
+    Action   => 'join',
+    Channel  => $chan,
+    Username => $user,
+    Host     => $host,
+  };
   
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_left {
   my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $part    = ${ $_[1] };
   
+  my $nick = $part->{src_nick};
+  my $user = $part->{src_user};
+  my $host = $part->{src_host};
+  my $chan = $part->{channel};
+
+  $self->{BufDirty} = 1;
+
+  $nick = $self->parse_nick($nick);
+  $self->{Buf}->{$context}->{$nick} = {
+    TS => time(),
+    Action   => 'part',
+    Channel  => $chan,
+    Username => $user,
+    Host     => $host,
+  };
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $quit    = ${ $_[1] };
+  
+  my $nick = $quit->{src_nick};
+  my $user = $quit->{src_user};
+  my $host = $quit->{src_host};
+  my $chan = $quit->{channel};
+
+  $self->{BufDirty} = 1;
+
+  $nick = $self->parse_nick($nick);
+  $self->{Buf}->{$context}->{$nick} = {
+    TS => time(),
+    Action   => 'quit',
+    Channel  => $chan,
+    Username => $user,
+    Host     => $host,
+  };
   
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_public_cmd_seen {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $msg     = ${ $_[1] };
+  
+  my $channel = $msg->{channel};
+  my $nick    = $msg->{src_nick};
+  
+  my $targetnick = $msg->{message_array}->[0];
+  
+  unless ($targetnick) {
+    $core->send_event( 'send_message', 
+      $context,
+      $channel,
+      "Need a nickname to look for, $nick"
+    );
+    return PLUGIN_EAT_NONE
+  }
+  
+  my @ret = $self->retrieve($context, $targetnick);
+  
+  unless (@ret) {
+    $core->send_event( 'send_message',
+      $context,
+      $channel,
+      "${nick}: I don't know anything about $targetnick"
+    );
+    return PLUGIN_EAT_NONE
+  }
+  
+  my ($last_ts, $last_act, $last_user, $last_host, $last_chan) = 
+    @ret[TIME, ACTION, USERNAME, HOST, CHANNEL];
+
+  my $ts_delta = time() - $last_ts ;
+  my $ts_str   = secs_to_timestr($ts_delta);
+
+  my $resp;
+  given ($last_act) {
+    when ("quit") {
+      $resp = 
+        "$targetnick was last seen quitting from $last_chan $ts_str ago";
+    }
+    
+    when ("join") {
+      $resp =
+        "$targetnick was last seen joining $last_chan $ts_str ago";
+    }
+    
+    when ("part") {
+      $resp =
+        "$targetnick was last seen leaving $last_chan $ts_str ago";
+    }
+  }  
+  
+  
+  return PLUGIN_EAT_NONE
+}
 
 1;
 __END__
