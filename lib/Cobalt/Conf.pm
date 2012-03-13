@@ -32,7 +32,7 @@ sub new {
 }
 
 sub _read_conf {
-  ## deserialize a YAML1.0 conf
+  ## deserialize a YAML conf
   my ($self, $relative_to_etc) = @_;
 
   unless ($relative_to_etc) {

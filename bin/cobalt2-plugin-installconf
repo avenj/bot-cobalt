@@ -5,12 +5,19 @@ use strict;
 use warnings;
 use Carp;
 
+my $path_confsdir;
+my $path_rcfile;
+
 use Getopt::Long;
 GetOptions(
   help => sub {
   
     exit 0
   },
+  
+  'confsdir=s' => \$path_confsdir,
+  
+  'rcfile=s'   => \$path_rcfile;
   
   ## FIXME
 );

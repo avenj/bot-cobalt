@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.209';
+our $VERSION = '0.210';
 
 use Cobalt::Common;
 
@@ -977,6 +977,56 @@ sub Bot_send_raw {
 
   return PLUGIN_EAT_NONE
 
+}
+
+sub Bot_rehash {
+  my ($self, $core) = splice @_, 0, 2;
+  my $type = ${ $_[0] };
+  
+  if ($type eq 'channels') {
+    ## reset AutoJoin plugin instances
+    $core->log->info("Rehash received, resetting autojoins");
+    $self->_reset_ajoins;
+  }
+  
+  return PLUGIN_EAT_NONE
+}
+
+sub _reset_ajoins {
+  my ($self) = @_;
+  
+  my $core = $self->{core};
+  
+  my $corecf = $core->get_core_cfg;
+  
+  CONTEXT: for my $context (keys %{ $core->Servers }) {
+    my $chanscf = $core->get_channels_cfg($context);
+    
+    my $irc = $core->Servers->{$context}->{Object} // next CONTEXT;
+    my %ajoin;
+
+    for my $channel (keys %$chanscf) {
+      my $key = $chanscf->{$channel}->{password} // '';
+      $ajoin{$channel} = $key;
+    }
+
+    $core->log->debug("Removing AutoJoin plugin for $context");
+    $irc->plugin_del('AutoJoin');
+    
+    $core->log->debug("Loading new AutoJoin plugin for $context");
+    $irc->plugin_add('AutoJoin' =>
+      POE::Component::IRC::Plugin::AutoJoin->new(
+        Channels => \%ajoin,
+        RejoinOnKick => $corecf->{Opts}->{Chan_RetryAfterKick} // 1,
+        Rejoin_delay => $corecf->{Opts}->{Chan_RejoinDelay}    // 5,
+        NickServ_delay => $corecf->{Opts}->{Chan_NickServDelay} // 1,
+        Retry_when_banned => $corecf->{Opts}->{Chan_RetryAfterBan} // 60,
+      ),
+    );
+ 
+  } ## CONTEXT
+  
+  return 1;
 }
 
 1;
