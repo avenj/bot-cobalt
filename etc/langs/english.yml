@@ -17,9 +17,9 @@
 ### Names must be lowercase:
 NAME: english
 ### Bump +1 on significant revisions:
-REV: 12
+REV: 13
 ### english.yml set is authoritative:
-SPEC: 5
+SPEC: 6
 
 RPL:
 
@@ -31,8 +31,8 @@ RPL:
   ## RPL_DB_ERR
   RPL_DB_ERR: "Unknown database operation failure!"
 
-  ## RPL_PLUGIN_LOAD: %plugin, %module
-  RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module%)"
+  ## RPL_PLUGIN_LOAD: %plugin, %module, %version
+  RPL_PLUGIN_LOAD: "Plugin loaded: %plugin (%module %version%)"
 
   ## RPL_PLUGIN_UNLOAD: %plugin
   RPL_PLUGIN_UNLOAD: "Plugin removed: %plugin"

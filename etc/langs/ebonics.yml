@@ -5,8 +5,8 @@
 ## Loosely based on the original darkbot6 ebonics.h by rapsux
 
 NAME: ebonics
-REV: 4
-SPEC: 5
+REV: 5
+SPEC: 6
 
 RPL:
 
@@ -18,8 +18,8 @@ RPL:
   ## RPL_DB_ERR
   RPL_DB_ERR: "yo playa I ain't able to access the database!"
 
-  ## RPL_PLUGIN_LOAD: %plugin, %module
-  RPL_PLUGIN_LOAD: "yo I be holdin' dis here %plugin (%module%)"
+  ## RPL_PLUGIN_LOAD: %plugin, %module, %version
+  RPL_PLUGIN_LOAD: "yo I be holdin' dis here %plugin (%module %version%)"
 
   ## RPL_PLUGIN_UNLOAD: %plugin
   RPL_PLUGIN_UNLOAD: "yo I just tossed %plugin cuz'a 5-0"
@@ -37,7 +37,7 @@ RPL:
  ## Cobalt::IRC:
 
   ## RPL_CHAN_SYNC: %chan
-  RPL_CHAN_SYNC: "Now bein' about my paper on %chan"
+  RPL_CHAN_SYNC: "now about my paper on %chan"
 
 
  ## Plugin::Version:
