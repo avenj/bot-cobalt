@@ -1,8 +1,6 @@
 package Cobalt::Plugin::Seen;
 our $VERSION = '0.001';
 
-## FIXME nick changes?
-
 use Cobalt::Common;
 use Cobalt::DB;
 
@@ -107,7 +105,7 @@ sub Cobalt_register {
 
   $self->{Buf} = { };
   
-  $self->{BufDirty} = { };
+  $self->{BufDirty} = 0;
   
   $self->{SDB} = Cobalt::DB->new(
     File => $seendb_path,
@@ -157,9 +155,7 @@ sub Bot_seendb_update {
 
   return PLUGIN_EAT_ALL unless $self->{BufDirty};
 
-  $self->updatedb;
-
-  $self->{BufDirty} = 0;
+  $self->{BufDirty} = 0 if $self->updatedb;
 
   $core->timer_set( 6,
     {
@@ -255,6 +251,8 @@ sub Bot_nick_changed {
   my ($nick, $user, $host) = parse_user($src);
   
   my $first_common = $nchange->{common}->[0];
+
+  $self->{BufDirty} = 1;
   
   $self->{Buf}->{$context}->{$old} = {
     TS => time(),
@@ -361,10 +359,30 @@ __END__
 
 =head1 NAME
 
+Cobalt::Plugin::Seen - IRC 'seen' command
+
 =head1 SYNOPSIS
+
+  !seen SomeNickname
 
 =head1 DESCRIPTION
 
+A fairly basic 'seen' command; tracks users joining, leaving, and 
+changing nicknames.
+
+Uses L<Cobalt::DB> for storage.
+
+The path to the SeenDB can be specified via C<plugins.conf>:
+
+  Seen:
+    Module: Cobalt::Plugin::Seen
+    Opts:
+      SeenDB: path/relative/to/var/seen.db
+
 =head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
