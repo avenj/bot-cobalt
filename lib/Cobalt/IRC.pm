@@ -661,6 +661,7 @@ sub irc_nick {
   my $casemap = $core->get_irc_casemap($context);
   ## is this just a case change ?
   my $equal = eq_irc($old, $new, $casemap) ? 1 : 0 ;
+  ## FIXME add src_* keys
   my $nick_change = {
     old => $old,
     new => $new,

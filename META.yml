@@ -24,13 +24,13 @@ provides:
     version: 2.00_31
   Cobalt::DB:
     file: lib/Cobalt/DB.pm
-    version: 0.21
+    version: 0.22
   Cobalt::HTTP:
     file: lib/Cobalt/HTTP.pm
     version: 0.04
   Cobalt::IRC:
     file: lib/Cobalt/IRC.pm
-    version: 0.211
+    version: 0.212
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.142
@@ -46,6 +46,9 @@ provides:
   Cobalt::Plugin::Extras::Karma:
     file: lib/Cobalt/Plugin/Extras/Karma.pm
     version: 0.131
+  Cobalt::Plugin::Extras::Logger:
+    file: lib/Cobalt/Plugin/Extras/Logger.pm
+    version: 0.001
   Cobalt::Plugin::Extras::Money:
     file: lib/Cobalt/Plugin/Extras/Money.pm
     version: 0.071
@@ -100,6 +103,9 @@ provides:
   Cobalt::Plugin::Rehash:
     file: lib/Cobalt/Plugin/Rehash.pm
     version: 0.101
+  Cobalt::Plugin::Seen:
+    file: lib/Cobalt/Plugin/Seen.pm
+    version: 0.001
   Cobalt::Plugin::Version:
     file: lib/Cobalt/Plugin/Version.pm
     version: 1.02
