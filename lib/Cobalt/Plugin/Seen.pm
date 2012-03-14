@@ -12,6 +12,7 @@ use constant {
   CHANNEL  => 2,
   USERNAME => 3,
   HOST     => 4,
+  META     => 5,
 };
 
 sub new { bless {}, shift }
@@ -57,10 +58,11 @@ sub retrieve {
   $last_chan = $ref->{Channel};
   $last_user = $ref->{Username};
   $last_host = $ref->{Host};
+  my $meta = $ref->{Meta} // {};
 
   ## fetchable via constants
   ## TIME, ACTION, CHANNEL, USERNAME, HOST
-  return($last_ts, $last_act, $last_chan, $last_user, $last_host)
+  return($last_ts, $last_act, $last_chan, $last_user, $last_host, $meta)
 }
 
 sub updatedb {
@@ -121,6 +123,7 @@ sub Cobalt_register {
     
       public_cmd_seen
       
+      nick_changed      
       user_joined
       user_left
       user_quit
@@ -175,7 +178,7 @@ sub Bot_user_joined {
   my $user = $join->{src_user};
   my $host = $join->{src_host};
   my $chan = $join->{channel};
-  
+
   $self->{BufDirty} = 1;
   
   $nick = $self->parse_nick($nick);
@@ -238,6 +241,42 @@ sub Bot_user_quit {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_nick_changed {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $nchange = ${ $_[1] };
+  return PLUGIN_EAT_NONE if $nchange->{equal};
+  
+  my $old = $nchange->{old};
+  my $new = $nchange->{new};
+  
+  my $irc = $core->get_irc_obj($context);
+  my $src = $irc->nick_long_form($new) || $new;
+  my ($nick, $user, $host) = parse_user($src);
+  
+  my $first_common = $nchange->{common}->[0];
+  
+  $self->{Buf}->{$context}->{$old} = {
+    TS => time(),
+    Action   => 'nchange',
+    Channel  => $first_common,
+    Username => $user || 'unknown',
+    Host     => $host || 'unknown',
+    Meta     => { To => $new },
+  };
+  
+  $self->{Buf}->{$context}->{$new} = {
+    TS => time(),
+    Action   => 'nchange',
+    Channel  => $first_common,
+    Username => $user || 'unknown',
+    Host     => $host || 'unknown',
+    Meta     => { From => $old },
+  };
+  
+  return PLUGIN_EAT_NONE
+}
+
 sub Bot_public_cmd_seen {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
@@ -268,8 +307,8 @@ sub Bot_public_cmd_seen {
     return PLUGIN_EAT_NONE
   }
   
-  my ($last_ts, $last_act, $last_user, $last_host, $last_chan) = 
-    @ret[TIME, ACTION, USERNAME, HOST, CHANNEL];
+  my ($last_ts, $last_act, $last_user, $last_host, $last_chan, $meta) = 
+    @ret[TIME, ACTION, USERNAME, HOST, CHANNEL, META];
 
   my $ts_delta = time() - $last_ts ;
   my $ts_str   = secs_to_timestr($ts_delta);
@@ -290,11 +329,42 @@ sub Bot_public_cmd_seen {
       $resp =
         "$targetnick was last seen leaving $last_chan $ts_str ago";
     }
+    
+    when ("nchange") {
+      if      ($meta->{From}) {
+        $resp = 
+          "$targetnick was last seen changing nicknames from "
+          .$meta->{From}.
+          " $ts_str ago";
+      } elsif ($meta->{To}) {
+        $resp = 
+          "$targetnick was last seen changing nicknames from "
+          .$meta->{To}.
+          " $ts_str ago";
+      }
+    }
   }  
-  
+
+  $core->send_event( 'send_message', 
+    $context,
+    $channel,
+    $resp
+  );  
   
   return PLUGIN_EAT_NONE
 }
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+=cut
