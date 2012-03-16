@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -94,6 +94,12 @@ sub dbopen {
   );
   $self->{DB_IS_OPEN} = 1;
   return 1
+}
+
+sub isopen { is_open(@_) }
+sub is_open {
+  my ($self) = @_;
+  return $self->{DB_IS_OPEN} // 0;
 }
 
 sub get_tied {
@@ -304,6 +310,10 @@ see the B<LockFile> constructor argument).
 Try to call a B<dbclose> as quickly as possible to reduce locking 
 contention.
 
+=head3 is_open
+
+Returns a boolean value representing whether or not the DB is currently 
+open and locked.
 
 =head3 dbclose
 
