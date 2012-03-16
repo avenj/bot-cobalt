@@ -1,6 +1,6 @@
 #!perl
 
-my $VERSION = '0.01';
+my $VERSION = '0.02';
 
 use 5.12.1;
 use strict;
@@ -14,6 +14,8 @@ use Cobalt::Utils qw/
   glob_to_re_str
   glob_to_re
 /;
+
+use IRC::Utils qw/decode_irc/;
 
 my $info2_path;
 my $output_path;
