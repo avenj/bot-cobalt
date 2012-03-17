@@ -1,6 +1,6 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 use 5.12.1;
 use strict;
@@ -86,17 +86,17 @@ sub rplprintf {
     $vars->{$fmtvar} = $COLORS{$color};
   }
 
-  sub _repl {
+  my $repl = sub {
     ## _repl($1, $2, $vars)
     my ($orig, $match, $vars) = @_;
     return $orig unless ref $vars and defined $vars->{$match};
     my $replace = $vars->{$match};
     return $replace
-  }
+  };
 
   my $regex = qr/(%([^\s%]+)%?)/;
 
-  $string =~ s/$regex/_repl($1, $2, $vars)/ge;
+  $string =~ s/$regex/$repl->($1, $2, $vars)/ge;
 
   return $string  
 }
