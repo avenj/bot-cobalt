@@ -13,7 +13,7 @@ use Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
 
-use Digest::SHA1 qw/sha1_hex/;
+use Digest::SHA qw/sha1_hex/;
 
 use Time::HiRes;
 
