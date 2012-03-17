@@ -88,7 +88,7 @@ if ($rdb_dir_path) {
       my $digest = sha1_hex($item.rand.Time::HiRes::time);
       my @splitd = split //, $digest;
       my $idx = join '', splice(@splitd, -4);
-      $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
+      $idx .= pop @splitd while exists $rdbref->{$rdb_name}->{$idx} and @splitd;
       $rdbref->{$rdb_name}->{$idx} = {
         AddedBy => '-Imported',
         AddedAt => time,
