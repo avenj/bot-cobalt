@@ -496,13 +496,15 @@ sub irc_001 {
   my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
   $core->Servers->{$context}->{CaseMap} = $casemap;
   
-  ## if the server returns a fubar value (hi, paradoxirc) IRC::Utils
-  ## automagically defaults to rfc1459 casemapping rules
+  ## if the server returns a fubar value IRC::Utils automagically 
+  ## defaults to rfc1459 casemapping rules
   ## 
   ## this is unavoidable in some situations, however:
-  ## misconfigured inspircd on paradoxirc gives a codepage for CASEMAPPING
+  ## misconfigured inspircd on paradoxirc gave a codepage for CASEMAPPING
   ## and a casemapping for CHARSET (which is supposed to be deprecated)
   ## I strongly suspect there are other similarly broken servers around.
+  ##
+  ## para has since fixed this after extensive whining on my part \o/
   ##
   ## we can try to check for this, but it's still a crapshoot.
   ##
