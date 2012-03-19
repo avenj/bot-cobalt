@@ -77,11 +77,7 @@ has 'TimerPool' => (
   ## timers; see _core_timer_check_pool and timer_set methods
   is  => 'rw',
   isa => 'HashRef',
-  default => sub { 
-    {
-      TIMERS => { },
-    } 
-  },
+  default => sub { {} },
 );
 
 ## alias -> object:
@@ -329,7 +325,7 @@ sub _core_timer_check_pool {
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
 
-  my $timerpool = $self->TimerPool->{TIMERS};
+  my $timerpool = $self->TimerPool;
   
   for my $id (keys %$timerpool) {
     my $timer = $timerpool->{$id};
@@ -412,10 +408,10 @@ sub timer_set {
     my @p = ( 'a'..'z', 0..9 );
     do {
       $id = join '', map { $p[rand@p] } 1 .. 8;
-    } while exists $self->TimerPool->{TIMERS}->{$id};    
+    } while exists $self->TimerPool->{$id};    
   } else {
     ## an id was specified, overrule an existing by the same name
-    delete $self->TimerPool->{TIMERS}->{$id};
+    delete $self->TimerPool->{$id};
   }
 
   my $type = $ev->{Type} // 'event';
@@ -453,7 +449,7 @@ sub timer_set {
   my $addedby = $ev->{Alias} // scalar caller;
 
   if ($event_name) {
-    $self->TimerPool->{TIMERS}->{$id} = {
+    $self->TimerPool->{$id} = {
       ExecuteAt => time() + $delay,
       Event   => $event_name,
       Args    => [ @event_args ],
@@ -474,8 +470,18 @@ sub timer_del {
   ## doesn't care if the timerID actually exists or not.
   my ($self, $id) = @_;
   return unless $id;
-  $self->log->debug("timer del; $id");
-  return delete $self->TimerPool->{TIMERS}->{$id};
+  $self->log->debug("timer del; $id")
+    if $self->debug > 1;
+  return delete $self->TimerPool->{$id};
+}
+
+sub get_timer { timer_get(@_) }
+sub timer_get {
+  my ($self, $id) = @_;
+  return unless $id;
+  $self->log->debug("timer retrieved; $id")
+    if $self->debug > 2;
+  return $self->TimerPool->{$id};
 }
 
 sub timer_get_alias {
@@ -483,7 +489,7 @@ sub timer_get_alias {
   my ($self, $alias) = @_;
   return unless $alias;
   my @timers;
-  my $timerpool = $self->TimerPool->{TIMERS};
+  my $timerpool = $self->TimerPool;
   for my $timerID (keys %$timerpool) {
     my $entry = $timerpool->{$timerID};
     push(@timers, $timerID) if $entry->{AddedBy} eq $alias;
@@ -494,7 +500,7 @@ sub timer_get_alias {
 sub timer_del_alias {
   my ($self, $alias) = @_;
   return $alias;
-  my $timerpool = $self->TimerPool->{TIMERS};
+  my $timerpool = $self->TimerPool;
   
   my @deleted;
   for my $timerID (keys %$timerpool) {
@@ -517,9 +523,9 @@ sub timer_del_pkg {
   ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
-  for my $timer (keys %{ $self->TimerPool->{TIMERS} }) {
-    my $ev = $self->TimerPool->{TIMERS}->{$timer};
-    delete $self->TimerPool->{TIMERS}->{$timer}
+  for my $timer (keys %{ $self->TimerPool }) {
+    my $ev = $self->TimerPool->{$timer};
+    delete $self->TimerPool->{$timer}
       if $ev->{AddedBy} eq $pkg;
   }
 }

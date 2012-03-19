@@ -6,9 +6,9 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.014
+Plugins guide revision: 0.015
 
-Last updated for cobalt 2.00_22
+Last updated for cobalt 2.00_32
 
 =head1 DESCRIPTION
 
@@ -805,6 +805,8 @@ more on interacting directly with the IRC component.
 
   my $server_state = $core->get_irc_server( $context );
 
+Can also be called via B<get_irc_context>.
+
 Retrieves the appropriate hash reference from B<< $core->Servers >>
 
 A server context must be specified.
@@ -902,8 +904,7 @@ B<Cobalt_unregister> handlers.
 =head3 Timers
 
 Core timers live in B<< $core->TimerPool >>; if need be, you can access 
-the timer pool directly via B<< $core->TimerPool->{TIMERS} >>, which is a 
-hash keyed on timer ID.
+the timer pool directly. It is a hash keyed on timer ID.
 
 Typically most plugins will only need the following functionality:
 
@@ -1037,6 +1038,12 @@ Find out which active timerIDs are owned by the specified alias:
 
   my $plugin_alias  = $core->plugin_get_alias( $self );
   my @active_timers = $core->timer_get_alias( $plugin_alias );
+
+=head4 timer_get
+
+Retrieve the hash for this active timer (or undef if not found).
+
+  my $this_timer = $core->timer_get($id);
 
 
 =head2 Syndicated core events

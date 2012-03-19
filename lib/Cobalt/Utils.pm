@@ -119,7 +119,7 @@ sub glob_grep {
 sub glob_to_re {
   my $glob = shift || return;
   my $re = glob_to_re_str($glob);
-  return qr{$re};
+  return qr/$re/;
 }
 
 sub glob_to_re_str {

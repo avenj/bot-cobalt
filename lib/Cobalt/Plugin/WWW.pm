@@ -317,7 +317,7 @@ Cobalt::Plugin::WWW - asynchronous HTTP requests
     [ $some, $args ],
   );
 
-  ## ... for your handler ...
+  ## handle the response ...
   sub Bot_myplugin_resp_recv {
     my ($self, $core) = splice @_, 0, 2;
     my $content      = ${ $_[0] };
