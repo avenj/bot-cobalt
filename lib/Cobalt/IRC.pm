@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.213';
+our $VERSION = '0.214';
 
 use Cobalt::Common;
 
@@ -78,7 +78,7 @@ sub Bot_initialize_irc {
     
     next if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
     
-    my $server = $thiscfg->{ServerAddr};
+    my $server = $thiscfg->{ServerAddr} // next SERVER;
     my $port   = $thiscfg->{ServerPort} // 6667;
     my $nick   = $thiscfg->{Nickname} // 'cobalt2' ;
     my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
