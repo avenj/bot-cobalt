@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.212';
+our $VERSION = '0.213';
 
 use Cobalt::Common;
 
@@ -791,7 +791,7 @@ sub Bot_send_message {
     return PLUGIN_EAT_NONE 
   }
   
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   ## Issue USER event Outgoing_message for output filters
   my @msg = ( $context, $target, $txt );
@@ -822,7 +822,7 @@ sub Bot_send_notice {
     return PLUGIN_EAT_NONE 
   }
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   ## USER event Outgoing_notice
   my @notice = ( $context, $target, $txt );
@@ -852,7 +852,7 @@ sub Bot_send_action {
     return PLUGIN_EAT_NONE 
   }
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
   
   ## USER event Outgoing_ctcp (CONTEXT, TYPE, TARGET, TEXT)
   my @ctcp = ( $context, 'ACTION', $target, $txt );
@@ -879,7 +879,7 @@ sub Bot_topic {
     return PLUGIN_EAT_NONE 
   }
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   $self->irc->yield( 'topic', $channel, $topic );
 
@@ -900,7 +900,7 @@ sub Bot_mode {
     return PLUGIN_EAT_NONE 
   }
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   my ($mode, @args) = split ' ', $modestr;
 
@@ -924,7 +924,7 @@ sub Bot_kick {
     return PLUGIN_EAT_NONE 
   }      
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   $self->{IRCs}->{$context}->yield( 'kick', $channel, $target, $reason );
 
@@ -943,7 +943,7 @@ sub Bot_join {
     return PLUGIN_EAT_NONE 
   }
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   $self->{IRCs}->{$context}->yield( 'join', $channel );
 
@@ -963,7 +963,7 @@ sub Bot_part {
     return PLUGIN_EAT_NONE 
   }      
 
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
   $self->{IRCs}->{$context}->yield( 'part', $channel, $reason );
 
@@ -979,7 +979,7 @@ sub Bot_send_raw {
     return PLUGIN_EAT_NONE
   }
   
-  return PLUGIN_EAT_NONE unless $core->Servers->{$context}->{Connected};
+  return PLUGIN_EAT_NONE unless $core->is_connected($context);
   
   $self->{IRCs}->{$context}->yield( 'quote', $raw );
 
@@ -1006,14 +1006,14 @@ sub Bot_rehash {
 sub _reset_ajoins {
   my ($self) = @_;
   
-  my $core = $self->{core};
+  my $core    = $self->{core};
+  my $corecf  = $core->get_core_cfg;
+  my $servers = $core->Servers;
   
-  my $corecf = $core->get_core_cfg;
-  
-  CONTEXT: for my $context (keys %{ $core->Servers }) {
+  CONTEXT: for my $context (keys %$servers) {
     my $chanscf = $core->get_channels_cfg($context);
     
-    my $irc = $core->Servers->{$context}->{Object} // next CONTEXT;
+    my $irc = $core->get_irc_obj($context) || next CONTEXT;
     my %ajoin;
 
     for my $channel (keys %$chanscf) {
