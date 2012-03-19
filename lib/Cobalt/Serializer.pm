@@ -177,7 +177,7 @@ sub _dump_yaml {
   $YAML::Syck::ImplicitUnicode = 1;
   use warnings;
   my $yaml = YAML::Syck::Dump($data);
-  return $yaml;
+  return $yaml
 }
 
 sub _load_yaml {
@@ -189,7 +189,7 @@ sub _load_yaml {
   $YAML::Syck::ImplicitUnicode = 1;
   use warnings;
   my $data = YAML::Syck::Load($yaml);
-  return $data;
+  return $data
 }
 
 sub _dump_yamlxs {
@@ -197,14 +197,14 @@ sub _dump_yamlxs {
   ## turn data into YAML1.1
   require YAML::XS;
   my $yaml = YAML::XS::Dump($data);
-  return $yaml;
+  return $yaml
 }
 
 sub _load_yamlxs {
   my ($self, $yaml) = @_;
   require YAML::XS;
   my $data = YAML::XS::Load($yaml);
-  return $data;
+  return $data
 }
 
 sub _dump_json {
@@ -212,7 +212,7 @@ sub _dump_json {
   require JSON;
   my $jsify = JSON->new->allow_nonref;
   my $json = $jsify->utf8->encode($data);
-  return $json;
+  return $json
 }
 
 sub _load_json {
@@ -221,7 +221,7 @@ sub _load_json {
   my $jsify = JSON->new->allow_nonref;
   $jsify->utf8(1);
   my $data = $jsify->utf8->decode($json);
-  return $data;
+  return $data
 }
 
 
@@ -258,7 +258,7 @@ sub _read_serialized {
 
   utf8::encode($data);
 
-  return $data;
+  return $data
 }
 
 sub _write_serialized {

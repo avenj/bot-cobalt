@@ -86,9 +86,6 @@ has 'PluginObjects' => (
   default => sub { {} },
 );
 
-## the core IRC plugin is single-server
-## however a MultiServer plugin is possible (and planned)
-## thusly, track hashes for our servers here.
 ## Servers->{$alias} = {
 ##   Name => servername,
 ##   PreferredNick => nick,
@@ -465,6 +462,7 @@ sub timer_set {
   return
 }
 
+sub del_timer { timer_del(@_) }
 sub timer_del {
   ## delete a timer by its ID
   ## doesn't care if the timerID actually exists or not.
@@ -811,7 +809,7 @@ Cobalt::Core - Cobalt2 IRC bot core
 
 This module is the core of B<Cobalt2>, tying an event syndicator (via 
 L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
-L<Log::Handler> instance and other useful tools.
+L<Log::Handler> instance, configuration manager, and other useful tools.
 
 Public methods are documented in L<Cobalt::Manual::Plugins/"Core methods">
 
