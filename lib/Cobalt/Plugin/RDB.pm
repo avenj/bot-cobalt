@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.304';
+our $VERSION = '0.305';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -668,14 +668,15 @@ sub Bot_rdb_broadcast {
   ## throw randstuffs at configured channels unless told not to
   my $servers = $core->Servers;
   SERVER: for my $context (keys %$servers) {
-    next SERVER unless $core->Servers->{$context}->{Connected};
-    my $irc = $core->Servers->{$context}->{Object} || next SERVER;
+    my $c_hash = $core->get_irc_context($context);
+    next SERVER unless $c_hash->{Connected};
+    my $irc = $core->get_irc_obj($context) || next SERVER;
     my $chcfg = $core->get_channels_cfg($context);
 
     $core->log->debug("rdb_broadcast to $context");
 
     my $on_channels = $irc->channels || {};
-    my $casemap = $core->Servers->{$context}->{CaseMap} // 'rfc1459';
+    my $casemap = $core->get_irc_casemap($context) || 'rfc1459';
     my @channels = map { lc_irc($_, $casemap) } keys %$on_channels;
 
     CHAN: for my $channel (@channels) {
