@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -44,6 +44,12 @@ sub new {
   return $self
 }
 
+sub DESTROY {
+  my ($self) = @_;
+  $self->dbclose if $self->is_open;
+}
+
+
 sub dbopen {
   my ($self) = @_;
   my $path = $self->{DatabasePath};
@@ -59,8 +65,8 @@ sub dbopen {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
       return
     }
-    select undef, undef, undef, 0.25;
-    $timer += 0.25;
+    select undef, undef, undef, 0.2;
+    $timer += 0.2;
   }
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
@@ -92,33 +98,13 @@ sub dbopen {
       $_ .= "\0";
     }
   );
-  $self->{DB_IS_OPEN} = 1;
+  $self->is_open(1);
   return 1
-}
-
-sub isopen { is_open(@_) }
-sub is_open {
-  my ($self) = @_;
-  return $self->{DB_IS_OPEN} // 0;
-}
-
-sub get_tied {
-  my ($self) = @_;
-  croak "attempted to get_tied on unopened db"
-    unless $self->{DB_IS_OPEN};
-  return $self->{Tied}
-}
-
-sub get_db {
-  my ($self) = @_;
-  croak "attempted to get_db on unopened db"
-    unless $self->{DB_IS_OPEN};
-  return $self->{DB}
 }
 
 sub dbclose {
   my ($self) = @_;
-  unless ($self->{DB_IS_OPEN}) {
+  unless ($self->is_open) {
     carp "attempted dbclose on unopened db";
     return
   }
@@ -128,13 +114,28 @@ sub dbclose {
   close $lockfh;
   delete $self->{LockFH};
   unlink $self->{LockFile};
-  $self->{DB_IS_OPEN} = 0;
+  $self->is_open(0);
   return 1
 }
 
-sub DESTROY {
+sub is_open {
+  my ($self, $val) = @_;
+  $self->{DB_IS_OPEN} = $val if defined $val;
+  return $self->{DB_IS_OPEN} //= 0
+}
+
+sub get_tied {
   my ($self) = @_;
-  $self->dbclose if $self->{DB_IS_OPEN};
+  croak "attempted to get_tied on unopened db"
+    unless $self->is_open;
+  return $self->{Tied}
+}
+
+sub get_db {
+  my ($self) = @_;
+  croak "attempted to get_db on unopened db"
+    unless $self->is_open;
+  return $self->{DB}
 }
 
 sub get_path {
@@ -145,7 +146,7 @@ sub get_path {
 sub dbkeys {
   my ($self) = @_;
   croak "attempted 'dbkeys' on unopened db"
-    unless $self->{DB_IS_OPEN};
+    unless $self->is_open;
   return wantarray ? (keys %{ $self->{Tied} })
                    : scalar keys %{ $self->{Tied} };
 }
@@ -153,17 +154,16 @@ sub dbkeys {
 sub get {
   my ($self, $key) = @_;
   croak "attempted 'get' on unopened db"
-    unless $self->{DB_IS_OPEN};
+    unless $self->is_open;
   return undef unless exists $self->{Tied}{$key};
   my $value = $self->{Tied}{$key};
   return $value
 }
 
-sub add { put(@_) }
 sub put {
   my ($self, $key, $value) = @_;
   croak "attempted 'put' on unopened db"
-    unless $self->{DB_IS_OPEN};
+    unless $self->is_open;
   $self->{Tied}{$key} = $value;
   return $value
 }
@@ -171,7 +171,7 @@ sub put {
 sub del {
   my ($self, $key) = @_;
   croak "attempted 'del' on unopened db"
-    unless $self->{DB_IS_OPEN};
+    unless $self->is_open;
   return undef unless exists $self->{Tied}{$key};
   delete $self->{Tied}{$key};
   return 1
@@ -180,7 +180,7 @@ sub del {
 sub dbdump {
   my ($self, $format) = @_;
   croak "attempted dbdump on unopened db"
-    unless $self->{DB_IS_OPEN};
+    unless $self->is_open;
   $format = 'YAML' unless $format;
   ## 'cross-serialize' to some other format and dump it
   
