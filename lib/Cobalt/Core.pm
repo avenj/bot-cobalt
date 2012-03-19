@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_31';
+our $VERSION = '2.00_32';
 
 use 5.12.1;
 use Carp;
@@ -667,8 +667,20 @@ sub ignore_list {
 }
 
 
-
 ### Accessors acting on ->Servers:
+
+sub is_connected {
+  my ($self, $context) = @_;
+  return unless $context and exists $self->Servers->{$context};
+  return $self->Servers->{$context}->{Connected};
+}
+
+sub get_irc_server  { get_irc_context(@_) }
+sub get_irc_context {
+  my ($self, $context) = @_;
+  return unless $context and exists $self->Servers->{$context};
+  return $self->Servers->{$context}
+}
 
 sub get_irc_object { get_irc_obj(@_) }
 sub get_irc_obj {
@@ -679,13 +691,15 @@ sub get_irc_obj {
     $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
     return
   }
-  elsif (! exists $self->Servers->{$context} ) {
+
+  my $c_hash = $self->get_irc_context($context);
+  unless ($c_hash && ref $c_hash eq 'HASH') {
     $self->log->debug("get_irc_obj called but context $context not found");
     $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
     return
   }
 
-  my $irc = $self->Servers->{$context}->{Object} // return;
+  my $irc = $c_hash->{Object} // return;
   return ref $irc ? $irc : ();
 }
 
@@ -696,31 +710,16 @@ sub get_irc_casemap {
     $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
     return
   }
-  elsif (! exists $self->Servers->{$context} ) {
+  
+  my $c_hash = $self->get_irc_context($context);
+  unless ($c_hash && ref $c_hash eq 'HASH') {
     $self->log->debug("get_irc_casemap called but context $context not found");
     $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
     return
   }
 
-  my $map = $self->Servers->{$context}->{CaseMap} // 'rfc1459';
+  my $map = $c_hash->{CaseMap} // 'rfc1459';
   return $map
-}
-
-sub get_irc_server {
-  ## return a REF to the hash for this server context.
-  my ($self, $context) = @_;
-  if (! $context) {
-    $self->log->debug("get_irc_server called but no context specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-  elsif (! exists $self->Servers->{$context} ) {
-    $self->log->debug("get_irc_server called but context $context not found");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-
-  return $self->Servers->{$context};  
 }
 
 
