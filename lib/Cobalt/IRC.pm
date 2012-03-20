@@ -692,6 +692,12 @@ sub irc_join {
     src_host => $host,
     channel  => $channel,
   };
+  
+  my $me = $irc->nick_name();
+  my $casemap = $core->get_irc_casemap($context);
+  if ( eq_irc($me, $nick, $casemap) ) {
+    $core->send_event( 'self_joined', $context, $channel );
+  }
 
   ## Bot_user_joined
   $core->send_event( 'user_joined', $context, $join );
@@ -1392,6 +1398,13 @@ $join is a hash with the following keys:
     channel => Channel the user joined
   };
 
+=head3 Bot_self_joined
+
+Broadcast when the bot joins a channel.
+
+A L</Bot_user_joined> is still issued as well.
+
+Carries the same syntax and caveats as L</Bot_self_left>, below.
 
 =head3 Bot_user_left
 
