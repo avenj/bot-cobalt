@@ -1,5 +1,5 @@
 package Cobalt::DB;
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:
@@ -65,8 +65,8 @@ sub dbopen {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
       return
     }
-    select undef, undef, undef, 0.2;
-    $timer += 0.2;
+    select undef, undef, undef, 0.1;
+    $timer += 0.1;
   }
   print $lockf_fh $$;
   $self->{LockFH} = $lockf_fh;
