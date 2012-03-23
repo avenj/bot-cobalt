@@ -1,5 +1,5 @@
 #!perl
-my $VERSION = '0.22';
+my $VERSION = '0.23';
 
 use 5.12.1;
 use strict;
@@ -13,7 +13,7 @@ use Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
 
-use Digest::SHA qw/sha1_hex/;
+use Digest::SHA qw/sha256_hex/;
 
 use Time::HiRes;
 
@@ -38,7 +38,7 @@ $rdbref->{main} = { };
 for my $item (@randstuff_ini) {
   $item =~ s/\s+$//;
   $item = decode_irc($item);
-  my $digest = sha1_hex($item.rand.Time::HiRes::time);
+  my $digest = sha256_hex($item.rand.Time::HiRes::time);
   my @splitd = split //, $digest;
   my $idx = join '', splice(@splitd, -4);
   $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
@@ -85,7 +85,7 @@ if ($rdb_dir_path) {
     for my $item (@current_rdb) {
       $item =~ s/\s+$//;
       $item = decode_irc($item);
-      my $digest = sha1_hex($item.rand.Time::HiRes::time);
+      my $digest = sha256_hex($item.rand.Time::HiRes::time);
       my @splitd = split //, $digest;
       my $idx = join '', splice(@splitd, -4);
       $idx .= pop @splitd while exists $rdbref->{$rdb_name}->{$idx} and @splitd;
