@@ -493,7 +493,7 @@ sub _rdb_switch {
   
   $self->{CURRENT} = Cobalt::DB->new(
     File => $path,
-  ) or $self->{CURRENT} = undef;
+  );
 }
 
 1;

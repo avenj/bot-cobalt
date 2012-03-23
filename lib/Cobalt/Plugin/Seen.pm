@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Seen;
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 use Cobalt::Common;
 use Cobalt::DB;
@@ -122,6 +122,7 @@ sub Cobalt_register {
       public_cmd_seen
       
       nick_changed      
+      self_joined
       user_joined
       user_left
       user_quit
@@ -187,6 +188,10 @@ sub Bot_user_joined {
   };
   
   return PLUGIN_EAT_NONE
+}
+
+sub Bot_self_joined {
+  ## FIXME 
 }
 
 sub Bot_user_left {
