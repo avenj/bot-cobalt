@@ -257,12 +257,12 @@ sub passwdcmp {
   ## we don't handle regular old blowfish
   if ( index($crypt, '$2a$') == 0 ) ## bcrypted
   {
-    return 0 unless $crypt eq
+    return unless $crypt eq
       Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $crypt);
   }
   else  ## some crypt() method, hopefully we have it!
   {
-    return 0 unless $crypt eq crypt($pwd, $crypt);
+    return unless $crypt eq crypt($pwd, $crypt);
   }
 
   return $crypt
