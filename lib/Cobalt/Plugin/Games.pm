@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use 5.12.1;
 use strict;
@@ -49,8 +49,7 @@ sub Bot_public_msg {
   my $obj  = $self->{Objects}->{$game};
   
   my @message = @{ $msg->{message_array} };
-  shift @message;
-  my $str  = join ' ', @message;
+  my $str = join ' ', @message[1 .. $#message];
   
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
