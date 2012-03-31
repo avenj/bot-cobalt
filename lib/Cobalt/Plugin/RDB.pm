@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.305';
+our $VERSION = '0.306';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -438,7 +438,8 @@ sub _cmd_rdb {
     }
     
     when ("add") {
-      my ($rdb, $item) = @message;
+      my ($rdb, @items) = @message;
+      my $item = join ' ', @items;
       return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
 
       my $rplvars = {

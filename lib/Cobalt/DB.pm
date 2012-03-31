@@ -253,8 +253,9 @@ Berkeley DB:
     # Database file mode
     Perms => $octal_mode,
 
-    # Locking is enabled regardless
-    # but you can change the location:
+    # Locking is enabled regardless but you can change the location
+    # AVOID IF POSSIBLE - unless you're sure everyone uses this lock, 
+    # you could easily toast the DB
     LockFile => "/tmp/sharedlock",
     
     ## Locking timeout in seconds
