@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.214';
+our $VERSION = '0.215';
 
 use Cobalt::Common;
 
@@ -307,6 +307,8 @@ sub irc_public {
     message => $txt,  # stripped text
     orig => $orig,    # the original unparsed text
     message_array => [ split ' ', $txt ],
+    ## FIXME: document array w/ spaces:
+    message_array_sp => [ split / /, $txt ],
   };
 
   $msg->{highlight} = 1 if $txt =~ /^${me}.?\s+/i;

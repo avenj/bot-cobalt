@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.306';
+our $VERSION = '0.307';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -94,8 +94,11 @@ sub Bot_public_msg {
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
   return PLUGIN_EAT_NONE unless $msg->{highlight};
+  ## uses message_array_sp, ie spaces are preserved
+  ## (so don't include them prior to rdb names, for example)
+  ## FIXME: document this behavior
   ## since this is a highlighted message, bot's nickname is first:
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->{message_array_sp} };
   shift @message;
   my $cmd = lc(shift @message || '');
   ## ..if it's not @handled we don't care:
