@@ -56,35 +56,35 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_dumpcfg {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpcfg called (debugger)");
-  print(Dumper $core->cfg);
+  $core->log->warn(Dumper $core->cfg);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpstate {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpstate called (debugger)");
-  print(Dumper $core->State);
+  $core->log->warn(Dumper $core->State);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumptimers {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumptimers called (debugger)");
-  print(Dumper $core->TimerPool);
+  $core->log->warn(Dumper $core->TimerPool);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpservers {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumpservers called (debugger)");
-  print(Dumper $core->Servers);
+  $core->log->warn(Dumper $core->Servers);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumplangset {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->warn("dumplangset called (debugger)");
-  print(Dumper $core->lang);
+  $core->log->warn(Dumper $core->lang);
   return PLUGIN_EAT_NONE
 }
 
@@ -107,13 +107,11 @@ Cobalt::Plugin::Extras::Debug - dump internal state information
 
 =head1 IMPORTANT
 
-B<
-This plugin has no access controls!
+B<This plugin has no access controls!>
 
 It is intended to be used strictly for debugging during development.
 
 If it is loaded, anyone can flood STDOUT using the dump commands.
->
 
 =head1 DESCRIPTION
 
