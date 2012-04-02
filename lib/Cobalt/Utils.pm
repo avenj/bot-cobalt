@@ -1,11 +1,12 @@
 package Cobalt::Utils;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 use 5.12.1;
 use strict;
 use warnings;
 
+use App::bmkpasswd ();
 use Crypt::Eksblowfish::Bcrypt;
 
 require Exporter;
@@ -247,81 +248,10 @@ sub secs_to_timestr {
 }
 
 
-## (b)crypt frontends:
+## App::bmkpasswd stubs as of 2.00_35 (Utils-0.23):
 
-sub passwdcmp {
-  my $pwd   = shift || return;
-  my $crypt = shift || return;
-
-  ## realistically this should be a regex ..
-  ## we don't handle regular old blowfish
-  if ( index($crypt, '$2a$') == 0 ) ## bcrypted
-  {
-    return unless $crypt eq
-      Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $crypt);
-  }
-  else  ## some crypt() method, hopefully we have it!
-  {
-    return unless $crypt eq crypt($pwd, $crypt);
-  }
-
-  return $crypt
-}
-
-sub mkpasswd {
-  my ($pwd, $type, $cost) = @_;
-
-  $type = 'bcrypt' unless $type;
-
-  # generate a new passwd based on $type
-
-  # a default (randomized) salt ..
-  # we can use it for MD5 or build on it for SHA
-  my @p = ('a' .. 'z', 'A' .. 'Z', 0 .. 9, '_');
-  my $salt = join '', map { $p[rand@p] } 1 .. 8;
-
-  given ($type)
-  {
-    when (/sha-?512/i) {  ## SHA-512: glibc-2.7+
-        ## unfortunately mostly only glibc has support in crypt()
-        ## SHA has variable length salts (up to 16)
-        ## varied salt lengths can (maybe) slow down attacks
-        ## (so says Drepper, anyway)
-        $salt .= $p[rand@p] for 1 .. rand 8;
-        $salt = '$6$'.$salt.'$';
-    }
-
-    when (/sha-?256/i) {  ## SHA-256: glibc-2.7+
-        $salt .= $p[rand@p] for 1 .. rand 8;
-        $salt = '$5$'.$salt.'$';
-    }
-
-    when (/^bcrypt$/i) {  ## Bcrypt via Crypt::Eksblowfish
-        ## blowfish w/ cost factor
-        ## cost value is configurable, but 08 is a good choice.
-        ## has to be a two digit power of 2. pad with 0 as needed
-        $cost //= '08';
-        ## try to pad with 0 if user is an idiot
-        ## not documented because you shouldn't be an idiot:
-        $cost = '0'.$cost if length $cost == 1;
-        ## bcrypt expects 16 octets of salt:
-        $salt = join '', map { chr int rand 256 } 1 .. 16;
-        ## ...base64-encoded via bcrypt's en_base64:
-        $salt = Crypt::Eksblowfish::Bcrypt::en_base64( $salt );
-        ## actual settings string to feed bcrypt ($2a$COST$SALT)
-        $salt = join '', '$2a$', $cost, '$', $salt;
-        return Crypt::Eksblowfish::Bcrypt::bcrypt($pwd, $salt)
-    } 
-
-    default {  ## defaults to MD5 -- portable, fast, but weak
-        $salt = '$1$'.$salt.'$';
-    }
-
-  }
-
-  return crypt($pwd, $salt)
-}
-
+sub mkpasswd  { App::bmkpasswd::mkpasswd(@_) }
+sub passwdcmp { App::bmkpasswd::passwdcmp(@_) }
 
 1;
 __END__

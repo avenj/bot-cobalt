@@ -73,6 +73,7 @@ my $build = $class->new(
 
    ### Cobalt set ###
      # Crypt
+      'App::bmkpasswd' => 0,
       'Crypt::Eksblowfish' => '0.003',
 
      # HTTP
