@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_33';
+our $VERSION = '2.00_35';
 
 use 5.12.1;
 use Carp;
@@ -378,7 +378,7 @@ sub timer_set {
   ## TYPE = event
   ##   Event => "send_notice",  ## send notice example
   ##   Args  => [ ], ## optional array of args for event
-  ## TYPE = msg
+  ## TYPE = msg || action
   ##   Target => $somewhere,
   ##   Text => $string,
   ##   Context => $server_context, # defaults to 'Main'
@@ -424,7 +424,7 @@ sub timer_set {
       @event_args = @{ $ev->{Args} // [] };
     }
 
-    when ([qw/msg message privmsg/]) {
+    when ([qw/msg message privmsg action/]) {
       unless ($ev->{Text}) {
         $self->log->warn("timer_set no Text specified in ".caller);
         return
@@ -436,8 +436,8 @@ sub timer_set {
 
       my $context = $ev->{Context} // 'Main';
 
-      ## send_message $context, $target, $text
-      $event_name = 'send_message';
+      ## send_message / send_action $context, $target, $text
+      $event_name = $type eq "action" ? 'send_action' : 'send_message' ;
       @event_args = ( $context, $ev->{Target}, $ev->{Text} );
     }
   }
