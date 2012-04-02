@@ -73,11 +73,11 @@
       },
       "Cobalt::Core" : {
          "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_31"
+         "version" : "2.00_34"
       },
       "Cobalt::DB" : {
          "file" : "lib/Cobalt/DB.pm",
-         "version" : "0.22"
+         "version" : "0.25"
       },
       "Cobalt::HTTP" : {
          "file" : "lib/Cobalt/HTTP.pm",
@@ -85,7 +85,7 @@
       },
       "Cobalt::IRC" : {
          "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.212"
+         "version" : "0.215"
       },
       "Cobalt::Plugin::Alarmclock" : {
          "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
@@ -129,7 +129,7 @@
       },
       "Cobalt::Plugin::Games" : {
          "file" : "lib/Cobalt/Plugin/Games.pm",
-         "version" : "0.15"
+         "version" : "0.16"
       },
       "Cobalt::Plugin::Games::Dice" : {
          "file" : "lib/Cobalt/Plugin/Games/Dice.pm",
@@ -169,7 +169,7 @@
       },
       "Cobalt::Plugin::RDB" : {
          "file" : "lib/Cobalt/Plugin/RDB.pm",
-         "version" : "0.304"
+         "version" : "0.307"
       },
       "Cobalt::Plugin::RDB::Database" : {
          "file" : "lib/Cobalt/Plugin/RDB/Database.pm",
@@ -185,7 +185,7 @@
       },
       "Cobalt::Plugin::Seen" : {
          "file" : "lib/Cobalt/Plugin/Seen.pm",
-         "version" : "0.001"
+         "version" : "0.002"
       },
       "Cobalt::Plugin::Version" : {
          "file" : "lib/Cobalt/Plugin/Version.pm",
@@ -201,7 +201,7 @@
       },
       "Cobalt::Utils" : {
          "file" : "lib/Cobalt/Utils.pm",
-         "version" : "0.21"
+         "version" : "0.23"
       }
    },
    "release_status" : "testing",
@@ -210,5 +210,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_31"
+   "version" : "2.00_34"
 }

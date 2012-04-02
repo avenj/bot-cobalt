@@ -21,16 +21,16 @@ provides:
     version: 1.01
   Cobalt::Core:
     file: lib/Cobalt/Core.pm
-    version: 2.00_31
+    version: 2.00_34
   Cobalt::DB:
     file: lib/Cobalt/DB.pm
-    version: 0.22
+    version: 0.25
   Cobalt::HTTP:
     file: lib/Cobalt/HTTP.pm
     version: 0.04
   Cobalt::IRC:
     file: lib/Cobalt/IRC.pm
-    version: 0.212
+    version: 0.215
   Cobalt::Plugin::Alarmclock:
     file: lib/Cobalt/Plugin/Alarmclock.pm
     version: 0.142
@@ -63,7 +63,7 @@ provides:
     version: 1.03
   Cobalt::Plugin::Games:
     file: lib/Cobalt/Plugin/Games.pm
-    version: 0.15
+    version: 0.16
   Cobalt::Plugin::Games::Dice:
     file: lib/Cobalt/Plugin/Games/Dice.pm
     version: 0.02
@@ -93,7 +93,7 @@ provides:
     version: 1.08
   Cobalt::Plugin::RDB:
     file: lib/Cobalt/Plugin/RDB.pm
-    version: 0.304
+    version: 0.307
   Cobalt::Plugin::RDB::Database:
     file: lib/Cobalt/Plugin/RDB/Database.pm
     version: 0.32
@@ -105,7 +105,7 @@ provides:
     version: 0.101
   Cobalt::Plugin::Seen:
     file: lib/Cobalt/Plugin/Seen.pm
-    version: 0.001
+    version: 0.002
   Cobalt::Plugin::Version:
     file: lib/Cobalt/Plugin/Version.pm
     version: 1.02
@@ -117,7 +117,7 @@ provides:
     version: 0.19
   Cobalt::Utils:
     file: lib/Cobalt/Utils.pm
-    version: 0.21
+    version: 0.23
 recommends:
   JSON::XS: 0
   POE::Component::SSLify: 1.006
@@ -158,4 +158,4 @@ requires:
   perl: v5.12.1
 resources:
   license: http://dev.perl.org/licenses/
-version: 2.00_31
+version: 2.00_34
