@@ -65,7 +65,7 @@ my $pwd;
 if (@ARGV) {
   $pwd = $ARGV[0];
 } else {
-  eval "require Term::ReadKey";
+  eval { require Term::ReadKey };
   if ($@) {
     warn "WARNING: Term::ReadKey missing, cannot blank passwd prompt\n"
   } else { Term::ReadKey->import('ReadMode') }
