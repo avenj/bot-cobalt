@@ -84,3 +84,4 @@ t/03_serial/01_freezethaw.t
 t/03_serial/02_file_rw.t
 t/04_db/01_db.t
 t/04_db/02_dbdump.t
+t/05_plugins/01_loadable_coreset.t

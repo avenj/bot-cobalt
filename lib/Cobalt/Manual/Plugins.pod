@@ -925,10 +925,11 @@ do when the delay has elapsed.
   ## (A triggered 'msg' timer broadcasts a 'send_message' event)
   my $id = $core->timer_set( 60,
     {
-      ## The type of timer; 'msg' or 'event':
+      ## The type of timer; 'msg', 'action' or 'event':
       Type => 'msg',
 
-      ## This is a 'msg' timer; we need to know what to send:
+      ## This is a 'msg' timer; we need to know what to send
+      ## 'action' carries the same syntax
       Context => $context,
       Target  => $channel,
       Text    => $string,
