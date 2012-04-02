@@ -3,7 +3,6 @@
 use 5.12.1;
 use strict;
 use warnings;
-use Carp;
 
 STDOUT->autoflush(1);
 
@@ -30,7 +29,7 @@ GetOptions(
 );
 
 ## Format check
-croak "$format is not a valid export format; see perldoc Cobalt::Serializer"
+die "$format is not a valid export format; see perldoc Cobalt::Serializer"
   unless Cobalt::Serializer->_check_if_avail($format);
 
 unless ($dbpath) {
@@ -39,7 +38,7 @@ unless ($dbpath) {
   chomp($dbpath);
 }
 
-croak "could not locate dbpath: $dbpath"
+die "could not locate dbpath: $dbpath"
   unless -f $dbpath;
 
 unless ($outpath) {
@@ -60,13 +59,13 @@ my $db = Cobalt::DB->new(
   LockFile => ".dbdump.lock",
 );
 
-$db->dbopen or croak "dbopen failure";
-my $yaml = $db->dbdump($format) or croak "dbdump failure";
+$db->dbopen or die "dbopen failure";
+my $yaml = $db->dbdump($format) or die "dbdump failure";
 $db->dbclose;
 
 say "Writing $format to $outpath";
 
-open my $outfh, '>:encoding(UTF-8)', $outpath or croak "open failed: $!";
+open my $outfh, '>:encoding(UTF-8)', $outpath or die "open failed: $!";
 print $outfh $yaml;
 close $outfh;
 

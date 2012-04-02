@@ -4,7 +4,6 @@
 use 5.12.1;
 use strict;
 use warnings;
-use Carp;
 
 my $rcfile = $ENV{HOME}."/.cobalt2rc";
 my $opt_debug  = 0;
@@ -94,7 +93,7 @@ sub _rc_read {
   my ($BASE, $ETC, $VAR);
   eval $str;
   if ($@) {
-    croak "Errors reported during rc parsing; $@";
+    die "Errors reported during rc parsing; $@";
   }
 
   ## my ($base, $etc, $var) = _rc_read()
@@ -227,7 +226,7 @@ if ($basedir) {
   say ">! Using --basedir=${basedir}";
   ## A basedir was specified, disregard cobalt2rc
   unless (-e $basedir) {
-    croak "basedir $basedir specified but nonexistant";
+    die "basedir $basedir specified but nonexistant";
   }
 
   $etcdir = $basedir . "/etc";

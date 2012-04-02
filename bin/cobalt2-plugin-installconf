@@ -3,26 +3,40 @@
 use 5.12.1;
 use strict;
 use warnings;
-use Carp;
 
-my $path_confsdir;
-my $path_rcfile;
+use File::Copy;
+
+my($path_rcfile, $path_dest);
 
 use Getopt::Long;
 GetOptions(
   help => sub {
-  
+    ## FIXME
     exit 0
   },
   
-  'confsdir=s' => \$path_confsdir,
+  'rcfile=s'   => \$path_rcfile,
+
+  'destination=s' => \$path_dest,
   
-  'rcfile=s'   => \$path_rcfile;
-  
+    
   ## FIXME
 );
 
+
 ## FIXME
-## try to install .conf files from 'confs/' in either specified libdir
-## or found libdir
+
+## if no plugin name specified, prompt for it
+
+## look for This::Plugin::Conf::ExampleConf
+## load it and look for example conf from 
+##  class method This::Plugin::Conf->install
+##   -or-
+##  $This::Plugin::Conf::CONF
+## -> either should return example conf as string
+## -> write example conf to either specified path, or use rcfile & 
+##    prompt
+
 ## if the .conf already exists, show diff, offer to exit or backup+replace
+
+## Kill PluginConfs crap
