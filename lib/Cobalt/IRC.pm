@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.215';
+our $VERSION = '0.216';
 
 use Cobalt::Common;
 
@@ -418,6 +418,7 @@ sub irc_notice {
     message => $txt,
     orig    => $orig,
     message_array => [ split ' ', $txt ],
+    message_array_sp => [ split / /, $txt ],
   };
 
   ## Bot_notice
@@ -453,6 +454,7 @@ sub irc_ctcp_action {
     message => $txt,
     orig    => $orig,
     message_array => [ split ' ', $txt ],
+    message_array_sp => [ split / /, $txt ],
   };
 
   ## if this is a public ACTION, add a 'channel' key
@@ -1084,7 +1086,6 @@ Other arguments may vary by event. See below.
 
 =head2 Connection state events
 
-
 =head3 Bot_connected
 
 Issued when an irc_001 (welcome msg) event is received.
@@ -1092,7 +1093,7 @@ Issued when an irc_001 (welcome msg) event is received.
 Indicates the bot is now talking to an IRC server.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
+  my $context     = ${$_[0]};
   my $server_name = ${$_[1]};
 
 The relevant $core->Servers->{$context} hash is updated prior to
@@ -1115,7 +1116,7 @@ compare two nicknames, for example:
 Broadcast when irc_disconnected is received.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
+  my $context     = ${$_[0]};
   my $server_name = ${$_[1]};
 
 $core->Servers->{$context}->{Connected} will be false until a reconnect.
@@ -1128,7 +1129,7 @@ The IRC component will provide a maybe-not-useful reason:
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $reason = ${$_[1]};
+  my $reason  = ${$_[1]};
 
 ... Maybe you're zlined. :)
 
@@ -1142,7 +1143,7 @@ Broadcast upon receiving public text (text in a channel).
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg     = ${$_[1]};
   my $stripped = $msg->{message};
   ...
 
@@ -1155,12 +1156,13 @@ $msg is a hash, with the following structure:
     src_user => Source username
     src_host => Source hostname
 
-    channel => The first channel message was seen on
+    channel      => The first channel message was seen on
     target_array => Array of channels message was seen on    
 
-    orig => Original, unparsed message content
+    orig    => Original, unparsed message content
     message => Color/format-stripped message content
-    message_array => Color/format-stripped content, split to array
+    message_array    => Color/format-stripped content, split to array
+    message_array_sp => Same as above, spaces preserved as empty fields
 
     highlight => Boolean: was the bot being addressed?
     cmdprefix => Boolean: was the string prefixed with CmdChar?
@@ -1256,7 +1258,6 @@ Carries a copy of the target and text:
 
 This being IRC, there is no guarantee that the message actually went out.
 
-
 =head3 Bot_notice_sent
 
 Broadcast when a NOTICE has been sent out via a send_notice event.
@@ -1270,10 +1271,14 @@ L</send_action>.
 
   my $context   = ${$_[0]};
   my $ctcp_type = ${$_[1]};  ## 'ACTION' for example
-  my $target  = ${$_[2]};
-  my $content = ${$_[3]};
+  my $target    = ${$_[2]};
+  my $content   = ${$_[3]};
 
+=head3 Bot_raw_sent
 
+Broadcast when a raw string has been sent via L</send_raw>.
+
+Arguments are the server context name and the raw string sent.
 
 =head2 Channel state events
 
@@ -1307,7 +1312,7 @@ $t_change has the following keys:
     src_nick => 
     src_user => 
     src_host =>
-    channel =>
+    channel  =>
     topic => New topic string
   };
 
@@ -1342,7 +1347,7 @@ $modechg->{hash} is produced by L<IRC::Utils>.
 It has two keys: I<modes> and I<args>. They are both ARRAY references:
 
   my @modes = @{ $modechg->{hash}->{modes} };
-  my @args = @{ $modechg->{hash}->{args} };
+  my @args  = @{ $modechg->{hash}->{args} };
 
 If parsing failed, the hash is empty.
 
@@ -1388,7 +1393,7 @@ Broadcast when a user joins a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $join = ${$_[1]};
+  my $join    = ${$_[1]};
 
 $join is a hash with the following keys:
 
@@ -1414,7 +1419,7 @@ Broadcast when a user parts a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $part = ${$_[1]};
+  my $part    = ${$_[1]};
 
 $part is a hash with the same keys as L</Bot_user_joined>.
 
@@ -1464,7 +1469,7 @@ Broadcast when a user (maybe us) is kicked.
 
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
-  my $kick = ${$_[1]};
+  my $kick    = ${$_[1]};
 
 ${$_[1]} is a hash with the following keys:
 
@@ -1615,8 +1620,8 @@ similar CTCP handler.
 
   my $context   = ${ $_[0] };
   my $ctcp_type = ${ $_[1] };
-  my $target  = ${ $_[2] };
-  my $content = ${ $_[3] };
+  my $target    = ${ $_[2] };
+  my $content   = ${ $_[3] };
 
 
 
