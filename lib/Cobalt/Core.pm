@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_35';
+our $VERSION = '2.00_36';
 
 use 5.12.1;
 use Carp;
@@ -315,6 +315,8 @@ sub ev_plugin_error {
 
 sub _core_timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
+  my $tick = $_[ARG0];
+  ++$tick;
 
   ## Timer hash format:
   ##   Event => $event_to_syndicate,
@@ -329,7 +331,7 @@ sub _core_timer_check_pool {
      # this should never happen ...
      # ... unless a plugin author is a fucking idiot:
     unless (ref $timer eq 'HASH' && scalar keys %$timer) {
-      $self->log->warn("broken timer, not a hash: $id");
+      $self->log->warn("broken timer, not a hash: $id (in tick $tick)");
       delete $timerpool->{$id};
       next
     }
@@ -338,19 +340,20 @@ sub _core_timer_check_pool {
     if ( $execute_ts <= time ) {
       my $event = $timer->{Event};
       my @args = @{ $timer->{Args} };
-      $self->log->debug("timer execute: $id (ev: $event)")
+      $self->log->debug("timer execute: $id (ev: $event) [tick $tick]")
         if $self->debug > 1;
       ## dispatch this event:
       $self->send_event( $event, @args ) if $event;
       ## send executed_timer to indicate this timer's done:
-      $self->send_event( 'executed_timer', $id );
+      $self->send_event( 'executed_timer', $id, $tick );
       delete $timerpool->{$id};
     }
   }
 
   ## most definitely NOT a high-precision timer.
   ## checked every second or so
-  $kernel->alarm('_core_timer_check_pool' => time + 1);
+  ## tracks timer pool ticks
+  $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
 }
 
 
