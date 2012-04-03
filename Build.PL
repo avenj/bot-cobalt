@@ -89,6 +89,7 @@ my $build = $class->new(
      # Serialization
       'JSON'        => '2.00',
       'YAML::XS'    => '0.34',
+      'YAML::Syck'  => '1.18',
 
      # Logging
       'Log::Handler' => '0.71',
@@ -120,7 +121,6 @@ my $build = $class->new(
       'Term::ReadKey' => 0,
 
     ### Storage / serialization
-      'YAML::Syck'  => '1.18',
       'JSON::XS'    => 0,
 
     ### Release tools, commented for now
