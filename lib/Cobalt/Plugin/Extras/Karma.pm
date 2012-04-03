@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.201';
+our $VERSION = '0.202';
 
 ## simple karma++/-- tracking
 
@@ -36,7 +36,14 @@ sub Cobalt_register {
       'karmaplug_sync_db',
     ],
   );
+
+  $core->timer_set( 5,
+    { Event => 'karmaplug_sync_db' },
+    'KARMAPLUG_SYNC_DB',
+  );
+
   $core->log->info("Registered");
+
   return PLUGIN_EAT_NONE
 }
 
