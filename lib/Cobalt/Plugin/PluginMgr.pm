@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 
 ## handles and eats: !plugin
 
@@ -56,6 +56,7 @@ sub _unload {
   } else {
     $core->log->info("Attempting to unload $alias ($plugisa) per request");
     if ( $core->plugin_del($alias) ) {
+      delete $core->PluginObjects->{$plug_obj};
       ## ask core to clean up symbol table:
       $core->unloader_cleanup($plugisa);
       ## also cleanup our config if there is one:
