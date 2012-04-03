@@ -98,12 +98,16 @@ my $build = $class->new(
       'Moose'                => '2.00',
       'MooseX::NonMoose'     => '0.18',
       'namespace::autoclean' => '0.12',
+      
+     # Network
+       'Net::IP::Minimal' => '0.02',
 
      # POE::
       'POE'            => '1.311',
       'POE::Wheel::Run'        => 0,
       'POE::Filter::Reference' => 0,
 
+      'POE::Component::Client::DNS' => 0,
       'POE::Component::IRC::State' => '6.78',
       'POE::Component::Syndicator' => '0.06',
       'Object::Pluggable'          => '1.27',
