@@ -4,7 +4,6 @@ my $version = '0.12';
 use 5.12.1;
 use strict;
 use warnings;
-use Carp;
 
 use File::Path;
 
@@ -51,9 +50,9 @@ sub _slurp {
   my ($path) = @_;
   ## Slurp a file
   my $str;
-  open(my $fh, '<', $path) or croak "failed file read: $path: $!" ;
+  open(my $fh, '<', $path) or die "failed file read: $path: $!" ;
   {  local $/ ; $str = <$fh>;  }
-  close($fh) or carp "failed to close $path: $!";
+  close($fh) or warn "failed to close $path: $!\n";
   return $str
 }
 
@@ -72,7 +71,7 @@ sub RC_Read {
   my ($BASE, $ETC, $VAR);
   eval $str;
   if ($@) {
-    croak "Errors reported during rc parsing; $@";
+    die "Errors reported during rc parsing; $@";
   }
   return ($BASE, $ETC, $VAR);
 }
@@ -89,9 +88,9 @@ sub RC_Write {
   ;
 
   open(my $fh, '>', $rcfile)
-    or croak "failed to open $rcfile: $!";
+    or die "failed to open $rcfile: $!";
   print $fh $str;
-  close($fh) or carp "close failed for $rcfile: $!";
+  close($fh) or warn "close failed for $rcfile: $!\n";
 
   say ">! wrote rcfile";
   say ">! ETC is: ". $ENV{HOME} ."/". $relative_base . "/etc" ;
@@ -107,6 +106,7 @@ sub Conf_write_confs {
   my ($vars_h) = @_;
   my ($base, $etc, $var) = RC_Read();
   File::Path::mkpath( $var ."/db" );
+  File::Path::mkpath( $var ."/tmp" );
   my $ref = _deserialize_etc();
   ## should have a vars hash for rplprintf, and RC_Read can give us an etc dir path
   ## use File::Path to create our dir structure
@@ -117,7 +117,7 @@ sub Conf_write_confs {
     my $output_path = $etc ."/". $confpath ;
     (undef, my $dir, my $file) = File::Spec->splitpath($output_path);
     File::Path::mkpath($dir) if $dir;
-    croak "tried to create $dir but can't be found?" unless -e $dir;
+    die "tried to create $dir but can't be found?" unless -e $dir;
 
     my $content = $ref->{$confpath};
     my $output = rplprintf( $content, $vars_h );
@@ -132,9 +132,9 @@ sub Conf_write_confs {
       } else { next }
     }
 
-    open(my $fh, '>', $output_path) or croak "open failed: $output_path: $!";
+    open(my $fh, '>', $output_path) or die "open failed: $output_path: $!";
     print $fh $output;
-    close($fh) or carp "close failed on $output_path: $!";
+    close($fh) or warn "close failed on $output_path: $!\n";
 
     say ">! Wrote $confpath";
   }
