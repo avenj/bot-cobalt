@@ -4,6 +4,7 @@ our $VERSION = '0.01';
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die
 
+use 5.12.1;
 use Cobalt::Common;
 
 sub new { bless {}, shift }

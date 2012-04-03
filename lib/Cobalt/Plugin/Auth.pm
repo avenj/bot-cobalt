@@ -1,6 +1,8 @@
 package Cobalt::Plugin::Auth;
 our $VERSION = '0.241';
 
+use 5.12.1;
+
 ## "Standard" Auth module
 ##
 ## Commands:

@@ -13,6 +13,8 @@ our $VERSION = '0.307';
 ##   AddedBy => $username,
 ##   },
 
+use 5.12.1;
+
 use Cobalt::Common;
 
 use Cobalt::Plugin::RDB::Database;

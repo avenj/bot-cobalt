@@ -17,7 +17,7 @@ our $VERSION = '0.001';
 ##      console.log for unspecific stuff
 ##      public/private implies outgoing also
 ##      ability to combine above arbitrarily
-
+use 5.12.1;
 use Cobalt::Common;
 
 use File::Path;

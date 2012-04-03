@@ -2,7 +2,7 @@ package Cobalt::Plugin::Extras::Relay;
 our $VERSION = '0.005';
 
 ## Simplistic relaybot plugin
-
+use 5.12.1;
 use Cobalt::Common;
 
 sub new { bless {}, shift }

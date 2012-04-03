@@ -1,12 +1,14 @@
 package Cobalt::Common;
-our $VERSION = '0.05';
+our $VERSION = '0.07';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##
 ## Does some Evil; the importing package will also have strict, warnings, 
 ## and the '5.12' featureset ('say', 'given/when', 'unicode_strings' ..)
+##  -> under 5.15.9, feature->import no longer seems to work as it did
+##     no longer documented.
 
-use 5.12.1;  ## because you're gonna need it
+use 5.12.1;
 use strict;
 use warnings;
 
@@ -120,7 +122,7 @@ Cobalt::Common - import commonly-used tools and constants
   ##  IRC::Utils
   ##  Cobalt::Utils
   ##  Object::Pluggable::Constants
-  ## also get strict, warnings, 5.12 features
+  ## also get strict + warnings
   use Cobalt::Common;
 
 =head1 DESCRIPTION
@@ -128,9 +130,7 @@ Cobalt::Common - import commonly-used tools and constants
 This is a small exporter module providing easy inclusion of commonly 
 used tools and constants.
 
-By default, B<strict>, B<warnings>, and the B<5.12> feature set are 
-also enabled (but it's still good practice to explicitly make use of 
-them -- life sucks when you start forgetting later . . . )
+By default, B<strict> and B<warnings> are also enabled.
 
 
 =head2 Exported

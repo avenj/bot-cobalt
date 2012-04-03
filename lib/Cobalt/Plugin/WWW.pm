@@ -204,7 +204,7 @@ sub _worker_spawn {
   
   $core->log->debug("created new worker: pid $pid");
   
-  ## feed this worker the top of the pending req stack
+  ## feed this worker the top of the pending req list
   my $pending = shift @{ $self->{PendingReqs} };
   my ($request, $req_tag) = @$pending;
   my %opts = (

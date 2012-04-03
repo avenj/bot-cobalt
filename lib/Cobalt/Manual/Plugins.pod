@@ -1054,21 +1054,34 @@ These are events sent by Cobalt::Core when various core states change.
 You should probably return PLUGIN_EAT_NONE on all of these, unless 
 you're absolutely sure of what you're doing.
 
-=head3 Plugin-related
+=head3 Plugin related events
+
+=head4 Bot_plugins_initialized
+
+Broadcast when the initial plugin load has completed at start-time.
+
+Carries no arguments.
+
+=head4 Bot_plugin_error
 
 FIXME
 
-=head3 Langset-related
+=head3 Langset related events
 
 FIXME
 
-=head3 Timer-related
+=head3 Timer related events
 
 =head4 Bot_executed_timer
 
 Broadcast whenever a timer ID has been executed.
 
-The only argument is the timer ID.
+The first argument is the timer ID.
+
+The second argument is the "tick" that the timer was executed from; this 
+is an integer increased by one every time the core timer pool is 
+checked; batched timer runs (set for exactly the same time) will execute 
+within the same "tick."
 
 =head4 Bot_deleted_timer
 
@@ -1078,6 +1091,9 @@ The first argument is the timer ID.
 
 The second argument is a cloned copy of the original timer hash.
 
+=head3 Ignore list related events
+
+FIXME
 
 =head1 PLUGIN DESIGN TIPS
 
@@ -1091,7 +1107,7 @@ and utilities from L<Object::Pluggable::Constants>, L<IRC::Utils>, and
 L<Cobalt::Utils>.
 
 Additionally, C<use Cobalt::Constant> will enable the B<strict> and 
-B<warnings> pragmas and import the '5.12' featureset (see 'perldoc feature')
+B<warnings> pragmas.
 
 This is provided as a convenience for plugin authors; rather than importing 
 from a goodly handful of modules, you can simply:
