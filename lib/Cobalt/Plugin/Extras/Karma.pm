@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.131';
+our $VERSION = '0.201';
 
 ## simple karma++/-- tracking
 
@@ -18,6 +18,8 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
+  
+  $self->{Cache} = {};
 
   my $dbpath = $core->var ."/karma.db";
   $self->{karmadb} = Cobalt::DB->new(
@@ -31,6 +33,7 @@ sub Cobalt_register {
       'public_msg',
       'public_cmd_karma',
       'public_cmd_resetkarma',
+      'karmaplug_sync_db',
     ],
   );
   $core->log->info("Registered");
@@ -40,9 +43,63 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering");
+  $self->_sync();
   return PLUGIN_EAT_NONE
 }
 
+
+sub _sync {
+  my ($self) = @_;
+  my $core = $self->{core};
+  my $db   = $self->{karmadb};
+  
+  return unless keys %{ $self->{Cache} };
+  
+  unless ($db->dbopen) {
+    $core->log->warn("dbopen failure for karmadb in _sync");
+    return
+  }
+  
+  for my $karma_for (keys %{ $self->{Cache} }) {
+    my $current = $self->{Cache}->{$karma_for};
+    $db->put($karma_for, $current);
+  }
+  
+  $db->dbclose;
+  return 1
+}
+
+sub _get {
+  my ($self, $karma_for) = @_;
+  my $core = $self->{core};
+  my $db = $self->{karmadb};
+  
+  return $self->{Cache}->{$karma_for}
+    if exists $self->{Cache}->{$karma_for};
+  
+  unless ($db->dbopen) {
+    $core->log->warn("dbopen failure for karmadb in _get");
+    return
+  }
+  
+  my $current = $db->get($karma_for) || 0;
+  $self->{Cache}->{$karma_for} = $current;  
+  $db->dbclose;
+  
+  return $current
+}
+
+sub Bot_karmaplug_sync_db {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  $self->_sync();
+
+  $core->timer_set( 5,
+    { Event => 'karmaplug_sync_db' },
+    'KARMAPLUG_SYNC_DB',
+  );
+  return PLUGIN_EAT_NONE  
+}
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
@@ -56,14 +113,9 @@ sub Bot_public_msg {
 
   if ($first_word =~ $self->{karma_regex}) {
     
-    unless ( $self->{karmadb}->dbopen ) {
-      $core->log->warn("dbopen failure for karmadb");
-      return PLUGIN_EAT_NONE
-    }
-    
     my ($karma_for, $karma) = (lc($1), $2);
 
-    my $current = $self->{karmadb}->get($karma_for) // 0;
+    my $current = $self->_get($karma_for);
 
     if      ($karma eq '--') {
       --$current;
@@ -71,9 +123,7 @@ sub Bot_public_msg {
       ++$current;
     }
 
-    $self->{karmadb}->put($karma_for, $current);
-
-    $self->{karmadb}->dbclose;
+    $self->{Cache}->{$karma_for} = $current;
   }
 
   return PLUGIN_EAT_NONE
@@ -95,33 +145,18 @@ sub Bot_public_cmd_resetkarma {
   my @message = @{ $msg->{message_array} };
   my $karma_for = lc(shift @message || return PLUGIN_EAT_ALL);
 
-  unless ( $self->{karmadb}->dbopen ) {
-    $core->log->warn("dbopen failure for karmadb");
-    $core->send_event( 'send_message', $context, $channel, 
-      "Failed to open karmadb",
-    );
-    return PLUGIN_EAT_ALL
-  }
-
-  unless ( $self->{karmadb}->get($karma_for) ) {
+  unless ( $self->_get($karma_for) ) {
     $core->send_event( 'send_message', $context, $channel,
-      "That user has no karmadb entry.",
+      "That user has no karma as it is.",
     );
-    $self->{karmadb}->dbclose;
     return PLUGIN_EAT_ALL
   }
   
-  if ( $self->{karmadb}->del($karma_for) ) {
-    $core->send_event( 'send_message', $context, $channel,
-      "Cleared karma for $karma_for",
-    );
-  } else {
-    $core->send_event( 'send_message', $context, $channel,
-      "Failed to clear karma for $karma_for",
-    );
-  }
-
-  $self->{karmadb}->dbclose;  
+  $self->{Cached}->{$karma_for} = 0;
+  
+  $core->send_event( 'send_message', $context, $channel,
+    "Cleared karma for $karma_for",
+  );
   
   return PLUGIN_EAT_ALL
 }
@@ -137,21 +172,11 @@ sub Bot_public_cmd_karma {
 
   my $resp;
 
-  unless ( $self->{karmadb}->dbopen ) {
-    $core->log->warn("dbopen failure for karmadb");
-    $core->send_event( 'send_message', $context, $channel, 
-      "Failed to open karmadb",
-    );
-    return PLUGIN_EAT_ALL
-  }
-
-  if ( my $karma = $self->{karmadb}->get($karma_for) ) {
+  if ( my $karma = $self->_get($karma_for) ) {
     $resp = "Karma for $karma_for: $karma";
   } else {
     $resp = "$karma_for currently has no karma, good or bad.";
   }
-
-  $self->{karmadb}->dbclose;
 
   $core->send_event( 'send_message', $context, $channel, $resp );
 
