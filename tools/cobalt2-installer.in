@@ -84,7 +84,7 @@ sub RC_Write {
     '## cobalt2rc automatically generated at '.scalar localtime,
     '$BASE = $ENV{HOME} . "/'.$relative_base.'";' ,
     '$ETC = $BASE . "/etc";' ,
-    '$VAR = $BASE . "/var";' ,
+    '$VAR = $BASE . "/var";' , "\n"
   ;
 
   open(my $fh, '>', $rcfile)
@@ -122,7 +122,7 @@ sub Conf_write_confs {
     my $content = $ref->{$confpath};
     my $output = rplprintf( $content, $vars_h );
 
-    say ">! Attempting to write $output_path . . .";
+    print ">! Writing $output_path .. ";
 
     if (-e $output_path) {
       say ">! Exists already: $output_path";
@@ -136,7 +136,7 @@ sub Conf_write_confs {
     print $fh $output;
     close($fh) or warn "close failed on $output_path: $!\n";
 
-    say ">! Wrote $confpath";
+    print "OK\n";
   }
 
   say ">! Finished writing confs.";
@@ -160,30 +160,42 @@ sub Conf_interactive {
   chomp $cf->{CFG_BOT_NICK} ;
   $cf->{CFG_BOT_NICK} ||= 'cobalt2';
 
+  print "\n";
+
   print "Bot's username [cobalt] ";
   $cf->{CFG_BOT_USERNAME} = <STDIN>;
   chomp $cf->{CFG_BOT_USERNAME} ;
   $cf->{CFG_BOT_USERNAME} ||= 'cobalt';
+
+  print "\n";
 
   print "Bot's 'realname' [cobalt2 bot] ";
   $cf->{CFG_BOT_REALNAME} = <STDIN>;
   chomp $cf->{CFG_BOT_REALNAME} ;
   $cf->{CFG_BOT_REALNAME} ||= 'cobalt2 bot';
 
+  print "\n";
+
   print "Remote ServerAddr [irc.cobaltirc.org] ";
   $cf->{CFG_SERVER_ADDR} = <STDIN>;
   chomp $cf->{CFG_SERVER_ADDR} ;
   $cf->{CFG_SERVER_ADDR} ||= 'irc.cobaltirc.org';
 
+  print "\n";
+
   print "Use SSL for this server? [y/N] ";
   my $usessl = _ans(my $in = <STDIN>, 'n');
   $cf->{CFG_USE_SSL} = $usessl ? 1 : 0 ;
+
+  print "\n";
 
   my $default_irc_port = $usessl ? 6697 : 6667 ;
   print "Remote port [$default_irc_port] ";
   $cf->{CFG_SERVER_PORT} = <STDIN>;
   chomp $cf->{CFG_SERVER_PORT} ;
   $cf->{CFG_SERVER_PORT} ||= $default_irc_port;
+
+  print "\n";
 
   say "You need to specify a command character for the bot.";
   say "This is used to prefix various plugin-provided commands.";
@@ -192,12 +204,16 @@ sub Conf_interactive {
   chomp $cf->{CFG_CMD_CHAR};
   $cf->{CFG_CMD_CHAR} ||= '!' ;
 
+  print "\n";
+
   say ">! Done configuring cobalt.conf" ;
   say ">! There are many more opts; review the file!";
 
+  print "\n";
+
   # plugins.conf is probably fine with a suitable example file
   
-  say ">! Configuring channels.conf";
+  say ">! Configuring channels.conf\n";
   say "You're going to want to set up an initial channel.";
 
   print "Channel name [#otw] ";
@@ -205,10 +221,12 @@ sub Conf_interactive {
   chomp $cf->{CHAN};
   $cf->{CHAN} ||= '#otw';
 
-  ## FIXME note about ChanMgr?
-  say "You may want to edit channels.conf and add other channels.";
+  print "\n";
 
-  say ">! Configuring auth.conf";
+  ## FIXME note about ChanMgr?
+  say "You may want to edit channels.conf and add other channels.\n";
+
+  say ">! Configuring auth.conf\n";
 
   say "You'll want at least one SuperUser to control the bot.";
   say "Authorized users have a username that may or may not be their IRC nick.";
@@ -216,6 +234,8 @@ sub Conf_interactive {
   $cf->{AUTH_USER} = <STDIN>;
   chomp $cf->{AUTH_USER};
   $cf->{AUTH_USER} ||= 'MyUser';
+
+  print "\n";
 
   say "By default, passwords are encrypted using bcrypt.";
   say "bcrypt is a pretty secure way to generate password hashes.";
@@ -245,6 +265,7 @@ sub Conf_interactive {
   say "\nAdded mask $cf->{AUTH_MASK} for user $cf->{AUTH_USER}";
   say "You may want to edit auth.conf to add/edit superusers and masks.";
   ## FIXME chmod auth.conf ?
+  print "\n";
 
   return $cf
 }
