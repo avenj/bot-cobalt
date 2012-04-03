@@ -470,6 +470,12 @@ sub timer_del {
   return unless $id;
   $self->log->debug("timer del; $id")
     if $self->debug > 1;
+  return unless exists $self->TimerPool->{$id};
+
+  $self->send_event( 'deleted_timer', 
+    $id,  dclone($self->TimerPool->{$id})
+  );
+
   return delete $self->TimerPool->{$id};
 }
 
@@ -501,11 +507,14 @@ sub timer_del_alias {
   my $timerpool = $self->TimerPool;
   
   my @deleted;
-  for my $timerID (keys %$timerpool) {
-    my $entry = $timerpool->{$timerID};
+  for my $id (keys %$timerpool) {
+    my $entry = $timerpool->{$id};
     if ($entry->{AddedBy} eq $alias) {
-      delete $timerpool->{$timerID};
-      push(@deleted, $timerID);
+      delete $timerpool->{$id};
+      push(@deleted, $id);
+      $self->send_event( 'deleted_timer', 
+        $id,  dclone($self->TimerPool->{$id})
+      );
     }
   }
   return wantarray ? @deleted : scalar @deleted ;
@@ -521,10 +530,14 @@ sub timer_del_pkg {
   ## convenience method for plugins
   ## delete timers by 'AddedBy' package name
   ## (f.ex when unloading a plugin)
-  for my $timer (keys %{ $self->TimerPool }) {
-    my $ev = $self->TimerPool->{$timer};
-    delete $self->TimerPool->{$timer}
-      if $ev->{AddedBy} eq $pkg;
+  for my $id (keys %{ $self->TimerPool }) {
+    my $ev = $self->TimerPool->{$id};
+    if ($ev->{AddedBy} eq $pkg) {
+      delete $self->TimerPool->{$id};
+      $self->send_event( 'deleted_timer', 
+        $id,  dclone($self->TimerPool->{$id})
+      );
+    }
   }
 }
 

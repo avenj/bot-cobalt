@@ -1049,7 +1049,10 @@ Retrieve the hash for this active timer (or undef if not found).
 
 =head2 Syndicated core events
 
-FIXME
+These are events sent by Cobalt::Core when various core states change.
+
+You should probably return PLUGIN_EAT_NONE on all of these, unless 
+you're absolutely sure of what you're doing.
 
 =head3 Plugin-related
 
@@ -1061,7 +1064,19 @@ FIXME
 
 =head3 Timer-related
 
-FIXME
+=head4 Bot_executed_timer
+
+Broadcast whenever a timer ID has been executed.
+
+The only argument is the timer ID.
+
+=head4 Bot_deleted_timer
+
+Broadcast whenever a timer ID has been deleted.
+
+The first argument is the timer ID.
+
+The second argument is a cloned copy of the original timer hash.
 
 
 =head1 PLUGIN DESIGN TIPS
