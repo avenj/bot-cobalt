@@ -1002,7 +1002,7 @@ sub _mkpasswd {
   ## handles grabbing cfg opts for us:
   my $cfg = $self->core->get_plugin_cfg( $self );
   my $method = $cfg->{Method} // 'bcrypt';
-  my $bcrypt_cost = $cfg->{Bcrypt_Cost} // '08';
+  my $bcrypt_cost = $cfg->{Bcrypt_Cost} || '08';
   return mkpasswd($passwd, $method, $bcrypt_cost);
 }
 
