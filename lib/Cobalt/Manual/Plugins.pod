@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.015
+Plugins guide revision: 0.016
 
 Last updated for cobalt 2.00_32
 
@@ -584,14 +584,8 @@ on the methods you can call against C<$irc> -- they are very complete.
 The Cobalt core provides various useful accessors and methods for plugins.
 
 B<NOTE:> The object reference to the Cobalt core object is referred to here 
-as C<$core>. How you keep track of $core is your business; storing it in 
-$self is generally fairly convenient:
-
-  ## often in our Cobalt_register method:
-  $self->{core} = $core;
-  ...
-  ## later, in an internal method...
-  my $plug_cf = $self->{core}->get_plugin_cfg( $self );
+as C<$core>. How you keep track of $core is your business; see 
+L</"Keeping track of $core">
 
 
 =head3 Attributes
@@ -1269,8 +1263,6 @@ to core attributes and methods outside of an event handler.
 
 The easiest way is to grab $core from Cobalt_register and store it 
 somewhere in $self:
-
-  sub new { bless {}, shift }
   
   sub Cobalt_register {
     ## get self and Cobalt::Core objects:
@@ -1288,6 +1280,21 @@ somewhere in $self:
     ## get $core back for ease of use:
     my $core = $self->{core};
   }
+
+You could, of course, write a simple accessor:
+
+  sub core {
+    my ($self, $core) = @_;
+    return $self->{CORE} = $core if $core and ref $core;
+    return $self->{CORE}
+  }
+  
+  ## in Cobalt_register:
+  my ($self, $core) = splice @_, 0, 2;
+  $self->core( $core );
+  
+  ## later, when you need it:
+  $self->core->send_event( ... );
 
 
 =head2 Non-reloadable plugins
