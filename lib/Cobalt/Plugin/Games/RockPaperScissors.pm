@@ -22,7 +22,7 @@ sub execute {
     rock => 'scissors',
   };
 
-  my $throw = (keys %$beats)[rand(scalar keys %$beats)];
+  my $throw = (keys %$beats)[rand(keys %$beats)];
 
   if      ($throw eq $rps) {
     return "$nick threw $rps, I threw $throw -- it's a tie!";

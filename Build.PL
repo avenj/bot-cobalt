@@ -108,12 +108,16 @@ my $build = $class->new(
       'POE::Filter::Reference' => 0,
 
       'POE::Component::Client::DNS' => 0,
-      'POE::Component::IRC::State' => '6.78',
-      'POE::Component::Syndicator' => '0.06',
-      'Object::Pluggable'          => '1.27',
+      'POE::Component::IRC::State'  => '6.78',
+      'POE::Component::Syndicator'  => '0.06',
+      'Object::Pluggable'           => '1.27',
 
      # Process mgmt
       'Proc::PID::File' => '1.26',
+      
+     # Terminal interaction
+      'Term::UI'       => 0,
+      'Term::ReadLine' => 0,
   },
 
   recommends => {
@@ -123,11 +127,13 @@ my $build = $class->new(
     ### Utils / misc
       # terminal interaction
       'Term::ReadKey' => 0,
+      'Term::ReadLine::Perl' => 0,
 
     ### Storage / serialization
       'JSON::XS'    => 0,
 
     ### Release tools, commented for now
+#      'Dir::Self' => 0,
      # templating (cpodconv/release tools)
 #      'Template' => 0,
      # POD conversion

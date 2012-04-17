@@ -122,6 +122,10 @@ L<App::cpanminus> makes this even easier:
    # Easy install via cpanm:
   $ cpanm ./Cobalt-Plugin-User-MyPlugin-1.00.tar.gz
 
+=head2 Configuration files
+
+FIXME
+
 =head2 Language sets
 
 FIXME

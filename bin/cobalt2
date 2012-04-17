@@ -88,7 +88,7 @@ sub _rc_read {
     or die ">! Unable to open specified rcfile: $rcfile: $!";
   my $str;
   { local $/; $str = <$fh>; }
-  close($fh) or warn "failed close; $rcfile; $!";
+  close($fh);
 
   my ($BASE, $ETC, $VAR);
   eval $str;

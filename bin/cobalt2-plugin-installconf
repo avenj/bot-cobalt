@@ -6,7 +6,8 @@ use warnings;
 
 use File::Copy;
 
-my($path_rcfile, $path_dest);
+my $path_dest;
+my $path_rcfile = $ENV{HOME} . "/.cobalt2rc" ;
 
 use Getopt::Long;
 GetOptions(
@@ -18,25 +19,65 @@ GetOptions(
   'rcfile=s'   => \$path_rcfile,
 
   'destination=s' => \$path_dest,
-  
-    
-  ## FIXME
 );
 
+my $this_plugin = $ARGV[0];
+unless ($this_plugin) {
+  ## FIXME prompt for plugin name
+  die "No plugin specified.\n";
+}
+
+## set up path_dest
+unless ($path_dest) {
+  my ($base, $etc) = rc_read();
+  ## FIXME prompt for filename
+  $path_dest = $etc ."/plugins/". $fname;
+}
+
+#print try_load_cf($this_plugin);  # debug
 
 ## FIXME
 
 ## if no plugin name specified, prompt for it
 
+## if no try_load_cf, exit w/ warning
+
+sub rc_read {
+  open(my $fh, '<', $path_rcfile)
+    or die "Could not open rcfile: $_pathrcfile: $!";
+  my $str;
+  { local $/; $str = <$fh> }
+  close($fh);
+  
+  my ($base, $etc, $var);
+  eval $str;
+  if ($@) {
+    die "Errors reported during rc parsing; $@";
+  }
+
+  return ($base, $etc, $var);
+}
+
+sub write_conf {
+  ## pass me the result of try_load_cf()
+  my ($thiscf) = @_;
+  ## if no path specified, write to 
+}
+
+sub try_load_cf {
+  my ($plugin) = @_;
+  my $plugincf = $plugin . '::Conf' ;
+  eval "require $plugincf";
+  return if $@;
+  my $thiscf = $plugincf->conf;
+  return $thiscf
+}
+
 ## look for This::Plugin::Conf::ExampleConf
 ## load it and look for example conf from 
-##  class method This::Plugin::Conf->install
+##  class method This::Plugin::Conf->conf
 ##   -or-
 ##  $This::Plugin::Conf::CONF
 ## -> either should return example conf as string
 ## -> write example conf to either specified path, or use rcfile & 
 ##    prompt
-
-## if the .conf already exists, show diff, offer to exit or backup+replace
-
-## Kill PluginConfs crap

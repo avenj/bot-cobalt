@@ -16,11 +16,13 @@ use Pod::Find qw/pod_find contains_pod/;
 
 use Template;
 
+use Dir::Self;
+use lib __DIR__;
 use CobaltdocToDoku;
 
-my $conffile = qq{cfg-docs.yml};
-my $destdir  = qq{wikidoc};
-my $indexdir = qq{indexes};
+my $conffile = __DIR__.qq{/cfg-docs.yml};
+my $destdir  = __DIR__.qq{/wikidoc};
+my $indexdir = __DIR__.qq{/indexes};
 
 my $cfg;
 
