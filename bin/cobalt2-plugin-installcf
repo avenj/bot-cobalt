@@ -1,0 +1,79 @@
+#!perl
+
+use 5.10.1;
+use strict;
+use warnings;
+
+use File::Copy;
+
+use Term::UI;
+use Term::ReadLine;
+use Text::ParseWords qw/parse_line/;
+
+my $t = Term::ReadLine->new('cobalt2-plugin-installcf');
+my $o = $t->OUT || \*STDOUT ;
+
+my $interactive = 1;
+
+use Getopt::Long;
+GetOptions(
+  help => sub {
+    ## FIXME
+    exit 0
+  },
+
+  'rcfile=s'      => \$path_rcfile,
+  'destination=s' => \$path_dest,
+
+  'interactive!'  => \$interactive,
+);
+
+## remaining args == $this_plugin:
+my $this_plugin = $ARGV[0];
+
+my $info_output;
+
+sub main {
+  unless ($this_plugin) {
+    ## FIXME prompt
+  }
+
+  ## FIXME
+  ## try_load_cf, error out if no conf returned
+
+  ## if no $path_dest, prompt w/ default unless not $interactive
+  ## get default etcdir from rc_read  
+  ## if dest exists, prompt with default '.new'
+  ## if not $interactive, copy to .new, appending date if exists
+  ## write, print $info_output (check if arrayref)
+}
+
+sub rc_read {
+  open(my $fh, '<', $path_rcfile)
+    or die "Could not open rcfile: $path_rcfile: $1";
+  my $str;
+  { local $/ ; $str = <$fh> }
+  close($fh);
+  
+  my ($BASE, $ETC, $VAR);
+  eval $str;
+  if ($@ || !$BASE || !$ETC) {
+    die "Errors reported during rc parsing; $@";
+  }
+  
+  return ($BASE, $ETC, $VAR)
+}
+
+sub try_load_cf {
+  my ($plugin) = @_;
+  my $plugincf = $plugin . '::Conf' ;
+  eval "require $plugincf";
+  return if $@;
+  return unless $plugincf->can('conf');
+  my $thiscf = $plugincf->conf;
+  if ($plugincf->can('info')) {
+    ## FIXME push this elsewhere?
+    $info_output = $plugincf->info;
+  }
+  return $thiscf
+}

@@ -6,9 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Plugins guide revision: 0.016
-
-Last updated for cobalt 2.00_32
+Last updated for cobalt B<2.00_40>
 
 =head1 DESCRIPTION
 
@@ -1349,15 +1347,19 @@ about the new object:
   }
 
 
-=head2 Using Moose
+=head2 Using Moo
 
-Cobalt::Core makes use of L<Moose> -- it's perfectly valid to use 
-Moose for your plugins, as well (and it's already loaded!)
+Cobalt::Core makes use of L<Moo> -- it's perfectly valid to use 
+Moo for your plugins, as well:
 
   package Cobalt::Plugin::User::MyPlugin;
   
-  use Moose;
-  has 'core' => ( is => 'rw', isa => 'Object' );
+  ## Cobalt::Common will import types:
+  use Cobalt::Common;
+  
+  use Moo;
+  
+  has 'core' => ( is => 'rw', isa => Object );
   
   sub Cobalt_register {
     my ($self, $core) = splice @_, 0, 2;
@@ -1367,20 +1369,11 @@ Moose for your plugins, as well (and it's already loaded!)
     return PLUGIN_EAT_NONE
   }
   
-  no Moose; 1;
+L<Moo> is a lightweight class builder for Perl with 
+largely Moose-compatible syntax. It can significantly simplify your 
+plugins.
 
-Moose is a proper object system for Perl, covering Perl's fairly 
-basic OO facilities with a lot of tasty sugar.
-
-Moose may make life much easier when writing large plugins requiring 
-a useful inheritance structure.
-
-You will probably want to read the L<Moose::Manual> if you are not 
-previously familiar with Moose.
-
-B<< A reloadable plugin cannot call meta->make_immutable >> -- attempting to 
-reload a plugin that has been made immutable will break spectacularly.
-Mark the plugin as NON_RELOADABLE or skip the immutable call.
+See L<MooX::Types::MooseLike::Base> for details on imported types.
 
 
 =head1 ADVANCED CONCEPTS
