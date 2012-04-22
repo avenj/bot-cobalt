@@ -3,7 +3,9 @@ our $VERSION = '2.00_40';
 
 use 5.10.1;
 use Carp;
+
 use Moo;
+use Sub::Quote;
 
 use Log::Handler;
 
@@ -29,27 +31,27 @@ has 'var' => ( is => 'ro', isa => Str,     required => 1 );
 has 'log'      => ( is => 'rw', isa => Object );
 has 'loglevel' => ( 
   is => 'rw', isa => Str, 
-  default => sub { 'info' } 
+  default => quote_sub q{ 'info' } 
 );
 
 ## passed in via frontend, typically:
 has 'detached' => ( is => 'ro', isa => Int, required => 1 );
 has 'debug'    => ( 
   is => 'rw', isa => Int, 
-  default => sub { 0 } 
+  default => quote_sub q{ 0 } 
 );
 
 ## pure convenience, ->VERSION is a better idea:
 has 'version' => ( 
   is => 'ro', isa => Str, 
-  default => sub { $VERSION }
+  default => quote_sub q{ $VERSION }
 );
 
 ## frontends can specify a bot url if they like
 ## (mostly used for W~ in Plugin::Info3 str formatting)
 has 'url' => ( 
   is => 'ro', isa => Str,
-  default => sub { "http://www.cobaltirc.org" },
+  default => quote_sub q{ "http://www.cobaltirc.org" },
 );
 
 ## pulls hash from Conf->load_langset later
@@ -60,7 +62,7 @@ has 'State' => (
   ## global 'heap' of sorts
   is => 'rw',
   isa => HashRef,
-  default => sub {
+  default => quote_sub {
     {
       ## {HEAP} is here for convenience with no guarantee regarding 
       ## collisions
@@ -85,13 +87,13 @@ has 'State' => (
 has 'TimerPool' => (
   ## timers; see _core_timer_check_pool and timer_set methods
   is  => 'rw',  isa => HashRef,
-  default => sub { {} },
+  default => quote_sub { {} },
 );
 
 ## alias -> object:
 has 'PluginObjects' => (
   is  => 'rw',  isa => HashRef,
-  default => sub { {} },
+  default => quote_sub { {} },
 );
 
 ## Servers->{$alias} = {
@@ -103,14 +105,14 @@ has 'PluginObjects' => (
 ## }
 has 'Servers' => (
   is  => 'rw',  isa => HashRef,
-  default => sub { {} },
+  default => quote_sub { {} },
 );
 
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
   is  => 'rw',  isa => HashRef,
-  default => sub { {} },
+  default => quote_sub { {} },
 );
 
 sub init {
