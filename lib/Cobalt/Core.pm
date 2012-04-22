@@ -406,8 +406,8 @@ sub timer_set {
   ## automatically pick a unique id unless specified
   unless ($id) {
     my @p = ( 'a'..'f', 0..9 );
-    $id = join '', map { $p[rand@p] } 1 .. 5;
-    do { $id .= $p[rand@p] } while exists $self->TimerPool->{$id};
+    $id = join '', map { $p[rand@p] } 1 .. 4;
+    $id .= $p[rand@p] while exists $self->TimerPool->{$id};
   } else {
     ## an id was specified, overrule any existing by the same name
     delete $self->TimerPool->{$id};
