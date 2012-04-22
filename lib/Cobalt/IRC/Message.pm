@@ -3,13 +3,16 @@ package Cobalt::IRC::Message;
 ## Message superclass.
 ## Subclasses: Private, Public, Action, Notice
 
-## Required input: context, message (unstripped), src (full)
+## Required input: 
+##  core
+##  context (str), message (unstripped), src (full), targets (array ref)
 
 use 5.10.1;
 use Cobalt::Common;
 use Moo;
 use Sub::Quote;
 
+has 'core'    => ( is => 'rw', isa => Object, required => 1 );
 has 'context' => ( is => 'rw', isa => Str, required => 1 );
 has 'src'     => ( is => 'rw', isa => Str, required => 1 );
 
@@ -44,11 +47,11 @@ has 'src_host' => (  is => 'rw', lazy => 1,
 has 'stripped' => ( is => 'rw', isa => Str );
 
 has 'message_array' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ split ' ', $self->stripped },
+  default => quote_sub q{ [ split ' ', $self->stripped ] },
 );
 
 has 'message_array_sp' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ split / /, $self->stripped },
+  default => quote_sub q{ [ split / /, $self->stripped ] },
 );
 
 1;
