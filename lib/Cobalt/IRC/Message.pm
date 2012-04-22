@@ -29,6 +29,13 @@ has 'target'  => ( is => 'rw', isa => Str, lazy => 1,
   default => quote_sub q{ $_[0]->targets->[0] }, 
 );
 
+## May or may not have a channel.
+has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
+  default => quote_sub q{
+    $_[0]->target =~ /^[#&+]/ ? $_[0]->target : ''
+  },
+);
+
 ## Message source.
 has 'src_nick' => (  is => 'rw', lazy => 1,
   default => quote_sub q{ (parse_user($_[0]->src))[0] },
