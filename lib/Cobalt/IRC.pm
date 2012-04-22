@@ -3,6 +3,8 @@ our $VERSION = '0.216';
 
 use 5.10.1;
 use Cobalt::Common;
+use Cobalt::IRC::Message;
+use Cobalt::IRC::Message::Public;
 
 use POE;
 use POE::Component::IRC::State;
@@ -279,12 +281,6 @@ sub irc_public {
   my $core    = $self->{core};
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
-  
-  my $me = $irc->nick_name();
-  my $orig = $txt;
-  $txt = strip_color( strip_formatting($txt) );
-  my ($nick, $user, $host) = parse_user($src);
-  my $channel = $where->[0];
 
   my $casemap = $core->get_irc_casemap( $context );
   for my $mask ( $core->ignore_list($context) ) {
@@ -293,58 +289,21 @@ sub irc_public {
     return if matches_mask( $mask, $src, $casemap );
   }
 
-  my $msg = {
+  my $msg_obj = Cobalt::IRC::Message::Public->new(
+    core    => $core,
     context => $context,
-    myself => $me, 
-    src    => $src, 
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    channel  => $channel,
-    target   => $channel, # maintain compat with privmsg handler
-    target_array => $where, # array
-    highlight => 0,
-    cmdprefix => 0,
-    message => $txt,  # stripped text
-    orig => $orig,    # the original unparsed text
-    message_array => [ split ' ', $txt ],
-    ## FIXME: document array w/ spaces:
-    message_array_sp => [ split / /, $txt ],
-  };
-
-  $msg->{highlight} = 1 if $txt =~ /^${me}.?\s+/i;
-  $msg->{highlighted} = $msg->{highlight};
-
-  my $cf_core = $core->get_core_cfg();
-  my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!';
-  if ( $txt =~ /^${cmdchar}([^\s]+)/ ) {
-    ## Commands always get lowercased:
-    my $cmd = lc $1;
-    $msg->{cmd} = $cmd;
-    $msg->{cmdprefix} = 1;
-
-    ## IMPORTANT:
-    ## this is a _public_cmd_, so we shift message_array leftwards.
-    ## this means the command *without prefix* is in $msg->{cmd}
-    ## the text array *without command or prefix* is in $msg->{message_array}
-    ## the original unmodified string is in $msg->{orig}
-    ## the format/color-stripped string is in $msg->{message}
-    ## the text array here may well be empty (no args specified)
-
-    my $cmd_msg = dclone($msg);
-    shift @{ $cmd_msg->{message_array} };
-
-    ## issue a public_cmd_$cmd event to plugins (w/ different ref)
-    ## command-only plugins can choose to only receive specified events
-    $core->send_event( 
-      'public_cmd_'.$cmd,
-      $context, 
-      $cmd_msg
-    );
+    src     => $src,
+    targets => $where,
+    message => $txt,
+  );
+  
+  ## Bot_public_msg / Bot_public_cmd_$cmd  
+  if (my $cmd = $msg_obj->cmd) {
+    $core->send_event( 'public_cmd_'.$cmd, $msg_obj);
+  } else {
+    $core->send_event( 'public_msg', $msg_obj );
   }
-
-  ## issue Bot_public_msg (plugins will get _cmd_ events first!)
-  $core->send_event( 'public_msg', $context, $msg );
+  
 }
 
 sub irc_msg {
@@ -355,37 +314,20 @@ sub irc_msg {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $me = $irc->nick_name();
-  my $orig = $txt;
-  $txt = strip_color( strip_formatting($txt) );
-  my ($nick, $user, $host) = parse_user($src);
-
-  ## private msg handler
-  ## similar to irc_public
-
   my $casemap = $core->get_irc_casemap( $context );
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
-  my $sent_to = $target->[0];
-
-  my $msg = {
+  my $msg_obj = Cobalt::IRC::Message->new(
+    core    => $core,
     context => $context,
-    myself  => $me,
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    target   => $sent_to,
-    target_array => $target,
+    src     => $src,
+    targets => $target,
     message => $txt,
-    orig    => $orig,
-    message_array => [ split ' ', $txt ],
-  };
-
-  ## Bot_private_msg
-  $core->send_event( 'private_msg', $context, $msg );
+  );
+  
+  $core->send_event( 'private_msg', $msg_obj );
 }
 
 sub irc_notice {
@@ -395,35 +337,20 @@ sub irc_notice {
   my $core    = $self->{core};
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-
-  my $me = $irc->nick_name();
-  my $orig = $txt;
-  $txt = strip_color( strip_formatting($txt) );
-  my ($nick, $user, $host) = parse_user($src);
-
-  my $casemap = $core->get_irc_casemap($context) // 'rfc1459';
   
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
-
-  my $msg = {
+  
+  my $msg_obj = Cobalt::IRC::Message->new(
+    core    => $core,
     context => $context,
-    myself  => $me,
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    target => $target->[0],
-    target_array => $target,
+    src     => $src,
+    targets => $target,
     message => $txt,
-    orig    => $orig,
-    message_array => [ split ' ', $txt ],
-    message_array_sp => [ split / /, $txt ],
-  };
-
-  ## Bot_notice
-  $self->{core}->send_event( 'notice', $context, $msg );
+  );
+  
+  $core->send_event( 'notice', $msg_obj );
 }
 
 sub irc_ctcp_action {
@@ -434,37 +361,19 @@ sub irc_ctcp_action {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $me = $irc->nick_name();
-  my $orig = $txt;
-  $txt = strip_color( strip_formatting($txt) );
-  my ($nick, $user, $host) = parse_user($src);
-
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src );
   }
-
-  my $msg = {
-    context => $context, 
-    myself  => $me,      
-    src => $src,        
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    target   => $target->[0],
-    target_array => $target,
+  
+  my $msg_obj = Cobalt::IRC::Message->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    targets => $target,
     message => $txt,
-    orig    => $orig,
-    message_array => [ split ' ', $txt ],
-    message_array_sp => [ split / /, $txt ],
-  };
+  );
 
-  ## if this is a public ACTION, add a 'channel' key
-  ## same as ->target, but convenient for differentiating
-  $msg->{channel} = $target->[0] 
-    if $target->[0] =~ /^[#&+]/;
-
-  ## Bot_ctcp_action
-  $core->send_event( 'ctcp_action', $context, $msg );
+  $core->send_event( 'ctcp_action', $context, $msg_obj );
 }
 
 sub irc_connected {
