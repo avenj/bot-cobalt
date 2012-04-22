@@ -9,7 +9,7 @@ our $VERSION = '1.01';
 ## Plguins can specify their own config files to load
 ## See plugins.conf for more information.
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 use Carp;

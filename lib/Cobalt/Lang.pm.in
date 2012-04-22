@@ -1,5 +1,4 @@
 package Cobalt::Lang;
-our $VERSION = "0.17";
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
@@ -8,13 +7,12 @@ our $VERSION = "0.17";
 ## This provides an up-to-date default English set in case the 
 ## on-disk langset is old / incomplete / broken / missing.
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 use Carp;
 
-use Moose;
-use namespace::autoclean;
+use Moo;
 
 use Cobalt::Serializer;
 
@@ -98,6 +96,5 @@ sub load_langset {  ## load_langset(language)
 
 ### THIS MODULE WILL HAVE A LANGSET APPENDED AT BUILD-TIME ###
 
-__PACKAGE__->meta->make_immutable;
-no Moose; 1;
+no Moo; 1;
 __DATA__

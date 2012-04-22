@@ -1,7 +1,7 @@
 package Cobalt::Plugin::OutputFilters::StripFormat;
 our $VERSION = '0.12';
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

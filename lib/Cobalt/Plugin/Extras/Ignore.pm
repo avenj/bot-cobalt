@@ -2,7 +2,7 @@ package Cobalt::Plugin::Extras::Ignore;
 our $VERSION = '0.10';
 
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

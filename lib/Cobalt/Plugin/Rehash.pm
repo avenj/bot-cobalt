@@ -12,7 +12,7 @@ our $VERSION = '0.101';
 ##
 ## Also doesn't make very many guarantees regarding consequences ...
 
-use 5.12.1;
+use 5.10.1;
 
 use Cobalt::Common;
 use Cobalt::Conf;

@@ -3,7 +3,7 @@ our $VERSION = '0.202';
 
 ## simple karma++/-- tracking
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

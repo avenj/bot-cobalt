@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Extras::Shorten;
 our $VERSION = '0.07';
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

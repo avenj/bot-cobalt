@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Info3;
 our $VERSION = '0.221';
 
-use 5.12.1;
+use 5.10.1;
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior

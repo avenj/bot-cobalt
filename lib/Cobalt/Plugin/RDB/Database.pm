@@ -26,7 +26,7 @@ our $VERSION = '0.32';
 ## Go read the Cobalt::DB POD and write something better instead.
 ##   (  then send it to me! :)  )
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 use Carp;

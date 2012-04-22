@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Games;
 our $VERSION = '0.16';
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Games::Roulette;
 our $VERSION = '0.005';
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

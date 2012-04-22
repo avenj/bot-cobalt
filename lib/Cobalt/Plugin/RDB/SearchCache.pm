@@ -13,7 +13,7 @@ our $VERSION = '0.22';
 ## This may get moved out to the core lib directory, in which case this 
 ## module will become a placeholder.
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

@@ -9,7 +9,7 @@ our $VERSION = '0.25';
 ## Very simplistic, no readonly locking etc.
 ## a better 'DB2' interface using BerkeleyDB.pm is planned ...
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 use Carp;
