@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.241';
+our $VERSION = '0.300';
 
-use 5.12.1;
+use 5.10.1;
 
 ## "Standard" Auth module
 ##
@@ -59,8 +59,7 @@ use 5.12.1;
 ## Auth hash should be adjusted when nicknames change.
 ## This plugin tracks 'lost' identified users and clears as needed
 
-use Moose;
-use namespace::autoclean;
+use Moo;
 
 use Cobalt::Common;
 
@@ -80,10 +79,10 @@ use constant {
 };
 
 
-has 'core' => ( is => 'rw', isa => 'Object' );
-has 'DB_Path' => ( is => 'rw', isa => 'Str' );
+has 'core'    => ( is => 'rw', isa => Object );
+has 'DB_Path' => ( is => 'rw', isa => Str );
 
-has 'AccessList' => ( is => 'rw', isa => 'HashRef', 
+has 'AccessList' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
@@ -1064,7 +1063,7 @@ sub _write_access_list {
   chmod($perms, $authdb);
 }
 
-no Moose; 1;
+no Moo; 1;
 __END__
 
 

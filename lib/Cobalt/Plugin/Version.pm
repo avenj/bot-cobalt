@@ -16,8 +16,8 @@ our $VERSION = '1.02';
 ## Specifying a recent Perl is usually a good idea.
 ## You get handy new features like given/when case statements,
 ## better Unicode semantics, etc.
-## You need at least 5.12.1 to run cobalt2 anyway:
-use 5.12.1;
+## You need at least 5.10.1 to run cobalt2 anyway:
+use 5.10.1;
 
 ## Always, always use strict & warnings:
 use strict;

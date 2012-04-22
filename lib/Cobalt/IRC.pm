@@ -1,7 +1,7 @@
 package Cobalt::IRC;
 our $VERSION = '0.216';
 
-use 5.12.1;
+use 5.10.1;
 use Cobalt::Common;
 
 use POE;

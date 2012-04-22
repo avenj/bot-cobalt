@@ -1,14 +1,13 @@
 package Cobalt::Common;
-our $VERSION = '0.07';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##
 ## Does some Evil; the importing package will also have strict, warnings, 
-## and the '5.12' featureset ('say', 'given/when', 'unicode_strings' ..)
+## and the '5.10' featureset ('say', 'given/when', ..)
 ##  -> under 5.15.9, feature->import no longer seems to work as it did
 ##     no longer documented.
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 
@@ -32,6 +31,8 @@ use Object::Pluggable::Constants qw/
   PLUGIN_EAT_NONE 
   PLUGIN_EAT_ALL 
 /;
+
+use MooX::Types::MooseLike::Base qw/:all/;
 
 ## FIXME: These sets should be documented .. eventually ..
 
@@ -86,6 +87,17 @@ our %EXPORT_TAGS = (
     PLUGIN_EAT_NONE PLUGIN_EAT_ALL
     
   / ],
+  
+  types => [
+    qw/
+    
+    Any Defined Undef Bool
+    Value Ref Str Num Int
+    ArrayRef HashRef CodeRef RegexpRef GlobRef
+    FileHandle Object
+    AHRef
+
+  / ],
 );
 
 our @EXPORT;
@@ -100,7 +112,7 @@ our @EXPORT;
 sub import {
   strict->import;
   warnings->import;
-  feature->import( ':5.12' );
+  feature->import( ':5.10' );
   __PACKAGE__->export_to_level(1, @_);  
 }
 
@@ -148,6 +160,12 @@ PLUGIN_EAT_NONE (L<Object::Pluggable::Constants>)
 PLUGIN_EAT_ALL (L<Object::Pluggable::Constants>)
 
 =back
+
+=head3 Moo types
+
+All of the L<MooX::Types::MooseLike::Base> types are exported.
+
+See L<MooX::Types::MooseLike::Base> for details.
 
 =head3 IRC::Utils
 

@@ -1,7 +1,7 @@
 package Cobalt::Plugin::Seen;
 our $VERSION = '0.002';
 
-use 5.12.1;
+use 5.10.1;
 
 use Cobalt::Common;
 use Cobalt::DB;

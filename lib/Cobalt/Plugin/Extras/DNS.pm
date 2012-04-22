@@ -3,7 +3,7 @@ our $VERSION = '0.001';
 
 ## Mostly borrowed from POE::Component::IRC::Plugin::QueryDNS by BinGOs
 
-use 5.12.1;
+use 5.10.1;
 use Cobalt::Common;
 
 use POE;

@@ -1,56 +1,65 @@
 package Cobalt::Core;
-our $VERSION = '2.00_36';
+our $VERSION = '2.00_40';
 
-use 5.12.1;
+use 5.10.1;
 use Carp;
-use Moose;
-use MooseX::NonMoose;
-use namespace::autoclean;
+use Moo;
 
 use Log::Handler;
 
 use POE;
 use Object::Pluggable::Constants qw(:ALL);
 
-extends 'POE::Component::Syndicator',
-        'Cobalt::Lang';
-
 use Cobalt::IRC;
+use Cobalt::Common;
 
 use Storable qw/dclone/;
+
+extends 'POE::Component::Syndicator',
+        'Cobalt::Lang';
 
 ### a whole bunch of attributes ...
 
 ## usually a hashref from Cobalt::Conf created via frontend:
-has 'cfg' => ( is => 'rw', isa => 'HashRef', required => 1 );
+has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :
-has 'var' => ( is => 'ro', isa => 'Str',     required => 1 );
+has 'var' => ( is => 'ro', isa => Str,     required => 1 );
 
 ## the Log::Handler instance:
-has 'log'      => ( is => 'rw', isa => 'Object' );
-has 'loglevel' => ( is => 'rw', isa => 'Str', default => 'info' );
+has 'log'      => ( is => 'rw', isa => Object );
+has 'loglevel' => ( 
+  is => 'rw', isa => Str, 
+  default => sub { 'info' } 
+);
 
 ## passed in via frontend, typically:
-has 'debug'    => ( is => 'rw', isa => 'Int', default => 0 );
-has 'detached' => ( is => 'ro', isa => 'Int', required => 1 );
+has 'detached' => ( is => 'ro', isa => Int, required => 1 );
+has 'debug'    => ( 
+  is => 'rw', isa => Int, 
+  default => sub { 0 } 
+);
 
 ## pure convenience, ->VERSION is a better idea:
-has 'version' => ( is => 'ro', isa => 'Str', default => $VERSION );
+has 'version' => ( 
+  is => 'ro', isa => Str, 
+  default => sub { $VERSION }
+);
 
 ## frontends can specify a bot url if they like
 ## (mostly used for W~ in Plugin::Info3 str formatting)
-has 'url' => ( is => 'ro', isa => 'Str',
-  default => "http://www.cobaltirc.org",
+has 'url' => ( 
+  is => 'ro', isa => Str,
+  default => sub { "http://www.cobaltirc.org" },
 );
 
 ## pulls hash from Conf->load_langset later
 ## see Cobalt::Lang POD
-has 'lang' => ( is => 'rw', isa => 'HashRef' );
+has 'lang' => ( is => 'rw', isa => HashRef );
 
 has 'State' => (
   ## global 'heap' of sorts
   is => 'rw',
-  isa => 'HashRef',
+  isa => HashRef,
   default => sub {
     {
       ## {HEAP} is here for convenience with no guarantee regarding 
@@ -75,14 +84,13 @@ has 'State' => (
 
 has 'TimerPool' => (
   ## timers; see _core_timer_check_pool and timer_set methods
-  is  => 'rw',
-  isa => 'HashRef',
+  is  => 'rw',  isa => HashRef,
   default => sub { {} },
 );
 
 ## alias -> object:
 has 'PluginObjects' => (
-  is  => 'rw',  isa => 'HashRef',
+  is  => 'rw',  isa => HashRef,
   default => sub { {} },
 );
 
@@ -94,14 +102,14 @@ has 'PluginObjects' => (
 ##   ConnectedAt => time(),
 ## }
 has 'Servers' => (
-  is  => 'rw',  isa => 'HashRef',
+  is  => 'rw',  isa => HashRef,
   default => sub { {} },
 );
 
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is  => 'rw',  isa => 'HashRef',
+  is  => 'rw',  isa => HashRef,
   default => sub { {} },
 );
 
@@ -810,8 +818,7 @@ sub get_plugin_cfg {
 
 
 
-__PACKAGE__->meta->make_immutable;
-no Moose; 1;
+no Moo; 1;
 __END__
 
 =pod

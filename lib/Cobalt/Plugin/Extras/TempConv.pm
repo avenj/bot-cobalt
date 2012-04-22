@@ -5,7 +5,7 @@ our $VERSION = '1.03';
 ##  _public_cmd_tempconv  ( !tempconv )
 ##  _public_cmd_temp      ( !temp )
 
-use 5.12.1;
+use 5.10.1;
 use strict;
 use warnings;
 

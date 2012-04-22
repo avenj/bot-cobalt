@@ -58,7 +58,7 @@ my $build = $class->new(
 
   requires => {
    ### Core set ###
-      'perl' => '5.12.1',
+      'perl' => '5.10.1',
       'Carp' => 0,
       'Cwd'  => 0,
       'Data::Dumper'   => 0,
@@ -94,10 +94,9 @@ my $build = $class->new(
      # Logging
       'Log::Handler' => '0.71',
 
-     # Moose + related
-      'Moose'                => '2.00',
-      'MooseX::NonMoose'     => '0.18',
-      'namespace::autoclean' => '0.12',
+     # Moo + related
+      'Moo'                    => '0.009',
+      'MooX::Types::MooseLike' => '0.03',
       
      # Network
        'Net::IP::Minimal' => '0.02',
