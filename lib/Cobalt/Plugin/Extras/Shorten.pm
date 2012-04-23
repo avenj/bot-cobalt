@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use 5.10.1;
 use strict;
@@ -38,12 +38,12 @@ sub Cobalt_unregister {
 
 sub Bot_public_cmd_shorturl {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg = ${ $_[1] };
-  my $nick    = $msg->{src_nick};
-  my $channel = $msg->{channel};
-  my @message = @{ $msg->{message_array} };
-  my $url = shift @message if @message;
+  my $msg = ${ $_[0] };
+
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
+  my $channel = $msg->channel;
+  my $url = $msg->message_array->[0] || return PLUGIN_EAT_ALL;
   $url = uri_escape($url);
 
   $self->_request_shorturl($url, $context, $channel, $nick);
@@ -57,13 +57,12 @@ sub Bot_public_cmd_shorten {
 
 sub Bot_public_cmd_longurl {
   my ($self, $core) = splice @_, 0, 2;
-
-  my $context = ${ $_[0] };
-  my $msg = ${ $_[1] };
-  my $nick    = $msg->{src_nick};
-  my $channel = $msg->{channel};
-  my @message = @{ $msg->{message_array} };
-  my $url = shift @message if @message;
+  my $msg = ${ $_[0] };
+  
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
+  my $channel = $msg->channel;
+  my $url = $msg->message_array->[0] || return PLUGIN_EAT_ALL;
   $url = uri_escape($url);
 
   $self->_request_longurl($url, $context, $channel, $nick);

@@ -35,12 +35,12 @@ sub Cobalt_unregister {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg = ${ $_[1] };
+  my $msg = ${ $_[0] };
+ 
+  my $context = $msg->context;
 
-  return PLUGIN_EAT_NONE unless $msg->{cmdprefix};
-  
-  my $cmd = $msg->{cmd};
+  return PLUGIN_EAT_NONE unless $msg->cmd;
+  my $cmd = $msg->cmd;
   
   return PLUGIN_EAT_NONE
     unless $cmd and defined $self->{Dispatch}->{$cmd};
@@ -48,7 +48,7 @@ sub Bot_public_msg {
   my $game = $self->{Dispatch}->{$cmd};
   my $obj  = $self->{Objects}->{$game};
   
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->message_array };
   my $str = join ' ', @message[1 .. $#message];
   
   my $resp = '';
@@ -56,7 +56,7 @@ sub Bot_public_msg {
 
   $core->send_event( 'send_message',
     $context,
-    $msg->{target},
+    $msg->target,
     $resp
   ) if $resp;
 
@@ -137,10 +137,10 @@ in L<Cobalt::IRC/Bot_public_msg>) and the stripped string without
 the command:
 
   sub execute {
-    my ($self, $msg_h, $str) = @_;
+    my ($self, $msg, $str) = @_;
     ## We saved {core} in new():
     my $core = $self->{core};
-    my $src_nick = $msg->{src_nick};
+    my $src_nick = $msg->src_nick;
     
     ...
 
@@ -149,8 +149,8 @@ the command:
     
     ## ...or use $core and return nothing:
     $core->send_event( 'send_message',
-      $msg->{context},
-      $msg->{channel},
+      $msg->context,
+      $msg->channel,
       $some_response
     );
     return

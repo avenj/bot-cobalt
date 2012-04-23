@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Version;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 ## Always declare a package name as the first line.
 ## For example, if your module lives in:
 ##   lib/Cobalt/Plugin/User/MyPlugin.pm
@@ -76,16 +76,16 @@ sub Bot_public_msg {
 
   ## Arguments are provided as references
   ## deref:
-  my $context = ${$_[0]};  ## our server context
-  my $msg     = ${$_[1]};  ## our msg hash
+  my $msg     = ${$_[0]};      ## our msg object
+  my $context = $msg->context; ## our server context
 
   ## return unless bot is addressed:
-  return PLUGIN_EAT_NONE unless $msg->{highlight};
+  return PLUGIN_EAT_NONE unless $msg->highlight;
 
   my $resp;
 
   ## $message_array->[1] is the first word aside from botnick.
-  my $cmd = $msg->{message_array}->[1] || return PLUGIN_EAT_NONE;
+  my $cmd = $msg->message_array->[1] || return PLUGIN_EAT_NONE;
 
   given ( lc($cmd) ) {
 
@@ -128,7 +128,7 @@ sub Bot_public_msg {
   if ($resp) {
     ## We have a response . . .
     ## Send it back to the relevant location.
-    my $target = $msg->{channel};
+    my $target = $msg->channel;
     $core->send_event( 'send_message', $context, $target, $resp );
   }
 

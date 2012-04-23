@@ -43,13 +43,12 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_nslookup { Bot_public_cmd_dns(@_) }
 sub Bot_public_cmd_dns {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
   
-  my $channel = $msg->{channel};
-  my @message = @{$msg->{message_array}};
-  my $host = $message[0];
-  my $type = $message[1];
+  my $channel = $msg->channel;
+  
+  my ($host, $type) = @{ $msg->message_array };
   
   $self->_run_query($context, $channel, $host, $type);
   

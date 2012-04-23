@@ -338,6 +338,7 @@ sub irc_notice {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   
+  my $casemap = $core->get_irc_casemap($context);
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
@@ -361,8 +362,9 @@ sub irc_ctcp_action {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
+  my $casemap = $core->get_irc_casemap($context);
   for my $mask ( $core->ignore_list($context) ) {
-    return if matches_mask( $mask, $src );
+    return if matches_mask( $mask, $src, $casemap );
   }
   
   my $msg_obj = Cobalt::IRC::Message->new(

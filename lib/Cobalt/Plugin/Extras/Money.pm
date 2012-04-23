@@ -66,13 +66,13 @@ sub Bot_currencyconv_expire_cache {
 
 sub Bot_public_cmd_currency {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
   
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
 
-  my @message = @{ $msg->{message_array} };
-  my ($value, $from, undef, $to) = @message;
+  my $message = $msg->message_array;
+  my ($value, $from, undef, $to) = @$message;
   
   unless ($value && $from && $to) {
     $core->send_event( 'send_message', $context, $channel,

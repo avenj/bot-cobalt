@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Rehash;
-our $VERSION = '0.101';
+our $VERSION = '0.102';
 
 ## HANDLES AND EATS:
 ##  !rehash
@@ -49,10 +49,10 @@ sub Bot_rehash {
 
 sub Bot_public_cmd_rehash {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
 
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
 
@@ -67,10 +67,9 @@ sub Bot_public_cmd_rehash {
     return PLUGIN_EAT_ALL
   }
   
-  my @args = @{$msg->{message_array}};
-  my $type = lc($args[0] || 'all');
+  my $type = lc($msg->message_array->[0] || 'all');
 
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
   
   my $resp;
   given ($type) {

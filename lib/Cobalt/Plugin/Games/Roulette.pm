@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 use 5.10.1;
 use strict;
@@ -20,8 +20,8 @@ sub execute {
   my ($self, $msg, $str) = @_;
   my $cyls = 6;
 
-  my $context = $msg->{context};
-  my $nick = $msg->{src_nick};
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
 
   if ( $str && index(lc($str), 'spin') == 0 ) {
     ## clear loaded
@@ -37,8 +37,10 @@ sub execute {
     
     my $core = $self->{core};
     my $irc  = $core->get_irc_obj($context);
-    my $chan = $msg->{channel};
-    my $bot  = $msg->{myself};
+
+    my $chan = $msg->channel;
+    my $bot  = $msg->myself;
+
     if ( $irc->is_channel_operator($chan, $bot)
           ## support silly +q/+a modes also
           ## (because I feel sorry for the unrealircd kids)

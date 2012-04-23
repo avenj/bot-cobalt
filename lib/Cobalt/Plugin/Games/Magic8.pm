@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Magic8;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use 5.10.1;
 use strict;
@@ -17,7 +17,7 @@ sub new {
 
 sub execute {
   my ($self, $msg) = @_;
-  my $nick = $msg->{src_nick}//'' if ref $msg;
+  my $nick = $msg->src_nick//'' if ref $msg;
   my @responses = @{ $self->{Responses} };
   return $nick.': '.$responses[rand @responses]
 }

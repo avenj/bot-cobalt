@@ -21,7 +21,7 @@ has 'cmd' => ( is => 'rw', lazy => 1,
     if ($txt =~ /^${cmdchar}([^\s]+)/) {
       my $message = $self->message_array;
       shift @$message;
-      $self->message_array($message); 
+      $self->message_array($message);
       return lc($1)
     }
     undef

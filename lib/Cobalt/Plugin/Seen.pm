@@ -284,13 +284,13 @@ sub Bot_nick_changed {
 
 sub Bot_public_cmd_seen {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
   
-  my $channel = $msg->{channel};
-  my $nick    = $msg->{src_nick};
+  my $channel = $msg->channel;
+  my $nick    = $msg->src_nick;
   
-  my $targetnick = $msg->{message_array}->[0];
+  my $targetnick = $msg->message_array->[0];
   
   unless ($targetnick) {
     $core->send_event( 'send_message', 

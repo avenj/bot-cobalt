@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::RockPaperScissors;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use 5.10.1;
 use strict;
@@ -9,7 +9,7 @@ sub new { bless {}, shift }
 
 sub execute {
   my ($self, $msg, $rps) = @_;
-  my $nick = $msg->{src_nick}//'';
+  my $nick = $msg->src_nick//'';
   if      (! $rps) {
     return "What did you want to throw, ${nick}?"
   } elsif ( !(lc($rps) ~~ [ qw/rock paper scissors/ ]) ) {

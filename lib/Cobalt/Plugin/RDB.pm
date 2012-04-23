@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.307';
+our $VERSION = '0.310';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -85,8 +85,8 @@ sub Cobalt_unregister {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
 
   my @handled = qw/
     randstuff
@@ -95,14 +95,14 @@ sub Bot_public_msg {
   /;
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
-  return PLUGIN_EAT_NONE unless $msg->{highlight};
+  return PLUGIN_EAT_NONE unless $msg->highlight;
   ## uses message_array_sp, ie spaces are preserved
   ## (so don't include them prior to rdb names, for example)
   ## FIXME: document this behavior
+  my @msg_arr = @{ $msg->message_array_sp };
   ## since this is a highlighted message, bot's nickname is first:
-  my @message = @{ $msg->{message_array_sp} };
-  shift @message;
-  my $cmd = lc(shift @message || '');
+  my ($cmd, @message) = @msg_arr[1 .. $#msg_arr];
+  $cmd = lc($cmd||'');
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
 
@@ -121,7 +121,7 @@ sub Bot_public_msg {
   
   $resp = "No output for $cmd - BUG!" unless $resp;
 
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
   $core->log->debug("dispatching msg -> $channel");
   $core->send_event( 'send_message', $context, $channel, $resp );
 
@@ -133,11 +133,11 @@ sub Bot_public_msg {
 
 sub _cmd_randstuff {
   ## $parsed_msg_a  == message_array without prefix/cmd
-  ## $msg_h == original message hashref
-  my ($self, $parsed_msg_a, $msg_h) = @_;
+  ## $msg == original message obj
+  my ($self, $parsed_msg_a, $msg) = @_;
   my @message = @{ $parsed_msg_a };
-  my $src_nick = $msg_h->{src_nick};
-  my $context  = $msg_h->{context};
+  my $src_nick = $msg->src_nick;
+  my $context  = $msg->context;
 
   my $core = $self->{core};
   my $pcfg = $core->get_plugin_cfg( $self );
@@ -196,7 +196,7 @@ sub _cmd_randstuff {
 }
 
 sub _select_random {
-  my ($self, $msg_h, $rdb, $quietfail) = @_;
+  my ($self, $msg, $rdb, $quietfail) = @_;
   my $core   = $self->{core};
   my $dbmgr  = $self->{CDBM};
   my $retval = $dbmgr->random($rdb);
@@ -228,7 +228,7 @@ sub _select_random {
     }
     return rplprintf( $core->lang->{$rpl},
       {
-        nick => $msg_h->{src_nick}//'',
+        nick => $msg->src_nick//'',
         rdb  => $rdb,
       },
     );
@@ -237,7 +237,7 @@ sub _select_random {
 
 
 sub _cmd_randq {
-  my ($self, $parsed_msg_a, $msg_h, $type, $rdbpassed, $strpassed) = @_;
+  my ($self, $parsed_msg_a, $msg, $type, $rdbpassed, $strpassed) = @_;
   my @message = @{ $parsed_msg_a };
 
   ## also handler for 'rdb search rdb str'
@@ -248,7 +248,7 @@ sub _cmd_randq {
   if    ($type eq 'random') {
     ## FIXME this is actually deprecated
     ## use '~main' rdb info3 topic trick instead
-    return $self->_select_random($msg_h, 'main');
+    return $self->_select_random($msg, 'main');
   } elsif ($type eq 'rdb') {
     $rdb = $rdbpassed;
     $str = $strpassed;
@@ -272,7 +272,7 @@ sub _cmd_randq {
       default { $rpl = "RPL_DB_ERR" }
     }
     return rplprintf( $core->lang->{$rpl},
-      { nick => $msg_h->{src_nick}, rdb => $rdb }
+      { nick => $msg->src_nick, rdb => $rdb }
     );
   }
 
@@ -304,7 +304,7 @@ sub _cmd_randq {
     }
     return rplprintf( $core->lang->{$rpl},
       { 
-        nick  => $msg_h->{src_nick}//'',
+        nick  => $msg->src_nick//'',
         rdb   => $rdb, 
         index => $selection 
       }
@@ -331,7 +331,7 @@ sub _cmd_rdb {
   ## FIXME rdb dblist
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
-  my ($self, $parsed_msg_a, $msg_h) = @_;
+  my ($self, $parsed_msg_a, $msg) = @_;
   my $core = $self->{core};
   my @message = @{ $parsed_msg_a };
 
@@ -363,8 +363,8 @@ sub _cmd_rdb {
            ."dbadd <rdb> ; dbdel <rdb>";
   }
     
-  my $context  = $msg_h->{context};
-  my $nickname = $msg_h->{src_nick};
+  my $context  = $msg->context;
+  my $nickname = $msg->src_nick;
   my $user_lev = $core->auth_level($context, $nickname) // 0;
   my $username = $core->auth_username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
@@ -594,7 +594,7 @@ sub _cmd_rdb {
       $str = '*' unless $str;
       return 'Syntax: rdb search <RDB> <string>' unless $rdb;
 
-      $resp = $self->_cmd_randq([], $msg_h, 'rdb', $rdb, $str)
+      $resp = $self->_cmd_randq([], $msg, 'rdb', $rdb, $str)
     }
     
     when ("searchidx") {
@@ -648,13 +648,17 @@ sub Bot_rdb_triggered {
       ++$send_orig;
   }
   
-  ## construct fake msg hash for _select_random
-  my $msg_h = { };
-  $msg_h->{src_nick} = $nick;
-  $msg_h->{channel}  = $channel;
+  ## construct fake msg obj for _select_random
+  my $new_msg = Cobalt::IRC::Message::Public->new(
+    core    => $core,
+    context => $context,
+    src     => $nick . '!fake@host',
+    targets => [ $channel ],
+    message => '',
+  );
   
   my $random = $send_orig ? $orig 
-               : $self->_select_random($msg_h, $rdb, 'quietfail') ;
+               : $self->_select_random($new_msg, $rdb, 'quietfail') ;
 
   $core->send_event( 
     'info3_relay_string', $context, $channel, $nick, $random, $questionstr

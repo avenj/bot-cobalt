@@ -11,6 +11,7 @@ use 5.10.1;
 use Cobalt::Common;
 use Moo;
 use Sub::Quote;
+use namespace::autoclean;
 
 has 'core'    => ( is => 'rw', isa => Object, required => 1 );
 has 'context' => ( is => 'rw', isa => Str, required => 1 );

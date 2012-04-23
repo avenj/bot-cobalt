@@ -110,12 +110,12 @@ sub Bot_karmaplug_sync_db {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
-  return PLUGIN_EAT_NONE if $msg->{highlighted}
-                         or $msg->{cmdprefix};
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
+  return PLUGIN_EAT_NONE if $msg->highlight
+                         or $msg->cmd;
 
-  my $first_word = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
+  my $first_word = $msg->message_array->[0] // return PLUGIN_EAT_NONE;
   $first_word = decode_irc($first_word);
 
   if ($first_word =~ $self->{karma_regex}) {
@@ -138,19 +138,21 @@ sub Bot_public_msg {
 
 sub Bot_public_cmd_resetkarma {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
-  my $nick    = $msg->{src_nick};
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
+  
+  my $nick    = $msg->src_nick;
   
   my $usr_lev = $core->auth_level($context, $nick)
                 || return PLUGIN_EAT_ALL;
+
   my $pcfg = $core->get_plugin_cfg($self);
   my $req_lev = $pcfg->{PluginOpts}->{LevelRequired} || 9999;
   return PLUGIN_EAT_ALL unless $usr_lev >= $req_lev;
 
-  my $channel = $msg->{target};
-  my @message = @{ $msg->{message_array} };
-  my $karma_for = lc(shift @message || return PLUGIN_EAT_ALL);
+  my $channel = $msg->target;
+
+  my $karma_for = lc($msg->message_array->[0] || return PLUGIN_EAT_ALL);
 
   unless ( $self->_get($karma_for) ) {
     $core->send_event( 'send_message', $context, $channel,
@@ -170,12 +172,12 @@ sub Bot_public_cmd_resetkarma {
 
 sub Bot_public_cmd_karma {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
 
-  my $channel = $msg->{target};
-  my @message = @{ $msg->{message_array} };
-  my $karma_for = lc(shift @message || $msg->{src_nick});
+  my $channel = $msg->target;
+  my $karma_for = $msg->message_array->[0];
+  $karma_for = lc($karma_for || $msg->src_nick);
 
   my $resp;
 

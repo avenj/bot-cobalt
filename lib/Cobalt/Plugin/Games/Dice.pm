@@ -1,6 +1,6 @@
 package Cobalt::Plugin::Games::Dice;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use 5.10.1;
 use strict;
@@ -11,7 +11,7 @@ use Cobalt::Utils qw/ color /;
 sub new { bless( {}, shift ) }
 
 sub execute {
-  my ($self, $orig_msg, $str) = @_;
+  my ($self, $msg, $str) = @_;
   return "Syntax: roll XdY  [ +/- <modifier> ]" unless $str;
   my ($dice, $modifier, $modify_by) = split ' ', $str;
 

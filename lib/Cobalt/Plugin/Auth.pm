@@ -60,6 +60,7 @@ use 5.10.1;
 ## This plugin tracks 'lost' identified users and clears as needed
 
 use Moo;
+use namespace::autoclean;
 
 use Cobalt::Common;
 
@@ -286,23 +287,22 @@ sub Bot_nick_changed {
 
 sub Bot_private_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg = ${$_[0]};
+  my $context = $msg->context;
 
-  my $resp;
-
-  my $command = $msg->{message_array}->[0] // return PLUGIN_EAT_NONE;
+  my $command = $msg->message_array->[0] // return PLUGIN_EAT_NONE;
   $command = lc $command;
 
   ## simple method check/dispatch:
+  my $resp;
   my $method = "_cmd_".$command;
   if ( $self->can($method) ) {
-    $core->log->debug("dispatching '$command' for ".$msg->{src_nick});
+    $core->log->debug("dispatching '$command' for ".$msg->src_nick);
     $resp = $self->$method($context, $msg);
   }
 
   if (defined $resp) {
-    my $target = $msg->{src_nick};
+    my $target = $msg->src_nick;
     $core->log->debug("dispatching send_notice to $target");
     $core->send_event( 'send_notice', $context, $target, $resp );
   }
@@ -318,10 +318,10 @@ sub _cmd_login {
   ## _do_login does the heavy lifting, we just talk to the user
   ## this is stupid, but I'm too lazy to fix
   my ($self, $context, $msg) = @_;
-  my $l_user = $msg->{message_array}->[1] // undef;
-  my $l_pass = $msg->{message_array}->[2] // undef;
-  my $origin = $msg->{src};
-  my $nick = $msg->{src_nick};
+  my $l_user = $msg->message_array->[1] // undef;
+  my $l_pass = $msg->message_array->[2] // undef;
+  my $origin = $msg->src;
+  my $nick = $msg->src_nick;
 
   unless (defined $l_user && defined $l_pass) {
     ## bad syntax resp, currently takes no args ...
@@ -378,7 +378,7 @@ sub _cmd_chpass {
   my ($self, $context, $msg) = @_;
   ## 'self' chpass for logged-in users
   ##    chpass OLD NEW
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_for_nick = $self->core->auth_username($context, $nick);
   unless ($auth_for_nick) {
     return rplprintf( $self->core->lang->{RPL_NO_ACCESS},
@@ -386,8 +386,8 @@ sub _cmd_chpass {
     );
   }
   
-  my $passwd_old = $msg->{message_array}->[1];
-  my $passwd_new = $msg->{message_array}->[2];
+  my $passwd_old = $msg->message_array->[1];
+  my $passwd_new = $msg->message_array->[2];
   unless ($passwd_old && $passwd_new) {
     return rplprintf( $self->core->lang->{AUTH_BADSYN_CHPASS} );
   }
@@ -400,7 +400,7 @@ sub _cmd_chpass {
         context => $context,
         nick => $nick,
         user => $auth_for_nick,
-        src => $msg->{src},
+        src => $msg->src,
       }
     );
   }
@@ -423,7 +423,7 @@ sub _cmd_chpass {
       context => $context,
       nick => $nick,
       user => $auth_for_nick,
-      src => $msg->{src},
+      src  => $msg->src,
     }
   );
 }
@@ -431,7 +431,7 @@ sub _cmd_chpass {
 sub _cmd_whoami {
   my ($self, $context, $msg) = @_;
   ## return current auth status
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $self->core->auth_level($context, $nick);
   my $auth_usr = $self->core->auth_username($context, $nick) 
                  // 'Not Authorized';
@@ -451,7 +451,7 @@ sub _cmd_user {
   ## user del
   ## user list
   ## user search
-  my $cmd = lc( $msg->{message_array}->[1] // '');
+  my $cmd = lc( $msg->message_array->[1] // '');
 
   my $resp;
 
@@ -461,7 +461,7 @@ sub _cmd_user {
 
   my $method = "_user_".$cmd;
   if ( $self->can($method) ) {
-    $self->core->log->debug("dispatching $method for ".$msg->{src_nick});
+    $self->core->log->debug("dispatching $method for ".$msg->src_nick);
     $resp = $self->$method($context, $msg);
   }
   return $resp;
@@ -570,7 +570,7 @@ sub _do_login {
 sub _user_add {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   
@@ -598,7 +598,7 @@ sub _user_add {
   }
 
   ## user add <username> <lev> <mask> <passwd> ?
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->message_array };
   my @args = @message[2 .. $#message];
   my ($target_usr, $target_lev, $mask, $passwd) = @args;
   unless ($target_usr && $target_lev && $mask && $passwd) {
@@ -669,7 +669,7 @@ sub _user_delete { _user_del(@_) }
 sub _user_del {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   
@@ -694,7 +694,7 @@ sub _user_del {
   }
 
   ## user del <username>
-  my $target_usr = $msg->{message_array}[2];
+  my $target_usr = $msg->message_array->[2];
   unless ($target_usr) {
     return "Usage: user del <username>"
   }
@@ -751,7 +751,7 @@ sub _user_del {
 sub _user_list {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   
@@ -781,7 +781,7 @@ sub _user_list {
 sub _user_whois {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   
@@ -791,7 +791,7 @@ sub _user_whois {
 sub _user_info {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   
@@ -799,7 +799,7 @@ sub _user_info {
     return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
   }
   
-  my $target_usr = $msg->{message_array}[2];
+  my $target_usr = $msg->message_array->[2];
   unless ($target_usr) {
     return 'Usage: user info <username>'
   }
@@ -826,7 +826,7 @@ sub _user_info {
 sub _user_search {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
 
@@ -839,7 +839,7 @@ sub _user_chflags {
 sub _user_chmask {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   ## [+/-]mask syntax
@@ -850,7 +850,7 @@ sub _user_chmask {
 sub _user_chpass {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
-  my $nick = $msg->{src_nick};
+  my $nick = $msg->src_nick;
   my $auth_lev = $core->auth_level($context, $nick);
   my $auth_usr = $core->auth_username($context, $nick);
   ## superuser (or configurable level.. ?) chpass ability

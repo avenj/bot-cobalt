@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.142';
+our $VERSION = '0.143';
 
 use 5.10.1;
 use strict;
@@ -55,17 +55,19 @@ sub Bot_public_cmd_alarmdelete { Bot_public_cmd_alarmdel(@_) }
 
 sub Bot_public_cmd_alarmdel {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
-  my $nick    = $msg->{src_nick};
+  my $msg = ${$_[0]};
+
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
   
   my $auth_usr = $core->auth_username($context, $nick);
   return PLUGIN_EAT_NONE unless $auth_usr;
 
-  my $timerid = $msg->{message_array}->[0];  
+  my $msg_arr = $msg->message_array;
+  my $timerid = $msg_arr->[0];
   return PLUGIN_EAT_ALL unless $timerid;
   
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
   
   unless (exists $self->{Active}->{$timerid}) {
     $core->send_event( 'send_message', $context, $channel,
@@ -105,12 +107,11 @@ sub Bot_public_cmd_alarmdel {
 
 sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
+  my $msg     = ${$_[0]};
+  
+  my $context = $msg->context;
+  my $setter  = $msg->src_nick;
 
-  my $resp;
-
-  my $setter = $msg->{src_nick};
   my $cfg = $core->get_plugin_cfg( $self );
   my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
 
@@ -120,17 +121,17 @@ sub Bot_public_cmd_alarmclock {
   my $auth_usr = $core->auth_username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
-  my @args = @{ $msg->{message_array} };  
+  my $args = $msg->message_array;
   ## -> f.ex.:  split ' ', !alarmclock 1h10m things and stuff
-  my $timestr = shift @args;
+  my $timestr = shift @$args;
   ## the rest of this string is the alarm text:
-  my $txtstr  = join ' ', @args;
+  my $txtstr  = join ' ', @$args;
 
   $txtstr = "$setter: ALARMCLOCK: ".$txtstr ;
 
   ## set a timer
   my $secs = timestr_to_secs($timestr) || 1;
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
 
   my $id = $core->timer_set( $secs,
     {
@@ -142,6 +143,7 @@ sub Bot_public_cmd_alarmclock {
     }
   );
 
+  my $resp;
   if ($id) {
     $self->{Active}->{$id} = [ $context, $auth_usr ];
     $resp = rplprintf( $core->lang->{ALARMCLOCK_SET},
@@ -157,8 +159,7 @@ sub Bot_public_cmd_alarmclock {
   }
 
   if ($resp) {
-    my $target = $msg->{channel};
-    $core->send_event( 'send_message', $context, $target, $resp );
+    $core->send_event( 'send_message', $context, $channel, $resp );
   }
 
   return PLUGIN_EAT_ALL

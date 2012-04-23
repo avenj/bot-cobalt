@@ -221,11 +221,12 @@ sub _load_conf {
 
 sub Bot_public_cmd_plugin {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg = ${$_[0]};
+  my $context = $msg->context;
 
-  my $chan = $msg->{channel};
-  my $nick = $msg->{src_nick};
+  my $chan = $msg->channel;
+  my $nick = $msg->src_nick;
+  
   my $pcfg = $core->get_plugin_cfg( $self );
 
   ## default to superuser-only:
@@ -233,7 +234,7 @@ sub Bot_public_cmd_plugin {
 
   my $resp;
 
-  my $operation = $msg->{message_array}->[0];
+  my $operation = $msg->message_array->[0];
 
   unless ( $core->auth_level($context, $nick) >= $required_lev ) {
     $resp = rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
@@ -241,20 +242,20 @@ sub Bot_public_cmd_plugin {
     given ( lc($operation || '') ) {
       when ('load') {
         ## syntax: !plugin load <alias>, !plugin load <alias> <module>
-        my $alias = $msg->{message_array}->[1];
-        my $module = $msg->{message_array}->[2];
+        my $alias = $msg->message_array->[1];
+        my $module = $msg->message_array->[2];
         $resp = $self->_load($alias, $module);
       }
 
       when ('unload') {
         ## syntax: !plugin unload <alias>
-        my $alias = $msg->{message_array}->[1];
+        my $alias = $msg->message_array->[1];
         $resp = $self->_unload($alias) || "Strange, no reply from _unload?";
       }
 
       when ('reload') {
         ## syntax: !plugin reload <alias>
-        my $alias = $msg->{message_array}->[1];
+        my $alias = $msg->message_array->[1];
         my $plug_obj = $core->plugin_get($alias);
         unless ($alias) {
           $resp = "Bad syntax; no plugin alias specified";

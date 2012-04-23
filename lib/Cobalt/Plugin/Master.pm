@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Master;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 ## FIXME:
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die
@@ -43,9 +43,9 @@ sub Cobalt_unregister {
 
 sub Bot_public_cmd_cycle {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -57,7 +57,7 @@ sub Bot_public_cmd_cycle {
 
   $core->log->info("CYCLE issued by $src_nick");
   
-  my $channel = $msg->{channel};  
+  my $channel = $msg->channel;  
   $core->send_event( 'part', $context, $channel, "Cycling $channel" );
   $core->send_event( 'join', $context, $channel );
 
@@ -66,9 +66,9 @@ sub Bot_public_cmd_cycle {
 
 sub Bot_public_cmd_join {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -77,12 +77,12 @@ sub Bot_public_cmd_join {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $channel = $msg->{message_array}->[0];
+  my $channel = $msg->message_array->[0];
   return PLUGIN_EAT_ALL unless $channel;
   
   $core->log->info("JOIN ($channel) issued by $src_nick");
   
-  $core->send_event( 'send_message', $context, $msg->{channel},
+  $core->send_event( 'send_message', $context, $msg->channel,
     "Joining $channel"
   );
   $core->send_event( 'join', $context, $channel );
@@ -92,9 +92,9 @@ sub Bot_public_cmd_join {
 
 sub Bot_public_cmd_part {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -103,12 +103,12 @@ sub Bot_public_cmd_part {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $channel = $msg->{message_array}->[0] // $msg->{channel};
+  my $channel = $msg->message_array->[0] // $msg->channel;
   
   $core->log->info("PART ($channel) issued by $src_nick");
   
-  $core->send_event( 'send_message', $context, $msg->{channel},
-    "Leaving $channel"
+  $core->send_event( 'send_message', $context, $msg->channel,
+      "Leaving $channel"
   );
   $core->send_event( 'part', $context, $channel, "Requested by $src_nick" );
   
@@ -119,9 +119,9 @@ sub Bot_public_cmd_part {
 ### OP / DEOP
 sub Bot_public_cmd_op {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -130,8 +130,8 @@ sub Bot_public_cmd_op {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $target_usr = $msg->{message_array}->[0] // $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $target_usr = $msg->message_array->[0] // $msg->src_nick;
+  my $channel = $msg->channel;
   $core->send_event( 'mode', $context, $channel, "+o $target_usr" );
   
   return PLUGIN_EAT_ALL
@@ -139,9 +139,9 @@ sub Bot_public_cmd_op {
 
 sub Bot_public_cmd_deop {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -150,8 +150,8 @@ sub Bot_public_cmd_deop {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $target_usr = $msg->{message_array}->[0] // $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $target_usr = $msg->message_array->[0] // $msg->src_nick;
+  my $channel = $msg->channel;
   
   $core->send_event( 'mode', $context, $channel, "-o $target_usr" );
   
@@ -162,9 +162,9 @@ sub Bot_public_cmd_deop {
 
 sub Bot_public_cmd_voice {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -173,8 +173,8 @@ sub Bot_public_cmd_voice {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $target_usr = $msg->{message_array}->[0] // $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $target_usr = $msg->message_array->[0] // $msg->src_nick;
+  my $channel = $msg->channel;
   
   $core->send_event( 'mode', $context, $channel, "+v $target_usr" );
   
@@ -183,9 +183,9 @@ sub Bot_public_cmd_voice {
 
 sub Bot_public_cmd_devoice {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
-  my $src_nick = $msg->{src_nick};
+  my $msg     = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
@@ -194,8 +194,8 @@ sub Bot_public_cmd_devoice {
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
   
-  my $target_usr = $msg->{message_array}->[0] // $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $target_usr = $msg->message_array->[0] // $msg->src_nick;
+  my $channel = $msg->channel;
   
   $core->send_event( 'mode', $context, $channel, "-v $target_usr" );
   

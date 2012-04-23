@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.221';
+our $VERSION = '0.230';
 
 use 5.10.1;
 
@@ -85,18 +85,18 @@ sub Cobalt_unregister {
 
 sub Bot_ctcp_action {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg = ${$_[0]};
+  my $context = $msg->context;
   ## similar to _public_msg handler
   ## pre-pend ~action+ and run a match
 
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->message_array };
   return PLUGIN_EAT_NONE unless @message;
 
   my $str = join ' ', '~action', @message;
 
-  my $nick = $msg->{src_nick};
-  my $channel = $msg->{target};
+  my $nick = $msg->src_nick;
+  my $channel = $msg->target;
 
   ## is this a channel? ctcp_action doesn't differentiate on its own
   return PLUGIN_EAT_NONE 
@@ -139,18 +139,14 @@ sub Bot_ctcp_action {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg = ${$_[1]};
+  my $msg = ${$_[0]};
+  my $context = $msg->context;
   
-  ## if this is a !cmd, discard it:
-  return PLUGIN_EAT_NONE if $msg->{cmdprefix};
-  
-  ## also discard if we have no useful text:
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->message_array };
   return PLUGIN_EAT_NONE unless @message;
 
   my $with_highlight;
-  if ($msg->{highlight}) { 
+  if ($msg->highlight) { 
     ## we were highlighted -- might be an info3 cmd
     my %handlers = (
       'add' => '_info_add',
@@ -177,7 +173,7 @@ sub Bot_public_msg {
           ## ...which may be nothing, up to the handler to send syntax RPL
           my $resp = $self->$method($msg, @args);
           $core->send_event( 'send_message', 
-            $context, $msg->{channel}, $resp ) if $resp;
+            $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
         } else {
           $core->log->warn($message[1]." is a valid cmd but method missing");
@@ -198,8 +194,8 @@ sub Bot_public_msg {
   ## rejoin message
   my $str = join ' ', @message;
 
-  my $nick = $msg->{src_nick};
-  my $channel = $msg->{channel};
+  my $nick    = $msg->src_nick;
+  my $channel = $msg->channel;
 
   my $chcfg = $core->get_channels_cfg($context) || {};
   return PLUGIN_EAT_NONE
@@ -329,13 +325,12 @@ sub _over_max_triggered {
 
 
 sub _info_add {
-  my ($self, $msg, @args) = @_;
-  my $glob = shift @args;
+  my ($self, $msg, $glob, @args) = @_;
   my $string = join ' ', @args;
-  my $core = $self->{core};
+  my $core   = $self->{core};
 
-  my $context = $msg->{context};
-  my $nick = $msg->{src_nick};
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
 
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
@@ -411,8 +406,8 @@ sub _info_del {
   my ($glob) = @args;
   my $core = $self->{core};
   
-  my $context = $msg->{context};
-  my $nick = $msg->{src_nick};
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
 
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
@@ -471,8 +466,8 @@ sub _info_replace {
   $glob = lc $glob;
   my $core = $self->{core};
 
-  my $context = $msg->{context};
-  my $nick = $msg->{src_nick};
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
 
   my $auth_user  = $core->auth_username($context, $nick);
   my $auth_level = $core->auth_level($context, $nick);
@@ -554,14 +549,14 @@ sub _info_tell {
 
   unless ($target) {
     return rplprintf( $core->lang->{INFO_TELL_WHO} // "Tell who what?",
-      { nick => $msg->{src_nick} }
+      { nick => $msg->src_nick }
     );
   }
 
   unless (@args) {
     return rplprintf( $core->lang->{INFO_TELL_WHAT}
       // "What should I tell $target about?" ,
-        { nick => $msg->{src_nick}, target => $target }
+        { nick => $msg->src_nick, target => $target }
     );
   }
 
@@ -579,7 +574,7 @@ sub _info_tell {
   my $match = $self->_info_match($str_to_match);
   unless ($match) {
     return rplprintf( $core->lang->{INFO_DONTKNOW},
-      { nick => $msg->{src_nick}, topic => $str_to_match }
+      { nick => $msg->src_nick, topic => $str_to_match }
     );
   }
 
@@ -590,8 +585,8 @@ sub _info_tell {
     if ($rdb) {
       ## rdb_triggered will take it from here
       $core->send_event( 'rdb_triggered',
-        $msg->{context},
-        $msg->{channel},
+        $msg->context,
+        $msg->channel,
         $target,
         lc($rdb),
         $match,
@@ -601,12 +596,12 @@ sub _info_tell {
     }
   }
     
-  my $channel = $msg->{channel};
+  my $channel = $msg->channel;
   
   $core->log->debug("issuing info3_relay_string for tell");
 
   $core->send_event( 'info3_relay_string', 
-    $msg->{context}, $channel, $target, $match, $str_to_match
+    $msg->context, $channel, $target, $match, $str_to_match
   );
 
   return
@@ -624,7 +619,7 @@ sub _info_about {
 
   unless (exists $self->{Globs}->{$glob}) {
     return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
-      { topic => $glob, nick  => $msg->{src_nick} },
+      { topic => $glob, nick  => $msg->src_nick },
     );
   }
 
@@ -640,7 +635,7 @@ sub _info_about {
   
   return rplprintf( $core->lang->{INFO_ABOUT},
     {
-      nick  => $msg->{src_nick},
+      nick  => $msg->src_nick,
       topic => $glob,
       author => $addedby,
       date => $addedat,
@@ -662,7 +657,7 @@ sub _info_display {
     return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
       {
         topic => $glob,
-        nick  => $msg->{src_nick},
+        nick  => $msg->src_nick,
       },
     );
   }
@@ -706,10 +701,10 @@ sub _info_dsearch {
 
   my $pcfg = $core->get_plugin_cfg( $self );
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
-  my $usr_lev = $core->auth_level($msg->{context}, $msg->{src_nick});
+  my $usr_lev = $core->auth_level($msg->context, $msg->src_nick);
   unless ($usr_lev >= $req_lev) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
-      { nick => $msg->{src_nick} }
+      { nick => $msg->src_nick }
     );
   }
 
@@ -789,8 +784,8 @@ sub _info_varhelp {
   ;
   
   $core->send_event( 'send_notice',
-    $msg->{context},
-    $msg->{src_nick},
+    $msg->context,
+    $msg->src_nick,
     $help
   );
   

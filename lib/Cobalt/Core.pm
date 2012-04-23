@@ -6,6 +6,7 @@ use Carp;
 
 use Moo;
 use Sub::Quote;
+use namespace::autoclean;
 
 use Log::Handler;
 
@@ -62,7 +63,7 @@ has 'State' => (
   ## global 'heap' of sorts
   is => 'rw',
   isa => HashRef,
-  default => quote_sub {
+  default => quote_sub q{
     {
       ## {HEAP} is here for convenience with no guarantee regarding 
       ## collisions
@@ -87,13 +88,13 @@ has 'State' => (
 has 'TimerPool' => (
   ## timers; see _core_timer_check_pool and timer_set methods
   is  => 'rw',  isa => HashRef,
-  default => quote_sub { {} },
+  default => quote_sub q{ {} },
 );
 
 ## alias -> object:
 has 'PluginObjects' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub { {} },
+  default => quote_sub q{ {} },
 );
 
 ## Servers->{$alias} = {
@@ -105,14 +106,14 @@ has 'PluginObjects' => (
 ## }
 has 'Servers' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub { {} },
+  default => quote_sub q{ {} },
 );
 
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub { {} },
+  default => quote_sub q{ {} },
 );
 
 sub init {

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 ## Simplistic relaybot plugin
 use 5.10.1;
@@ -198,23 +198,23 @@ sub _push_left_queue {
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
 
-  my $channel = $msg->{target};
+  my $channel = $msg->target;
 
   my @relays = $self->get_relays($context, $channel);
   return PLUGIN_EAT_NONE unless @relays;
 
   ## don't relay our handled commands
   my @handled = qw/ relay rwhois /;
-  if ($msg->{cmdprefix}) {
-    return PLUGIN_EAT_NONE if $msg->{cmd}
-      and $msg->{cmd} ~~ @handled;
+  if ($msg->cmd) {
+    return PLUGIN_EAT_NONE if $msg->cmd
+      and $msg->cmd ~~ @handled;
   }
 
-  my $src_nick = $msg->{src_nick};
-  my $text = $msg->{orig};
+  my $src_nick = $msg->src_nick;
+  my $text = $msg->message;
   my $str  = "<${src_nick}:${channel}> $text";
 
   for my $relay (@relays) {
@@ -380,11 +380,11 @@ sub Bot_nick_changed {
 
 sub Bot_public_cmd_relay {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
   ## Show relay info
   
-  my $channel = $msg->{target};
+  my $channel = $msg->target;
   
   my @relays = $self->get_relays($context, $channel);
   
@@ -411,14 +411,14 @@ sub Bot_public_cmd_relay {
 
 sub Bot_public_cmd_rwhois {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $msg     = ${ $_[1] };
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
 
-  my $channel = $msg->{target};
+  my $channel = $msg->target;
 
-  my ($remotenet, $remoteuser) = @{ $msg->{message_array} };
+  my ($remotenet, $remoteuser) = @{ $msg->message_array };
   unless ($remotenet && $remoteuser) {
-    my $src_nick = $msg->{src_nick};
+    my $src_nick = $msg->src_nick;
     $core->send_event( 'send_message',
       $context,
       $channel,
