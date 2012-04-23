@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.310';
+our $VERSION = '0.312';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -19,13 +19,36 @@ use Cobalt::Common;
 
 use Cobalt::Plugin::RDB::Database;
 
+use Moo;
+use Sub::Quote;
 ## marked non-reloadable .. shouldfix
 ## ought to feed our external RDB:: modules to unloader_cleanup
-sub new { bless { NON_RELOADABLE => 1 }, shift }
+has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1, 
+  default => quote_sub q{1},
+);
+
+has 'core'  => ( is => 'rw', isa => Object );
+has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub {
+    my ($self) = @_;
+    my $cfg = $self->core->get_plugin_cfg($self);
+    my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
+    my $rdbdir = $self->core->var ."/". 
+                ($cfg->{Opts}->{RDBDir} || "db/rdb");
+
+    Cobalt::Plugin::RDB::Database->new(
+      CacheKeys => $cachekeys,
+      RDBDir    => $rdbdir,
+      core => $self->core,
+    )
+  }, 
+);
+
+has 'rand_delay' => ( is => 'rw', isa => Int );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
+  $self->core($core);
 
   $core->plugin_register($self, 'SERVER',
     [ 
@@ -35,20 +58,10 @@ sub Cobalt_register {
     ],
   );  
 
-  my $cfg = $core->get_plugin_cfg( $self );
-
-  my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
-
-  my $rdbdir = $core->var ."/". ($cfg->{Opts}->{RDBDir} || "db/rdb");
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
-  my $dbmgr = Cobalt::Plugin::RDB::Database->new(
-    CacheKeys => $cachekeys,
-    RDBDir    => $rdbdir,
-    core => $core,
-  );
-  $core->log->debug("Created RDB manager instance");
-  $self->{CDBM} = $dbmgr;
+  ## DBmgr must be called after core() is set:
+  my $dbmgr = $self->DBmgr;
 
   my $keys_c = $dbmgr->get_keys('main');
   $core->Provided->{randstuff_items} = $keys_c;
@@ -57,10 +70,11 @@ sub Cobalt_register {
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
   ## (0 turns off timer)
+  my $cfg = $core->get_plugin_cfg( $self );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
   $core->log->debug("randdelay: $randdelay");
   $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
-  $self->{RandDelay} = $randdelay;
+  $self->rand_delay( $randdelay );
   if ($randdelay) {
     $core->timer_set( $randdelay, 
       { 
@@ -139,7 +153,7 @@ sub _cmd_randstuff {
   my $src_nick = $msg->src_nick;
   my $context  = $msg->context;
 
-  my $core = $self->{core};
+  my $core = $self->core;
   my $pcfg = $core->get_plugin_cfg( $self );
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
@@ -156,7 +170,7 @@ sub _cmd_randstuff {
   if (@message && index($message[0], '~') == 0) {
     $rdb = substr(shift @message, 1);
     $rplvars->{rdb} = $rdb;
-    my $dbmgr = $self->{CDBM};
+    my $dbmgr = $self->DBmgr;
     unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
       return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
@@ -197,8 +211,8 @@ sub _cmd_randstuff {
 
 sub _select_random {
   my ($self, $msg, $rdb, $quietfail) = @_;
-  my $core   = $self->{core};
-  my $dbmgr  = $self->{CDBM};
+  my $core   = $self->core;
+  my $dbmgr  = $self->DBmgr;
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
   
@@ -241,8 +255,8 @@ sub _cmd_randq {
   my @message = @{ $parsed_msg_a };
 
   ## also handler for 'rdb search rdb str'
-  my $dbmgr = $self->{CDBM};
-  my $core  = $self->{core};
+  my $dbmgr = $self->DBmgr;
+  my $core  = $self->core;
 
   my($str, $rdb);
   if    ($type eq 'random') {
@@ -332,7 +346,7 @@ sub _cmd_rdb {
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg) = @_;
-  my $core = $self->{core};
+  my $core = $self->core;
   my @message = @{ $parsed_msg_a };
 
   my $pcfg = $core->get_plugin_cfg( $self );
@@ -373,7 +387,7 @@ sub _cmd_rdb {
     );
   }
 
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
 
   my $resp;
   given ($cmd) {
@@ -509,7 +523,7 @@ sub _cmd_rdb {
         index => $idx,
       };
       
-      my $dbmgr = $self->{CDBM};
+      my $dbmgr = $self->DBmgr;
       unless ( $dbmgr->dbexists($rdb) ) {
         return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
       }
@@ -540,7 +554,7 @@ sub _cmd_rdb {
       return 'Syntax: rdb info <RDB> <index key>'
         unless $rdb;
       
-      my $dbmgr = $self->{CDBM};
+      my $dbmgr = $self->DBmgr;
 
       my $rplvars = {
         nick => $nickname,
@@ -640,7 +654,7 @@ sub Bot_rdb_triggered {
 
   $core->log->debug("received rdb_triggered");
 
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
   
   ## if referenced rdb doesn't exist, send orig string
   my $send_orig;
@@ -708,8 +722,8 @@ sub Bot_rdb_broadcast {
   } # SERVER
 
   ## reset timer unless randdelay is 0
-  if ($self->{RandDelay}) {
-    $core->timer_set( $self->{RandDelay}, 
+  if ($self->rand_delay) {
+    $core->timer_set( $self->rand_delay, 
       { 
         Event => 'rdb_broadcast', 
         Alias => $core->get_plugin_alias($self) 
@@ -729,12 +743,12 @@ sub _searchidx {
   $rdb   = 'main' unless $rdb;
   $string = '<*>' unless $string;
 
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
   my $ret = $dbmgr->search($rdb, $string);
   
   unless (ref $ret eq 'ARRAY') {
     my $err = $dbmgr->Error;
-    $self->{core}->log->warn("searchidx failure: retval: $err");
+    $self->core->log->warn("searchidx failure: retval: $err");
     return wantarray ? () : $err ;
   }
   return wantarray ? @$ret : $ret ;
@@ -743,10 +757,10 @@ sub _searchidx {
 sub _add_item {
   my ($self, $rdb, $item, $username) = @_;
   return unless $rdb and defined $item;
-  my $core = $self->{core};
+  my $core = $self->core;
   $username = '-undefined' unless $username;
   
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot add item to nonexistant rdb: $rdb");
     return (0, 'RDB_NOSUCH')
@@ -775,9 +789,9 @@ sub _add_item {
 sub _delete_item {
   my ($self, $rdb, $item_idx, $username) = @_;
   return unless $rdb and defined $item_idx;
-  my $core = $self->{core};
+  my $core = $self->core;
 
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
   
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete from nonexistant rdb: $rdb");
@@ -800,7 +814,7 @@ sub _delete_item {
 sub _delete_rdb {
   my ($self, $rdb) = @_;
   return unless $rdb;
-  my $core = $self->{core};
+  my $core = $self->core;
   my $pcfg = $core->get_plugin_cfg( $self );
 
   my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
@@ -810,7 +824,7 @@ sub _delete_rdb {
     return (0, 'RDB_NOTPERMITTED')
   }
 
-  my $dbmgr = $self->{CDBM};
+  my $dbmgr = $self->DBmgr;
 
   unless ( $dbmgr->dbexists($rdb) ) {
     $core->log->debug("cannot delete nonexistant rdb $rdb");
