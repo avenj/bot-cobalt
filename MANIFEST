@@ -24,6 +24,8 @@ lib/Cobalt/Core.pm
 lib/Cobalt/DB.pm
 lib/Cobalt/HTTP.pm
 lib/Cobalt/IRC.pm
+lib/Cobalt/IRC/Message.pm
+lib/Cobalt/IRC/Message/Public.pm
 lib/Cobalt/Lang.pm.in
 lib/Cobalt/Lang.pm.PL
 lib/Cobalt/Lang.pod

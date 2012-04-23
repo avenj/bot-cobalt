@@ -44,8 +44,8 @@ has 'debug'    => (
 
 ## pure convenience, ->VERSION is a better idea:
 has 'version' => ( 
-  is => 'ro', isa => Str, 
-  default => quote_sub q{ $VERSION }
+  is => 'ro', isa => Str, lazy => 1,
+  default => quote_sub q{ $_[0]->VERSION }
 );
 
 ## frontends can specify a bot url if they like
