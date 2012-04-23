@@ -490,7 +490,7 @@ sub irc_kick {
 
   my $me = $irc->nick_name();
   my $casemap = $core->get_irc_casemap($context);
-  if ( eq_irc($me, $nick, $casemap) ) {
+  if ( eq_irc($me, $kick->src_nick, $casemap) ) {
     ## Bot_self_kicked:
     $core->send_event( 'self_kicked', $context, $src, $channel, $reason );
   }

@@ -1,24 +1,16 @@
 package Cobalt::Plugin::Games::Magic8;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use 5.10.1;
 use strict;
 use warnings;
 
-sub new {
-  my $class = shift;
-  my $self = {};
-  bless($self, $class);
-  my %args = @_;
-  $self->{core} = $args{core} if $args{core};
-  @{ $self->{Responses} } = <DATA>;
-  return $self
-}
+sub new { bless {}, shift }
 
 sub execute {
   my ($self, $msg) = @_;
   my $nick = $msg->src_nick//'' if ref $msg;
-  my @responses = @{ $self->{Responses} };
+  my @responses = <DATA>;
   return $nick.': '.$responses[rand @responses]
 }
 

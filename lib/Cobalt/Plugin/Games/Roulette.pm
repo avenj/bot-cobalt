@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 use 5.10.1;
 use strict;
@@ -7,14 +7,7 @@ use warnings;
 
 use Cobalt::Utils qw/color/;
 
-sub new {
-  my $class = shift;
-  my $self = {};
-  bless $self, $class;
-  my %args = @_;
-  $self->{core} = $args{core} if ref $args{core};
-  return $self
-}
+sub new { bless {}, shift }
 
 sub execute {
   my ($self, $msg, $str) = @_;
@@ -35,11 +28,10 @@ sub execute {
   if ($loaded == 0) {
     delete $self->{Cylinder}->{$context}->{$nick};
     
-    my $core = $self->{core};
+    my $core = $msg->core;
     my $irc  = $core->get_irc_obj($context);
-
+    my $bot  = $irc->nick_name;
     my $chan = $msg->channel;
-    my $bot  = $msg->myself;
 
     if ( $irc->is_channel_operator($chan, $bot)
           ## support silly +q/+a modes also

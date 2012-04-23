@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 use 5.10.1;
 use strict;
@@ -13,13 +13,9 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $self->{core} = $core;
 
-  $self->_load_games();
+  my $count = $self->_load_games();
 
-  $core->plugin_register($self, 'SERVER',
-    [ 'public_msg' ],
-  );
-
-  $core->log->info("$VERSION loaded");
+  $core->log->info("$VERSION loaded - $count games");
   return PLUGIN_EAT_NONE
 }
 
@@ -33,23 +29,21 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_public_msg {
+sub _handle_auto {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
  
   my $context = $msg->context;
 
-  return PLUGIN_EAT_NONE unless $msg->cmd;
   my $cmd = $msg->cmd;
-  
   return PLUGIN_EAT_NONE
-    unless $cmd and defined $self->{Dispatch}->{$cmd};
+    unless defined $self->{Dispatch}->{$cmd};
 
   my $game = $self->{Dispatch}->{$cmd};
   my $obj  = $self->{Objects}->{$game};
   
-  my @message = @{ $msg->message_array };
-  my $str = join ' ', @message[1 .. $#message];
+  my $msgarr = $msg->message_array;
+  my $str = join ' ', @$msgarr;
   
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
@@ -72,6 +66,7 @@ sub _load_games {
 
   $core->log->debug("Loading games");
 
+  my $count;
   for my $game (keys %$games) {
     my $module = $games->{$game}->{Module} // next;
     next unless ref $games->{$game}->{Cmds} eq 'ARRAY';
@@ -91,12 +86,29 @@ sub _load_games {
     $self->{Objects}->{$game} = $obj;
     ## build a hash of commands we should handle
     for my $cmd (@{ $games->{$game}->{Cmds} }) {
+
       $self->{Dispatch}->{$cmd} = $game;
+
+      ## install a cmd handler and register for it
+      my $handler = sub {
+            my $this_self = shift;
+            $this_self->_handle_auto(@_)
+      };
+      
+      { no strict 'refs';
+          *{__PACKAGE__.'::Bot_public_cmd_'.$cmd} = $handler;
+      }
+      
+      $core->plugin_register( $self, 'SERVER',
+        [ 'public_cmd_'.$cmd ],
+      );
     }
-    
+
+    ++$count;
     $core->log->debug("Game loaded: $game");
   }
 
+  return $count
 }
 
 
@@ -129,7 +141,7 @@ modules that are automatically loaded when this plugin is.
 Games modules are given a 'core' argument in new() that tells them 
 where to find the core instance:
 
-  sub new { my %arg = @_; bless { core => $arg{core} }, shift }
+  sub new { my %args = @_; bless { core => $args{core} }, shift }
 
 When the specified command is handled, the game module's B<execute> 
 method is called and passed the original message hash (as specified 

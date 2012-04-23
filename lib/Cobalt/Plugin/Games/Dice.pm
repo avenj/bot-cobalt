@@ -8,7 +8,7 @@ use warnings;
 
 use Cobalt::Utils qw/ color /;
 
-sub new { bless( {}, shift ) }
+sub new { bless {}, shift }
 
 sub execute {
   my ($self, $msg, $str) = @_;
