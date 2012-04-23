@@ -1,4 +1,4 @@
-package Cobalt::IRC::UserEvent;
+package Cobalt::IRC::Event;
 
 ## Base class for IRC events.
 
@@ -29,7 +29,7 @@ __END__
 
 =head1 NAME
 
-Cobalt::IRC::UserEvent - Represent an IRC event
+Cobalt::IRC::Event - Represent an IRC event
 
 =head1 SYNOPSIS
 
@@ -79,6 +79,18 @@ May be undefined if the message was "odd."
 L<Cobalt::IRC::Message> -- subclass for messages, notices, and actions
 
 L<Cobalt::IRC::Message::Public> -- subclass for public messages
+
+L<Cobalt::IRC::Event::Channel>
+
+L<Cobalt::IRC::Event::Kick>
+
+L<Cobalt::IRC::Event::Mode>
+
+L<Cobalt::IRC::Event::Nick>
+
+L<Cobalt::IRC::Event::Quit>
+
+L<Cobalt::IRC::Event::Topic>
 
 L<Cobalt::Manual::Plugins>
 

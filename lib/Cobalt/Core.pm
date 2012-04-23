@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_40';
+our $VERSION = '2.00_41';
 
 use 5.10.1;
 use Carp;
@@ -44,7 +44,7 @@ has 'debug'    => (
 ## pure convenience, ->VERSION is a better idea:
 has 'version' => ( 
   is => 'ro', isa => Str, lazy => 1,
-  default => quote_sub q{ $_[0]->VERSION }
+  default => sub { $VERSION }
 );
 
 ## frontends can specify a bot url if they like

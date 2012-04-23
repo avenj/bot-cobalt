@@ -1,12 +1,12 @@
 package Cobalt::IRC::Message;
 
-## Message class. Inherits from UserEvent
+## Message class. Inherits from Event
 
 use 5.10.1;
 use Cobalt::Common;
 use Moo;
 
-extends 'Cobalt::IRC::UserEvent';
+extends 'Cobalt::IRC::Event';
 
 has 'message' => ( is => 'rw', isa => Str, required => 1,
   trigger => sub {
@@ -66,8 +66,8 @@ Incoming IRC messages are broadcast to the plugin pipeline via
 L<Cobalt::IRC>; this is the base class providing an easy object 
 interface to parsed messages.
 
-This is the most frequently used UserEvent subclass; the methods 
-inherited from L<Cobalt::IRC::UserEvent> are also documented 
+This is the most frequently used Event subclass; the methods 
+inherited from L<Cobalt::IRC::Event> are also documented 
 here for convenience.
 
 =head1 METHODS
@@ -137,7 +137,7 @@ leading spaces.
 
 L<Cobalt::IRC::Message::Public> -- subclass for public messages
 
-L<Cobalt::IRC::UserEvent> -- base class for IRC events
+L<Cobalt::IRC::Event> -- base class for IRC events
 
 L<Cobalt::Manual::Plugins>
 

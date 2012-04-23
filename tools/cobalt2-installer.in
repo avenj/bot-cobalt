@@ -299,6 +299,7 @@ say "> Normally this would be somewhere in your HOME directory.";
 say "> Specify a directory relative to your HOME for cobalt to live:";
 print "[cobalt2] ";
 my $relative_basedir = <STDIN> ; chomp($relative_basedir);
+$relative_basedir //= 'cobalt2';
 
 if (-e $rcfile) {
   say ">! $rcfile seems to already exist.";

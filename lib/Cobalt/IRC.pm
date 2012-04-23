@@ -3,8 +3,16 @@ our $VERSION = '0.220';
 
 use 5.10.1;
 use Cobalt::Common;
+
 use Cobalt::IRC::Message;
 use Cobalt::IRC::Message::Public;
+
+use Cobalt::IRC::Event::Channel;
+use Cobalt::IRC::Event::Kick;
+use Cobalt::IRC::Event::Mode;
+use Cobalt::IRC::Event::Nick;
+use Cobalt::IRC::Event::Quit;
+use Cobalt::IRC::Event::Topic;
 
 use POE;
 use POE::Component::IRC::State;
@@ -16,8 +24,6 @@ use POE::Component::IRC::Plugin::NickReclaim;
 
 ## Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
-
-use Storable qw/dclone/;
 
 sub new { bless { NON_RELOADABLE => 1 }, shift }
 
