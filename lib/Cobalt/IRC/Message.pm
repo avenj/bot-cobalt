@@ -17,7 +17,7 @@ has 'context' => ( is => 'rw', isa => Str, required => 1 );
 has 'src'     => ( is => 'rw', isa => Str, required => 1 );
 
 has 'message' => ( is => 'rw', isa => Str, required => 1,
-  trigger => quote_sub q{
+  trigger => sub {
     my ($self, $value) = @_;
     $self->stripped( strip_color( strip_formatting($value) ) );    
   },
