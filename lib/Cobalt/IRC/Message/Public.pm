@@ -4,16 +4,15 @@ use 5.10.1;
 use Cobalt::Common;
 
 use Moo;
-use Sub::Quote;
 
 extends 'Cobalt::IRC::Message';
 
 has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
-  default => quote_sub q{ $_[0]->target },
+  default => sub { $_[0]->target },
 );
 
 has 'cmd' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{
+  default => sub {
     my ($self) = @_;
     my $cf_core = $self->core->get_core_cfg;
     my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!' ;
@@ -29,11 +28,11 @@ has 'cmd' => ( is => 'rw', lazy => 1,
 );
 
 has 'cmdprefix' => ( is => 'ro', isa => Bool, lazy => 1,
-  default => quote_sub q{ defined $_[0]->cmd ? 1 : 0 },
+  default => sub { defined $_[0]->cmd ? 1 : 0 },
 );
 
 has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
-  default => quote_sub q{
+  default => sub {
     my ($self) = @_;
     my $irc = $self->core->get_irc_obj( $self->context );
     my $me = $irc->nick_name;
