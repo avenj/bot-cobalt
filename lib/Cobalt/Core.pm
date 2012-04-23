@@ -20,9 +20,6 @@ use Storable qw/dclone/;
 extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
 
-with 'Cobalt::Core::Role::Timers';
-with 'Cobalt::Core::Role::Auth';
-
 ### a whole bunch of attributes ...
 
 ## usually a hashref from Cobalt::Conf created via frontend:
@@ -117,6 +114,11 @@ has 'Provided' => (
   is  => 'rw',  isa => HashRef,
   default => quote_sub q{ {} },
 );
+
+
+with 'Cobalt::Core::Role::Timers';
+with 'Cobalt::Core::Role::Auth';
+
 
 sub init {
   my ($self) = @_;
