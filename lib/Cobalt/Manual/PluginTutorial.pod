@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Cobalt::Manual::PluginTutorial - Let's write a plugin
+Cobalt::Manual::PluginTutorial - Let's write a simple plugin
 
 =head1 SYNOPSIS
 
@@ -110,11 +110,111 @@ know.
 
 =head2 Add some data
 
-FIXME
+For convenience, we'll store our fortune cookies in the B<DATA> 
+filehandle.
+
+At the bottom of your plugin module:
+
+  1;  ## Perl modules must return a true value
+  __DATA__
+  You are not dead yet. Watch for further reports.
+  Don't look up.
+  You look tired.
+  Fine day for friends. Crappy day for you.
+
+Add as many as you like, one per line. When we want to retrieve them, we 
+just read B<DATA> like a normal file handle.
+
+Let's write our B<fortune()> method to pull a random fortune from 
+B<DATA> -- this is nice and simple:
+
+  sub fortune {
+    my ($self) = @_;
+    my @fortunes = <DATA>;
+    return $fortunes[rand @fortunes]
+  }
 
 =head2 Finished product
 
-FIXME
+  package My::Cobalt::Plugin;
+  our $VERSION = '0.01';
+
+  use strict;
+  use warnings;
+  use Cobalt::Common;
+
+  sub new { bless {}, shift }
+
+  sub Cobalt_register {
+    my ($self, $core) = splice @_, 0, 2;
+
+    $core->plugin_register( $self, 'SERVER',
+      ## An array reference of events to catch.
+      [ qw/ public_cmd_fortune /],
+    );
+    
+    ## It's polite to log that we're here now.
+    $core->log->info("Loaded - $VERSION");
+    
+    return PLUGIN_EAT_NONE
+  }
+  
+  sub Cobalt_unregister {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    $core->log->info("Unloaded");
+    
+    return PLUGIN_EAT_NONE
+  }
+
+  sub Bot_public_cmd_fortune {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    ## Get our (de-referenced) message object.
+    my $msg = ${ $_[0] };
+
+    ## Get our server context, source nickname, and channel.
+    my $context  = $msg->context;
+    my $src_nick = $msg->src_nick;
+    my $channel  = $msg->channel;
+    
+    ## We'll write our response method fortune() later.
+    my $fortune = $self->fortune;
+    my $response_string = "$src_nick: $fortune";
+    
+    ## Relay our response string back to Cobalt::IRC
+    $core->send_event( 'send_message', $context, $channel,
+      $response_string
+    );
+  
+    ## This one eats the event when it's complete.
+    return PLUGIN_EAT_ALL
+  }
+
+  sub fortune {
+    my ($self) = @_;
+    my @fortunes = <DATA>;
+    return $fortunes[rand @fortunes]
+  }
+
+  1;  ## Perl modules must return a true value
+  __DATA__
+  You are not dead yet. Watch for further reports.
+  Don't look up.
+  You look tired.
+  Fine day for friends. Crappy day for you.
+
+=head1 SEE ALSO
+
+L<Cobalt::Manual::Plugins> - Plugin authoring handbook
+
+L<Cobalt::Core>
+
+L<Cobalt::IRC>
+
+L<Cobalt::IRC::Event>
+
+L<Cobalt::IRC::Message>
 
 =head1 AUTHOR
 
