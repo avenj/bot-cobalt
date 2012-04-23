@@ -269,16 +269,22 @@ scalar, or it might be a reference of some sort, such as a hash:
     return PLUGIN_EAT_NONE
   }
 
-B<Be cautious with your argument modifiers!>
+Be cautious with your argument modifications!
 
 For example, when splicing values from a C<< $msg->{message_array} >> 
 (I<< L</Messages> >>):
 
   ## copy, then splice/shift/pop
-  my @message = @{ $msg->{message_array} };
+  my @message = @{ $msg->message_array };
   my ($first, $second) = splice @message, 0, 2;
   my $third = shift @message;
 
+  ## even better (and cleaner):
+  my $msgarr = $msg->message_array;
+  my ($first, $second, $third) = @$msgarr;
+
+(Then you never have to worry about trashing events that may be passed 
+to another plugin.)
 
 =head3 Returning proper values
 
@@ -367,9 +373,10 @@ A _msg event is passed a context and a L<Cobalt::IRC::Message> object:
     return PLUGIN_EAT_NONE
   }
 
-See L<Cobalt::IRC::Message> and L<Cobalt::IRC::Message::Public> for the 
-complete documentation regarding message object methods. The most 
-commonly-used methods are:
+See L<Cobalt::IRC::Event>, L<Cobalt::IRC::Message> and 
+L<Cobalt::IRC::Message::Public> for the complete 
+documentation regarding message object methods. The most 
+commonly-used message methods are:
 
 =head4 target
 
@@ -456,7 +463,8 @@ A plugin can register to receive commands in this format:
 
 It's important to note that B<< $msg->message_array >> is shifted leftwards 
 in B<public_cmd_> handlers; it won't contain the CmdChar-prefixed 
-command. B<< $msg->message_array_sp >> remains unchanged.
+command. B<< $msg->message_array_sp >> remains unchanged, as do the 
+B<message> and B<stripped> strings.
 
 =head3 Other events
 

@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.220';
+our $VERSION = '0.230';
 
 use 5.10.1;
 use Cobalt::Common;
@@ -1170,59 +1170,46 @@ Carries the channel name:
 
 Broadcast when a channel topic has changed.
 
-Carries a hash:
+Carries a L<Cobalt::IRC::Event::Topic> object:
 
   my ($self, $core) = @splice @_, 0, 2;
-  my $context  = ${$_[0]};
-  my $t_change = ${$_[1]};
+  my $topic_obj = ${$_[0]};
+  
+  my $context   = $topic_obj->context;
+  my $setter    = $topic_obj->src_nick;
+  my $new_topic = $topic_obj->topic;
 
-$t_change has the following keys:
-
-  $t_change = {
-    src => Topic setter; may be an arbitrary string
-    src_nick => 
-    src_user => 
-    src_host =>
-    channel  =>
-    topic => New topic string
-  };
+L<Cobalt::IRC::Event::Topic> is a subclass of L<Cobalt::IRC::Event> and 
+L<Cobalt::IRC::Event::Channel> -- see the documentation for those base 
+classes for complete details on available methods.
 
 Note that the topic setter may be a server, just a nickname, 
 the name of a service, or some other arbitrary string.
-
 
 =head3 Bot_mode_changed
 
 Broadcast when a channel mode has changed.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $modechg = ${$_[1]};
+  my $modechg = ${$_[0]};
+  
+  my $context  = $modechg->context;
+  my $modestr  = $modechg->mode;
+  my $modeargs = $modechg->args;
+  my $modehash = $modechg->hash;
 
-The $modechg hash has the following keys:
-
-  $modechg = {
-    src => Full nick!user@host (or a server name)
-    ## The other src_* variables are irrelevant if src is a server:
-    src_nick => Nickname of mode changer
-    src_user => Username of mode changer
-    src_host => Hostname of mode changer
-    channel => Channel mode changed on
-    mode => Mode change string
-    args => Array of arguments to modes, if any
-    hash => HashRef produced by IRC::Utils::parse_mode_line
-  };
-
-$modechg->{hash} is produced by L<IRC::Utils>.
+The hashref returned by B<<->hash>> is produced by 
+L<IRC::Utils/parse_mode_line>.
 
 It has two keys: I<modes> and I<args>. They are both ARRAY references:
 
-  my @modes = @{ $modechg->{hash}->{modes} };
-  my @args  = @{ $modechg->{hash}->{args} };
+  my @modes = @{ $modechg->hash->{modes} };
+  my @args  = @{ $modechg->hash->{args}  };
 
 If parsing failed, the hash is empty.
 
-The caveat to parsing modes is determining whether or not they have args.
+The trick to parsing modes is determining whether or not they have args 
+that need to be pulled out.
 You can walk each individual mode and handle known types:
 
   for my $mode (@modes) {
@@ -1263,18 +1250,12 @@ As of this writing the Cobalt core provides no convenience method for this.
 Broadcast when a user joins a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $join    = ${$_[1]};
+  my $join     = ${$_[0]};
+  
+  my $nickname = $join->src_nick;
+  my $context  = $join->context;
 
-$join is a hash with the following keys:
-
-  $join = {
-    src =>
-    src_nick =>
-    src_user =>
-    src_host =>
-    channel => Channel the user joined
-  };
+Carries a L<Cobalt::IRC::Event::Channel> object.
 
 =head3 Bot_self_joined
 
@@ -1289,10 +1270,10 @@ Carries the same syntax and caveats as L</Bot_self_left>, below.
 Broadcast when a user parts a channel we are on.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $part    = ${$_[1]};
+  my $part    = ${$_[0]};
 
-$part is a hash with the same keys as L</Bot_user_joined>.
+Carries a L<Cobalt::IRC::Event::Channel> object; also see 
+L</Bot_user_joined>.
 
 =head3 Bot_self_left
 
@@ -1332,43 +1313,33 @@ Broadcast when the bot was seemingly kicked from a channel.
 Relies on the same logic as L</Bot_self_left> -- be sure to read the 
 note in that section (above).
 
-The bot will probably attempt to auto-rejoin.
+The bot will probably attempt to auto-rejoin unless configured 
+otherwise.
 
 =head3 Bot_user_kicked
 
 Broadcast when a user (maybe us) is kicked.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $kick    = ${$_[1]};
+  my $kick    = ${$_[0]};
+  
+  my $kicked    = $kick->kicked;
+  my $kicked_by = $kick->src_nick;
+  my $reason    = $kick->reason;
 
-${$_[1]} is a hash with the following keys:
-
-  $kick = {
-    src => Origin of the kick
-    src_nick =>
-    src_user =>
-    src_host =>
-    channel => Channel kick took place on
-    kicked => User that was kicked
-    reason => Kick reason
-  }
-
+Carries a L<Cobalt::IRC::Event::Kick> object.
 
 =head3 Bot_invited
 
 Broadcast when the bot has been invited to a channel.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $invite  = ${$_[1]};
+  my $invite  = ${$_[0]};
+  
+  my $invited_to = $invite->channel;
+  my $invited_by = $invite->src_nick;
 
-The hash in ${$_[1]} has the normal B<src>, B<src_nick>, B<src_user>, 
-B<src_host> keys.
-
-The B<channel> key contains the name of the channel the bot was invited to.
-
-
+Carries a L<Cobalt::IRC::Event::Channel> object.
 
 =head2 User state events
 
@@ -1376,29 +1347,28 @@ The B<channel> key contains the name of the channel the bot was invited to.
 
 Broadcast when mode changes on the bot's nickname (umode).
 
-The context and mode string is provided:
-
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $modestr = ${$_[1]};
+  my $modechg = ${$_[0]};
 
+  my $modestr = $modechg->mode;
+
+Carries a L<Cobalt::IRC::Event::Mode> object.
 
 =head3 Bot_nick_changed
 
 Broadcast when a visible user's nickname changes.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $nchange = ${$_[1]};
+  my $nchange = ${$_[0]};
+  
+  my $old = $nchange->old_nick;
+  my $new = $nchange->new_nick;
 
-${$_[1]} is a hash with the following keys:
-
-  $nchange = {
-    old => Previous nickname
-    new => New nickname
-    equal => Indicates a simple case change
-    common => Array(ref) of channels shared with the user
+  if ( $nchange->equal ) {
+    ## Case change only
   }
+
+Carries a L<Cobalt::IRC::Event::Nick> object.
 
 I<equal> is determined by attempting to get server CASEMAPPING= 
 (falling back to 'rfc1459' rules) and using L<IRC::Utils> to check 
@@ -1414,30 +1384,21 @@ Broadcast when our own nickname changed, possibly via coercion.
   my $context  = ${$_[0]};
   my $new_nick = ${$_[1]};
 
-A I<nick_changed> event will be queued after I<self_nick_changed>.
-
 
 =head3 Bot_user_quit
 
 Broadcast when a visible user has quit.
 
-We can only receive quit notifications if we share channels with the user.
+We can only receive quit notifications if we share channels with the 
+user, of course.
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $quit_h  = ${$_[1]};
+  my $quit = ${ $_[0] };
+  
+  my $nickname = $quit->src_nick;
+  my $reason   = $quit->reason;
 
-$quit_h would be a hash with the following keys:
-
-  $quit_h = {
-    src =>
-    src_nick =>
-    src_user =>
-    src_host =>
-    reason =>
-    common => Arrayref of formerly common channels (per PoCo::IRC::State)
-  }
-
+Carries a L<Cobalt::IRC::Event::Quit> object.
 
 =head2 Outgoing messages
 
