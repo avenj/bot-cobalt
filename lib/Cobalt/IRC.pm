@@ -381,7 +381,7 @@ sub irc_ctcp_action {
     message => $txt,
   );
 
-  $core->send_event( 'ctcp_action', $context, $msg_obj );
+  $core->send_event( 'ctcp_action', $msg_obj );
 }
 
 sub irc_connected {
@@ -474,22 +474,19 @@ sub irc_error {
 sub irc_kick {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $channel, $target, $reason) = @_[ARG0 .. ARG3];
-  my ($nick, $user, $host) = parse_user($src);
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
 
-  my $kick = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
+  my $kick = Cobalt::IRC::Event::Kick->new(
+    core    => $core,
+    context => $context,
     channel => $channel,
-    kicked => $target,
-    target => $target,  # kicked/target are both valid
-    reason => $reason,
-  };
+    src     => $src,
+    kicked  => $target,
+    reason  => $reason,
+  );
 
   my $me = $irc->nick_name();
   my $casemap = $core->get_irc_casemap($context);
@@ -499,7 +496,7 @@ sub irc_kick {
   }
 
   ## Bot_user_kicked:
-  $core->send_event( 'user_kicked', $context, $kick );
+  $core->send_event( 'user_kicked', $kick );
 }
 
 sub irc_mode {
@@ -509,61 +506,48 @@ sub irc_mode {
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
   my $core    = $self->{core};
+
+  my $mode_obj = Cobalt::IRC::Event::Mode->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    target  => $changed_on,
+    mode    => $modestr,
+    args    => [ @modeargs ],
+  );
   
-  my ($nick, $user, $host) = parse_user($src);
-
-  ## shouldfix; split into modes with args and modes without based on isupport?
-
-  my $modechg = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    channel => $changed_on,
-    mode => $modestr,
-    args => [ @modeargs ],
-    ## shouldfix; try to parse isupport to feed parse_mode_line chan/status lines?
-    ## (code to sort-of do this in embedded POD)
-    hash => parse_mode_line($modestr, @modeargs),
-  };
-  ## try to guess whether the mode change was umode (us):
-  my $me = $irc->nick_name();
-  my $casemap = $core->get_irc_casemap($context);
-  if ( eq_irc($me, $changed_on, $casemap) ) {
+  if ( $mode_obj->is_umode ) {
     ## our umode changed
-    $core->send_event( 'umode_changed', $context, $modestr );
+    $core->send_event( 'umode_changed', $mode_obj );
     return
   }
-
   ## otherwise it's mostly safe to assume mode changed on a channel
   ## could check by grabbing isupport('CHANTYPES') and checking against
   ## is_valid_chan_name from IRC::Utils, f.ex:
   ## my $chantypes = $self->irc->isupport('CHANTYPES') || '#&';
   ## is_valid_chan_name($changed_on, [ split '', $chantypes ]) ? 1 : 0;
   ## ...but afaik this Should Be Fine:
-  $core->send_event( 'mode_changed', $context, $modechg);
+  $core->send_event( 'mode_changed', $mode_obj);
 }
 
 sub irc_topic {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $channel, $topic) = @_[ARG0 .. ARG2];
-  my ($nick, $user, $host) = parse_user($src);
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
 
-  my $topic_change = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
+  my $topic_obj = Cobalt::IRC::Event::Topic->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
     channel => $channel,
-    topic => $topic,
-  };
+    topic   => $topic,
+  );
 
   ## Bot_topic_changed
-  $core->send_event( 'topic_changed', $context, $topic_change );
+  $core->send_event( 'topic_changed', $topic_obj );
 }
 
 sub irc_nick {
@@ -574,27 +558,25 @@ sub irc_nick {
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
 
-  ## if $src is a hostmask, get just the nickname:
-  my $old = parse_user($src);
-
   ## see if it's our nick that changed, send event:
   if ($new eq $irc->nick_name) {
     $self->{core}->send_event( 'self_nick_changed', $context, $new );
+    return
   }
 
-  my $casemap = $core->get_irc_casemap($context);
-  ## is this just a case change ?
-  my $equal = eq_irc($old, $new, $casemap) ? 1 : 0 ;
-  ## FIXME add src_* keys
-  my $nick_change = {
-    old => $old,
-    new => $new,
-    equal => $equal,
-    common => $common,
-  };
+  my $old = parse_user($src);
+    
+  my $nchg = Cobalt::IRC::Event::Nick->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    old_nick => $old,
+    new_nick => $new,
+    channels => $common,
+  );
 
   ## Bot_nick_changed
-  $core->send_event( 'nick_changed', $context, $nick_change );
+  $core->send_event( 'nick_changed', $nchg );
 }
 
 sub irc_join {
@@ -605,24 +587,21 @@ sub irc_join {
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
 
-  my ($nick, $user, $host) = parse_user($src);
+  my $join = Cobalt::IRC::Event::Channel->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    channel => $channel,
+  );
 
-  my $join = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    channel  => $channel,
-  };
-  
   my $me = $irc->nick_name();
   my $casemap = $core->get_irc_casemap($context);
-  if ( eq_irc($me, $nick, $casemap) ) {
+  if ( eq_irc($me, $join->src_nick, $casemap) ) {
     $core->send_event( 'self_joined', $context, $channel );
   }
 
   ## Bot_user_joined
-  $core->send_event( 'user_joined', $context, $join );
+  $core->send_event( 'user_joined', $join );
 }
 
 sub irc_part {
@@ -633,47 +612,42 @@ sub irc_part {
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
   
-  my ($nick, $user, $host) = parse_user($src);
-
-  my $part = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
+  my $part = Cobalt::IRC::Event::Channel->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
     channel => $channel,
-  };
+  );
 
   my $me = $irc->nick_name();
   my $casemap = $core->get_irc_casemap($context);
   ## shouldfix? we could try an 'eq' here ... but is a part issued by
   ## force methods going to be guaranteed the same case ... ?
-  if ( eq_irc($me, $nick, $casemap) ) {
+  if ( eq_irc($me, $part->src_nick, $casemap) ) {
     ## we were the issuer of the part -- possibly via /remove, perhaps?
     ## (autojoin might bring back us back, though)
     $core->send_event( 'self_left', $context, $channel );
   }
 
   ## Bot_user_left
-  $core->send_event( 'user_left', $context, $part );
+  $core->send_event( 'user_left', $part );
 }
 
 sub irc_quit {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $msg, $common) = @_[ARG0 .. ARG2];
-  my ($nick, $user, $host) = parse_user($src);
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
 
-  my $quit = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    reason => $msg,
-    common => $common,
-  };
+  my $quit = Cobalt::IRC::Event::Quit->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    reason  => $msg,
+    common  => $common,
+  );
 
   ## Bot_user_quit
   $core->send_event( 'user_quit', $context, $quit );
@@ -682,22 +656,20 @@ sub irc_quit {
 sub irc_invite {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $channel) = @_[ARG0, ARG1];
-  my ($nick, $user, $host) = parse_user($src);
   
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   my $core    = $self->{core};
-  
-  my $invite = {
-    src => $src,
-    src_nick => $nick,
-    src_user => $user,
-    src_host => $host,
-    channel  => $channel,
-  };
+
+  my $invite = Cobalt::IRC::Event::Channel->new(
+    core    => $core,
+    context => $context,
+    src     => $src,
+    channel => $channel,
+  );
   
   ## Bot_invited
-  $core->send_event( 'invited', $context, $invite );
+  $core->send_event( 'invited', $invite );
 }
 
 

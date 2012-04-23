@@ -9,6 +9,9 @@ has 'old_nick' => ( is => 'rw', isa => Str, required => 1 );
 has 'new_nick' => ( is => 'rw', isa => Str, required => 1 );
 
 has 'channels' => ( is => 'rw', isa => ArrayRef, required => 1 );
+has 'common'   => ( is => 'ro', lazy => 1,
+  default => sub { $_[0]->channels },
+);
 
 has 'equal' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {

@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 ## Simplistic relaybot plugin
 use 5.10.1;
@@ -234,16 +234,16 @@ sub Bot_public_msg {
 
 sub Bot_ctcp_action {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $action  = ${ $_[1] };
+  my $action  = ${ $_[0] };
+  my $context = $action->context;
   
-  my $channel = $action->{target};
+  my $channel = $action->channel || return PLUGIN_EAT_NONE;
 
   my @relays = $self->get_relays($context, $channel);
   return PLUGIN_EAT_NONE unless @relays;
 
-  my $src_nick = $action->{src_nick};
-  my $text = $action->{orig};
+  my $src_nick = $action->src_nick;
+  my $text = $action->message;
   my $str  = "[action:${channel}] * $src_nick $text";
 
   for my $relay (@relays) {
@@ -262,14 +262,13 @@ sub Bot_ctcp_action {
 
 sub Bot_user_joined {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $joinref = ${ $_[1] };
-  
-  my $channel = $joinref->{channel};
+  my $join    = ${ $_[0] };
+  my $context = $join->context;
+  my $channel = $join->channel;
 
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
   
-  my $src_nick = $joinref->{src_nick};
+  my $src_nick = $join->src_nick;
   push( @{ $self->{JoinQueue}->{$context}->{$channel} }, $src_nick )
     unless $src_nick ~~ @{ $self->{JoinQueue}->{$context}->{$channel}//[] };
 
@@ -278,14 +277,13 @@ sub Bot_user_joined {
 
 sub Bot_user_left {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $partref = ${ $_[1] };
-  
-  my $channel = $partref->{channel};
+  my $part    = ${ $_[0] };
+  my $context = $part->context;
+  my $channel = $part->channel;
   
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
     
-  my $src_nick = $partref->{src_nick};
+  my $src_nick = $part->src_nick;
   push( @{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
     unless $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
   
@@ -294,17 +292,17 @@ sub Bot_user_left {
 
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $kickref = ${ $_[1] };
+  my $kick = ${ $_[0] };
+  my $context = $kick->context;
 
-  my $channel = $kickref->{channel};
+  my $channel = $kick->channel;
   
   my @relays = $self->get_relays($context, $channel);
   return PLUGIN_EAT_NONE unless @relays;
   
-  my $src_nick = $kickref->{src_nick};
-  my $kicked_u = $kickref->{kicked};
-  my $reason   = $kickref->{reason};
+  my $src_nick = $kick->src_nick;
+  my $kicked_u = $kick->kicked;
+  my $reason   = $kick->reason;
 
   for my $relay (@relays) {  
     my $to_context = $relay->[0];
@@ -324,18 +322,18 @@ sub Bot_user_kicked {
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $quitref = ${ $_[1] };
+  my $quit = ${ $_[0] };
+  my $context = $quit->context;
   
   return PLUGIN_EAT_NONE
     unless $self->{Relays}->{$context};
   
-  my $src_nick = $quitref->{src_nick};
-  my @common = @{ $quitref->{common}||[] };
+  my $src_nick = $quit->src_nick;
+  my $common   = $quit->common;
 
   ## see if we have any applicable relays for this quit
   ## send the quit to all of them
-  for my $channel (@common) {
+  for my $channel (@$common) {
     my @relays = $self->get_relays($context, $channel);
     next unless @relays;
     RELAY: for my $relay (@relays) {
@@ -351,20 +349,20 @@ sub Bot_user_quit {
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $nchange = ${ $_[1] };
+  my $nchg = ${ $_[0] };
+  my $context = $nchg->context;
   
   ## disregard case changes to cut back noise
-  return PLUGIN_EAT_NONE if $nchange->{equal};
+  return PLUGIN_EAT_NONE if $nchg->equal;
 
   return PLUGIN_EAT_NONE
     unless $self->{Relays}->{$context};
 
-  my $src_nick = $nchange->{new};
-  my $old_nick = $nchange->{old};
-  my @common = @{ $nchange->{common}||[] };
-
-  for my $channel (@common) {
+  my $src_nick = $nchg->new_nick;
+  my $old_nick = $nchg->old_nick;
+  my $common   = $nchg->channels;
+  
+  for my $channel (@$common) {
     my @relays = $self->get_relays($context, $channel);
     next unless @relays;
     RELAY: for my $relay (@relays) {

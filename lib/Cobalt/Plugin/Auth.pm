@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.300';
+our $VERSION = '0.301';
 
 use 5.10.1;
 
@@ -219,11 +219,11 @@ sub Bot_user_left {
   ## User left a channel
   ## If we don't share other channels, this user can't be tracked
   ## (therefore clear any auth entries for user belonging to us)
-  my $context = ${$_[0]};
-  my $left    = ${$_[1]};
+  my $left    = ${$_[0]};
+  my $context = $left->context;
 
-  my $channel = $left->{channel};
-  my $nick    = $left->{src_nick};
+  my $channel = $left->channel;
+  my $nick    = $left->src_nick;
 
   ## Call _remove_if_lost to see if we can still track this user:
   $self->_remove_if_lost($context, $nick);
@@ -250,16 +250,18 @@ sub Bot_self_kicked {
 
 sub Bot_user_kicked {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $nick    = ${$_[1]}->{src_nick};
+  my $kick    = ${ $_[0] };
+  my $context = $kick->context;
+  my $nick    = $kick->src_nick;
   $self->_remove_if_lost($context, $nick);
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $nick    = ${$_[1]}->{src_nick};
+  my $quit    = ${$_[0]};
+  my $context = $quit->context;
+  my $nick    = $quit->src_nick;
   ## User quit, clear relevant auth entries
   ## We can call _do_logout directly here:
   $self->_do_logout($context, $nick);
@@ -268,9 +270,12 @@ sub Bot_user_quit {
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $old = ${$_[1]}->{old};
-  my $new = ${$_[1]}->{new};
+  my $nchg = ${$_[0]};
+
+  my $old = $nchg->old_nick;
+  my $new = $nchg->new_nick;
+  my $context = $nchg->context;
+
   ## a nickname changed, adjust Auth accordingly:
   if (exists $core->State->{Auth}->{$context}->{$old}) {
     my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};

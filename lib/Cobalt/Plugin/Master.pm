@@ -67,7 +67,7 @@ sub Bot_public_cmd_cycle {
 sub Bot_public_cmd_join {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${ $_[0] };
-  my $context = $msg->context;
+  my $context  = $msg->context;
   my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
@@ -120,7 +120,7 @@ sub Bot_public_cmd_part {
 sub Bot_public_cmd_op {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${ $_[0] };
-  my $context = $msg->context;
+  my $context  = $msg->context;
   my $src_nick = $msg->src_nick;
 
   my $pcfg = $core->get_plugin_cfg($self) || {};

@@ -170,13 +170,13 @@ sub Bot_seendb_update {
 
 sub Bot_user_joined {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $join    = ${ $_[1] };
+  my $join    = ${ $_[0] };
+  my $context = $join->context;
 
-  my $nick = $join->{src_nick};
-  my $user = $join->{src_user};
-  my $host = $join->{src_host};
-  my $chan = $join->{channel};
+  my $nick = $join->src_nick;
+  my $user = $join->src_user;
+  my $host = $join->src_host;
+  my $chan = $join->channel;
 
   $self->{BufDirty} = 1;
   
@@ -198,13 +198,13 @@ sub Bot_self_joined {
 
 sub Bot_user_left {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $part    = ${ $_[1] };
+  my $part    = ${ $_[0] };
+  my $context = $part->context;
   
-  my $nick = $part->{src_nick};
-  my $user = $part->{src_user};
-  my $host = $part->{src_host};
-  my $chan = $part->{channel};
+  my $nick = $part->src_nick;
+  my $user = $part->src_user;
+  my $host = $part->src_host;
+  my $chan = $part->channel;
 
   $self->{BufDirty} = 1;
 
@@ -222,13 +222,13 @@ sub Bot_user_left {
 
 sub Bot_user_quit {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $quit    = ${ $_[1] };
+  my $quit    = ${ $_[0] };
+  my $context = $quit->context;
   
-  my $nick = $quit->{src_nick};
-  my $user = $quit->{src_user};
-  my $host = $quit->{src_host};
-  my $chan = $quit->{channel};
+  my $nick = $quit->src_nick;
+  my $user = $quit->src_user;
+  my $host = $quit->src_host;
+  my $chan = $quit->channel;
 
   $self->{BufDirty} = 1;
 
@@ -246,18 +246,18 @@ sub Bot_user_quit {
 
 sub Bot_nick_changed {
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${ $_[0] };
-  my $nchange = ${ $_[1] };
-  return PLUGIN_EAT_NONE if $nchange->{equal};
+  my $nchange = ${ $_[0] };
+  my $context = $nchange->context;
+  return PLUGIN_EAT_NONE if $nchange->equal;
   
-  my $old = $nchange->{old};
-  my $new = $nchange->{new};
+  my $old = $nchange->old_nick;
+  my $new = $nchange->new_nick;
   
   my $irc = $core->get_irc_obj($context);
   my $src = $irc->nick_long_form($new) || $new;
   my ($nick, $user, $host) = parse_user($src);
   
-  my $first_common = $nchange->{common}->[0];
+  my $first_common = $nchange->channels->[0];
 
   $self->{BufDirty} = 1;
   
