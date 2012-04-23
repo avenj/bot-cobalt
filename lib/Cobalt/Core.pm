@@ -498,7 +498,7 @@ sub get_plugin_cfg {
 }
 
 
-
+## Moose-compatible 'no Moo'
 no Moo; 1;
 __END__
 
