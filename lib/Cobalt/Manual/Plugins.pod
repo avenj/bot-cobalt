@@ -17,6 +17,7 @@ Refer to L</SEE ALSO> for other relevant documentation.
 
 B<Plugin authors should at least read the L<Cobalt::IRC> POD>
 
+For a quick-start guide, try L<Cobalt::Manual::Plugins::Tutorial>.
 
 =head1 PLUGIN FUNDAMENTALS
 
