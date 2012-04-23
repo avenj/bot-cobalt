@@ -67,33 +67,94 @@ __END__
 
 =head1 NAME
 
-Cobalt::IRC::Message - IRC Message base class
+Cobalt::IRC::Message - Represent an incoming IRC message
 
 =head1 SYNOPSIS
 
-  ## In a message handler:
-  sub Bot_public_msg {
+  sub Bot_private_msg {
     my ($self, $core) = splice @_, 0, 2;
     my $msg = ${ $_[0] };
     
     my $context  = $msg->context;
     my $stripped = $msg->stripped;
+    my $nickname = $msg->src_nick;
     . . . 
   }
 
 =head1 DESCRIPTION
 
-FIXME
+Incoming IRC messages are broadcast to the plugin pipeline via 
+L<Cobalt::IRC>; this is the base class providing an easy object 
+interface to parsed messages.
 
 =head1 METHODS
 
 =head2 context
 
+Returns the server context name.
+
+=head2 src
+
+Returns the full source of the message in the form of C<nick!user@host>
+
+=head2 src_nick
+
+The 'nick' portion of the message's L</src>.
+
+=head2 src_user
+
+The 'user' portion of the message's L</src>.
+
+May be undefined if the message was "odd."
+
+=head2 src_host
+
+The 'host' portion of the message's L</src>.
+
+May be undefined if the message was "odd."
+
+=head2 targets
+
+An array reference containing any seen destinations for this message.
+
+=head2 target
+
+The first seen destination, as a string.
+
+Same as C<< $msg->targets->[0] >>
+
+=head2 channel
+
+Undefined if the destination for the message doesn't appear to be a 
+properly-prefixed channel; otherwise the same value as L</target>.
+
 =head2 message
+
+The unstripped, unparsed message string we were originally given.
 
 =head2 stripped
 
-=head2 FIXME
+The color and formatting stripped L</message>.
+
+=head2 message_array
+
+An array reference containing the message string split on white space.
+
+"Extra" spaces are not preserved; see L</message_array_sp>.
+
+B<message_array> can be modified in the case of command-prefixed public 
+messages; see L<Cobalt::IRC::Message::Public/cmd>.
+
+=head2 message_array_sp
+
+Similar to L</message_array>, except all spaces are preserved, including 
+leading spaces.
+
+=head1 SEE ALSO
+
+L<Cobalt::IRC::Message::Public> -- subclass for public messages
+
+L<Cobalt::Manual::Plugins>
 
 =head1 AUTHOR
 

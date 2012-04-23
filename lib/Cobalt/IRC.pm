@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.216';
+our $VERSION = '0.220';
 
 use 5.10.1;
 use Cobalt::Common;
@@ -1054,38 +1054,21 @@ The IRC component will provide a maybe-not-useful reason:
 Broadcast upon receiving public text (text in a channel).
 
   my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $msg     = ${$_[1]};
-  my $stripped = $msg->{message};
+  my $msg     = ${$_[0]};
+  my $context  = $msg->context;
+  my $stripped = $msg->stripped;
   ...
 
-$msg is a hash, with the following structure:
+$msg is a L<Cobalt::IRC::Message> object; in the case of public 
+messages; it is a L<Cobalt::IRC::Message::Public> object.
 
-  $msg = {
-    myself => The bot's current nickname on this context
-    src => Source's full nick!user@host
-    src_nick => Source nickname
-    src_user => Source username
-    src_host => Source hostname
-
-    channel      => The first channel message was seen on
-    target_array => Array of channels message was seen on    
-
-    orig    => Original, unparsed message content
-    message => Color/format-stripped message content
-    message_array    => Color/format-stripped content, split to array
-    message_array_sp => Same as above, spaces preserved as empty fields
-
-    highlight => Boolean: was the bot being addressed?
-    cmdprefix => Boolean: was the string prefixed with CmdChar?
-    ## also see L</Bot_public_cmd_CMD>
-    cmd => The command used, if cmdprefix was true
-  };
+See L<Cobalt::IRC::Message> for complete documentation regarding 
+available methods.
 
 B<IMPORTANT:> We don't automatically decode any character encodings.
 This means that text may be a byte-string of unknown encoding.
 Storing or displaying the text may present complications.
-You may want decode_irc from L<IRC::Utils> for these purposes.
+You may want decode_irc from L<IRC::Utils> for these applications.
 See L<IRC::Utils/ENCODING> for more on encodings + IRC.
 
 Also see:
@@ -1117,7 +1100,7 @@ CMD is the public command triggered; ie the first "word" of something
 like (if CmdChar is '!'): I<!kick> --> I<Bot_public_cmd_kick>
 
 Syntax is precisely the same as L</Bot_public_msg>, with one major 
-caveat: B<< $msg->{message_array} will not contain the command. >>
+caveat: B<< $msg->message_array will not contain the command. >>
 
 This event is pushed to the pipeline before _public_msg.
 
@@ -1137,20 +1120,18 @@ It's fairly safe to assume that C<target> is the bot's current nickname.
 
 Broadcast when a /NOTICE is received.
 
-Syntax is the same as L</Bot_private_msg>
+Syntax is the same as L</Bot_public_msg>.
 
 
 =head3 Bot_ctcp_action
 
 Broadcast when a CTCP ACTION (/ME in most clients) is received.
 
-Syntax is similar to L</Bot_public_msg>, except the only keys available are:
-  context
-  myself
-  src src_nick src_user src_host
-  target target_array
-  message message_array orig
+Syntax is similar to L</Bot_public_msg>.
 
+If the ACTION appears to have been directed at a channel, the B<channel> 
+method will return the same value as B<target> -- otherwise it will 
+return an empty string.
 
 
 =head2 Sent notification events

@@ -7,10 +7,6 @@ use Moo;
 
 extends 'Cobalt::IRC::Message';
 
-has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
-  default => sub { $_[0]->target },
-);
-
 has 'cmd' => ( is => 'rw', lazy => 1,
   default => sub {
     my ($self) = @_;
@@ -25,10 +21,6 @@ has 'cmd' => ( is => 'rw', lazy => 1,
     }
     undef
   },
-);
-
-has 'cmdprefix' => ( is => 'ro', isa => Bool, lazy => 1,
-  default => sub { defined $_[0]->cmd ? 1 : 0 },
 );
 
 has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
@@ -46,5 +38,48 @@ has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
 __END__
 
 =pod
+
+=head1 NAME
+
+Cobalt::IRC::Message::Public - Public message subclass
+
+=head1 SYNOPSIS
+
+  sub Bot_public_msg {
+    my ($self, $core) = splice @_, 0, 2;
+    my $msg = ${ $_[0] };
+    
+    if ($msg->highlight) {
+      . . . 
+    }
+  }
+
+=head1 DESCRIPTION
+
+This is a subclass of L<Cobalt::IRC::Message> -- almost everything you 
+might need is documented there.
+
+When an incoming message is a public (channel) message, the provided 
+C<$msg> object has the following extra methods available:
+
+=head2 highlight
+
+If the bot appears to have been highlighted (ie, the message is prefixed 
+with the bot's nickname), this method will return boolean true.
+
+Used to see if someone is "talking to" the bot.
+
+=head2 cmd
+
+If the message appears to actually be a command and some arguments, 
+B<cmd> will return the specified command and automatically shift 
+the B<message_array> leftwards to drop the command from 
+B<message_array>.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
