@@ -1,7 +1,8 @@
 package Cobalt::IRC::Event::Topic;
 
 use Moo;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
+use IRC::Utils qw/strip_color strip_formatting/;
 
 extends 'Cobalt::IRC::Event::Channel';
 

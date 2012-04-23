@@ -1,7 +1,8 @@
 package Cobalt::IRC::Event::Nick;
 
 use Moo;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
+use IRC::Utils qw/eq_irc/;
 
 extends 'Cobalt::IRC::Event';
 

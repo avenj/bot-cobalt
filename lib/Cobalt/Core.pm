@@ -17,8 +17,6 @@ use Cobalt::Common;
 
 use Storable qw/dclone/;
 
-### a whole bunch of attributes ...
-
 ## usually a hashref from Cobalt::Conf created via frontend:
 has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :

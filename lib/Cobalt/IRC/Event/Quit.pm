@@ -2,7 +2,7 @@ package Cobalt::IRC::Event::Quit;
 
 use Moo;
 use Sub::Quote;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
 
 extends 'Cobalt::IRC::Event';
 

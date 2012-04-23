@@ -3,7 +3,7 @@ package Cobalt::IRC::Event::Channel;
 ## Generic channel events.
 
 use Moo;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
 
 extends 'Cobalt::IRC::Event';
 

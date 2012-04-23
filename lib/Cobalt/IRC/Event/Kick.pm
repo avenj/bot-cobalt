@@ -1,7 +1,7 @@
 package Cobalt::IRC::Event::Kick;
 
 use Moo;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
 
 extends 'Cobalt::IRC::Event::Channel';
 
