@@ -11,6 +11,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 
 our @EXPORT_OK = qw{
+  secs_to_str
   secs_to_timestr
   timestr_to_secs
 
@@ -245,22 +246,45 @@ sub timestr_to_secs {
   return $secs
 }
 
-sub secs_to_timestr {
-  ## reverse of timestr_to_secs, sort of
-  ## turn seconds into a string like '0 days, 00:00:00'
-  my $diff = shift || return;
+sub _time_breakdown {
+  my ($diff) = @_;
+  return unless defined $diff;
   my $days   = int $diff / 86400;
   my $sec    = $diff % 86400;
   my $hours  = int $sec / 3600;  $sec   %= 3600;
   my $mins   = int $sec / 60;    $sec   %= 60;
+  return($days, $hours, $mins, $sec)
+}
+
+sub secs_to_timestr {
+  my ($diff) = @_;
+  return unless defined $diff;
+  my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
+
+  my $str;
+  $str .= $days.'d'  if $days;  
+  $str .= $hours.'h' if $hours;
+  $str .= $mins.'m'  if $mins;  
+  $str .= $sec.'s'   if $sec;
+
+  return $str  
+}
+
+sub secs_to_str {
+  ## reverse of timestr_to_secs, sort of
+  ## turn seconds into a string like '0 days, 00:00:00'
+  my ($diff) = @_;
+  return unless defined $diff;
+
+  my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
+  
   return sprintf("%d days, %2.2d:%2.2d:%2.2d",
     $days, $hours, $mins, $sec
   );
 }
 
 
-## App::bmkpasswd stubs as of 2.00_35 (Utils-0.23):
-
+## App::bmkpasswd stubs as of 2.00_35
 sub mkpasswd  { App::bmkpasswd::mkpasswd(@_) }
 sub passwdcmp { App::bmkpasswd::passwdcmp(@_) }
 
@@ -316,7 +340,9 @@ See below for a list of exportable functions.
 
 =item L</timestr_to_secs> - Convert a string into seconds
 
-=item L</secs_to_timestr> - Convert seconds into a string
+=item L</secs_to_timestr> - Convert seconds back into timestr
+
+=item L</secs_to_str> - Convert seconds into a 'readable' string
 
 =item L</color> - Add format/color to IRC messages
 
@@ -348,12 +374,20 @@ Useful for dealing with timers.
 
 =head3 secs_to_timestr
 
+Turns seconds back into a timestring suitable for feeding to 
+L</timestr_to_secs>:
+
+  my $timestr = secs_to_timestr(820); ## -> 13m40s
+
+
+=head3 secs_to_str
+
 Convert a timestamp delta into a string.
 
 Useful for uptime reporting, for example:
 
   my $delta = time() - $your_start_TS;
-  my $uptime_str = secs_to_timestr($delta);
+  my $uptime_str = secs_to_str($delta);
 
 
 

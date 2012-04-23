@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Version;
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 ## Always declare a package name as the first line.
 ## For example, if your module lives in:
 ##   lib/Cobalt/Plugin/User/MyPlugin.pm
@@ -32,10 +32,10 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 ## Cobalt::Utils provides a handful of functional utils.
-## We need secs_to_timestr to compose uptime strings
+## We need secs_to_str to compose uptime strings
 ## (and rplprintf to format langset replies)
 ## also see Cobalt::Utils POD
-use Cobalt::Utils qw/ secs_to_timestr rplprintf /;
+use Cobalt::Utils qw/ secs_to_str rplprintf /;
 
 ## Minimalist constructor example.
 ## This is all you need to create an object for this plugin:
@@ -100,7 +100,7 @@ sub Bot_public_msg {
         {
           version => 'cobalt '.$core->version,
           plugins => scalar keys %{ $core->plugin_list },
-          uptime => secs_to_timestr($delta),
+          uptime => secs_to_str($delta),
           sent   => $core->State->{Counters}->{Sent},
           topics     => $infoglobs,
           randstuffs => $randstuffs,

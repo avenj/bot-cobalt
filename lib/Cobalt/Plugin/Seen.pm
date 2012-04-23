@@ -316,7 +316,7 @@ sub Bot_public_cmd_seen {
     @ret[TIME, ACTION, USERNAME, HOST, CHANNEL, META];
 
   my $ts_delta = time() - $last_ts ;
-  my $ts_str   = secs_to_timestr($ts_delta);
+  my $ts_str   = secs_to_str($ts_delta);
 
   my $resp;
   given ($last_act) {

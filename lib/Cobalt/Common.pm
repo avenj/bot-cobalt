@@ -53,8 +53,10 @@ our %EXPORT_TAGS = (
   / ],
 
   errors => [ qw/
+
     carp
     croak
+
   / ],
   
   passwd => [ qw/
@@ -65,7 +67,9 @@ our %EXPORT_TAGS = (
   
   time   => [ qw/
     
-    timestr_to_secs secs_to_timestr
+    timestr_to_secs
+    secs_to_timestr 
+    secs_to_str
 
   / ],
 
@@ -213,6 +217,7 @@ See L<Cobalt::Utils> for details.
 
   timestr_to_secs
   secs_to_timestr
+  secs_to_str
 
 =head3 Carp
 
