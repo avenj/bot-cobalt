@@ -17,9 +17,6 @@ use Cobalt::Common;
 
 use Storable qw/dclone/;
 
-extends 'POE::Component::Syndicator',
-        'Cobalt::Lang';
-
 ### a whole bunch of attributes ...
 
 ## usually a hashref from Cobalt::Conf created via frontend:
@@ -116,8 +113,12 @@ has 'Provided' => (
 );
 
 
-with 'Cobalt::Core::Role::Timers';
+extends 'POE::Component::Syndicator',
+        'Cobalt::Lang';
+
 with 'Cobalt::Core::Role::Auth';
+with 'Cobalt::Core::Role::Ignore';
+with 'Cobalt::Core::Role::Timers';
 
 
 sub init {
@@ -272,8 +273,54 @@ sub ev_plugin_error {
   $self->send_event( 'plugin_error', $err );
 }
 
+### Core low-pri timer
 
-### Plugin utils
+sub _core_timer_check_pool {
+  my ($kernel, $self) = @_[KERNEL, OBJECT];
+  my $tick = $_[ARG0];
+  ++$tick;
+
+  ## Timer hash format:
+  ##   Event => $event_to_syndicate,
+  ##   Args => [ @event_args ],
+  ##   ExecuteAt => $ts,
+  ##   AddedBy => $caller,
+  ## Timers are provided by Core::Role::Timers
+
+  my $timerpool = $self->TimerPool;
+  
+  for my $id (keys %$timerpool) {
+    my $timer = $timerpool->{$id};
+     # this should never happen ...
+     # ... unless a plugin author is a fucking idiot:
+    unless (ref $timer eq 'HASH' && scalar keys %$timer) {
+      $self->log->warn("broken timer, not a hash: $id (in tick $tick)");
+      delete $timerpool->{$id};
+      next
+    }
+    
+    my $execute_ts = $timer->{ExecuteAt} // next;
+    if ( $execute_ts <= time ) {
+      my $event = $timer->{Event};
+      my @args = @{ $timer->{Args} };
+      $self->log->debug("timer execute: $id (ev: $event) [tick $tick]")
+        if $self->debug > 1;
+      ## dispatch this event:
+      $self->send_event( $event, @args ) if $event;
+      ## send executed_timer to indicate this timer's done:
+      $self->send_event( 'executed_timer', $id, $tick );
+      delete $timerpool->{$id};
+    }
+  }
+
+  ## most definitely not a high-precision timer.
+  ## checked every second or so
+  ## tracks timer pool ticks
+  $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
+}
+
+
+### Plugin utils:
 
 sub is_reloadable {
   my ($self, $alias, $obj) = @_;
@@ -328,104 +375,6 @@ sub unloader_cleanup {
   return 1
 }
 
-### Core low-pri timer
-
-sub _core_timer_check_pool {
-  my ($kernel, $self) = @_[KERNEL, OBJECT];
-  my $tick = $_[ARG0];
-  ++$tick;
-
-  ## Timer hash format:
-  ##   Event => $event_to_syndicate,
-  ##   Args => [ @event_args ],
-  ##   ExecuteAt => $ts,
-  ##   AddedBy => $caller,
-  ## Timers are provided by Core::Role::Timers
-
-  my $timerpool = $self->TimerPool;
-  
-  for my $id (keys %$timerpool) {
-    my $timer = $timerpool->{$id};
-     # this should never happen ...
-     # ... unless a plugin author is a fucking idiot:
-    unless (ref $timer eq 'HASH' && scalar keys %$timer) {
-      $self->log->warn("broken timer, not a hash: $id (in tick $tick)");
-      delete $timerpool->{$id};
-      next
-    }
-    
-    my $execute_ts = $timer->{ExecuteAt} // next;
-    if ( $execute_ts <= time ) {
-      my $event = $timer->{Event};
-      my @args = @{ $timer->{Args} };
-      $self->log->debug("timer execute: $id (ev: $event) [tick $tick]")
-        if $self->debug > 1;
-      ## dispatch this event:
-      $self->send_event( $event, @args ) if $event;
-      ## send executed_timer to indicate this timer's done:
-      $self->send_event( 'executed_timer', $id, $tick );
-      delete $timerpool->{$id};
-    }
-  }
-
-  ## most definitely not a high-precision timer.
-  ## checked every second or so
-  ## tracks timer pool ticks
-  $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
-}
-
-
-### Ignores (->State->{Ignored})
-
-## FIXME role
-## FIXME documentation
-sub ignore_add {
-  my ($self, $context, $username, $mask, $reason) = @_;
-  
-  my ($pkg, $line) = (caller)[0,2];
-  unless (defined $context && defined $username && defined $mask) {
-    $self->log->debug("ignore_add missing arguments in $pkg ($line)");
-    return
-  }
-
-  my $ignore = $self->State->{Ignored}->{$context} //= {};
-
-  $mask   = normalize_mask($mask);
-  $reason = "added by $pkg" unless $reason;
-
-  $ignore->{$mask} = {
-    AddedBy => $username,
-    AddedAt => time(),
-    Reason  => $reason,
-  };
-}
-
-sub ignore_del {
-  my ($self, $context, $mask) = @_;
-
-  unless (defined $context && defined $mask) {
-    my ($pkg, $line) = (caller)[0,2];
-    $self->log->debug("ignore_del missing arguments in $pkg ($line)");
-    return  
-  }
-
-  my $ignore = $self->State->{Ignored}->{$context} // return;
-  
-  unless (exists $ignore->{$mask}) {
-    my ($pkg, $line) = (caller)[0,2];
-    $self->log->debug("ignore_del; no such mask in $pkg ($line)");
-    return
-  }
-  
-  return delete $ignore->{$mask};
-}
-
-sub ignore_list {
-  my ($self, $context) = @_;
-  ## apply scalar context if you want the hashref for this context:
-  my $ignorelist = $self->State->{Ignored}->{$context} // {};
-  return wantarray ? keys %$ignorelist : $ignorelist ;
-}
 
 
 ### Accessors acting on ->Servers:
