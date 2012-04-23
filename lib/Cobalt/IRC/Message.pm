@@ -54,11 +54,11 @@ has 'src_host' => (  is => 'rw', lazy => 1,
 has 'stripped' => ( is => 'rw', isa => Str );
 
 has 'message_array' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ [ split ' ', $self->stripped ] },
+  default => quote_sub q{ [ split ' ', $_[0]->stripped ] },
 );
 
 has 'message_array_sp' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ [ split / /, $self->stripped ] },
+  default => quote_sub q{ [ split / /, $_[0]->stripped ] },
 );
 
 1;
