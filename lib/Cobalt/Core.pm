@@ -6,7 +6,6 @@ use Carp;
 
 use Moo;
 use Sub::Quote;
-use namespace::autoclean;
 
 use Log::Handler;
 

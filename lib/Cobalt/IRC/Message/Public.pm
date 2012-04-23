@@ -1,4 +1,4 @@
-package Cobalt::IRC::Public;
+package Cobalt::IRC::Message::Public;
 
 use 5.10.1;
 use Cobalt::Common;

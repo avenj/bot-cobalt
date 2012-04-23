@@ -60,7 +60,6 @@ use 5.10.1;
 ## This plugin tracks 'lost' identified users and clears as needed
 
 use Moo;
-use namespace::autoclean;
 
 use Cobalt::Common;
 
