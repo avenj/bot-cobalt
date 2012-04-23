@@ -24,6 +24,13 @@ lib/Cobalt/Core.pm
 lib/Cobalt/DB.pm
 lib/Cobalt/HTTP.pm
 lib/Cobalt/IRC.pm
+lib/Cobalt/IRC/Event.pm
+lib/Cobalt/IRC/Event/Channel.pm
+lib/Cobalt/IRC/Event/Kick.pm
+lib/Cobalt/IRC/Event/Mode.pm
+lib/Cobalt/IRC/Event/Nick.pm
+lib/Cobalt/IRC/Event/Quit.pm
+lib/Cobalt/IRC/Event/Topic.pm
 lib/Cobalt/IRC/Message.pm
 lib/Cobalt/IRC/Message/Public.pm
 lib/Cobalt/Lang.pm.in
