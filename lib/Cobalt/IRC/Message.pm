@@ -1,19 +1,12 @@
 package Cobalt::IRC::Message;
 
-## Message superclass.
-## Subclasses: Private, Public, Action, Notice
-
-## Required input: 
-##  core
-##  context (str), message (unstripped), src (full), targets (array ref)
+## Message class. Inherits from UserEvent
 
 use 5.10.1;
 use Cobalt::Common;
 use Moo;
 
-has 'core'    => ( is => 'rw', isa => Object, required => 1 );
-has 'context' => ( is => 'rw', isa => Str, required => 1 );
-has 'src'     => ( is => 'rw', isa => Str, required => 1 );
+extends 'Cobalt::IRC::UserEvent';
 
 has 'message' => ( is => 'rw', isa => Str, required => 1,
   trigger => sub {
@@ -34,20 +27,6 @@ has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
     $_[0]->target =~ /^[#&+]/ ? $_[0]->target : ''
   },
 );
-
-## Message source.
-has 'src_nick' => (  is => 'rw', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[0] },
-);
-
-has 'src_user' => (  is => 'rw', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[1] },
-);
-
-has 'src_host' => (  is => 'rw', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[2] },
-);
-
 
 ## Message content.
 has 'stripped' => ( is => 'rw', isa => Str );
@@ -86,6 +65,10 @@ Cobalt::IRC::Message - Represent an incoming IRC message
 Incoming IRC messages are broadcast to the plugin pipeline via 
 L<Cobalt::IRC>; this is the base class providing an easy object 
 interface to parsed messages.
+
+This is the most frequently used UserEvent subclass; the methods 
+inherited from L<Cobalt::IRC::UserEvent> are also documented 
+here for convenience.
 
 =head1 METHODS
 
@@ -153,6 +136,8 @@ leading spaces.
 =head1 SEE ALSO
 
 L<Cobalt::IRC::Message::Public> -- subclass for public messages
+
+L<Cobalt::IRC::UserEvent> -- base class for IRC events
 
 L<Cobalt::Manual::Plugins>
 
