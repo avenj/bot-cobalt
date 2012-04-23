@@ -530,6 +530,18 @@ L<Cobalt::IRC> - IRC bridge / events
 
 =item *
 
+L<Cobalt::Core::Role::Auth>
+
+=item *
+
+L<Cobalt::Core::Role::Ignore>
+
+=item *
+
+L<Cobalt::Core::Role::Timers>
+
+=item *
+
 L<Cobalt::Manual::PluginDist> - Distributing Cobalt plugins
 
 =back

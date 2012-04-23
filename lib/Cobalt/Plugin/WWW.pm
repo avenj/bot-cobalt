@@ -1,6 +1,9 @@
 package Cobalt::Plugin::WWW;
 our $VERSION = '0.008';
 
+## FIXME use POE::Component::Client::HTTP
+## Resolver bug is fixed in latest
+
 use 5.10.1;
 use strict;
 use warnings;

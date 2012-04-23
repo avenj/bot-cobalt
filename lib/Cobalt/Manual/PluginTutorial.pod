@@ -1,0 +1,125 @@
+=pod
+
+=head1 NAME
+
+Cobalt::Manual::PluginTutorial - Let's write a plugin
+
+=head1 SYNOPSIS
+
+Quick-start plugin authoring guide.
+
+=head1 DESCRIPTION
+
+Let's write a simple plugin that will respond to a command with a random 
+string.
+
+=head2 Outline
+
+We'll at least need a package name, a version, some utilities, and an 
+object constructor.
+
+Declare our package:
+
+  package My::Cobalt::Plugin;
+  our $VERSION = '0.01';
+
+We might need L<Cobalt::Common> utilities.
+It's good practice to use strict and warnings explicitly, although 
+L<Cobalt::Common> will import them for you.
+
+  use strict;
+  use warnings;
+  use Cobalt::Common;
+
+We can add a simple empty constructor:
+
+  sub new { bless {}, shift }
+
+=head2 Registering
+
+Our plugin can't be loaded unless it can handle B<Cobalt_register> and 
+B<Cobalt_unregister> events. It's also probably not very useful unless 
+it's registered to receive some kind of event, most often from 
+L<Cobalt::IRC>.
+
+Let's register to receive the in-channel command 'fortune' -- we'll 
+figure out some responses to it later.
+
+  sub Cobalt_register {
+    my ($self, $core) = splice @_, 0, 2;
+
+    $core->plugin_register( $self, 'SERVER',
+      ## An array reference of events to catch.
+      [ qw/ public_cmd_fortune /],
+    );
+    
+    ## It's polite to log that we're here now.
+    $core->log->info("Loaded - $VERSION");
+    
+    return PLUGIN_EAT_NONE
+  }
+  
+  sub Cobalt_unregister {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    $core->log->info("Unloaded");
+    
+    return PLUGIN_EAT_NONE
+  }
+
+Notice the B<PLUGIN_EAT_NONE>? Our event handlers should B<always> 
+return a L<Object::Pluggable::Constants> constant indicating what 
+to do with the event after the handler is complete. This is typically 
+one of I<PLUGIN_EAT_NONE> or I<PLUGIN_EAT_ALL>, indicating whether to 
+let the event continue on down the pipeline or be terminated, 
+respectively.
+
+=head2 Handling commands
+
+Now we're loadable and registered to receive the 'SERVER' event 
+B<public_cmd_fortune> -- we just need a handler for it.
+
+The first argument after the C<$self> and C<$core> objects will be a 
+reference to a L<Cobalt::IRC::Message::Public> object. We'll 
+de-reference it and call some common methods to find out what we want to 
+know.
+
+  sub Bot_public_cmd_fortune {
+    my ($self, $core) = splice @_, 0, 2;
+    
+    ## Get our (de-referenced) message object.
+    my $msg = ${ $_[0] };
+
+    ## Get our server context, source nickname, and channel.
+    my $context  = $msg->context;
+    my $src_nick = $msg->src_nick;
+    my $channel  = $msg->channel;
+    
+    ## We'll write our response method fortune() later.
+    my $fortune = $self->fortune;
+    my $response_string = "$src_nick: $fortune";
+    
+    ## Relay our response string back to Cobalt::IRC
+    $core->send_event( 'send_message', $context, $channel,
+      $response_string
+    );
+  
+    ## This one eats the event when it's complete.
+    return PLUGIN_EAT_ALL
+  }
+
+=head2 Add some data
+
+FIXME
+
+=head2 Finished product
+
+FIXME
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

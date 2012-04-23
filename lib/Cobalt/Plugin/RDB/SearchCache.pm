@@ -1,5 +1,4 @@
 package Cobalt::Plugin::RDB::SearchCache;
-our $VERSION = '0.22';
 
 ## This is a fairly generic in-memory cache object.
 ##
