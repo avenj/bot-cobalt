@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_41';
+our $VERSION = '2.00_42';
 
 use 5.10.1;
 use Carp;
@@ -19,6 +19,9 @@ use Storable qw/dclone/;
 
 extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
+
+with 'Cobalt::Core::Role::Timers';
+with 'Cobalt::Core::Role::Auth';
 
 ### a whole bunch of attributes ...
 
@@ -175,59 +178,6 @@ sub init {
 
 }
 
-sub is_reloadable {
-  my ($self, $alias, $obj) = @_;
-  
-  if ($obj and ref $obj) {
-    ## passed an object
-    ## see if the object is marked non-reloadable
-    ## if it is, update State
-    if ( $obj->{NON_RELOADABLE} || 
-       ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
-    ) {
-      $self->log->debug("Marked plugin $alias non-reloadable");
-      $self->State->{NonReloadable}->{$alias} = 1;
-      ## not reloadable, return 0
-      return 0
-    } else {
-      ## reloadable, return 1
-      delete $self->State->{NonReloadable}->{$alias};
-      return 1
-    }
-  }
-  ## passed just an alias (or a bustedass object)
-  ## return whether the alias is reloadable
-  return 0 if $self->State->{NonReloadable}->{$alias};
-  return 1
-}
-
-sub unloader_cleanup {
-  ## clean up symbol table after a module load fails miserably
-  ## (or when unloading)
-  my ($self, $module) = @_;
-
-  $self->log->debug("cleaning up after $module (unloader_cleanup)");
-
-  my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';  
-  
-  $self->log->debug("removing from INC: $included");
-  delete $INC{$included};
-  
-  { no strict 'refs';
-
-    @{$module.'::ISA'} = ();
-    my $s_table = $module.'::';
-    for my $symbol (keys %$s_table) {
-      next if $symbol =~ /\A[^:]+::\z/;
-      delete $s_table->{$symbol};
-    }
-  
-  }
-  
-  $self->log->debug("finished module cleanup");
-  return 1
-}
-
 sub syndicator_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
@@ -321,7 +271,62 @@ sub ev_plugin_error {
 }
 
 
-### Core timer pieces.
+### Plugin utils
+
+sub is_reloadable {
+  my ($self, $alias, $obj) = @_;
+  
+  if ($obj and ref $obj) {
+    ## passed an object
+    ## see if the object is marked non-reloadable
+    ## if it is, update State
+    if ( $obj->{NON_RELOADABLE} || 
+       ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
+    ) {
+      $self->log->debug("Marked plugin $alias non-reloadable");
+      $self->State->{NonReloadable}->{$alias} = 1;
+      ## not reloadable, return 0
+      return 0
+    } else {
+      ## reloadable, return 1
+      delete $self->State->{NonReloadable}->{$alias};
+      return 1
+    }
+  }
+  ## passed just an alias (or a bustedass object)
+  ## return whether the alias is reloadable
+  return 0 if $self->State->{NonReloadable}->{$alias};
+  return 1
+}
+
+sub unloader_cleanup {
+  ## clean up symbol table after a module load fails miserably
+  ## (or when unloading)
+  my ($self, $module) = @_;
+
+  $self->log->debug("cleaning up after $module (unloader_cleanup)");
+
+  my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';  
+  
+  $self->log->debug("removing from INC: $included");
+  delete $INC{$included};
+  
+  { no strict 'refs';
+
+    @{$module.'::ISA'} = ();
+    my $s_table = $module.'::';
+    for my $symbol (keys %$s_table) {
+      next if $symbol =~ /\A[^:]+::\z/;
+      delete $s_table->{$symbol};
+    }
+  
+  }
+  
+  $self->log->debug("finished module cleanup");
+  return 1
+}
+
+### Core low-pri timer
 
 sub _core_timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
@@ -333,6 +338,7 @@ sub _core_timer_check_pool {
   ##   Args => [ @event_args ],
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
+  ## Timers are provided by Core::Role::Timers
 
   my $timerpool = $self->TimerPool;
   
@@ -360,292 +366,16 @@ sub _core_timer_check_pool {
     }
   }
 
-  ## most definitely NOT a high-precision timer.
+  ## most definitely not a high-precision timer.
   ## checked every second or so
   ## tracks timer pool ticks
   $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
 }
 
 
-sub timer_set {
-  ## generic/easy timer set method
-  ## $core->timer_set($delay, $event, $id)
-
-  ## Returns timer ID on success
-
-  ##  $delay should always be in seconds
-  ##   (timestr_to_secs from Cobalt::Utils may help)
-  ##  $event should be a hashref:
-  ##   Type => 'event' || 'msg'
-  ##  If Type is 'event':
-  ##   Event => name of event to syndicate to plugins
-  ##   Args => [ array of arguments to event ]
-  ##  If Type is 'msg':
-  ##   Context => server context (defaults to 'Main')
-  ##   Target => target for privmsg
-  ##   Text => text string for privmsg
-  ##  $id is optional (randomized if unspecified)
-  ##  if adding an existing id the old one will be deleted first.
-
-  ##  Type options:
-  ## TYPE = event
-  ##   Event => "send_notice",  ## send notice example
-  ##   Args  => [ ], ## optional array of args for event
-  ## TYPE = msg || action
-  ##   Target => $somewhere,
-  ##   Text => $string,
-  ##   Context => $server_context, # defaults to 'Main'
-
-  ## for example, a random-ID timer to join a channel 60s from now:
-  ##  my $id = timer_set( 60,
-  ##    {
-  ##      Type  => 'event', 
-  ##      Event => 'join',
-  ##      Args  => [ $context, $channel ],
-  ##      Alias => $core->get_plugin_alias( $self ),
-  ##    } 
-  ##  );
-
-  my ($self, $delay, $ev, $id) = @_;
-
-  unless (ref $ev eq 'HASH') {
-    $self->log->warn("timer_set not called with hashref in ".caller);
-    return
-  }
-
-  ## automatically pick a unique id unless specified
-  unless ($id) {
-    my @p = ( 'a'..'f', 0..9 );
-    $id = join '', map { $p[rand@p] } 1 .. 4;
-    $id .= $p[rand@p] while exists $self->TimerPool->{$id};
-  } else {
-    ## an id was specified, overrule any existing by the same name
-    delete $self->TimerPool->{$id};
-  }
-
-  my $type = $ev->{Type} // 'event';
-  my($event_name, @event_args);
-  given ($type) {
-
-    when ("event") {
-      unless (exists $ev->{Event}) {
-        $self->log->warn("timer_set no Event specified in ".caller);
-        return
-      }
-      $event_name = $ev->{Event};
-      @event_args = @{ $ev->{Args} // [] };
-    }
-
-    when ([qw/msg message privmsg action/]) {
-      unless ($ev->{Text}) {
-        $self->log->warn("timer_set no Text specified in ".caller);
-        return
-      }
-      unless ($ev->{Target}) {
-        $self->log->warn("timer_set no Target specified in ".caller);
-        return
-      }
-
-      my $context = $ev->{Context} // 'Main';
-
-      ## send_message / send_action $context, $target, $text
-      $event_name = $type eq "action" ? 'send_action' : 'send_message' ;
-      @event_args = ( $context, $ev->{Target}, $ev->{Text} );
-    }
-  }
-
-  # tag w/ __PACKAGE__ if no alias is specified
-  my $addedby = $ev->{Alias} // scalar caller;
-
-  if ($event_name) {
-    $self->TimerPool->{$id} = {
-      ExecuteAt => time() + $delay,
-      Event   => $event_name,
-      Args    => [ @event_args ],
-      AddedBy => $addedby,
-    };
-    $self->log->debug("timer_set; $id $delay $event_name")
-      if $self->debug > 1;
-    return $id
-  } else {
-    $self->log->debug("timer_set called but no timer added; bad type?");
-    $self->log->debug("timer_set failure for ".join(' ', (caller)[0,2]) );
-  }
-  return
-}
-
-sub del_timer { timer_del(@_) }
-sub timer_del {
-  ## delete a timer by its ID
-  ## doesn't care if the timerID actually exists or not.
-  my ($self, $id) = @_;
-  return unless $id;
-  $self->log->debug("timer del; $id")
-    if $self->debug > 1;
-  return unless exists $self->TimerPool->{$id};
-
-  $self->send_event( 'deleted_timer', 
-    $id,  dclone($self->TimerPool->{$id})
-  );
-
-  return delete $self->TimerPool->{$id};
-}
-
-sub get_timer { timer_get(@_) }
-sub timer_get {
-  my ($self, $id) = @_;
-  return unless $id;
-  $self->log->debug("timer retrieved; $id")
-    if $self->debug > 2;
-  return $self->TimerPool->{$id};
-}
-
-sub timer_get_alias {
-  ## get all timerIDs for this alias
-  my ($self, $alias) = @_;
-  return unless $alias;
-  my @timers;
-  my $timerpool = $self->TimerPool;
-  for my $timerID (keys %$timerpool) {
-    my $entry = $timerpool->{$timerID};
-    push(@timers, $timerID) if $entry->{AddedBy} eq $alias;
-  }
-  return wantarray ? @timers : \@timers;
-}
-
-sub timer_del_alias {
-  my ($self, $alias) = @_;
-  return $alias;
-  my $timerpool = $self->TimerPool;
-  
-  my @deleted;
-  for my $id (keys %$timerpool) {
-    my $entry = $timerpool->{$id};
-    if ($entry->{AddedBy} eq $alias) {
-      delete $timerpool->{$id};
-      push(@deleted, $id);
-      $self->send_event( 'deleted_timer', 
-        $id,  dclone($self->TimerPool->{$id})
-      );
-    }
-  }
-  return wantarray ? @deleted : scalar @deleted ;
-}
-
-## FIXME timer_del_pkg is deprecated as of 2.00_18 and should go away
-## (may clobber other timers if there are dupe modules)
-## pkgs not declaring their alias in timer_set are on their own
-sub timer_del_pkg {
-  my $self = shift;
-  my $pkg = shift || return;
-  ## $core->timer_del_pkg( __PACKAGE__ )
-  ## convenience method for plugins
-  ## delete timers by 'AddedBy' package name
-  ## (f.ex when unloading a plugin)
-  for my $id (keys %{ $self->TimerPool }) {
-    my $ev = $self->TimerPool->{$id};
-    if ($ev->{AddedBy} eq $pkg) {
-      delete $self->TimerPool->{$id};
-      $self->send_event( 'deleted_timer', 
-        $id,  dclone($self->TimerPool->{$id})
-      );
-    }
-  }
-}
-
-
-### Accessors acting on State->{Auth}:
-
-## Work is mostly done by Auth.pm or equivalent
-## These are just easy ways to get at the hash.
-
-sub auth_level {
-  ## retrieve an auth level for $nickname in $context
-  ## unidentified users get access level 0 by default
-  my ($self, $context, $nickname) = @_;
-
-  if (! $context) {
-    $self->log->debug("auth_level called but no context specified");
-    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
-    return undef
-  } elsif (! $nickname) {
-    $self->log->debug("auth_level called but no nickname specified");
-    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
-    return undef
-  }
-
-  ## We might have proper args but no auth for this user
-  ## That makes them level 0:
-  return 0 unless exists $self->State->{Auth}->{$context};
-  my $context_rec = $self->State->{Auth}->{$context};
-  return 0 unless exists $context_rec->{$nickname};
-  my $level = $context_rec->{$nickname}->{Level} // 0;
-
-  return $level
-}
-
-sub auth_user { auth_username(@_) }
-sub auth_username {
-  ## retrieve an auth username by context -> IRC nick
-  ## retval is undef if user can't be found
-  my ($self, $context, $nickname) = @_;
-
-  if (! $context) {
-    $self->log->debug("auth_username called but no context specified");
-    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
-    return undef
-  } elsif (! $nickname) {
-    $self->log->debug("auth_username called but no nickname specified");
-    $self->log->debug("returning undef to ".join(' ', (caller)[0,2] ) );
-    return undef
-  }
-
-  return undef unless exists $self->State->{Auth}->{$context};
-  my $context_rec = $self->State->{Auth}->{$context};
-
-  return undef unless exists $context_rec->{$nickname};
-  my $username = $context_rec->{$nickname}->{Username};
-
-  return $username
-}
-
-sub auth_flags {
-  ## retrieve auth flags by context -> IRC nick
-  ##
-  ## untrue if record can't be found
-  ##
-  ## otherwise you get a reference to the Flags hash in Auth
-  ##
-  ## this means you can modify flags:
-  ##  my $flags = $core->auth_flags($context, $nick);
-  ##  $flags->{SUPERUSER} = 1;
-
-  my ($self, $context, $nickname) = @_;
-
-  return unless exists $self->State->{Auth}->{$context};
-  my $context_rec = $self->State->{Auth}->{$context};
-
-  return unless exists $context_rec->{$nickname};
-  return unless ref $context_rec->{$nickname}->{Flags} eq 'HASH';
-  return $context_rec->{$nickname}->{Flags};
-}
-
-sub auth_pkg {
-  ## retrieve the __PACKAGE__ that provided this user's auth
-  ## (in other words, the plugin that created the hash)
-  my ($self, $context, $nickname) = @_;
-
-  return unless exists $self->State->{Auth}->{$context};
-  my $context_rec = $self->State->{Auth}->{$context};
-
-  return unless exists $context_rec->{$nickname};
-  my $pkg = $context_rec->{$nickname}->{Package};
-
-  return $pkg ? $pkg : ();
-}
-
 ### Ignores (->State->{Ignored})
 
+## FIXME role
 ## FIXME documentation
 sub ignore_add {
   my ($self, $context, $username, $mask, $reason) = @_;

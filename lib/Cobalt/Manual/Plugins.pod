@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Last updated for cobalt B<2.00_40>
+Last updated for cobalt B<2.00_41>
 
 =head1 DESCRIPTION
 
