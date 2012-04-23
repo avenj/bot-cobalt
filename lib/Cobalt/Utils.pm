@@ -214,22 +214,35 @@ sub color {
 sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
   my $timestr = shift || return;
-  my($hrs,$mins,$secs,$total);
 
   ## maybe just seconds:
   return $timestr if $timestr =~ /^\d+$/;
 
-  ## FIXME smarter regex, add days ?
-  if ($timestr =~ m/(\d+)h/)
-    { $hrs = $1; }
-  if ($timestr =~ m/(\d+)m/)
-    { $mins = $1; }
-  if ($timestr =~ m/(\d+)s/)
-    { $secs = $1; }
-  $total = $secs // 0;
-  $total += (int $mins * 60) if $mins;
-  $total += (int $hrs * 3600) if $hrs;
-  return int($total)
+  my @chunks = $timestr =~ m/(\d+)([dhms])/gc;
+
+  my $secs = 0;
+  while ( my ($ti, $unit) = splice @chunks, 0, 2 ) {
+    UNIT: {
+      if ($unit eq 'd') {
+        $secs += $ti * 86400;
+        last UNIT
+      }
+      
+      if ($unit eq 'h') {
+        $secs += $ti * 3600;
+        last UNIT
+      }
+      
+      if ($unit eq 'm') {
+        $secs += $ti * 60;
+        last UNIT
+      }
+      
+      $secs += $ti;
+    }
+  }
+
+  return $secs
 }
 
 sub secs_to_timestr {
