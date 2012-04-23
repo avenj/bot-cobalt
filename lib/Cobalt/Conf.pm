@@ -1,5 +1,5 @@
 package Cobalt::Conf;
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 ## Cobalt::Conf
 ## Looks for the following YAML confs:
 ##   etc/cobalt.conf
@@ -14,22 +14,12 @@ use strict;
 use warnings;
 use Carp;
 
+use Moo;
+use Cobalt::Common qw/:types/;
+
+has 'etc' => ( is => 'rw', isa => Str, required => 1 );
+
 use Cobalt::Serializer;
-
-sub new {
-  my $class = shift;
-  my $self = {};
-  my %args = @_;
-  bless $self, $class;
-
-  unless ($args{etc}) {
-    croak "constructor requires argument: etc => PATH";
-  } else {
-    $self->{etc} = $args{etc};
-  }
-
-  return $self
-}
 
 sub _read_conf {
   ## deserialize a YAML conf
@@ -40,15 +30,15 @@ sub _read_conf {
     return
   }
 
-  my $etc = $self->{etc};
-  unless (-e $self->{etc}) {
-    carp "cannot find etcdir: $self->{etc}";
+  my $etc = $self->etc;
+  unless (-e $self->etc) {
+    carp "cannot find etcdir: $self->etc";
     return
   }
 
   my $path = $etc ."/". $relative_to_etc;
   unless (-e $path) {
-    carp "cannot find $path at $self->{etc}";
+    carp "cannot find $path at $self->etc";
     return
   }
 
@@ -126,7 +116,7 @@ sub read_cfg {
   my ($self) = @_;
   my $conf = {};
 
-  $conf->{path} = $self->{etc};
+  $conf->{path} = $self->etc;
   $conf->{path_chan_cf} = $conf->{path} ."/channels.conf" ;
   $conf->{path_plugins_cf} = $conf->{path} . "/plugins.conf" ;
 
