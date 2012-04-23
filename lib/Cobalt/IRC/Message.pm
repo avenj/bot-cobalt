@@ -10,7 +10,6 @@ package Cobalt::IRC::Message;
 use 5.10.1;
 use Cobalt::Common;
 use Moo;
-use Sub::Quote;
 
 has 'core'    => ( is => 'rw', isa => Object, required => 1 );
 has 'context' => ( is => 'rw', isa => Str, required => 1 );
@@ -26,27 +25,27 @@ has 'message' => ( is => 'rw', isa => Str, required => 1,
 has 'targets' => ( is => 'rw', isa => ArrayRef, required => 1 );
 
 has 'target'  => ( is => 'rw', isa => Str, lazy => 1,
-  default => quote_sub q{ $_[0]->targets->[0] }, 
+  default => sub { $_[0]->targets->[0] }, 
 );
 
 ## May or may not have a channel.
 has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
-  default => quote_sub q{
+  default => sub {
     $_[0]->target =~ /^[#&+]/ ? $_[0]->target : ''
   },
 );
 
 ## Message source.
 has 'src_nick' => (  is => 'rw', lazy => 1,
-  default => quote_sub q{ (parse_user($_[0]->src))[0] },
+  default => sub { (parse_user($_[0]->src))[0] },
 );
 
 has 'src_user' => (  is => 'rw', lazy => 1,
-  default => quote_sub q{ (parse_user($_[0]->src))[1] },
+  default => sub { (parse_user($_[0]->src))[1] },
 );
 
 has 'src_host' => (  is => 'rw', lazy => 1,
-  default => quote_sub q{ (parse_user($_[0]->src))[2] },
+  default => sub { (parse_user($_[0]->src))[2] },
 );
 
 
@@ -54,11 +53,11 @@ has 'src_host' => (  is => 'rw', lazy => 1,
 has 'stripped' => ( is => 'rw', isa => Str );
 
 has 'message_array' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ [ split ' ', $_[0]->stripped ] },
+  default => sub { [ split ' ', $_[0]->stripped ] },
 );
 
 has 'message_array_sp' => ( is => 'rw', lazy => 1,
-  default => quote_sub q{ [ split / /, $_[0]->stripped ] },
+  default => sub { [ split / /, $_[0]->stripped ] },
 );
 
 1;

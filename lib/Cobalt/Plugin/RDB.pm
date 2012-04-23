@@ -99,9 +99,9 @@ sub Bot_public_msg {
   ## uses message_array_sp, ie spaces are preserved
   ## (so don't include them prior to rdb names, for example)
   ## FIXME: document this behavior
-  my @msg_arr = @{ $msg->message_array_sp };
-  ## since this is a highlighted message, bot's nickname is first:
-  my ($cmd, @message) = @msg_arr[1 .. $#msg_arr];
+  my $msg_arr = $msg->message_array_sp;
+  ## since this is a highlighted message, bot's nickname is first
+  my ($cmd, @message) = @$msg_arr[1 .. (scalar @$msg_arr - 1)];
   $cmd = lc($cmd||'');
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
