@@ -39,7 +39,7 @@ has 'debug'    => (
 ## pure convenience, ->VERSION is a better idea:
 has 'version' => ( 
   is => 'ro', isa => Str, lazy => 1,
-  default => sub { $VERSION }
+  default => quote_sub q{ $Cobalt::Core::VERSION }
 );
 
 ## frontends can specify a bot url if they like
@@ -80,7 +80,7 @@ has 'State' => (
 );
 
 has 'TimerPool' => (
-  ## timers; see _core_timer_check_pool and timer_set methods
+  ## timers; see _core_timer_check_pool, Core::Role::Timers
   is  => 'rw',  isa => HashRef,
   default => quote_sub q{ {} },
 );

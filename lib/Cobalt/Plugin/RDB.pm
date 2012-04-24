@@ -29,7 +29,7 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
 
 has 'core'  => ( is => 'rw', isa => Object );
 has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub {
+  default => quote_sub q{
     my ($self) = @_;
     my $cfg = $self->core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
