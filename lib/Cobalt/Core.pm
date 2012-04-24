@@ -2,7 +2,7 @@ package Cobalt::Core;
 our $VERSION = '2.00_43';
 
 ## This is the core Syndicator.
-## It is very much a "god object" ... but such is the nature of 
+## It is something of a "god object" ... but such is the nature of 
 ## this particular beast; the Core ties together logging, conf, 
 ## langsets, global state, and the plugin pipeline.
 
@@ -27,35 +27,31 @@ has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :
 has 'var' => ( is => 'ro', isa => Str,     required => 1 );
 
-## the Log::Handler instance:
 has 'log'      => ( is => 'rw', isa => Object );
 has 'loglevel' => ( 
   is => 'rw', isa => Str, 
   default => quote_sub q{ 'info' } 
 );
 
-## passed in via frontend, typically:
 has 'detached' => ( is => 'ro', isa => Int, required => 1 );
 has 'debug'    => ( 
   is => 'rw', isa => Int, 
   default => quote_sub q{ 0 } 
 );
 
-## pure convenience, ->VERSION is a better idea:
+## pure plugin convenience, ->VERSION is a better idea:
 has 'version' => ( 
   is => 'ro', isa => Str, lazy => 1,
   default => quote_sub q{ $Cobalt::Core::VERSION }
 );
 
-## frontends can specify a bot url if they like
-## (mostly used for W~ in Plugin::Info3 str formatting)
+## Mostly used for W~ in Plugin::Info3 str formatting:
 has 'url' => ( 
   is => 'ro', isa => Str,
   default => quote_sub q{ "http://www.cobaltirc.org" },
 );
 
-## pulls hash from Conf->load_langset later
-## see Cobalt::Lang POD
+## pulls hash from Cobalt::Lang->load_langset later
 has 'lang' => ( is => 'rw', isa => HashRef );
 
 has 'State' => (
@@ -64,14 +60,9 @@ has 'State' => (
   isa => HashRef,
   default => quote_sub q{
     {
-      ## {HEAP} is here for convenience with no guarantee regarding 
-      ## collisions
-      ## may be useful for plugins to share some info bits
-      ## . . . better to interact strictly via events
       HEAP => { },
-    
       StartedTS => time(),
-      Counters => {
+      Counters  => {
         Sent => 0,
       },
       # each server context should set up its own Auth->{$context} hash:

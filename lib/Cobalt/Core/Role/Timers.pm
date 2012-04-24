@@ -149,7 +149,6 @@ sub timer_del {
   return $deleted
 }
 
-sub get_timer { timer_get(@_) }
 sub timer_get {
   my ($self, $id) = @_;
   return unless $id;
