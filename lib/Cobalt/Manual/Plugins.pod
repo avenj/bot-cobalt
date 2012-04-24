@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Last updated for cobalt B<2.00_41>
+Last updated for cobalt B<2.00_42>
 
 =head1 DESCRIPTION
 
@@ -904,6 +904,8 @@ B<Cobalt_unregister> handlers.
 
 Core timers live in B<< $core->TimerPool >>; if need be, you can access 
 the timer pool directly. It is a hash keyed on timer ID.
+
+Timer methods are provided by the L<Cobalt::Core::Role::Timers> role.
 
 Typically most plugins will only need the following functionality:
 

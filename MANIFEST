@@ -43,7 +43,7 @@ lib/Cobalt/Manual/INSTALL.pod
 lib/Cobalt/Manual/PluginConf.pod
 lib/Cobalt/Manual/PluginDist.pod
 lib/Cobalt/Manual/Plugins.pod
-lib/Cobalt/Manual/PluginTutorial.pod
+lib/Cobalt/Manual/Plugins/Tutorial.pod
 lib/Cobalt/Manual/README.pod
 lib/Cobalt/Manual/UserTutorial.pod
 lib/Cobalt/Plugin/Alarmclock.pm
@@ -78,6 +78,7 @@ lib/Cobalt/Plugin/User/.keep
 lib/Cobalt/Plugin/Version.pm
 lib/Cobalt/Plugin/WWW.pm
 lib/Cobalt/Serializer.pm
+lib/Cobalt/Timer.pm
 lib/Cobalt/Utils.pm
 Makefile.PL
 MANIFEST			This list of files
