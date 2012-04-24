@@ -478,6 +478,10 @@ L<Cobalt::Core::Role::Timers>
 
 =item *
 
+L<Cobalt::Core::Role::Unloader>
+
+=item *
+
 L<Cobalt::Manual::PluginDist> - Distributing Cobalt plugins
 
 =back
