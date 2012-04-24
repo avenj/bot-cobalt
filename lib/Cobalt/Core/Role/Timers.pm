@@ -3,7 +3,9 @@ package Cobalt::Core::Role::Timers;
 use 5.10.1;
 use strict;
 use warnings;
+
 use Moo::Role;
+use Sub::Quote;
 
 use Cobalt::Timer;
 

@@ -1,6 +1,11 @@
 package Cobalt::Core;
 our $VERSION = '2.00_43';
 
+## This is the core Syndicator.
+## It is very much a "god object" ... but such is the nature of 
+## this particular beast; the Core ties together logging, conf, 
+## langsets, global state, and the plugin pipeline.
+
 use 5.10.1;
 use Carp;
 
@@ -278,6 +283,8 @@ sub _core_timer_check_pool {
   ##   ExecuteAt => $ts,
   ##   AddedBy => $caller,
   ## Timers are provided by Core::Role::Timers
+
+  ## FIXME: use Cobalt::Timer interface
 
   my $timerpool = $self->TimerPool;
   
