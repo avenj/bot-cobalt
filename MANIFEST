@@ -24,6 +24,7 @@ lib/Cobalt/Core.pm
 lib/Cobalt/Core/Role/Auth.pm
 lib/Cobalt/Core/Role/Ignore.pm
 lib/Cobalt/Core/Role/Timers.pm
+lib/Cobalt/Core/Role/Unloader.pm
 lib/Cobalt/DB.pm
 lib/Cobalt/HTTP.pm
 lib/Cobalt/IRC.pm
