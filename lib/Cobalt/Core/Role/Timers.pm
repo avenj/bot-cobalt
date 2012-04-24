@@ -5,7 +5,6 @@ use strict;
 use warnings;
 
 use Moo::Role;
-use Sub::Quote;
 
 use Cobalt::Timer;
 
@@ -18,7 +17,7 @@ requires qw/
 /;
 
 
-has TimerPool => ( is => 'rw', default => quote_sub q{ {} });
+has TimerPool => ( is => 'rw', default => sub { {} });
 
 
 sub timer_gen_unique_id {
@@ -44,9 +43,11 @@ sub timer_set {
     $timer = $item;
   }
 
-  my $id = defined $timer->id ? 
-      $timer->id : $self->timer_gen_unique_id ;
-
+  unless ($timer->has_id) {
+    $timer->id( $self->timer_gen_unique_id );
+  }
+  
+  my $id = $timer->id;
 
   ## FIXME sanity check ?
 
@@ -79,7 +80,7 @@ sub timer_set_hashref {
   }
   
   my $timer = Cobalt::Timer->new(
-    core => $self->core
+    core => $self,
   );
 
   $timer->id($id) if $id;

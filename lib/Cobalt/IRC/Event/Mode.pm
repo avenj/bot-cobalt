@@ -1,7 +1,6 @@
 package Cobalt::IRC::Event::Mode;
 
 use Moo;
-use Sub::Quote;
 use Cobalt::Common qw/:types/;
 use IRC::Utils qw/parse_mode_line eq_irc/;
 
@@ -29,7 +28,7 @@ has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
 );
 
 has 'args' => ( is => 'rw', isa => ArrayRef, lazy => 1,
-  default => quote_sub q{[]},
+  default => sub {[]},
 );
 
 has 'hash' => ( is => 'ro', isa => HashRef, lazy => 1,

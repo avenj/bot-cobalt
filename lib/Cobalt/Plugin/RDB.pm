@@ -20,16 +20,15 @@ use Cobalt::Common;
 use Cobalt::Plugin::RDB::Database;
 
 use Moo;
-use Sub::Quote;
 ## marked non-reloadable .. shouldfix
 ## ought to feed our external RDB:: modules to unloader_cleanup
 has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1, 
-  default => quote_sub q{1},
+  default => sub {1},
 );
 
 has 'core'  => ( is => 'rw', isa => Object );
 has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
-  default => quote_sub q{
+  default => sub {
     my ($self) = @_;
     my $cfg = $self->core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;

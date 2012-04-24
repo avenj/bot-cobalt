@@ -1,17 +1,16 @@
 package Cobalt::IRC::Event::Quit;
 
 use Moo;
-use Sub::Quote;
 use Cobalt::Common qw/:types/;
 
 extends 'Cobalt::IRC::Event';
 
 has 'reason' => ( is => 'rw', isa => Str, lazy => 1, 
-  default => quote_sub q{''},
+  default => sub {''},
 );
 
 has 'common' => ( is => 'rw', isa => ArrayRef, lazy => 1,
-  default => quote_sub q{[]},
+  default => sub {[]},
 );
 
 1;

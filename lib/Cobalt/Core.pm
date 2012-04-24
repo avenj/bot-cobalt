@@ -10,7 +10,6 @@ use 5.10.1;
 use Carp;
 
 use Moo;
-use Sub::Quote;
 
 use Log::Handler;
 
@@ -32,25 +31,25 @@ has 'var' => ( is => 'ro', isa => Str,     required => 1 );
 has 'log'      => ( is => 'rw', isa => Object );
 has 'loglevel' => ( 
   is => 'rw', isa => Str, 
-  default => quote_sub q{ 'info' } 
+  default => sub { 'info' } 
 );
 
 has 'detached' => ( is => 'ro', isa => Int, required => 1 );
 has 'debug'    => ( 
   is => 'rw', isa => Int, 
-  default => quote_sub q{ 0 } 
+  default => sub { 0 } 
 );
 
 ## pure plugin convenience, ->VERSION is a better idea:
 has 'version' => ( 
   is => 'ro', isa => Str, lazy => 1,
-  default => quote_sub q{ $Cobalt::Core::VERSION }
+  default => sub { $Cobalt::Core::VERSION }
 );
 
 ## Mostly used for W~ in Plugin::Info3 str formatting:
 has 'url' => ( 
   is => 'ro', isa => Str,
-  default => quote_sub q{ "http://www.cobaltirc.org" },
+  default => sub { "http://www.cobaltirc.org" },
 );
 
 ## pulls hash from Cobalt::Lang->load_langset later
@@ -60,7 +59,7 @@ has 'State' => (
   ## global 'heap' of sorts
   is => 'rw',
   isa => HashRef,
-  default => quote_sub q{
+  default => sub {
     {
       HEAP => { },
       StartedTS => time(),
@@ -80,7 +79,7 @@ has 'State' => (
 ## alias -> object:
 has 'PluginObjects' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub q{ {} },
+  default => sub { {} },
 );
 
 ## Servers->{$alias} = {
@@ -92,14 +91,14 @@ has 'PluginObjects' => (
 ## }
 has 'Servers' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub q{ {} },
+  default => sub { {} },
 );
 
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
   is  => 'rw',  isa => HashRef,
-  default => quote_sub q{ {} },
+  default => sub { {} },
 );
 
 extends 'POE::Component::Syndicator',

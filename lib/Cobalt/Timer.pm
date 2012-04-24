@@ -4,7 +4,6 @@ use strict; use warnings;
 use 5.10.1;
 use Carp;
 use Moo;
-use Sub::Quote;
 use MooX::Types::MooseLike::Base qw/:all/;
 
 ## my $timer = Cobalt::Core::Item::Timer->new(
@@ -21,37 +20,47 @@ has 'core'  => ( is => 'rw', isa => Object, required => 1 );
 ## timer pool managers; if not, creating IDs is up to them.
 ## (See ::Core::Role::Timers)
 ## This can be any value, but most often a string or number.
-has 'id' => ( is => 'rw' );
+has 'id' => ( is => 'rw', lazy => 1, predicate => 'has_id' );
 
 ## Must provide either an absolute time or a delta from now
-has 'at'    => ( is => 'rw', isa => Num, default => quote_sub q{0} );
-has 'delay' => ( is => 'rw', isa => Num,
+has 'at'    => ( is => 'rw', isa => Num, lazy => 1, 
+  default => sub { 0 } 
+);
+has 'delay' => ( is => 'rw', isa => Num, lazy => 1,
+  default => sub { 0 },
   trigger => sub {
     my ($self, $value) = @_;
     $self->at( time() + $value );
   }, 
 );
 
-has 'event' => ( is => 'rw', isa => Str );
-
-has 'args'  => ( is => 'rw', isa => ArrayRef, 
-  default => quote_sub q{[]},
+has 'event' => ( is => 'rw', isa => Str, lazy => 1,
+  predicate => 'has_event',
 );
 
-has 'alias' => ( is => 'rw', isa => Str,
+has 'args'  => ( is => 'rw', isa => ArrayRef, lazy => 1,
+  default => sub { [] },
+);
+
+has 'alias' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub { scalar caller }, 
 );
 
-has 'context' => ( is => 'rw', isa => Str, 
-  default => quote_sub q{'Main'},
+has 'context' => ( is => 'rw', isa => Str, lazy => 1,
+  default   => sub { 'Main' },
   predicate => 'has_context',
 );
 
-has 'text'    => ( is => 'rw', isa => Str, predicate => 'has_text' );
-has 'target'  => ( is => 'rw', isa => Str, predicate => 'has_target' );
+has 'text'    => ( is => 'rw', isa => Str, lazy => 1, 
+  predicate => 'has_text' 
+);
+
+has 'target'  => ( is => 'rw', isa => Str, lazy => 1, 
+  predicate => 'has_target' 
+);
 
 has 'type'  => ( is => 'rw', isa => Str, lazy => 1,
-  default => quote_sub q{
+  default => sub {
     my ($self) = @_;
     
     if ($self->has_context && $self->has_target) {
@@ -63,7 +72,7 @@ has 'type'  => ( is => 'rw', isa => Str, lazy => 1,
     }
   },
   
-  trigger => quote_sub q{
+  trigger => sub {
     my ($self, $value) = @_;
     $value = lc($value);
     $value = 'msg' if $value ~~ [qw/message privmsg/];
