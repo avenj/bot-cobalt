@@ -9,20 +9,46 @@ use Sub::Quote;
 
 use Cobalt::Timer;
 
+use Scalar::Util qw/blessed/;
+
 requires qw/
   log
   debug
   send_event
 /;
 
+
 has TimerPool => ( is => 'rw', default => quote_sub q{ {} });
 
-sub timer_set {
-  ## FIXME: support either old-style hashref (create Cobalt::Timer)
-  ## or passed-in Cobalt::Timer
-  ## changeup core to use Cobalt::Timer ->execute methods
 
+sub timer_gen_unique_id {
+  my ($self) = @_;
+  my @p = ( 'a'..'f', 0..9 );
+  my $id = join '', map { $p[rand@p] } 1 .. 4;
+  $id .= $p[rand@p] while exists $self->TimerPool->{$id};
+  return $id
+}
+
+sub timer_set {
+  my ($self, $item) = @_;
+  
+  if (blessed $item && $item->isa('Cobalt::Timer') ) {
+    ## Timer object passed
+    ## FIXME add to TimerPool directly
+    ## sanity check
+  } else {
+    ## hashref-style (we hope)
+    ## FIXME: change _hashref to return the obj to add
+    ## move ID generation and sanity checking
+    return $self->timer_set_hashref( $item, @_[2 .. $#_] );
+  }
+}
+
+sub timer_set_hashref {
   my ($self, $delay, $ev, $id) = @_;
+  
+  ## FIXME set up Cobalt::Timer obj for TimerPool
+  ## changeup core to use ->execute methods from ::Timer
 
   unless (ref $ev eq 'HASH') {
     $self->log->warn("timer_set not called with hashref in ".caller);
@@ -34,9 +60,7 @@ sub timer_set {
     ## an id was specified, overrule any existing by the same name
     delete $self->TimerPool->{$id};
   } else {
-    my @p = ( 'a'..'f', 0..9 );
-    $id = join '', map { $p[rand@p] } 1 .. 4;
-    $id .= $p[rand@p] while exists $self->TimerPool->{$id};
+    $id = $self->timer_gen_unique_id;
   }
 
   ## Try to guess type, or default to 'event'

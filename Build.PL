@@ -69,8 +69,9 @@ my $build = $class->new(
       'File::Path'     => '2.00',
       'File::Spec'     => 0,
       'Getopt::Long'   => 0,
+      'Scalar::Util'   => 0,
       'Storable'       => 0,
-
+      
    ### Cobalt set ###
      # Crypt
       'App::bmkpasswd' => 0,
@@ -96,7 +97,6 @@ my $build = $class->new(
 
      # Moo + related
       'Moo'         => '0.009',
-      'Sub::Quote'  => 0,
       'MooX::Types::MooseLike' => '0.03',
       
      # Network

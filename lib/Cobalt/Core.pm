@@ -115,6 +115,7 @@ extends 'POE::Component::Syndicator',
 
 with 'Cobalt::Core::Role::Auth';
 with 'Cobalt::Core::Role::Ignore';
+with 'Cobalt::Core::Role::Unloader';
 with 'Cobalt::Core::Role::Timers';
 
 
@@ -317,63 +318,6 @@ sub _core_timer_check_pool {
   ## tracks timer pool ticks
   $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
 }
-
-
-### Plugin utils:
-
-sub is_reloadable {
-  my ($self, $alias, $obj) = @_;
-  
-  if ($obj and ref $obj) {
-    ## passed an object
-    ## see if the object is marked non-reloadable
-    ## if it is, update State
-    if ( $obj->{NON_RELOADABLE} || 
-       ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
-    ) {
-      $self->log->debug("Marked plugin $alias non-reloadable");
-      $self->State->{NonReloadable}->{$alias} = 1;
-      ## not reloadable, return 0
-      return 0
-    } else {
-      ## reloadable, return 1
-      delete $self->State->{NonReloadable}->{$alias};
-      return 1
-    }
-  }
-  ## passed just an alias (or a bustedass object)
-  ## return whether the alias is reloadable
-  return 0 if $self->State->{NonReloadable}->{$alias};
-  return 1
-}
-
-sub unloader_cleanup {
-  ## clean up symbol table after a module load fails miserably
-  ## (or when unloading)
-  my ($self, $module) = @_;
-
-  $self->log->debug("cleaning up after $module (unloader_cleanup)");
-
-  my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';  
-  
-  $self->log->debug("removing from INC: $included");
-  delete $INC{$included};
-  
-  { no strict 'refs';
-
-    @{$module.'::ISA'} = ();
-    my $s_table = $module.'::';
-    for my $symbol (keys %$s_table) {
-      next if $symbol =~ /\A[^:]+::\z/;
-      delete $s_table->{$symbol};
-    }
-  
-  }
-  
-  $self->log->debug("finished module cleanup");
-  return 1
-}
-
 
 
 ### Accessors acting on ->Servers:
