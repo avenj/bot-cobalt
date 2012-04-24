@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_42';
+our $VERSION = '2.00_43';
 
 use 5.10.1;
 use Carp;
@@ -77,12 +77,6 @@ has 'State' => (
       NonReloadable => { },
     } 
   },
-);
-
-has 'TimerPool' => (
-  ## timers; see _core_timer_check_pool, Core::Role::Timers
-  is  => 'rw',  isa => HashRef,
-  default => quote_sub q{ {} },
 );
 
 ## alias -> object:

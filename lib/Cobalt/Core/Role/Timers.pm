@@ -5,51 +5,20 @@ use strict;
 use warnings;
 use Moo::Role;
 
+use Cobalt::Timer;
+
 requires qw/
   log
   debug
-  TimerPool
   send_event
 /;
 
+has TimerPool => ( is => 'rw', default => quote_sub q{ {} });
+
 sub timer_set {
-  ## generic/easy timer set method
-  ## $core->timer_set($delay, $event, $id)
-
-  ## Returns timer ID on success
-
-  ##  $delay should always be in seconds
-  ##   (timestr_to_secs from Cobalt::Utils may help)
-  ##  $event should be a hashref:
-  ##   Type => 'event' || 'msg'
-  ##  If Type is 'event':
-  ##   Event => name of event to syndicate to plugins
-  ##   Args => [ array of arguments to event ]
-  ##  If Type is 'msg':
-  ##   Context => server context (defaults to 'Main')
-  ##   Target => target for privmsg
-  ##   Text => text string for privmsg
-  ##  $id is optional (randomized if unspecified)
-  ##  if adding an existing id the old one will be deleted first.
-
-  ##  Type options:
-  ## TYPE = event
-  ##   Event => "send_notice",  ## send notice example
-  ##   Args  => [ ], ## optional array of args for event
-  ## TYPE = msg || action
-  ##   Target  => $somewhere,
-  ##   Text    => $string,
-  ##   Context => $server_context, # defaults to 'Main'
-
-  ## for example, a random-ID timer to join a channel 60s from now:
-  ##  my $id = timer_set( 60,
-  ##    {
-  ##      Type  => 'event',
-  ##      Event => 'join',
-  ##      Args  => [ $context, $channel ],
-  ##      Alias => $core->get_plugin_alias( $self ),
-  ##    }
-  ##  );
+  ## FIXME: support either old-style hashref (create Cobalt::Timer)
+  ## or passed-in Cobalt::Timer
+  ## changeup core to use Cobalt::Timer ->execute methods
 
   my ($self, $delay, $ev, $id) = @_;
 
