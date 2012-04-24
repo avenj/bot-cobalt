@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Moo::Role;
 
+use IRC::Utils qw/normalize_mask/;
+
 requires qw/
   log
   debug

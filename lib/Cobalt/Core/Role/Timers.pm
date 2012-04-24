@@ -37,8 +37,8 @@ sub timer_set {
   ##   Event => "send_notice",  ## send notice example
   ##   Args  => [ ], ## optional array of args for event
   ## TYPE = msg || action
-  ##   Target => $somewhere,
-  ##   Text => $string,
+  ##   Target  => $somewhere,
+  ##   Text    => $string,
   ##   Context => $server_context, # defaults to 'Main'
 
   ## for example, a random-ID timer to join a channel 60s from now:
@@ -59,24 +59,34 @@ sub timer_set {
   }
 
   ## automatically pick a unique id unless specified
-  unless ($id) {
+  if ($id) {
+    ## an id was specified, overrule any existing by the same name
+    delete $self->TimerPool->{$id};
+  } else {
     my @p = ( 'a'..'f', 0..9 );
     $id = join '', map { $p[rand@p] } 1 .. 4;
     $id .= $p[rand@p] while exists $self->TimerPool->{$id};
-  } else {
-    ## an id was specified, overrule any existing by the same name
-    delete $self->TimerPool->{$id};
   }
 
-  my $type = $ev->{Type} // 'event';
+  ## Try to guess type, or default to 'event'
+  my $type = $ev->{Type};
+  unless ($type) {
+    if (defined $ev->{Text} && defined $ev->{Context}) {
+      $type = 'msg'
+    } else {
+      $type = 'event'
+    }
+  }
+  
+  
   my($event_name, @event_args);
+
   given ($type) {
 
     when ("event") {
       unless (exists $ev->{Event}) {
         $self->log->warn("timer_set no Event specified in ".caller);
         return
-         return
       }
       $event_name = $ev->{Event};
       @event_args = @{ $ev->{Args} // [] };
@@ -101,7 +111,7 @@ sub timer_set {
   }
 
   # tag w/ __PACKAGE__ if no alias is specified
-  my $addedby = $ev->{Alias} // scalar caller;
+  my $addedby = $ev->{Alias} // caller;
 
   if ($event_name) {
     $self->TimerPool->{$id} = {
@@ -110,15 +120,19 @@ sub timer_set {
       Args    => [ @event_args ],
       AddedBy => $addedby,
     };
+
     $self->send_event( 'new_timer', $id );
+
     $self->log->debug("timer_set; $id $delay $event_name")
       if $self->debug > 1;
+
     return $id
+
   } else {
     $self->log->debug("timer_set called but no timer added; bad type?");
-    $self->log->debug("timer_set failure for ".join(' ', (caller)[0,2]) 
-);
+    $self->log->debug("timer_set failure for ".join(' ', (caller)[0,2]) );
   }
+
   return
 }
 
@@ -128,8 +142,10 @@ sub timer_del {
   ## doesn't care if the timerID actually exists or not.
   my ($self, $id) = @_;
   return unless $id;
+
   $self->log->debug("timer del; $id")
     if $self->debug > 1;
+
   return unless exists $self->TimerPool->{$id};
 
   my $deleted = delete $self->TimerPool->{$id};
@@ -142,22 +158,27 @@ sub get_timer { timer_get(@_) }
 sub timer_get {
   my ($self, $id) = @_;
   return unless $id;
+
   $self->log->debug("timer retrieved; $id")
     if $self->debug > 2;
-  return $self->TimerPool->{$id};
+
+  return $self->TimerPool->{$id}
 }
 
 sub timer_get_alias {
   ## get all timerIDs for this alias
   my ($self, $alias) = @_;
   return unless $alias;
-  my @timers;
+
   my $timerpool = $self->TimerPool;
+  my @timers;
+
   for my $timerID (keys %$timerpool) {
     my $entry = $timerpool->{$timerID};
     push(@timers, $timerID) if $entry->{AddedBy} eq $alias;
   }
-  return wantarray ? @timers : \@timers;
+
+  return wantarray ? @timers : \@timers
 }
 
 sub timer_del_alias {
@@ -166,35 +187,19 @@ sub timer_del_alias {
   my $timerpool = $self->TimerPool;
 
   my @deleted;
+
   for my $id (keys %$timerpool) {
     my $entry = $timerpool->{$id};
+
     if ($entry->{AddedBy} eq $alias) {
       my $deleted = delete $timerpool->{$id};
       push(@deleted, $id);
       $self->send_event( 'deleted_timer', $id, $deleted );
     }
-  }
-  return wantarray ? @deleted : scalar @deleted ;
-}
 
-
-## FIXME timer_del_pkg is deprecated as of 2.00_18 and should go away
-## (may clobber other timers if there are dupe modules)
-## pkgs not declaring their alias in timer_set are on their own
-sub timer_del_pkg {
-  my $self = shift;
-  my $pkg = shift || return;
-  ## $core->timer_del_pkg( __PACKAGE__ )
-  ## convenience method for plugins
-  ## delete timers by 'AddedBy' package name
-  ## (f.ex when unloading a plugin)
-  for my $id (keys %{ $self->TimerPool }) {
-    my $ev = $self->TimerPool->{$id};
-    if ($ev->{AddedBy} eq $pkg) {
-      my $deleted = delete $self->TimerPool->{$id};
-      $self->send_event( 'deleted_timer', $id, $deleted );
-    }
   }
+
+  return wantarray ? @deleted : scalar @deleted 
 }
 
 
@@ -310,7 +315,18 @@ instanced more than once.)
 
 =head3 Message timers
 
-FIXME msg / action types
+If a timer is simply intended to send some message or action to an IRC 
+context, the B<msg> and B<action> types can be used for convenience:
+
+  $core->timer_set( 30,
+    {
+      Alias   => $core->get_plugin_alias($self),
+      Type    => 'msg',
+      Context => $context,
+      Target  => $channel,
+      Text    => $string,
+    },
+  );
 
 =head2 timer_del
 
