@@ -61,4 +61,16 @@ sub ignore_list {
 
 
 1;
+__END__
 
+=pod
+
+=head1 NAME
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+=cut

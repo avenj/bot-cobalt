@@ -104,4 +104,62 @@ sub auth_pkg {
 
 
 1;
+__END__
 
+=pod
+
+=head1 NAME
+
+Cobalt::Core::Role::Auth - A role for managing pluggable auth state
+
+=head1 SYNOPSIS
+
+  my $auth_lev   = $core->auth_level($context, $nick);
+  my $auth_usr   = $core->auth_user($context, $nick);
+  my $auth_flags = $core->auth_flags($context, $nick);
+  my $owned_by   = $core->auth_pkg($context, $nick);
+
+=head1 DESCRIPTION
+
+A Moo role for managing plugin-owned authentication states living in a 
+State hash.
+
+This is consumed by L<Cobalt::Core> to provide easy authentication 
+management for plugins.
+
+=head1 METHODS
+
+=head2 auth_level
+
+Takes a context and nickname.
+
+Returns the recognized authorization level for a logged-in user
+
+Returns 0 if the user is not logged in.
+
+=head2 auth_user
+
+Takes a context and nickname.
+
+Returns the 'actual' username for a logged-in user, or 'undef' if the 
+user is not logged in.
+
+=head2 auth_flags
+
+Takes a context and nickname.
+
+Returns a reference to the authorization flags hash for this user.
+
+=head2 auth_pkg
+
+Takes a context and nickname.
+
+Returns the name of the package that authorized this user.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
