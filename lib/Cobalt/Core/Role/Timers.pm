@@ -246,12 +246,23 @@ methods to the plugin pipeline.
 =head2 timer_set
 
 The B<timer_set> method adds a new timer to the hashref 
-provided by B<TimerPool> in the consumer class.
+provided by B<TimerPool> in the consuming class (usually 
+L<Cobalt::Core>).
 
+  ## Supply a Cobalt::Timer object:
+  $core->timer_set( $timer_obj );
+  
+  ## Supply a hashref containing options:
   $core->timer_set( $secs, $opts_ref );
   $core->timer_set( $secs, $opts_ref, $timer_id );
 
-Timer options should be provided as a hash reference.
+An already-constructed L<Cobalt::Timer> object can be passed in; see the 
+L<Cobalt::Timer> documentation for details on constructing a timer 
+object.
+
+More frequently, plugins pass in a hash reference containing event 
+options and let B<timer_set> construct a L<Cobalt::Timer> on its own. 
+This is the interface documented here.
 
 B<timer_set> will return the new timer's ID on success; a B<send_event> 
 will be called for event L</new_timer>.
@@ -344,15 +355,13 @@ removed timer.
 
 =head2 timer_get
 
-Rarely used.
-
-Retrieves the reference to the specified timer ID.
+Retrieves the L<Cobalt::Timer> object for the specified timer ID.
 
 This can be useful for tweaking active timers.
 
 =head2 timer_get_alias
 
-Returns all timer IDs belonging to the specified alias tag.
+Returns all timer IDs in the pool belonging to the specified alias tag.
 
 Returns a list of timer IDs. In scalar context, returns an array 
 reference.
@@ -369,7 +378,7 @@ Only argument provided is the timer ID.
 
 Issued when a timer is deleted.
 
-Arguments are the timer ID and the deleted item hash, respectively.
+Arguments are the timer ID and the deleted item object, respectively.
 
 =head1 AUTHOR
 

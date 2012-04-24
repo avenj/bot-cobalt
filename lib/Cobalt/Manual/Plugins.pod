@@ -906,8 +906,13 @@ Core timers live in B<< $core->TimerPool >>; if need be, you can access
 the timer pool directly. It is a hash keyed on timer ID.
 
 Timer methods are provided by the L<Cobalt::Core::Role::Timers> role.
+Each individual timer is a L<Cobalt::Timer> object; if you plan to 
+manipulate timers, you'll likely want to consult that POD.
 
-Typically most plugins will only need the following functionality:
+Typically most plugins will only need the following functionality; this 
+only covers the hash-based interface to 
+L<Cobalt::Core::Role::Timers/timer_set>, so review the aforementioned 
+documentation if you'd like to use the pure object interface instead.
 
 =head4 timer_set
 
@@ -1010,12 +1015,15 @@ Delete a timer by ID.
 Returns the deleted TimerPool entry, or nothing if there was no such ID.
 
 The returned result (if there is one) can be fed back to L</timer_set> 
-if needed:
+if needed; it will be a L<Cobalt::Timer> object:
 
   ## hang on to this timer for now:
    my $postponed = $core->timer_del( $id ) ;
+
   ## . . . situation changes . . .
-   if ( $core->timer_set( 60, $postponed, $id ) ) {
+   $postponed->delay(60);
+  
+   if ( $core->timer_set( $postponed ) ) {
      ## readding postponed timer successful
    }
 
@@ -1043,7 +1051,8 @@ Find out which active timerIDs are owned by the specified alias:
 
 =head4 timer_get
 
-Retrieve the hash for this active timer (or undef if not found).
+Retrieve the L<Cobalt::Timer> for this active timer (or undef if not 
+found).
 
   my $this_timer = $core->timer_get($id);
 
@@ -1090,7 +1099,7 @@ Broadcast whenever a timer ID has been deleted.
 
 The first argument is the timer ID.
 
-The second argument is a cloned copy of the original timer hash.
+The second argument is the removed L<Cobalt::Timer> object.
 
 =head3 Ignore list related events
 

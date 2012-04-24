@@ -42,7 +42,7 @@ has 'args'  => ( is => 'rw', isa => ArrayRef, lazy => 1,
   default => sub { [] },
 );
 
-has 'alias' => ( is => 'rw', isa => Str, lazy => 1,
+has 'alias' => ( is => 'rw', isa => Str,
   default => sub { scalar caller }, 
 );
 
@@ -130,3 +130,137 @@ sub execute_ready {
 
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Timer - Cobalt timer objects
+
+=head1 SYNOPSIS
+
+  my $timer = Cobalt::Timer->new(
+    core   => $core,
+    event  => 'my_timed_event',
+    args   => [ $one, $two ],
+  );
+  
+  $timer->delay(30);
+  
+  ## Add this instance to Core's TimerPool, for example:
+  $core->timer_set( $timer );
+
+=head1 DESCRIPTION
+
+A B<Cobalt::Timer> instance represents a single timed event.
+
+These are usually constructed for use by the L<Cobalt::Core> TimerPool; 
+also see L<Cobalt::Core::Role::Timers/timer_set>.
+
+When constructed, a Timer should be provided a B<core> object that can 
+B<send_event> -- this is usually the running L<Cobalt::Core> instance:
+
+  my $timer = Cobalt::Timer->new(
+    core => $core,
+  );
+
+=head1 METHODS
+
+=head2 Timer settings
+
+=head3 at
+
+The absolute time that this timer is supposed to fire (epoch seconds).
+
+This is normally set automatically when L</delay> is called.
+
+=head3 delay
+
+The time this timer is supposed to fire expressed in seconds from now.
+
+This will set L</at> to I<time()> + I<delay>.
+
+=head3 event
+
+The name of the event that should be fired via B<send_event> when this 
+timer is executed.
+
+=head3 args
+
+An array reference containing any arguments attached to the L</event>.
+
+=head3 id
+
+This timer's unique identifier, used as a key in timer pools.
+
+=head3 alias
+
+The alias tag attached to this timer. Defaults to C<caller()>
+
+=head3 type
+
+The type of event.
+
+Valid types as of this writing are B<msg>, B<action>, and B<event>.
+
+B<msg> and B<action> types require L</context>, L</text>, and L</target> 
+attributes be specified.
+
+If no type has been specified for this timer, B<type()> returns our best 
+guess; for timed events carrying a L</context> and L</target> the 
+default is B<msg>.
+
+This is used to set up proper event names for special timer types.
+
+=head3 context
+
+B<msg and action timer types only>
+
+The server context for an outgoing B<msg> or B<action>.
+
+See L</type>
+
+=head3 text
+
+B<msg and action timer types only>
+
+The text string to send with an outgoing B<msg> or B<action>.
+
+See L</type>
+
+=head3 target
+
+B<msg and action timer types only>
+
+The target channel or nickname for an outgoing B<msg> or B<action>.
+
+See L</type>
+
+=head2 Execution
+
+A timer object can be instructed to execute as long as it was provided a 
+proper B<core> object at construction time -- this is normally 
+L<Cobalt::Core>, but any class that can B<send_event> will do.
+
+=head3 is_ready
+
+Returns boolean true if the timer is ready to execute; in other words, 
+if the specified L</at> is reached.
+
+=head3 execute_if_ready
+
+L</execute> the timer if L</is_ready> is true.
+
+=head3 execute
+
+Execute the timer; if our B<core> object can B<send_event>, the timer's 
+event is broadcast. Otherwise the timer will warn and return.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
