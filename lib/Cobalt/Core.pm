@@ -22,6 +22,8 @@ use Cobalt::Common;
 
 use Storable qw/dclone/;
 
+use Scalar::Util qw/blessed/;
+
 ## usually a hashref from Cobalt::Conf created via frontend:
 has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :
@@ -99,7 +101,6 @@ has 'Provided' => (
   is  => 'rw',  isa => HashRef,
   default => quote_sub q{ {} },
 );
-
 
 extends 'POE::Component::Syndicator',
         'Cobalt::Lang';
@@ -280,30 +281,27 @@ sub _core_timer_check_pool {
 
   my $timerpool = $self->TimerPool;
   
-  for my $id (keys %$timerpool) {
+  TIMER: for my $id (keys %$timerpool) {
     my $timer = $timerpool->{$id};
      # this should never happen ...
      # ... unless a plugin author is a fucking idiot:
-    unless (ref $timer eq 'HASH' && scalar keys %$timer) {
-      $self->log->warn("broken timer, not a hash: $id (in tick $tick)");
+    unless (blessed $timer && $timer->isa('Cobalt::Timer') ) {
+      $self->log->warn("not a Cobalt::Timer: $id (in tick $tick)");
       delete $timerpool->{$id};
-      next
+      next TIMER
     }
     
-    my $execute_ts = $timer->{ExecuteAt} // next;
-    if ( $execute_ts <= time ) {
-      my $event = $timer->{Event};
-      my @args = @{ $timer->{Args} };
-      $self->log->debug("timer execute: $id (ev: $event) [tick $tick]")
+    if ( $timer->execute_if_ready ) {
+      my $event = $timer->event;
+      $self->log->debug("timer execute; $id ($event) in tick $tick")
         if $self->debug > 1;
-      ## dispatch this event:
-      $self->send_event( $event, @args ) if $event;
-      ## send executed_timer to indicate this timer's done:
-      $self->send_event( 'executed_timer', $id, $tick );
-      delete $timerpool->{$id};
-    }
-  }
 
+      $self->send_event( 'executed_timer', $id, $tick );
+      $self->timer_del($id);
+    }
+  
+  } ## TIMER
+  
   ## most definitely not a high-precision timer.
   ## checked every second or so
   ## tracks timer pool ticks

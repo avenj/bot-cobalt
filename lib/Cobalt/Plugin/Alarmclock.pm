@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.143';
+our $VERSION = '0.144';
 
 use 5.10.1;
 use strict;
@@ -39,6 +39,7 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_deleted_timer { Bot_executed_timer(@_) }
 sub Bot_executed_timer {
   my ($self, $core) = splice @_, 0, 2;
   my $timerid = ${$_[0]};

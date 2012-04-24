@@ -1,5 +1,6 @@
 package Cobalt::Timer;
 
+use strict; use warnings;
 use 5.10.1;
 use Carp;
 use Moo;
@@ -15,6 +16,12 @@ use MooX::Types::MooseLike::Base qw/:all/;
 ## );
 
 has 'core'  => ( is => 'rw', isa => Object, required => 1 );
+
+## May have a timer ID specified at construction for use by 
+## timer pool managers; if not, creating IDs is up to them.
+## (See ::Core::Role::Timers)
+## This can be any value, but most often a string or number.
+has 'id' => ( is => 'rw' );
 
 ## Must provide either an absolute time or a delta from now
 has 'at'    => ( is => 'rw', isa => Num, default => quote_sub q{0} );
@@ -37,35 +44,47 @@ has 'alias' => ( is => 'rw', isa => Str,
 
 has 'context' => ( is => 'rw', isa => Str, 
   default => quote_sub q{'Main'},
+  predicate => 'has_context',
 );
 
-has 'text'    => ( is => 'rw', isa => Str );
-has 'target'  => ( is => 'rw', isa => Str );
+has 'text'    => ( is => 'rw', isa => Str, predicate => 'has_text' );
+has 'target'  => ( is => 'rw', isa => Str, predicate => 'has_target' );
 
-has 'type'  => ( is => 'rw', isa => Str, lazy => 1, 
-  trigger => sub {
-    my ($self, $value) = @_;
-    given (lc($value)) {
-      when ([qw/msg message privmsg action/]) {
-        my $ev_name = $value eq 'action' ? 
-            'send_action' : 'send_message' ;
-        my @ev_args = ( $self->context, $self->target, $self->text );
-        $self->args( \@ev_args );
-        $self->event( $ev_name );
-      }
-      
-      default { carp "Unknown type $value" }
-
+has 'type'  => ( is => 'rw', isa => Str, lazy => 1,
+  default => quote_sub q{
+    my ($self) = @_;
+    
+    if ($self->has_context && $self->has_target) {
+      ## Guessing we're a message.
+      return 'msg' 
+    } else {
+      ## Guessing we're an event.
+      return 'event'
     }
   },
-);
+  
+  trigger => quote_sub q{
+    my ($self, $value) = @_;
+    $value = lc($value);
+    $value = 'msg' if $value ~~ [qw/message privmsg/];
+  },
+); 
 
-## FIXME sanity-checking BUILD ?
 
-sub execute {
+sub _process_type {
   my ($self) = @_;
-  my $args = $self->args;
-  $self->core->send_event( $self->event, @$args );
+  ## If this is a special type, set up event and args.
+  my $type = lc($self->type);
+  
+  if ($type ~~ [qw/msg message privmsg action/]) {
+    my $ev_name = $type eq 'action' ? 
+          'send_action' : 'send_message' ;
+    my @ev_args = ( $self->context, $self->target, $self->text );
+    $self->args( \@ev_args );
+    $self->event( $ev_name );
+  }
+
+  return 1
 }
 
 sub is_ready {
@@ -74,14 +93,29 @@ sub is_ready {
   return
 }
 
+sub execute {
+  my ($self) = @_;
+  $self->_process_type;
+  
+  unless ( $self->event ) {
+    carp "timer execute called but no event specified";
+    return
+  }
+  
+  unless ( $self->core->can('send_event') ) {
+    carp "timer execute called but specified core can't send_event";
+    return
+  }
+  
+  my $args = $self->args;
+  $self->core->send_event( $self->event, @$args );
+  return 1
+}
+
 sub execute_if_ready { execute_ready(@_) }
 sub execute_ready {
   my ($self) = @_;
-  if ($self->at <= time) {
-    my $args = $self->args;
-    $self->core->send_event( $self->event, @$args );
-    return 1
-  }
+  return $self->execute if $self->is_ready;
   return
 }
 

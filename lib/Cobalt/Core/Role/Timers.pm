@@ -32,36 +32,57 @@ sub timer_gen_unique_id {
 sub timer_set {
   my ($self, $item) = @_;
   
-  if (blessed $item && $item->isa('Cobalt::Timer') ) {
-    ## Timer object passed
-    ## FIXME add to TimerPool directly
-    ## sanity check
-  } else {
+  my ($caller_pkg, $caller_line) = (caller)[0,2];
+  my $d_line = "$caller_pkg line $caller_line";
+  
+  my $timer;
+  unless (blessed $item && $item->isa('Cobalt::Timer') ) {
     ## hashref-style (we hope)
-    ## FIXME: change _hashref to return the obj to add
-    ## move ID generation and sanity checking
-    return $self->timer_set_hashref( $item, @_[2 .. $#_] );
+    $timer = $self->timer_set_hashref( $item, @_[2 .. $#_] );
+  } else {
+    ## passed a Cobalt::Timer
+    $timer = $item;
   }
+
+  my $id = defined $timer->id ? 
+      $timer->id : $self->timer_gen_unique_id ;
+
+
+  ## FIXME sanity check ?
+
+  
+  ## Add to our TimerPool.
+  $self->TimerPool->{$id} = $timer;
+  
+  $self->send_event( 'new_timer', $id );
+
+  $self->log->debug(
+    "timer_set; ".join ' ', $timer->id, $timer->delay, $timer->event
+  ) if $self->debug > 1;
+
+  return $id
 }
 
 sub timer_set_hashref {
   my ($self, $delay, $ev, $id) = @_;
   
-  ## FIXME set up Cobalt::Timer obj for TimerPool
-  ## changeup core to use ->execute methods from ::Timer
+  ## Old-style compat.
 
+  my ($caller_pkg, $caller_line) = (caller)[0,2];
+  my $d_line = "$caller_pkg line $caller_line";
+  
   unless (ref $ev eq 'HASH') {
-    $self->log->warn("timer_set not called with hashref in ".caller);
+    $self->log->warn(
+      "timer_set_hashref not called with hashref; $d_line"
+    );
     return
   }
+  
+  my $timer = Cobalt::Timer->new(
+    core => $self->core
+  );
 
-  ## automatically pick a unique id unless specified
-  if ($id) {
-    ## an id was specified, overrule any existing by the same name
-    delete $self->TimerPool->{$id};
-  } else {
-    $id = $self->timer_gen_unique_id;
-  }
+  $timer->id($id) if $id;
 
   ## Try to guess type, or default to 'event'
   my $type = $ev->{Type};
@@ -73,62 +94,42 @@ sub timer_set_hashref {
     }
   }
   
-  
   my($event_name, @event_args);
-
   given ($type) {
-
     when ("event") {
-      unless (exists $ev->{Event}) {
-        $self->log->warn("timer_set no Event specified in ".caller);
+      unless (defined $ev->{Event}) {
+        $self->log->warn(
+          "timer_set_hashref no Event specified; $d_line"
+        );
         return
       }
-      $event_name = $ev->{Event};
-      @event_args = @{ $ev->{Args} // [] };
+
+      $timer->event( $ev->{Event} );
+      $timer->args( $ev->{Args}//[] );
     }
 
     when ([qw/msg message privmsg action/]) {
-      unless ($ev->{Text}) {
-        $self->log->warn("timer_set no Text specified in ".caller);
-        return
-      }
-      unless ($ev->{Target}) {
-        $self->log->warn("timer_set no Target specified in ".caller);
+      unless (defined $ev->{Text} && defined $ev->{Target}) {
+        $self->log->warn(
+          "timer_set_hashref; $type needs Text and Target; $d_line"
+        );
         return
       }
 
-      my $context = $ev->{Context} // 'Main';
-
-      ## send_message / send_action $context, $target, $text
-      $event_name = $type eq "action" ? 'send_action' : 'send_message' ;
-      @event_args = ( $context, $ev->{Target}, $ev->{Text} );
+      $timer->context( $ev->{Context} ) if defined $ev->{Context};
+      $timer->target( $ev->{Target} );
+      $timer->text( $ev->{Text} );
+      $timer->type( $type );
     }
   }
 
-  # tag w/ __PACKAGE__ if no alias is specified
-  my $addedby = $ev->{Alias} // caller;
+  ## Tag w/ __PACKAGE__ if no alias is specified
+  $timer->alias( $ev->{Alias} // scalar caller );
+  
+  ## Start ticking.
+  $timer->delay( $delay );
 
-  if ($event_name) {
-    $self->TimerPool->{$id} = {
-      ExecuteAt => time() + $delay,
-      Event   => $event_name,
-      Args    => [ @event_args ],
-      AddedBy => $addedby,
-    };
-
-    $self->send_event( 'new_timer', $id );
-
-    $self->log->debug("timer_set; $id $delay $event_name")
-      if $self->debug > 1;
-
-    return $id
-
-  } else {
-    $self->log->debug("timer_set called but no timer added; bad type?");
-    $self->log->debug("timer_set failure for ".join(' ', (caller)[0,2]) );
-  }
-
-  return
+  return $timer
 }
 
 sub del_timer { timer_del(@_) }
@@ -169,7 +170,7 @@ sub timer_get_alias {
 
   for my $timerID (keys %$timerpool) {
     my $entry = $timerpool->{$timerID};
-    push(@timers, $timerID) if $entry->{AddedBy} eq $alias;
+    push(@timers, $timerID) if $entry->alias eq $alias;
   }
 
   return wantarray ? @timers : \@timers
@@ -185,7 +186,7 @@ sub timer_del_alias {
   for my $id (keys %$timerpool) {
     my $entry = $timerpool->{$id};
 
-    if ($entry->{AddedBy} eq $alias) {
+    if ($entry->alias eq $alias) {
       my $deleted = delete $timerpool->{$id};
       push(@deleted, $id);
       $self->send_event( 'deleted_timer', $id, $deleted );
