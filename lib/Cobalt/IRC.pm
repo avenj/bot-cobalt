@@ -954,9 +954,12 @@ __END__
 
 =head1 NAME
 
-Cobalt::IRC -- core (context "Main") IRC plugin
+Cobalt::IRC -- Standard Cobalt IRC-bridging plugin
 
 =head1 DESCRIPTION
+
+B<Cobalt> handles incoming and outgoing IRC activity just like any other 
+plugin pipeline events.
 
 The core IRC plugin provides a multi-server IRC interface via
 L<POE::Component::IRC>. Any other IRC plugins should follow this pattern 
@@ -966,17 +969,14 @@ It does various work on incoming events we consider important enough
 to re-broadcast from the IRC component. This makes life easier on 
 plugins and reduces code redundancy.
 
-IRC-related events provide the $core->Servers context name in the 
-first argument:
+Arguments may vary by event. See below.
 
-  ## args to pluggable events are always references:
-  my $context = ${ $_[0] };  ## dereference.
-
-Other arguments may vary by event. See below.
+(If you're trying to write Cobalt plugins, you probably want to start 
+with L<Cobalt::Manual::Plugins> -- this is a reference for IRC-related 
+events specifically.)
 
 
 =head1 EMITTED EVENTS
-
 
 =head2 Connection state events
 
@@ -990,7 +990,7 @@ Indicates the bot is now talking to an IRC server.
   my $context     = ${$_[0]};
   my $server_name = ${$_[1]};
 
-The relevant $core->Servers->{$context} obj is updated prior to
+The relevant $core->Servers->{$context} object is updated prior to
 broadcasting this event. This means that 'maxmodes' and 'casemap'
 are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
@@ -1120,7 +1120,6 @@ return an empty string.
 
 =head2 Sent notification events
 
-
 =head3 Bot_message_sent
 
 Broadcast when a PRIVMSG has been sent to the server via an event;
@@ -1157,8 +1156,8 @@ Broadcast when a raw string has been sent via L</send_raw>.
 
 Arguments are the server context name and the raw string sent.
 
-=head2 Channel state events
 
+=head2 Channel state events
 
 =head3 Bot_chan_sync
 
@@ -1406,7 +1405,8 @@ user, of course.
 
 Carries a L<Cobalt::IRC::Event::Quit> object.
 
-=head2 Outgoing messages
+
+=head2 Outgoing message triggers
 
 It's possible to write plugins that register for B<USER> events to catch 
 messages before they are dispatched to IRC.
@@ -1571,7 +1571,12 @@ L<Cobalt::IRC::Event>
 
 L<Cobalt::IRC::Message>
 
+=item *
+
+L<Cobalt::Manual::Plugins>
+
 =back
+
 
 =head1 AUTHOR
 
