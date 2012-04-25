@@ -893,6 +893,10 @@ documentation if you'd like to use the pure object interface instead.
 
 Set up a new timer for an event or message.
 
+  ## Object interface:
+  $core->timer_set( $timer_object );
+
+  ## Hash interface:
   $core->timer_set( $delay, $ev_hash );
   $core->timer_set( $delay, $ev_hash, $id );
 
@@ -917,6 +921,19 @@ do when the delay has elapsed.
     }
   );
 
+Here's the same timer, but using the pure object syntax:
+
+  use Cobalt::Timer;
+  $core->timer_set(
+    Cobalt::Timer->new(
+      core    => $core,
+      context => $context,
+      target  => $channel,
+      text    => $string,
+      type    => 'msg',
+      delay   => 60
+    );
+  );
 
 If no B<Type> is specified, I<event> is assumed:
 
@@ -926,6 +943,15 @@ If no B<Type> is specified, I<event> is assumed:
       Event => $event,
       Args  => [ @args ],
     }
+  );
+  
+  ## ... same thing, but object interface:
+  my $id = $core->timer_set(
+    Cobalt::Timer->new(
+      core  => $core,
+      event => $event,
+      args  => \@args,
+    );
   );
 
 You can tags packages with your plugin's B<Alias>, if you'd like; 
@@ -941,6 +967,8 @@ L</timer_del_alias>:
       Alias => $core->get_plugin_alias( $self ),
     },
   );
+
+(The L<Cobalt::Timer> object interface uses the B<alias> attribute.)
 
 Additionally, L<Cobalt::Plugin::PluginMgr> automatically tries to clear 
 plugin timers for unloaded plugins; this only works for Alias-tagged timers.
@@ -960,6 +988,8 @@ You can also specify an ID:
     'MyTimer'
   );
 
+(The L<Cobalt::Timer> object interface uses the B<id> attribute.)
+
 This can be useful for resetting timers you've already set; grab the ID 
 returned by a C<timer_set()> call and reset it to change the event or delay.
 
@@ -970,8 +1000,9 @@ included by default if you C<< use L<Cobalt::Common> >>.
 If you need better accuracy, you'll need to use your own alarm()/delay() 
 calls to L<POE::Kernel>; the timer pool is checked every second or so.
 
-Arguments specified in the B<Args> array reference will be relayed to 
-plugin event handlers just like any other event:
+Arguments specified in the B<Args> array reference or B<args> object 
+attribute will be relayed to plugin event handlers just like any other 
+event's parameters:
 
   sub Bot_some_timed_event {
     ## Called by a timer_set() timer
@@ -980,14 +1011,14 @@ plugin event handlers just like any other event:
     my $second   = ${ $_[1] };
   }
 
-
 =head4 timer_del
 
 Delete a timer by ID.
 
   my $deleted = $core->timer_del( $id );
 
-Returns the deleted TimerPool entry, or nothing if there was no such ID.
+Returns the deleted timer object, or nothing if there was no such 
+ID.
 
 The returned result (if there is one) can be fed back to L</timer_set> 
 if needed; it will be a L<Cobalt::Timer> object:
