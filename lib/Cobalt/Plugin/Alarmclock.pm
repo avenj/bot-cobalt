@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.144';
+our $VERSION = '0.145';
 
 use 5.10.1;
 use strict;

@@ -82,13 +82,7 @@ has 'PluginObjects' => (
   default => sub { {} },
 );
 
-## Servers->{$alias} = {
-##   Name => servername,
-##   PreferredNick => nick,
-##   Object => poco-obj,
-##   Connected => BOOL,
-##   ConnectedAt => time(),
-## }
+## Map context aliases to Cobalt::IRC::Server objects
 has 'Servers' => (
   is  => 'rw',  isa => HashRef,
   default => sub { {} },
@@ -108,6 +102,7 @@ with 'Cobalt::Core::Role::Auth';
 with 'Cobalt::Core::Role::Ignore';
 with 'Cobalt::Core::Role::Unloader';
 with 'Cobalt::Core::Role::Timers';
+with 'Cobalt::Core::Role::IRC';
 
 
 sub init {
@@ -188,6 +183,7 @@ sub syndicator_started {
     <=>
     ($self->cfg->{plugins}->{$a}->{Priority}//1)
                 } keys %{ $self->cfg->{plugins} };
+
   for my $plugin (@plugins)
   { 
     next if $self->cfg->{plugins}->{$plugin}->{NoAutoLoad};
@@ -202,13 +198,16 @@ sub syndicator_started {
     }
     
     my $obj = $module->new();
+
     $self->PluginObjects->{$obj} = $plugin;
+
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
       delete $self->PluginObjects->{$obj};
       $self->unloader_cleanup($module);
       next
     }
+
     $self->is_reloadable($plugin, $obj);
 
     $i++;
@@ -269,14 +268,7 @@ sub _core_timer_check_pool {
   my $tick = $_[ARG0];
   ++$tick;
 
-  ## Timer hash format:
-  ##   Event => $event_to_syndicate,
-  ##   Args => [ @event_args ],
-  ##   ExecuteAt => $ts,
-  ##   AddedBy => $caller,
   ## Timers are provided by Core::Role::Timers
-
-  ## FIXME: use Cobalt::Timer interface
 
   my $timerpool = $self->TimerPool;
   
@@ -307,89 +299,31 @@ sub _core_timer_check_pool {
   $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
 }
 
-
-### Accessors acting on ->Servers:
-
-sub is_connected {
-  my ($self, $context) = @_;
-  return unless $context and exists $self->Servers->{$context};
-  return $self->Servers->{$context}->{Connected};
+sub get_plugin_alias {
+  my ($self, $plugobj) = @_;
+  return unless blessed $plugobj;
+  my $alias = $self->PluginObjects->{$plugobj} || undef;
+  return $alias
 }
-
-sub get_irc_server  { get_irc_context(@_) }
-sub get_irc_context {
-  my ($self, $context) = @_;
-  return unless $context and exists $self->Servers->{$context};
-  return $self->Servers->{$context}
-}
-
-sub get_irc_object { get_irc_obj(@_) }
-sub get_irc_obj {
-  ## retrieve our POE::Component::IRC obj for $context
-  my ($self, $context) = @_;
-  if (! $context) {
-    $self->log->debug("get_irc_obj called but no context specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-
-  my $c_hash = $self->get_irc_context($context);
-  unless ($c_hash && ref $c_hash eq 'HASH') {
-    $self->log->debug("get_irc_obj called but context $context not found");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-
-  my $irc = $c_hash->{Object} // return;
-  return ref $irc ? $irc : ();
-}
-
-sub get_irc_casemap {
-  my ($self, $context) = @_;
-  if (! $context) {
-    $self->log->debug("get_irc_casemap called but no context specified");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-  
-  my $c_hash = $self->get_irc_context($context);
-  unless ($c_hash && ref $c_hash eq 'HASH') {
-    $self->log->debug("get_irc_casemap called but context $context not found");
-    $self->log->debug("returning empty list to ".join(' ', (caller)[0,2]) );
-    return
-  }
-
-  my $map = $c_hash->{CaseMap} // 'rfc1459';
-  return $map
-}
-
-
-### Accessors acting on ->cfg:
 
 sub get_core_cfg {
-  ## Get (a copy of) $core->cfg->{core}:
   my ($self) = @_;
-  my $corecfg = dclone($self->cfg->{core});
+  my $corecfg = dclone( $self->cfg->{core} );
   return $corecfg
 }
 
 sub get_channels_cfg {
   my ($self, $context) = @_;
   unless ($context) {
-    $self->log->debug("get_channels_cfg called but no context specified");
-    $self->log->debug("returning undef to ".join(' ', (caller)[0,2]) );
-    return undef
+    $self->log->warn(
+      "get_channels_cfg called with no context at "
+       .join ' ', (caller)[0,2]
+    );
+    return
   } 
   ## Returns empty hash if there's no conf for this channel:
   my $chcfg = dclone( $self->cfg->{channels}->{$context} // {} );
   return $chcfg
-}
-
-sub get_plugin_alias {
-  my ($self, $plugobj) = @_;
-  return undef unless ref $plugobj;
-  my $alias = $self->PluginObjects->{$plugobj} || undef;
-  return $alias
 }
 
 sub get_plugin_cfg {
@@ -399,7 +333,7 @@ sub get_plugin_cfg {
   
   my $alias;
 
-  if (ref $plugin) {
+  if (blessed $plugin) {
     ## plugin obj (theoretically) specified
     $alias = $self->PluginObjects->{$plugin};
     unless ($alias) {
@@ -447,19 +381,24 @@ This module is the core of B<Cobalt2>, tying an event syndicator (via
 L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
 L<Log::Handler> instance, configuration manager, and other useful tools.
 
-Public methods are documented in L<Cobalt::Manual::Plugins/"Core methods">
+Public methods are documented in L<Cobalt::Manual::Plugins/"Core 
+methods"> and the classes & roles listed below.
 
-You probably want to consult the following documentation:
+See:
 
 =over
 
 =item *
 
-L<Cobalt::Manual::Plugins> - Writing Cobalt plugins
+L<Cobalt::Manual::Plugins> - Cobalt plugin authoring manual
 
 =item *
 
 L<Cobalt::IRC> - IRC bridge / events
+
+=item *
+
+L<Cobalt::Core::Role::IRC>
 
 =item *
 
@@ -476,10 +415,6 @@ L<Cobalt::Core::Role::Timers>
 =item *
 
 L<Cobalt::Core::Role::Unloader>
-
-=item *
-
-L<Cobalt::Manual::PluginDist> - Distributing Cobalt plugins
 
 =back
 

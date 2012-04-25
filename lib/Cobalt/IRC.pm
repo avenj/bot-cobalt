@@ -4,6 +4,8 @@ our $VERSION = '0.230';
 use 5.10.1;
 use Cobalt::Common;
 
+use Cobalt::IRC::Server;
+
 use Cobalt::IRC::Message;
 use Cobalt::IRC::Message::Public;
 
@@ -61,7 +63,7 @@ sub Cobalt_unregister {
     delete $core->State->{Ignored}->{$context};
     my $irc = $self->{IRCs}->{$context};
     $irc->shutdown("IRC component shut down");
-    $core->Servers->{$context}->{Connected} = 0;
+    $core->Servers->{$context}->clear_irc;
   }
 
   return PLUGIN_EAT_NONE
@@ -114,25 +116,22 @@ sub Bot_initialize_irc {
     my $server_pass = $thiscfg->{ServerPass};
     $spawn_opts{password} = $server_pass if defined $server_pass;
   
-    my $i = POE::Component::IRC::State->spawn(
+    my $irc = POE::Component::IRC::State->spawn(
       %spawn_opts,
     ) or $core->log->emerg("(spawn: $context) poco-irc error: $!");
 
-    $self->{core}->Servers->{$context} = {
-      Name => $server,   ## specified server hostname
-      PreferredNick => $nick,
-      Object    => $i,   ## the pocoirc obj
-      Connected => 0,
-      # some reasonable defaults:
-      CaseMap   => 'rfc1459', # for feeding eq_irc et al
-      MaxModes  => 3,         # for splitting long modestrings
-    };
+    my $server_obj = Cobalt::IRC::Server->new(
+      name => $server,
+      irc  => $irc,
+      prefer_nick => $nick,
+    );
     
-    $self->{IRCs}->{$context} = $i;
+    $self->{core}->Servers->{$context} = $server_obj;
+    $self->{IRCs}->{$context} = $irc;
   
     POE::Session->create(
       ## track this session's context name in HEAP
-      heap =>  { Context => $context, Object => $i },
+      heap =>  { Context => $context, Object => $irc },
       object_states => [
         $self => [
           '_start',
@@ -403,10 +402,9 @@ sub irc_001 {
 
   ## server welcome message received.
   ## set up some stuff relevant to our server context:
-  $core->Servers->{$context}->{Connected} = 1;
-  $core->Servers->{$context}->{ConnectedAt} = time;
-  $core->Servers->{$context}->{MaxModes} = 
-    $irc->isupport('MODES') // 4;
+  $core->Servers->{$context}->connected( 1 );
+  $core->Servers->{$context}->connectedat( time() );
+  $core->Servers->{$context}->maxmodes( $irc->isupport('MODES') // 4 );
   ## irc comes with odd case-mapping rules.
   ## []\~ are considered uppercase equivalents of {}|^
   ##
@@ -416,7 +414,7 @@ sub irc_001 {
   ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
   ## checking ISUPPORT and setting the casemapping if available
   my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
-  $core->Servers->{$context}->{CaseMap} = $casemap;
+  $core->Servers->{$context}->casemap( $casemap);
   
   ## if the server returns a fubar value IRC::Utils automagically 
   ## defaults to rfc1459 casemapping rules
@@ -438,7 +436,7 @@ sub irc_001 {
   unless ($casemap ~~ @valid_casemaps) {
     my $charset = lc( $irc->isupport('CHARSET') || '' );
     if ($charset && $charset ~~ @valid_casemaps) {
-      $core->Servers->{$context}->{CaseMap} = $charset;
+      $core->Servers->{$context}->casemap( $charset );
     }
     ## we don't save CHARSET, it's deprecated per the spec
     ## also mostly unreliable and meaningless
@@ -456,7 +454,7 @@ sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
   $self->{core}->log->info("IRC disconnected: $context");
-  $self->{core}->Servers->{$context}->{Connected} = 0;
+  $self->{core}->Servers->{$context}->clear_connected;
   ## Bot_disconnected event, similar to Bot_connected:
   $self->{core}->send_event( 'disconnected', $context, $server );
 }
@@ -465,7 +463,7 @@ sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
-  $self->{core}->Servers->{$context}->{Connected} = 0;
+  $self->{core}->Servers->{$context}->clear_connected;
   $self->{core}->log->warn("IRC error: $context: $reason");
   $self->{core}->send_event( 'server_error', $context, $reason );
 }
@@ -986,8 +984,8 @@ Indicates the bot is now talking to an IRC server.
   my $context     = ${$_[0]};
   my $server_name = ${$_[1]};
 
-The relevant $core->Servers->{$context} hash is updated prior to
-broadcasting this event. This means that 'MaxModes' and 'CaseMap' keys
+The relevant $core->Servers->{$context} obj is updated prior to
+broadcasting this event. This means that 'maxmodes' and 'casemap'
 are now available for retrieval. You might use these to properly
 compare two nicknames, for example:
 
@@ -998,8 +996,10 @@ compare two nicknames, for example:
   my $context = ${$_[0]};
   ## most servers are 'rfc1459', some may be ascii or -strict
   ## (some return totally fubar values, and we'll default to rfc1459)
-  my $casemap = $core->Servers->{$context}->{CaseMap};
+  my $casemap = $core->Servers->{$context}->casemap;
   my $is_equal = IRC::Utils::eq_irc($nick_a, $nick_b, $casemap);
+
+See L<Cobalt::IRC::Server> for details on using a Server object.
 
 =head3 Bot_disconnected
 
@@ -1009,7 +1009,7 @@ Broadcast when irc_disconnected is received.
   my $context     = ${$_[0]};
   my $server_name = ${$_[1]};
 
-$core->Servers->{$context}->{Connected} will be false until a reconnect.
+$core->Servers->{$context}->connected will be false until a reconnect.
 
 =head3 Bot_server_error
 
@@ -1227,7 +1227,7 @@ You can walk each individual mode and handle known types:
 
 Theoretically, you can find out which types should have args via ISUPPORT:
 
-  my $irc = $self->Servers->{$context}->{Object};
+  my $irc = $self->Servers->{$context}->irc;
   my $is_chanmodes = $irc->isupport('CHANMODES')
                      || 'b,k,l,imnpst';  ## oldschool set
   ## $m_list modes add/delete modes from a list (bans for example)

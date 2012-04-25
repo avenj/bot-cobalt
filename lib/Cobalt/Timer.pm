@@ -26,6 +26,7 @@ has 'id' => ( is => 'rw', lazy => 1, predicate => 'has_id' );
 has 'at'    => ( is => 'rw', isa => Num, lazy => 1, 
   default => sub { 0 } 
 );
+
 has 'delay' => ( is => 'rw', isa => Num, lazy => 1,
   default => sub { 0 },
   trigger => sub {
@@ -193,6 +194,10 @@ An array reference containing any arguments attached to the L</event>.
 =head3 id
 
 This timer's unique identifier, used as a key in timer pools.
+
+Note that a unique random ID is added when the Timer object is passed to 
+L<Cobalt::Core::Role::Timers/timer_set> if no B<id> is explicitly 
+specified.
 
 =head3 alias
 
