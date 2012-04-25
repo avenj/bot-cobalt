@@ -4,11 +4,11 @@ our $VERSION = '0.10';
 use 5.10.1;
 use strictures 1;
 
+use Moo;
+
 use Cobalt::Common;
 
 use POE qw/Component::Client::HTTP/;
-
-use Moo;
 
 has 'core' => ( is => 'rw', isa => Object, predicate => 'has_core' );
 
@@ -61,6 +61,8 @@ has 'Waiting' => ( is => 'rw', isa => ArrayRef,
 has 'PendingResponse' => ( is => 'rw', isa => Int,
   default => sub { 0 },
 );
+
+has 'NON_RELOADABLE' => ( is => 'rw', default => sub { 1 } );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -165,7 +167,7 @@ sub Bot_www_push_pending {
     my $this_req = $self->Requests->{$tag};
     my $request  = $this_req->{Request};
 
-    $core->log->debug("Posting request to HTTP component");
+    $core->log->debug("www_request push $tag");
     
     my $sess_alias = 'www_'.$core->get_plugin_alias($self);
     $poe_kernel->call( $sess_alias, 
