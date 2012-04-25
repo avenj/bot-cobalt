@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.08';
+our $VERSION = '0.10';
 
 use 5.10.1;
 use strict;
@@ -9,8 +9,6 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use HTTP::Request;
 use URI::Escape;
-
-use LWP::UserAgent;
 
 sub new { bless {}, shift }
 
@@ -108,23 +106,9 @@ sub _request_shorturl {
     );
 
   } else {
-    ## no async http, use LWP
-    my $ua = LWP::UserAgent->new(
-      timeout      => 5,
-      max_redirect => 0,
-      agent => 'cobalt2',
+    $core->send_event( 'send_message', $context, $channel,
+      "No async HTTP available, try loading Cobalt::Plugin::WWW"
     );
-
-    my $shorturl = $ua->post('http://metamark.net/api/rest/simple',
-      [ long_url => $url ] )->content;
-
-    if ($shorturl) {
-      $shorturl = "shorturl for ${nick}: $shorturl";
-    } else {
-      $shorturl = "${nick}: shortener timed out";
-    }
-
-    $core->send_event( 'send_message', $context, $channel, $shorturl );
   }
 }
 
@@ -145,25 +129,9 @@ sub _request_longurl {
     );
 
   } else {
-    ## no async http, use blocking LWP (ew)
-    $core->log->warn("No async HTTP available!");
-    $core->log->warn("You probably want Cobalt::Plugin::WWW loaded");
-    my $ua = LWP::UserAgent->new(
-      timeout      => 5,
-      max_redirect => 0,
-      agent => 'cobalt2',
+    $core->send_event( 'send_message', $context, $channel,
+      "No async HTTP available, try loading Cobalt::Plugin::WWW"
     );
-
-    my $longurl = $ua->post('http://metamark.net/api/rest/simple',
-      [ short_url => $url ] )->content;
-
-    if ($longurl) {
-      $longurl = "longurl for ${nick}: $longurl";
-    } else {
-      $longurl = "${nick}: shortener timed out";
-    }
-
-    $core->send_event( 'send_message', $context, $channel, $longurl );
   }
 }
 
@@ -186,7 +154,7 @@ Cobalt::Plugin::Extras::Shorten - Shorten URLs via Metamark
 
 Provides a simple IRC interface to the http://xrl.us URL shortener.
 
-Uses L<Cobalt::Plugin::WWW> if available; otherwise falls back to LWP.
+Requires L<Cobalt::Plugin::WWW>
 
 =head1 AUTHOR
 

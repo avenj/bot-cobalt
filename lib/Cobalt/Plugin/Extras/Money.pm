@@ -182,22 +182,10 @@ sub _request_conversion_rate {
       [ $value, $context, $channel, $from, $to ],
     );
   } else {
-    $core->log->warn("No async HTTP! Install Cobalt::Plugin::WWW");
-    $core->log->warn("Falling back to blocking LWP . . .");
-    require LWP::UserAgent;
-    my $ua = LWP::UserAgent->new(
-      timeout => 3,
-      max_redirect => 0,
-      agent => 'cobalt2',
-    );
-    my $resp = $ua->get($uri);
-    $core->send_event( 'currencyconv_rate_recv', 
-      $resp->decoded_content || undef,
-      $resp, 
-      [ $value, $context, $channel, $from, $to ] 
+    $core->send_event( 'send_message', $context, $channel,
+      "No async HTTP available; try loading Cobalt::Plugin::WWW"
     );
   }
-  return 1
 }
 
 1;
@@ -218,8 +206,7 @@ Cobalt::Plugin::Extras::Money - currency conversion plugin
 
 Uses L<http://www.webservicex.net> to handle currency conversion.
 
-Will use L<Cobalt::Plugin::WWW> if available, otherwise falling back to 
-L<LWP::UserAgent>.
+Requires L<Cobalt::Plugin::WWW>
 
 =head1 AUTHOR
 

@@ -83,7 +83,6 @@ my $build = $class->new(
       'HTTP::Request'  => 0,
       'HTTP::Response' => 0,
       'URI::Escape'    => 0,
-      'LWP::UserAgent' => 0,
 
      # Utils
       'DateTime'    => 0,
