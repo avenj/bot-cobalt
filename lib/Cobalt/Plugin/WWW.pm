@@ -46,16 +46,20 @@ has 'timeout'   => ( is => 'rw', lazy => 1,
 has 'max_workers' => ( is => 'rw', isa => Int, lazy => 1,
   default => sub { 
     my ($self) = @_;
-    $self->opts->{MaxWorkers} || 10
+    $self->opts->{MaxWorkers} || 20
   },
 );
 
-has 'Requests' => ( is => 'rw', isa => HashRef, lazy => 1,
+has 'Requests' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
-has 'Waiting' => ( is => 'rw', isa => ArrayRef, lazy => 1,
+has 'Waiting' => ( is => 'rw', isa => ArrayRef,
   default => sub { [] },
+);
+
+has 'PendingResponse' => ( is => 'rw', isa => Int,
+  default => sub { 0 },
 );
 
 sub Cobalt_register {
@@ -77,6 +81,7 @@ sub Cobalt_register {
       $self => [
         '_start',
         'ht_response',
+        'ht_post_request',
       ],
     ],
   );
@@ -88,6 +93,9 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
+  my $sess_alias = 'www_'.$core->get_plugin_alias($self);  
+  $poe_kernel->alias_remove( $sess_alias );
 
   delete $core->Provided->{www_request};
 
@@ -126,9 +134,10 @@ sub Bot_www_request {
   };
 
   ## Push to pending
-  push(@{ $self->Waiting }, $tag);
+  my $pending = $self->Waiting;
+  push(@$pending, $tag);
 
-  $core->log->debug("www_request $tag -> $event");
+  $core->log->debug("www_request issue $tag -> $event");
   
   $core->send_event( 'www_push_pending' );
   
@@ -137,39 +146,57 @@ sub Bot_www_request {
 
 sub Bot_www_push_pending {
   my ($self, $core) = splice @_, 0, 2;
-  
-  my $current_count = ($self->{_pendingresp}||=0);
-  
-  if ($current_count >= $self->max_workers) {
-    $core->log->debug(
-      "Too many concurrent requests, throttling"
-    );
 
-    ## Try again later. 
-    $core->timer_set( 1,
+  my $pending = $self->Waiting;
+  return unless @$pending;
+  
+  my $ccount = $self->PendingResponse;
+
+  if ($ccount >= $self->max_workers) {
+    my $pcount = @$pending;
+    $core->log->debug(
+      "Throttling (r $ccount / w $pcount)"
+    );
+    $core->timer_set( 2,
       { Event => 'www_push_pending' },
       'WWWPLUG_PUSH_PENDING'
     );
   } else {
-    my $pending = $self->Waiting;
     my $tag = shift @$pending;
     
     my $this_req = $self->Requests->{$tag};
     my $request  = $this_req->{Request};
 
     $core->log->debug("Posting request to HTTP component");
-  
-    ## Post the ::Request
-    my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
-    $poe_kernel->post( $ht_alias, 
-      'request', 'ht_response', 
+    
+    my $sess_alias = 'www_'.$core->get_plugin_alias($self);
+    $poe_kernel->call( $sess_alias, 
+      'ht_post_request',
       $request, $tag
     );
-    
+  
     $self->increase_pending;
+    
+    if (@$pending) {
+      ## push_pending until we're either done or hit our limit
+      $core->send_event( 'www_push_pending' );
+    }
   }
 
   return PLUGIN_EAT_ALL
+}
+
+sub ht_post_request {
+  ## Bridge to make sure response gets delivered to correct session
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($request, $tag) = @_[ARG0, ARG1];
+  my $core = $self->core;
+  ## Post the ::Request
+  my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
+  $kernel->post( $ht_alias, 
+      'request', 'ht_response', 
+      $request, $tag
+  );
 }
 
 sub Bot_www_cancel_request {
@@ -206,6 +233,9 @@ sub _start {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
 
   my $core = $self->core;
+
+  my $sess_alias = 'www_'.$core->get_plugin_alias($self);
+  $kernel->alias_set( $sess_alias );
 
   my %opts;
   $opts{BindAddr} = $self->bindaddr if $self->has_bindaddr;
@@ -250,14 +280,15 @@ sub ht_response {
 
 sub decrease_pending {
   my ($self) = @_;
-  return if not defined $self->{_pendingresp}
-    or $self->{_pendingresp} == 0;
-  --$self->{_pendingresp}
+  my $pending = $self->PendingResponse;
+  return if !$pending or $pending == 0;
+  $self->PendingResponse( --$pending )
 }
 
 sub increase_pending {
   my ($self) = @_;
-  ++$self->{_pendingresp}
+  my $pending = $self->PendingResponse;
+  $self->PendingResponse( ++$pending );
 }
 
 1;
