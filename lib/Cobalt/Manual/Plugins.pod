@@ -1464,10 +1464,13 @@ Motivations for doing so include fine-grained timer control, integration
 with POE bits such as the POE::Component and POE::Wheel namespaces
 . . . and the fact that POE is pretty great ;-)
 
+It's worth noting that many POE Components use B<get_active_session> to 
+determine where to send responses. It may sometimes be necessary to use 
+intermediary "proxy" methods to ensure a proper destination session is 
+set in the POE::Component in use.
 See L<Cobalt::Plugin::WWW> source for an example of a plugin that uses 
-its own POE::Session and L<POE::Wheel::Run> to manage forked workers 
-asynchronously.
-
+its own POE::Session and does this (when issuing HTTP requests to 
+L<POE::Component::Client::HTTP>).
 
 =head2 Manipulating plugin pipeline order
 

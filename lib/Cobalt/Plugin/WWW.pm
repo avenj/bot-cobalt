@@ -100,15 +100,14 @@ sub Cobalt_unregister {
   delete $core->Provided->{www_request};
 
   $core->log->info("Unregistered");
-  
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
   my $request = ${ $_[0] };
-  my $event  = defined $_[1] ? ${$_[1]} : undef ;
-  my $args = defined $_[2] ? ${$_[2]} : undef ;
+  my $event   = defined $_[1] ? ${$_[1]} : undef ;
+  my $args    = defined $_[2] ? ${$_[2]} : undef ;
 
   unless ($request && $request->isa('HTTP::Request')) {
     $core->log->warn(
@@ -199,30 +198,6 @@ sub ht_post_request {
   );
 }
 
-sub _start {
-  my ($self, $kernel) = @_[OBJECT, KERNEL];
-
-  my $core = $self->core;
-
-  my $sess_alias = 'www_'.$core->get_plugin_alias($self);
-  $kernel->alias_set( $sess_alias );
-
-  my %opts;
-  $opts{BindAddr} = $self->bindaddr if $self->has_bindaddr;
-  $opts{Proxy}    = $self->proxy    if $self->has_proxy;
-  $opts{Timeout}  = $self->timeout;
-
-  ## Create "ht_${plugin_alias}" session
-  POE::Component::Client::HTTP->spawn(
-    FollowRedirects => 5,
-    Agent => __PACKAGE__,
-    Alias => 'ht_'.$core->get_plugin_alias($self),
-    %opts,
-  );
-  
-  $core->Provided->{www_request} = __PACKAGE__ ;
-}
-
 sub ht_response {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($req_pk, $resp_pk) = @_[ARG0, ARG1];
@@ -246,6 +221,30 @@ sub ht_response {
       : $response->message;
 
   $core->send_event($event, $content, $response, $args);
+}
+
+sub _start {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+
+  my $core = $self->core;
+
+  my $sess_alias = 'www_'.$core->get_plugin_alias($self);
+  $kernel->alias_set( $sess_alias );
+
+  my %opts;
+  $opts{BindAddr} = $self->bindaddr if $self->has_bindaddr;
+  $opts{Proxy}    = $self->proxy    if $self->has_proxy;
+  $opts{Timeout}  = $self->timeout;
+
+  ## Create "ht_${plugin_alias}" session
+  POE::Component::Client::HTTP->spawn(
+    FollowRedirects => 5,
+    Agent => __PACKAGE__,
+    Alias => 'ht_'.$core->get_plugin_alias($self),
+    %opts,
+  );
+  
+  $core->Provided->{www_request} = __PACKAGE__ ;
 }
 
 sub decrease_pending {
