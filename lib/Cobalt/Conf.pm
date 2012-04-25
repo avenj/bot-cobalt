@@ -154,3 +154,64 @@ sub read_cfg {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Conf - Parse Cobalt configuration files
+
+=head1 SYNOPSIS
+
+  ## Load:
+  ##  - cobalt.conf
+  ##  - channels.conf
+  ##  - plugins.conf
+  ##  - configured plugin-specific confs
+  my $cfg_obj = Cobalt::Conf->new(
+    etc => $path_to_etc_dir
+  );
+  
+  my $cfg_hash = $cfg_obj->read_cfg;
+
+=head1 DESCRIPTION
+
+Normally used by frontends to create a configuration hash to pass to 
+L<Cobalt::Core>'s constructor.
+
+Loads Cobalt configuration files from a directory (specified via B<etc> 
+at construction) and produces a hash with the following keys:
+
+=head2 core
+
+Loaded from C<cobalt.conf>
+
+The core Cobalt configuration.
+
+=head2 channels
+
+Loaded from C<channels.conf>
+
+Configured context and channel settings.
+
+Keyed on context name. Per-context hash is keyed on channel name.
+
+=head2 plugins
+
+Loaded from C<plugins.conf>
+
+Configured plugins. Keyed on plugin alias.
+
+=head2 plugin_cf
+
+Per-plugin options loaded from either B<PluginOpts> directives in 
+C<plugins.conf> or plugin-specific configuration files included via 
+B<Config> directives. Keyed on plugin alias.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
