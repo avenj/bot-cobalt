@@ -958,8 +958,6 @@ Cobalt::IRC -- core (context "Main") IRC plugin
 
 =head1 DESCRIPTION
 
-Plugin authors will almost definitely want to read this reference.
-
 The core IRC plugin provides a multi-server IRC interface via
 L<POE::Component::IRC>. Any other IRC plugins should follow this pattern 
 and provide a compatible event interface.
@@ -1046,7 +1044,7 @@ Broadcast upon receiving public text (text in a channel).
   ...
 
 $msg is a L<Cobalt::IRC::Message> object; in the case of public 
-messages; it is a L<Cobalt::IRC::Message::Public> object.
+messages it is a L<Cobalt::IRC::Message::Public> object.
 
 See L<Cobalt::IRC::Message> for complete documentation regarding 
 available methods.

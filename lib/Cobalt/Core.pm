@@ -1,5 +1,5 @@
 package Cobalt::Core;
-our $VERSION = '2.00_43';
+our $VERSION = '2.00_44';
 
 ## This is the core Syndicator.
 ## It is something of a "god object" ... but such is the nature of 
@@ -7,8 +7,8 @@ our $VERSION = '2.00_43';
 ## langsets, global state, and the plugin pipeline.
 
 use 5.10.1;
+use strictures 1;
 use Carp;
-
 use Moo;
 
 use Log::Handler;

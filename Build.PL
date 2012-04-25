@@ -72,6 +72,8 @@ my $build = $class->new(
       'Scalar::Util'   => 0,
       'Storable'       => 0,
       
+      'strictures' => '1',
+      
    ### Cobalt set ###
      # Crypt
       'App::bmkpasswd' => 0,

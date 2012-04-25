@@ -6,7 +6,7 @@ Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
 =head1 VERSION
 
-Last updated for cobalt B<2.00_42>
+Last updated for cobalt B<2.00_43>
 
 =head1 DESCRIPTION
 
@@ -688,6 +688,8 @@ contexts:
     . . .
   }
 
+Each value will be a L<Cobalt::IRC::Server> object.
+
 =head4 var
 
 Returns the path to the current VAR dir, typically used for log files, 
@@ -806,40 +808,13 @@ more on interacting directly with the IRC component.
 
 Can also be called via B<get_irc_context>.
 
-Retrieves the appropriate hash reference from B<< $core->Servers >>
+Retrieves the appropriate L<Cobalt::IRC::Server> object from 
+B<<$core->Servers>>.
 
 A server context must be specified.
 
-The referenced hash has the following keys:
-
-=over
-
-=item *
-
-B<Object>: The POE::Component::IRC object, see L</get_irc_obj>
-
-=item *
-
-B<Connected>: Boolean true/false; flipped on connect/disconnect events
-
-=item *
-
-B<ConnectedAt>: Most recent irc_001 (welcome) event timestamp
-
-=item *
-
-B<Name>: What we think this server is called
-
-=item *
-
-B<CaseMap>: The server's announced CASEMAPPING (or 'rfc1459'); see L</"IRC CAVEATS">
-
-=item *
-
-B<MaxModes>: The server's announced MAXMODES (or 4)
-
-=back
-
+See L<Cobalt::IRC::Server> for details on methods that can be called 
+against server context objects.
 
 =head3 Auth-related methods
 
@@ -1105,10 +1080,10 @@ The second argument is the removed L<Cobalt::Timer> object.
 
 FIXME
 
+
 =head1 PLUGIN DESIGN TIPS
 
 =head2 Useful tools
-
 
 =head3 Cobalt::Common
 
