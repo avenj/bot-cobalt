@@ -1,0 +1,94 @@
+package Cobalt::IRC::FloodChk;
+
+## Generic flood check.
+## Conceptually borrowed from Algorithm::FloodControl
+
+use Moo;
+use Cobalt::Common qw/:types/;
+
+## fqueue->{$context}->{$nick} = []
+has 'fqueue' => ( is => 'rw', isa => HashRef,
+  default => sub { {} },
+);
+
+has 'count' => ( is => 'rw', isa => Int, required => 1 );
+has 'in'    => ( is => 'rw', isa => Int, required => 1 );
+
+sub floodchk {
+  my ($self, $context, $nick) = @_;
+  
+  my $this_ref = ($self->fqueue->{$context}->{$nick}//[]);
+  
+  if (@$this_ref >= $self->count) {
+    ## Have at least RateCount tracked events.
+    my $oldest_ts = $this_ref->[0];
+    
+    my $delayed = int(
+      ($oldest_ts + (scalar @$this_ref * $self->in)) - time
+    );
+    
+    ## Too many events in this time window:
+    return $delayed if $delayed > 0;
+    
+    ## ...otherwise shift and push:
+    shift @$this_ref;
+  }
+  
+  ## Safe to push this ev.
+  push @$this_ref, time;
+
+  return
+}
+
+1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::IRC::FloodChk - Flood check utils for Cobalt::IRC
+
+=head1 SYNOPSIS
+
+  my $fcheck = Cobalt::IRC::FloodChk->new(
+    count => 5,
+    in    => 4,
+  );
+  
+  ## Incoming IRC message, f.ex
+  ## Throttle user to 5 messages in 4 seconds
+  if ( $fcheck->floodchk( $context, $nick ) ) {
+    ## Flood detected
+  } else {
+    ## No flood, continue
+  }
+
+=head1 DESCRIPTION
+
+This is a fairly generic flood control manager intended for 
+L<Cobalt::IRC> (although it can be used anywhere you'd like to rate 
+limit messages).
+
+=head2 new
+
+The object's constructor takes two mandatory parameters, B<count> and 
+B<in>, indicating that B<count> messages (or events, or whatever) are 
+allowed in a window of B<in> seconds.
+
+=head2 floodchk
+
+  $flood->floodchk( $context, $nick );
+
+If there appears to be a flood in progress, returns the number of 
+seconds until it would be permissible to process more events.
+
+Returns boolean false if there is no flood detected.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

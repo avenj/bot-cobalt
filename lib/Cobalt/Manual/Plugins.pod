@@ -1259,20 +1259,19 @@ When a response is received, it will be pushed to the plugin pipeline
 as the specified SERVER event.
 
 If the plugin is available, B<< $core->Provided->{www_request} >> will be 
-boolean true; you can fall back to LWP with a short timeout, perhaps:
+boolean true:
 
-  ## build request like above:
   my $request = HTTP::Request->new( . . . );
   if ($core->Provided->{www_request}) {
-    ## send www_request event like above  
+    ## send www_request event like above
+    . . .   
   } else {
-    ## no async available, use LWP
+    ## no async available, error out or use LWP or something:
     my $ua = LWP::UserAgent->new(
       timeout => 5,
       max_redirect => 0,
     );
     my $response = $ua->request($request);
-    ## now $response is a HTTP::Response object
     my $content = $response->content;
   }
 

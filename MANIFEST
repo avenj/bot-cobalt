@@ -35,6 +35,7 @@ lib/Cobalt/IRC/Event/Mode.pm
 lib/Cobalt/IRC/Event/Nick.pm
 lib/Cobalt/IRC/Event/Quit.pm
 lib/Cobalt/IRC/Event/Topic.pm
+lib/Cobalt/IRC/FloodChk.pm
 lib/Cobalt/IRC/Message.pm
 lib/Cobalt/IRC/Message/Public.pm
 lib/Cobalt/IRC/Server.pm
