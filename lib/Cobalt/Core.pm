@@ -82,12 +82,6 @@ has 'PluginObjects' => (
   default => sub { {} },
 );
 
-## Map context aliases to Cobalt::IRC::Server objects
-has 'Servers' => (
-  is  => 'rw',  isa => HashRef,
-  default => sub { {} },
-);
-
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (

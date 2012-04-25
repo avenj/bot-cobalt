@@ -1,17 +1,22 @@
 package Cobalt::Core::Role::IRC;
 
-use strict; use warnings;
 use 5.10.1;
+use strictures 1;
+
 use Moo::Role;
+use Cobalt::Common qw/:types/;
 
 use Scalar::Util qw/blessed/;
 
 requires qw/
   log
   debug
-  Servers
 /;
 
+has 'Servers' => (
+  is => 'rw', isa => HashRef,
+  default => sub { {} },
+);
 
 sub is_connected {
   my ($self, $context) = @_;
@@ -75,3 +80,56 @@ sub get_irc_casemap {
 
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Core::Role::IRC - A role for managing a collection of Servers
+
+=head1 SYNOPSIS
+
+  ## From a Cobalt plugin
+  ## Get this context's Cobalt::IRC::Server object:
+  my $context_obj = $core->get_irc_context( $context );
+  
+=head1 DESCRIPTION
+
+A Moo role for managing a pool of L<Cobalt::IRC::Server> objects.
+
+This role is consumed by L<Cobalt::Core> to provide the B<Servers> hash 
+(keyed on configured context name) and some convenience methods.
+
+=head1 METHODS
+
+All methods take the configured context name as an argument.
+
+=head2 get_irc_context
+
+Retrieve the L<Cobalt::IRC::Server> object for the specified context.
+
+=head2 get_irc_obj
+
+Retrieve the object for the backend IRC component; this is a convenience 
+method that returns the same object as L<Cobalt::IRC::Server/irc>
+
+=head2 get_irc_casemap
+
+Retrieve the specified context's CASEMAPPING value; this is a 
+convenience method that returns the same string as 
+L<Cobalt::IRC::Server/casemap>
+
+=head2 is_connected
+
+Boolean true if the specified context is marked as connected; this is a 
+convenience method that returns the same string as 
+L<Cobalt::IRC::Server/connected>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
