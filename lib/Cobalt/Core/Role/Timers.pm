@@ -22,7 +22,7 @@ has TimerPool => ( is => 'rw', default => sub { {} });
 
 sub timer_gen_unique_id {
   my ($self) = @_;
-  my @p = ( 'a'..'f', 0..9 );
+  my @p = ( 'a'..'f', 1..9 );
   my $id = join '', map { $p[rand@p] } 1 .. 4;
   $id .= $p[rand@p] while exists $self->TimerPool->{$id};
   return $id

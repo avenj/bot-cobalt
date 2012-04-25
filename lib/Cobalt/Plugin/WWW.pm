@@ -70,8 +70,6 @@ sub Cobalt_register {
   $core->plugin_register( $self, 'SERVER',
     [ 
       'www_request',
-      'www_cancel_request',
-      
       'www_push_pending',
     ],
   );
@@ -123,13 +121,13 @@ sub Bot_www_request {
   }
   
   $args = [] unless $args;
-  my @p = ( 'a' .. 'f', 0 .. 9 );
+  my @p = ( 'a' .. 'f', 1 .. 9 );
   my $tag = join '', map { $p[rand@p] } 1 .. 5;
   $tag .= $p[rand@p] while exists $self->Requests->{$tag};
 
   $self->Requests->{$tag} = {
     Event     => $event,
-    Args => $args,
+    Args      => $args,
     Request   => $request,
   };
 
@@ -197,36 +195,6 @@ sub ht_post_request {
       'request', 'ht_response', 
       $request, $tag
   );
-}
-
-sub Bot_www_cancel_request {
-  my ($self, $core) = splice @_, 0, 2;
-  my $tag = ${ $_[0] };
-  
-  my $this_req = delete $self->Requests->{$tag} || return;
-  my $request = $this_req->{Request};
-  
-  my $pending = $self->Waiting;
-  if ($tag ~~ @$pending) {
-    ## This request is still sitting in the Waiting room.
-    my $i;
-    ++$i until $i > (scalar @$pending - 1)
-      or $pending->[$i] eq $tag;
-    splice(@$pending, $i, 1)
-      if defined $pending->[$i]
-      and $pending->[$i] eq $tag;
-  } else {
-    ## This request has fired.
-    my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
-    $poe_kernel->post( $ht_alias,
-      'cancel', $request
-    );
-    $self->decrease_pending;
-  }
-  
-  $core->log->debug("Cancelled www_request $tag");
-  
-  return PLUGIN_EAT_ALL
 }
 
 sub _start {
