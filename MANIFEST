@@ -22,6 +22,7 @@ lib/Cobalt/Common.pm
 lib/Cobalt/Conf.pm
 lib/Cobalt/Core.pm
 lib/Cobalt/Core/Role/Auth.pm
+lib/Cobalt/Core/Role/IRC.pm
 lib/Cobalt/Core/Role/Ignore.pm
 lib/Cobalt/Core/Role/Timers.pm
 lib/Cobalt/Core/Role/Unloader.pm
@@ -37,6 +38,7 @@ lib/Cobalt/IRC/Event/Quit.pm
 lib/Cobalt/IRC/Event/Topic.pm
 lib/Cobalt/IRC/Message.pm
 lib/Cobalt/IRC/Message/Public.pm
+lib/Cobalt/IRC/Server.pm
 lib/Cobalt/Lang.pm.in
 lib/Cobalt/Lang.pm.PL
 lib/Cobalt/Lang.pod
