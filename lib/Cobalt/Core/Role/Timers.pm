@@ -34,13 +34,10 @@ sub timer_set {
   my ($caller_pkg, $caller_line) = (caller)[0,2];
   my $d_line = "$caller_pkg line $caller_line";
   
-  my $timer;
+  my $timer = $item;
   unless (blessed $item && $item->isa('Cobalt::Timer') ) {
     ## hashref-style (we hope)
     $timer = $self->timer_set_hashref( $item, @_[2 .. $#_] );
-  } else {
-    ## passed a Cobalt::Timer
-    $timer = $item;
   }
 
   unless ($timer->has_id) {
@@ -66,8 +63,6 @@ sub timer_set {
 
 sub timer_set_hashref {
   my ($self, $delay, $ev, $id) = @_;
-  
-  ## Old-style compat.
 
   my ($caller_pkg, $caller_line) = (caller)[0,2];
   my $d_line = "$caller_pkg line $caller_line";
@@ -139,7 +134,6 @@ sub timer_set_hashref {
   return $timer
 }
 
-sub del_timer { timer_del(@_) }
 sub timer_del {
   ## delete a timer by its ID
   ## doesn't care if the timerID actually exists or not.
@@ -343,6 +337,12 @@ context, the B<msg> and B<action> types can be used for convenience:
     },
   );
 
+=head2 timer_set_hashref
+
+timer_set_hashref is the method called by L</timer_set> when it is not 
+passed a preexisting L<Cobalt::Timer> object; you would not normally use 
+this method directly.
+
 =head2 timer_del
 
 Deletes a timer by timer ID.
@@ -373,6 +373,13 @@ Returns all timer IDs in the pool belonging to the specified alias tag.
 
 Returns a list of timer IDs. In scalar context, returns an array 
 reference.
+
+=head2 timer_gen_unique_id
+
+Generates a unique (guaranteed not to exist in the consumer's 
+TimerPool) randomized ID for a timer.
+
+You would not normally call this method directly.
 
 =head1 EVENTS
 

@@ -4,7 +4,7 @@ use strict; use warnings;
 use 5.10.1;
 use Carp;
 use Moo;
-use MooX::Types::MooseLike::Base qw/:all/;
+use Cobalt::Common qw/:types/;
 
 ## my $timer = Cobalt::Core::Item::Timer->new(
 ##   core  => $core,
