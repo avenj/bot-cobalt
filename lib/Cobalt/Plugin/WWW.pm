@@ -1,302 +1,263 @@
 package Cobalt::Plugin::WWW;
-our $VERSION = '0.008';
-
-## FIXME use POE::Component::Client::HTTP
-## Resolver bug is fixed in latest
+our $VERSION = '0.10';
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 
-use POE;
-use POE::Filter::Reference;
-use POE::Wheel::Run;
+use Cobalt::Common;
 
-use Object::Pluggable::Constants qw/:ALL/;
+use POE qw/Component::Client::HTTP/;
 
-use HTTP::Response;
-use HTTP::Request;
+use Moo;
 
-use Cobalt::HTTP;
+has 'core' => ( is => 'rw', isa => Object, predicate => 'has_core' );
 
-use Config;
+has 'opts' => ( is => 'rw', lazy => 1,
+  default => sub {
+    my ($self) = @_;
+    return {} unless $self->has_core;
+    $self->core->get_plugin_cfg($self)->{Opts}
+  },
+);
 
-sub new { bless {}, shift }
+has 'bindaddr'  => ( is => 'rw', lazy => 1,
+  predicate => 'has_bindaddr', 
+  default => sub {
+    my ($self) = @_;
+    $self->opts->{BindAddr}
+  },
+);
+
+has 'proxy' => ( is => 'rw', lazy => 1,
+  predicate => 'has_proxy',
+  default => sub {
+    my ($self) = @_;
+    $self->opts->{Proxy}
+  },
+);
+
+has 'timeout'   => ( is => 'rw', lazy => 1,
+  default => sub {
+    my ($self) = @_;
+    $self->opts->{Timeout} || 60
+  },
+);
+
+has 'max_workers' => ( is => 'rw', isa => Int, lazy => 1,
+  default => sub { 
+    my ($self) = @_;
+    $self->opts->{MaxWorkers} || 10
+  },
+);
+
+has 'Requests' => ( is => 'rw', isa => HashRef, lazy => 1,
+  default => sub { {} },
+);
+
+has 'Waiting' => ( is => 'rw', isa => ArrayRef, lazy => 1,
+  default => sub { [] },
+);
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
-  $core->Provided->{www_request} = 1;
-  $self->{WorkersByPID} = {};
-  $self->{WorkersByWID} = {};
 
-  my $pcfg = $core->get_plugin_cfg( $self );
-  $self->{MAX_WORKERS} = $pcfg->{Opts}->{MaxWorkers} || 5;
-  $self->{LOCAL_ADDR}  = $pcfg->{Opts}->{BindAddr}   || undef;
-  $self->{PROXY_ADDR}  = $pcfg->{Opts}->{Proxy}      || undef;
-  $self->{LWP_TIMEOUT} = $pcfg->{Opts}->{Timeout}    || 60;
-  
-  ## Hashref mapping tags to pipeline events/args
-  $self->{EventMap} = { };
+  $self->core( $core );
 
-  ## Array of arrays containing request_str, request_tag:
-  $self->{PendingReqs} = [ ];
-
-  $core->plugin_register($self, 'SERVER',
-    [ 'www_request', ],
+  $core->plugin_register( $self, 'SERVER',
+    [ 
+      'www_request',
+      'www_cancel_request',
+      
+      'www_push_pending',
+    ],
   );
-  
-  $core->log->info("$VERSION loaded");
-
-  $core->log->debug("Spawning POE session");
-  
+    
   POE::Session->create(
     object_states => [
       $self => [
         '_start',
-        '_stop',
-        '_master_shutdown',
-  
-        '_worker_spawn',      
-        '_worker_input',
-        '_worker_stderr',
-        '_worker_error',
-        '_worker_closed',
-        '_worker_signal',
+        'ht_response',
       ],
     ],
   );
- 
+
+  $core->log->info("Loaded WWW interface; $VERSION");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->Provided->{www_request} = 0;
-  $poe_kernel->call('WWW' => '_master_shutdown');
+
+  delete $core->Provided->{www_request};
+
   $core->log->info("Unregistered");
+  
   return PLUGIN_EAT_NONE
 }
 
-
 sub Bot_www_request {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->debug("www_request received");
   my $request = ${ $_[0] };
   my $event  = defined $_[1] ? ${$_[1]} : undef ;
-  my $ev_arg = defined $_[2] ? ${$_[2]} : undef ;
- 
-  unless ($request) {
-    $core->log->debug("www_request received but no request");
-    return PLUGIN_EAT_NONE
+  my $args = defined $_[2] ? ${$_[2]} : undef ;
+
+  unless ($request && $request->isa('HTTP::Request')) {
+    $core->log->warn(
+      "www_request received but no request at "
+      .join ' ', (caller)[0,2]
+    );
   }
   
   unless ($event) {
-    ## no event at all is fairly legitimate
-    ## (if you don't care if the request succeeds)
-    $core->log->debug("HTTP req without event handler");
-    $event = 'www_handled';
+    ## no event at all is legitimate
+    $event = 'www_not_handled';
   }
   
-  $ev_arg = [] unless $ev_arg;
-  my @p = ( 'a' .. 'z', 'A' .. 'Z' );
-  my $req_tag;
-  do {
-    $req_tag = join '', map { $p[rand@p] } 1 .. 8;
-  } while exists $self->{EventMap}->{$req_tag};
-  
-  $self->{EventMap}->{$req_tag} = {
-    Event => $event,
-    EventArgs => $ev_arg,
+  $args = [] unless $args;
+  my @p = ( 'a' .. 'f', 0 .. 9 );
+  my $tag = join '', map { $p[rand@p] } 1 .. 5;
+  $tag .= $p[rand@p] while exists $self->Requests->{$tag};
+
+  $self->Requests->{$tag} = {
+    Event     => $event,
+    Args => $args,
+    Request   => $request,
   };
+
+  ## Push to pending
+  push(@{ $self->Waiting }, $tag);
+
+  $core->log->debug("www_request $tag -> $event");
   
-  $core->log->debug("www_request; $req_tag -> $event");
+  $core->send_event( 'www_push_pending' );
+  
+  return PLUGIN_EAT_ALL
+}
 
-  ## add to pending request pool:
-  push(@{ $self->{PendingReqs} },
-    [ $request->as_string, $req_tag ]
-  );
+sub Bot_www_push_pending {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  my $current_count = ($self->{_pendingresp}||=0);
+  
+  if ($current_count >= $self->max_workers) {
+    $core->log->debug(
+      "Too many concurrent requests, throttling"
+    );
 
-  $poe_kernel->post('WWW', '_worker_spawn');
+    ## Try again later. 
+    $core->timer_set( 1,
+      { Event => 'www_push_pending' },
+      'WWWPLUG_PUSH_PENDING'
+    );
+  } else {
+    my $pending = $self->Waiting;
+    my $tag = shift @$pending;
+    
+    my $this_req = $self->Requests->{$tag};
+    my $request  = $this_req->{Request};
+
+    $core->log->debug("Posting request to HTTP component");
+  
+    ## Post the ::Request
+    my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
+    $poe_kernel->post( $ht_alias, 
+      'request', 'ht_response', 
+      $request, $tag
+    );
+    
+    $self->increase_pending;
+  }
 
   return PLUGIN_EAT_ALL
 }
 
-
-## Master's POE handlers
-sub _start {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  $kernel->alias_set('WWW');
-  $core->log->debug("Session started");
-
-}
-
-sub _stop {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  $self->_master_shutdown;
-  $core->log->debug("Session stopped");
-}
-
-sub _master_shutdown {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  $kernel->alias_remove('WWW') if defined $kernel;
-  for my $wheelid (keys %{ $self->{WorkersByPID} }) {
-    my $wheel = $self->{WorkersByPID}->{$wheelid};
-    $wheel->kill(9);
-  }
-  $self->{PendingReqs} = [ ];
-  $self->{WorkersByPID} = { };
-  $self->{WorkersByWID} = { };
-}
-
-sub _worker_spawn {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};  
-  ## fork a Cobalt::HTTP worker
+sub Bot_www_cancel_request {
+  my ($self, $core) = splice @_, 0, 2;
+  my $tag = ${ $_[0] };
   
-  ## do nothing if we have no requests
-  ## (www_request will tell us when there is one)
-  return unless @{ $self->{PendingReqs} };
+  my $this_req = delete $self->Requests->{$tag} || return;
+  my $request = $this_req->{Request};
   
-  ## do nothing if we have too many workers already
-  ## when one falls off a new one will pull pending
-  my $workers = scalar keys %{ $self->{WorkersByPID} };
-  unless ($workers < $self->{MAX_WORKERS}) {
-    $core->log->debug("too many workers, throttling");
-    return
-  }
-
-  $core->log->debug("_worker_spawn called, spawning new wheel");
-
-  ## path to perl + suffix if applicable
-  ## (see perldoc perlvar w.r.t $^X)
-  my $perlpath = $Config{perlpath};
-  if ($^O ne 'VMS') {
-    $perlpath .= $Config{_exe}
-      unless $perlpath =~ m/$Config{_exe}$/i;
-  }
-
-  ## Cobalt::HTTP->worker() (LWP bridge)
-  my $forkable;
-  unless ($^O eq "MSWin32") {
-    $forkable = [
-      $perlpath, (map { "-I$_" } @INC),
-      '-MCobalt::HTTP', '-e',
-      'Cobalt::HTTP->worker()'
-    ];
+  my $pending = $self->Waiting;
+  if ($tag ~~ @$pending) {
+    ## This request is still sitting in the Waiting room.
+    my $i;
+    ++$i until $i > (scalar @$pending - 1)
+      or $pending->[$i] eq $tag;
+    splice(@$pending, $i, 1)
+      if defined $pending->[$i]
+      and $pending->[$i] eq $tag;
   } else {
-    $forkable = \&Cobalt::HTTP::worker;
+    ## This request has fired.
+    my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
+    $poe_kernel->post( $ht_alias,
+      'cancel', $request
+    );
+    $self->decrease_pending;
   }
+  
+  $core->log->debug("Cancelled www_request $tag");
+  
+  return PLUGIN_EAT_ALL
+}
 
-  my $wheel = POE::Wheel::Run->new(
-    Program => $forkable,
-    ErrorEvent  => '_worker_error',
-    StdoutEvent => '_worker_input',
-    StderrEvent => '_worker_stderr',
-    CloseEvent  => '_worker_closed',
-    StdioFilter => POE::Filter::Reference->new(),
+sub _start {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+
+  my $core = $self->core;
+
+  my %opts;
+  $opts{BindAddr} = $self->bindaddr if $self->has_bindaddr;
+  $opts{Proxy}    = $self->proxy    if $self->has_proxy;
+  $opts{Timeout}  = $self->timeout;
+
+  ## Create "ht_${plugin_alias}" session
+  POE::Component::Client::HTTP->spawn(
+    FollowRedirects => 5,
+    Agent => __PACKAGE__,
+    Alias => 'ht_'.$core->get_plugin_alias($self),
+    %opts,
   );
   
-  my $wheel_id = $wheel->ID();
-  my $pid = $wheel->PID();
-  $kernel->sig_child($pid, "_worker_signal");
+  $core->Provided->{www_request} = __PACKAGE__ ;
+}
+
+sub ht_response {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($req_pk, $resp_pk) = @_[ARG0, ARG1];
+
+  $self->decrease_pending;
   
-  $self->{WorkersByPID}->{$pid} = $wheel;
-  $self->{WorkersByWID}->{$wheel_id} = $wheel;
+  my $core = $self->core;
   
-  $core->log->debug("new HTTP worker, PID: $pid");
+  my $response = $resp_pk->[0];
+  my $tag  = $req_pk->[1];
+
+  my $this_req = delete $self->Requests->{$tag};
   
-  ## feed this worker the top of the pending req list
-  my $pending = shift @{ $self->{PendingReqs} };
-  my ($request, $req_tag) = @$pending;
-  my %opts = (
-    Timeout => $self->{LWP_TIMEOUT},
-    Request => $request,
-    Tag => $req_tag,
-  );
-  $opts{Proxy}    = $self->{PROXY_ADDR} if $self->{PROXY_ADDR};
-  $opts{BindAddr} = $self->{LOCAL_ADDR} if $self->{LOCAL_ADDR};
-  $wheel->put([ %opts ]);
-}
-
-sub _worker_closed {
-  ## stdout closed on worker
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  my $wheelid = $_[ARG0];
-  my $wheel = delete $self->{WorkersByWID}->{$wheelid};
-  if (defined $wheel) {
-    my $pid = $wheel->PID();
-    $core->log->debug("worker closed, PID: $pid");
-    $wheel->kill(9);
-    delete $self->{WorkersByPID}->{$pid};
-  }
-  ## spawn another worker if there are pending requests
-  $kernel->yield('_worker_spawn') if @{ $self->{PendingReqs} };
-}
-
-sub _worker_signal {
-  ## child's gone (sig_chld handler)
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $pid = $_[ARG1];
-  my $core = $self->{core};
-  $core->log->debug("worker SIGCHLD, PID $pid");
-  return unless $self->{WorkersByPID}->{$pid};
-  my $wheel = delete $self->{WorkersByPID}->{$pid};
-  if (defined $wheel) {
-    my $wheelid = $wheel->ID();
-    delete $self->{WorkersByWID}->{$wheelid};
-  }
-  $kernel->yield('_worker_spawn') if @{ $self->{PendingReqs} };
-  return undef
-}
-
-sub _worker_input {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  $core->log->debug("worker response received");
-  my $ref = $_[ARG0];
-
-  my ($response_str, $tag) = @$ref;
-  my $response = HTTP::Response->parse($response_str);
+  my $event = $this_req->{Event};
+  my $args  = $this_req->{Args};
   
-  unless (ref $response) {
-    $core->log->warn("HTTP::Response obj could not be formed; tag $tag");
-    ## not really a 400 but this will do ...
-    $response = HTTP::Response->new('400', 'PARSE_ERR');
-  }
+  $core->log->debug("ht_response dispatch: $event ($tag)");
 
-  my $eventmap = delete $self->{EventMap}->{$tag};
-  my $event   = $eventmap->{Event};
-  my $ev_args = $eventmap->{EventArgs};
+  my $content = $response->is_success ?
+      $response->decoded_content
+      : $response->message;
 
-  $core->log->debug("dispatching $event ($tag)");
-
-  my $content = $response->is_success ? 
-                $response->decoded_content 
-                : $response->message;
-
-  $core->send_event($event, $content, $response, $ev_args);  
+  $core->send_event($event, $content, $response, $args);
 }
 
-sub _worker_stderr {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($err, $worker_wheelid) = @_[ARG0, ARG1];
-  my $core = $self->{core};
-  $core->log->warn("HTTP worker reported err: $err");  
-  # Cobalt::HTTP will pretty reliably die off and sigchld.
-  # we could kill to be sure .. undecided.
-#  my $wheel = $self->{WorkersByWID}->{$worker_wheelid};
-#  $wheel->kill(9);
+sub decrease_pending {
+  my ($self) = @_;
+  return if not defined $self->{_pendingresp}
+    or $self->{_pendingresp} == 0;
+  --$self->{_pendingresp}
 }
 
-sub _worker_error {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  my $op = $_[ARG0];
-#  $core->log->debug("HTTP worker reports error in $op");
+sub increase_pending {
+  my ($self) = @_;
+  ++$self->{_pendingresp}
 }
 
 1;
@@ -306,75 +267,61 @@ __END__
 
 =head1 NAME
 
-Cobalt::Plugin::WWW - asynchronous HTTP requests
+Cobalt::Plugin::WWW - Asynchronous HTTP requests from Cobalt plugins
 
 =head1 SYNOPSIS
 
-  ## send your async request ...
+  ## Send your request, specify an event to handle response:
+  use HTTP::Request;
   my $request = HTTP::Request->new(
     'GET',
-    'http://www.some.url',
+    'http://www.cobaltirc.org'
   );
+  
   $core->send_event( 'www_request',
     $request,
     'myplugin_resp_recv',
-    [ $some, $args ],
+    [ $some, $args ]
   );
-
-  ## handle the response ...
+  
+  ## Handle the response:
   sub Bot_myplugin_resp_recv {
     my ($self, $core) = splice @_, 0, 2;
-    my $content      = ${ $_[0] };
-    my $response_obj = ${ $_[1] };
-    my $args_ref     = ${ $_[2] };
+    
+    ## Content:
+    my $content  = ${ $_[0] };
+    ## HTTP::Response object:
+    my $response = ${ $_[1] };
+    ## Attached arguments array reference:
+    my $args_arr = ${ $_[2] };
+    
     return PLUGIN_EAT_ALL
   }
 
 =head1 DESCRIPTION
 
-This plugin provides an easy interface to asynchronous HTTP requests.
+This plugin provides an easy interface to asynchronous HTTP requests; it 
+bridges Cobalt's plugin pipeline and L<POE::Component::Client::HTTP> to 
+provide responses to B<Bot_www_request> events.
 
-Behind the scenes, a L<Cobalt::HTTP> instance is forked to talk to LWP and 
-return a response back to the plugin pipeline using the event specified 
-in the B<www_request> broadcast. This lets potentially long-running HTTP 
-requests continue in the background while Cobalt's event syndicator 
-ticks away unharmed.
+The request should be a L<HTTP::Request> object.
 
-The request should be an object generated by L<HTTP::Request>.
-A L<HTTP::Response> object will be attached as argument $_[1].
-If the request was successful, $_[0] should contain undecoded content. 
-If not, it will probably contain some error from L<HTTP::Status>.
+Inside the response handler, $_[1] will contain the L<HTTP::Response> 
+object; $_[0] is the undecoded content if the request was successful or 
+some error from L<HTTP::Status> if not.
 
-The specified event can carry its own set of arguments. These are usually 
-in array form, but a scalar or a hashref is perfectly acceptable.
+Arguments can be attached to the request event and retrieved in the 
+handler via $_[2] -- this is usually an array reference, but anything 
+that fits in a scalar will do.
 
-It is often a good idea to check for the boolean value of 
-B<< $core->Provided->{www_request} >> and possibly fall back to using LWP 
-with a short timeout, in case this plugin is not loaded.
-See L<Cobalt::Plugin::Extras::Shorten> for an example.
-
-=head2 Why not POE::Component::Client::HTTP?
-
-L<POE::Component::Client::HTTP> is B<great>. Seriously. An acquaintance 
-recently managed 13k B<concurrent> active proxy requests with 10 workers while 
-stress-testing an internal proxy using L<POE::Wheel::Run> and 
-L<POE::Component::Client::HTTP>.
-
-That's not too shabby.
-
-Why not use it for async HTTP here? Well, unfortunately, the HTTP component 
-also needs L<POE::Component::Resolver>, which had a small bug that results in 
-L<POE::Component::Resolver::Sidecar> instances sticking around as long as the 
-HTTP component does -- which in our case is the lifetime of the bot. This has 
-been fixed as of POE::Component::Resolver-0.915.
-
-Rather than start a new useragent session every time there are pending HTTP 
-requests, L<LWP::UserAgent> instances are forked off and die when they're 
-finished. This back-end behavior may change in the future, but plugin 
-authors need not concern themselves with that; the public interface is 
-unlikely to change.
+Plugin authors should check for the boolean value of B<< 
+$core->Provided->{www_request} >> and possibly fall back to using LWP 
+with a short timeout if they'd like to continue to function if this 
+plugin is B<not> loaded.
 
 =head1 SEE ALSO
+
+L<POE::Component::Client::HTTP>
 
 L<HTTP::Request>
 
