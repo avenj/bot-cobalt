@@ -1,7 +1,9 @@
 package Cobalt::IRC;
-our $VERSION = '0.230';
+our $VERSION = '0.240';
 
 use 5.10.1;
+use strictures 1;
+use Moo;
 use Cobalt::Common;
 
 use Cobalt::IRC::Server;
@@ -27,14 +29,20 @@ use POE::Component::IRC::Plugin::NickReclaim;
 ## Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
 
-sub new { bless { NON_RELOADABLE => 1 }, shift }
+has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
+  default => sub { 1 },
+);
+
+has 'core' => ( is => 'rw', isa => Object );
+
+has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
+  default => sub { {} },
+);
 
 sub Cobalt_register {
   my ($self, $core) = @_;
 
-  $self->{core} = $core;
-
-  $self->{IRCs} = { };
+  $self->core( $core );
 
   ## register for events
   $core->plugin_register($self, 'SERVER',
@@ -54,14 +62,14 @@ sub Cobalt_unregister {
   $core->log->debug("disconnecting");
 
   ## shutdown IRCs
-  for my $context ( keys %{ $self->{IRCs} } ) {
+  for my $context ( keys %{ $self->ircobjs } ) {
     $core->log->debug("shutting down irc: $context");
     ## FIXME: Cobalt::Core needs methods for these:
     ## clear auths for this context
     delete $core->State->{Auth}->{$context};
     ## and ignores:
     delete $core->State->{Ignored}->{$context};
-    my $irc = $self->{IRCs}->{$context};
+    my $irc = $self->ircobjs->{$context};
     $irc->shutdown("IRC component shut down");
     $core->Servers->{$context}->clear_irc;
   }
@@ -126,8 +134,8 @@ sub Bot_initialize_irc {
       prefer_nick => $nick,
     );
     
-    $self->{core}->Servers->{$context} = $server_obj;
-    $self->{IRCs}->{$context} = $irc;
+    $self->core->Servers->{$context} = $server_obj;
+    $self->ircobjs->{$context} = $irc;
   
     POE::Session->create(
       ## track this session's context name in HEAP
@@ -176,7 +184,7 @@ sub _start {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $core = $self->{core};
+  my $core = $self->core;
   my $cfg  = $core->get_core_cfg;
   my $pcfg = $core->get_plugin_cfg($self);
 
@@ -250,7 +258,7 @@ sub _start {
 sub irc_chan_sync {
   my ($self, $heap, $chan) = @_[OBJECT, HEAP, ARG0];
 
-  my $core    = $self->{core}; 
+  my $core    = $self->core; 
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
 
@@ -283,7 +291,7 @@ sub irc_public {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
   
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
 
@@ -315,7 +323,7 @@ sub irc_msg {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
@@ -339,7 +347,7 @@ sub irc_notice {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   
@@ -363,7 +371,7 @@ sub irc_ctcp_action {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
@@ -396,7 +404,7 @@ sub irc_connected {
 sub irc_001 {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
 
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
@@ -447,25 +455,25 @@ sub irc_001 {
   my $server = $irc->server_name;
   $core->log->info("Connected: $context: $server");
   ## send a Bot_connected event with context and visible server name:
-  $self->{core}->send_event( 'connected', $context, $server );
+  $self->core->send_event( 'connected', $context, $server );
 }
 
 sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
-  $self->{core}->log->info("IRC disconnected: $context");
-  $self->{core}->Servers->{$context}->clear_connected;
+  $self->core->log->info("IRC disconnected: $context");
+  $self->core->Servers->{$context}->clear_connected;
   ## Bot_disconnected event, similar to Bot_connected:
-  $self->{core}->send_event( 'disconnected', $context, $server );
+  $self->core->send_event( 'disconnected', $context, $server );
 }
 
 sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
-  $self->{core}->Servers->{$context}->clear_connected;
-  $self->{core}->log->warn("IRC error: $context: $reason");
-  $self->{core}->send_event( 'server_error', $context, $reason );
+  $self->core->Servers->{$context}->clear_connected;
+  $self->core->log->warn("IRC error: $context: $reason");
+  $self->core->send_event( 'server_error', $context, $reason );
 }
 
 
@@ -475,7 +483,7 @@ sub irc_kick {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $kick = Cobalt::IRC::Event::Kick->new(
     core    => $core,
@@ -503,7 +511,7 @@ sub irc_mode {
   
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $mode_obj = Cobalt::IRC::Event::Mode->new(
     core    => $core,
@@ -534,7 +542,7 @@ sub irc_topic {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $topic_obj = Cobalt::IRC::Event::Topic->new(
     core    => $core,
@@ -554,11 +562,11 @@ sub irc_nick {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   ## see if it's our nick that changed, send event:
   if ($new eq $irc->nick_name) {
-    $self->{core}->send_event( 'self_nick_changed', $context, $new );
+    $self->core->send_event( 'self_nick_changed', $context, $new );
     return
   }
 
@@ -583,7 +591,7 @@ sub irc_join {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $join = Cobalt::IRC::Event::Channel->new(
     core    => $core,
@@ -608,7 +616,7 @@ sub irc_part {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
   
   my $part = Cobalt::IRC::Event::Channel->new(
     core    => $core,
@@ -637,7 +645,7 @@ sub irc_quit {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $quit = Cobalt::IRC::Event::Quit->new(
     core    => $core,
@@ -657,7 +665,7 @@ sub irc_invite {
   
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->{core};
+  my $core    = $self->core;
 
   my $invite = Cobalt::IRC::Event::Channel->new(
     core    => $core,
@@ -682,7 +690,7 @@ sub Bot_send_message {
   ## core->send_event( 'send_message', $context, $target, $string );
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $target
            && defined $txt
   ) { 
@@ -696,7 +704,7 @@ sub Bot_send_message {
   my $eat = $core->send_user_event( 'message', \@msg );
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @msg[1,2];
-    $self->{IRCs}->{$context}->yield(privmsg => $target => $txt);
+    $self->ircobjs->{$context}->yield(privmsg => $target => $txt);
     $core->send_event( 'message_sent', $context, $target, $txt );
     ++$core->State->{Counters}->{Sent};
   }
@@ -713,7 +721,7 @@ sub Bot_send_notice {
   ## core->send_event( 'send_notice', $context, $target, $string );
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $target
            && defined $txt
   ) { 
@@ -727,7 +735,7 @@ sub Bot_send_notice {
   my $eat = $core->send_user_event( 'notice', \@notice );
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @notice[1,2];
-    $self->{IRCs}->{$context}->yield(notice => $target => $txt);
+    $self->ircobjs->{$context}->yield(notice => $target => $txt);
     $core->send_event( 'notice_sent', $context, $target, $txt );
   }
 
@@ -743,7 +751,7 @@ sub Bot_send_action {
   ## core->send_event( 'send_action', $context, $target, $string );
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $target
            && defined $txt
   ) { 
@@ -757,7 +765,7 @@ sub Bot_send_action {
   my $eat = $core->send_user_event( 'ctcp', \@ctcp );
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @ctcp[2,3];
-    $self->{IRCs}->{$context}->yield(ctcp => $target => 'ACTION '.$txt );
+    $self->ircobjs->{$context}->yield(ctcp => $target => 'ACTION '.$txt );
     $core->send_event( 'ctcp_sent', $context, 'ACTION', $target, $txt );
   }
 
@@ -771,7 +779,7 @@ sub Bot_topic {
   my $topic   = defined $_[2] ? ${$_[2]} : "" ;
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $channel
   ) { 
     return PLUGIN_EAT_NONE 
@@ -791,7 +799,7 @@ sub Bot_mode {
   my $modestr = ${$_[2]}; ## modes + args
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $target
            && defined $modestr
   ) { 
@@ -802,7 +810,7 @@ sub Bot_mode {
 
   my ($mode, @args) = split ' ', $modestr;
 
-  $self->{IRCs}->{$context}->yield( 'mode', $target, $mode, @args );
+  $self->ircobjs->{$context}->yield( 'mode', $target, $mode, @args );
 
   return PLUGIN_EAT_NONE
 }
@@ -815,7 +823,7 @@ sub Bot_kick {
   my $reason  = defined $_[3] ? ${$_[3]} : 'Kicked';
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $channel
            && $target
   ) { 
@@ -824,7 +832,7 @@ sub Bot_kick {
 
   return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
-  $self->{IRCs}->{$context}->yield( 'kick', $channel, $target, $reason );
+  $self->ircobjs->{$context}->yield( 'kick', $channel, $target, $reason );
 
   return PLUGIN_EAT_NONE
 }
@@ -835,7 +843,7 @@ sub Bot_join {
   my $channel = ${$_[1]};
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $channel
   ) { 
     return PLUGIN_EAT_NONE 
@@ -843,7 +851,7 @@ sub Bot_join {
 
   return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
-  $self->{IRCs}->{$context}->yield( 'join', $channel );
+  $self->ircobjs->{$context}->yield( 'join', $channel );
 
   return PLUGIN_EAT_NONE
 }
@@ -855,7 +863,7 @@ sub Bot_part {
   my $reason  = defined $_[2] ? ${$_[2]} : 'Leaving' ;
 
   unless ( $context
-           && $self->{IRCs}->{$context}
+           && $self->ircobjs->{$context}
            && $channel
   ) { 
     return PLUGIN_EAT_NONE 
@@ -863,7 +871,7 @@ sub Bot_part {
 
   return PLUGIN_EAT_NONE unless $core->is_connected($context);
 
-  $self->{IRCs}->{$context}->yield( 'part', $channel, $reason );
+  $self->ircobjs->{$context}->yield( 'part', $channel, $reason );
 
   return PLUGIN_EAT_NONE
 }
@@ -873,13 +881,13 @@ sub Bot_send_raw {
   my $context = ${$_[0]};
   my $raw     = ${$_[1]};
 
-  unless ( $context && $self->{IRCs}->{$context} && $raw ) {
+  unless ( $context && $self->ircobjs->{$context} && $raw ) {
     return PLUGIN_EAT_NONE
   }
   
   return PLUGIN_EAT_NONE unless $core->is_connected($context);
   
-  $self->{IRCs}->{$context}->yield( 'quote', $raw );
+  $self->ircobjs->{$context}->yield( 'quote', $raw );
 
   $core->send_event( 'raw_sent', $context, $raw );
 
@@ -904,7 +912,7 @@ sub Bot_rehash {
 sub _reset_ajoins {
   my ($self) = @_;
   
-  my $core    = $self->{core};
+  my $core    = $self->core;
   my $corecf  = $core->get_core_cfg;
   my $servers = $core->Servers;
   
@@ -1549,10 +1557,23 @@ There is no guarantee that we were present on the channel in the
 first place.
 
 
-=head1 LICENSE
+=head1 SEE ALSO
 
-Licensed under the same terms as Perl. 
+=over
 
+=item *
+
+L<Cobalt::IRC::Server>
+
+=item *
+
+L<Cobalt::IRC::Event>
+
+=item *
+
+L<Cobalt::IRC::Message>
+
+=back
 
 =head1 AUTHOR
 
