@@ -73,10 +73,16 @@ sub timer_set_hashref {
   my $d_line = "$caller_pkg line $caller_line";
   
   unless (ref $ev eq 'HASH') {
-    $self->log->warn(
-      "timer_set_hashref not called with hashref; $d_line"
-    );
-    return
+  
+    if (ref $ev) {
+      $self->log->warn(
+        "timer_set_hashref not called with hashref; $d_line"
+      );
+      return
+    } else {
+      ## Assume we were passed a simple string.
+      $ev = { Event => $ev };
+    }
   }
   
   my $timer = Cobalt::Timer->new(
@@ -274,6 +280,8 @@ preservation of timer ID:
 
   ## From a Cobalt plugin
   ## Trigger Bot_myplugin_timed_ev with no args in 30 seconds
+  $core->timer_set( 30, 'myplugin_timed_ev' );
+  ## Same as:
   $core->timer_set( 30, { Event => 'myplugin_timed_ev'  } );
 
 A more sophisticated timer will probably have some arguments specified:
