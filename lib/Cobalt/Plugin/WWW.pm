@@ -94,10 +94,13 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
 
+  delete $core->Provided->{www_request};
+
+  my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
+  $poe_kernel->post( $ht_alias, 'shutdown' );
+
   my $sess_alias = 'www_'.$core->get_plugin_alias($self);  
   $poe_kernel->alias_remove( $sess_alias );
-
-  delete $core->Provided->{www_request};
 
   $core->log->info("Unregistered");
   return PLUGIN_EAT_NONE
