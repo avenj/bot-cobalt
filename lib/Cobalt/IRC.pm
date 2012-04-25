@@ -45,8 +45,8 @@ has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub { 
     my ($self) = @_;
     my $cfg = $self->core->get_core_cfg;
-    my $count = $cfg->{Opts}->{FloodCount} || 6;
-    my $secs  = $cfg->{Opts}->{FloodTime}  || 3;
+    my $count = $cfg->{Opts}->{FloodCount} || 5;
+    my $secs  = $cfg->{Opts}->{FloodTime}  || 6;
     Cobalt::IRC::FloodChk->new(
       count => $count,
       in    => $secs,

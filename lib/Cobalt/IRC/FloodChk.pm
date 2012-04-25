@@ -21,11 +21,13 @@ sub check {
   my $this_ref = ($self->fqueue->{$context}->{$key}//=[]);
   
   if (@$this_ref >= $self->count) {
-    ## Have at least RateCount tracked events.
     my $oldest_ts = $this_ref->[0];
+    my $pending   = @$this_ref;
+    my $ev_c      = $self->count;
+    my $ev_sec    = $self->in;
     
     my $delayed = int(
-      ($oldest_ts + (scalar @$this_ref * $self->in)) - time
+      ($oldest_ts + ($pending * $ev_sec / $ev_c) ) - time
     );
     
     ## Too many events in this time window:

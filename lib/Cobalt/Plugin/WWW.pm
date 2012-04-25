@@ -97,7 +97,7 @@ sub Cobalt_unregister {
   delete $core->Provided->{www_request};
 
   my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
-  $poe_kernel->post( $ht_alias, 'shutdown' );
+  $poe_kernel->call( $ht_alias, 'shutdown' );
 
   my $sess_alias = 'www_'.$core->get_plugin_alias($self);  
   $poe_kernel->alias_remove( $sess_alias );
@@ -213,6 +213,7 @@ sub ht_response {
   my $tag  = $req_pk->[1];
 
   my $this_req = delete $self->Requests->{$tag};
+  return unless $this_req;
   
   my $event = $this_req->{Event};
   my $args  = $this_req->{Args};
