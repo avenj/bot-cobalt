@@ -21,7 +21,8 @@ sub Cobalt_register {
     object_states => [
       $self => [
         '_start',
-        '_dns_resp_recv',
+        'dns_resp_recv',
+        'dns_issue_query',
       ],
     ],
   );
@@ -36,6 +37,7 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  $poe_kernel->alias_remove( 'p_'.$core->get_plugin_alias($self) );
   $core->log->info("Unloaded");
   return PLUGIN_EAT_NONE  
 }
@@ -58,13 +60,14 @@ sub Bot_public_cmd_dns {
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $core = $self->{core};
+  $kernel->alias_set( 'p_'.$core->get_plugin_alias($self) );
   $self->{Resolver} = POE::Component::Client::DNS->spawn(
     Alias => 'named'.$core->get_plugin_alias($self),
   );
   $core->log->debug("Resolver session spawned");
 }
 
-sub _dns_resp_recv {
+sub dns_resp_recv {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my $core = $self->{core};
   my $response = $_[ARG0];
@@ -122,15 +125,26 @@ sub _run_query {
   
   $type = 'PTR' if ip_is_ipv4($host);
   ## FIXME v6 rr lookup?
+  
+  my $core = $self->{core};
+  $core->log->debug("issuing dns request: $host");
+  $poe_kernel->post( 'p_'.$core->get_plugin_alias($self), 
+    'dns_issue_query',
+    $context, $channel, $host, $type
+  );
+}  
+
+sub dns_issue_query {
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  my ($context, $channel, $host, $type) = @_[ARG0 .. $#_];
  
-  $self->{core}->log->debug("issuing dns request: $host"); 
   my $resp = $self->{Resolver}->resolve(
-    event => '_dns_resp_recv',
+    event => 'dns_resp_recv',
     host  => $host,
     type  => $type,
     context => { Context => $context, Channel => $channel },
   );
-  POE::Kernel->yield('_dns_resp_recv', $resp) if $resp;
+  POE::Kernel->yield('dns_resp_recv', $resp) if $resp;
   return 1
 }
 
