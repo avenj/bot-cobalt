@@ -86,6 +86,8 @@ has 'AccessList' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
+has 'NON_RELOADABLE' => ( is => 'ro', default => sub { 1 } );
+
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
