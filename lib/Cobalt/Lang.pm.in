@@ -8,11 +8,10 @@ package Cobalt::Lang;
 ## on-disk langset is old / incomplete / broken / missing.
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 use Carp;
 
-use Moo;
+use Moo::Role;
 
 use Cobalt::Serializer;
 

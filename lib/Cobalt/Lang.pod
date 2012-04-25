@@ -2,16 +2,19 @@
 
 =head1 NAME
 
-Cobalt::Lang -- read cobalt2 langsets
+Cobalt::Lang -- A role for language set loading
 
 =head1 SYNOPSIS
 
+  use Moo;
+  with 'Cobalt::Lang';
   ## Load an initial langset out of $etcdir/langs/ :
-  $core->lang( $core->load_langset('english') );
+  $self->lang( $self->load_langset('english') );
 
 =head1 DESCRIPTION
 
-Provides language set loading for the Cobalt core.
+Provides language set loading for the Cobalt core (and plugins that want 
+to load their own langset, if you'd like -- just consume this role)
 
 Langsets should be in a YAML format readable by L<YAML::XS>.
 
@@ -29,7 +32,7 @@ L<Cobalt::Utils>.
 
 Inspect C<etc/langs/english.yml> for an example.
 
-B<The English langset is built in to this module at install time.>
+B<The core English langset is built in to this module at install time.>
 Missing values in the loaded language set will be automatically filled 
 by the compiled-in English set, unless this is a prefixed plugin set.
 
@@ -40,7 +43,7 @@ replacement with C<rplprintf>.
 
 =head2 load_langset
 
-Used by the core to load a specified language set.
+Load a specified language set, converting it into a hash.
 
 If passed a single argument, loads the specified .yml file 
 out of $etcdir/langs/:
@@ -48,19 +51,17 @@ out of $etcdir/langs/:
   ## done by cobalt core to (re)load the ->lang hash:
   $core->lang( $core->load_langset('english') );
 
-B<A single-arg call will fail miserably of it's not referenced via $core.>
-
 If passed two arguments, the second argument is considered to be a 
 path prefix.
-
 Plugins can use this to read in a langset file, if they like:
 
   ## using Cobalt::Lang outside of $core
-  require Cobalt::Lang;
+  use Moo;
+  with 'Cobalt::Lang';
   my $etc = $core->cfg->{path};  ## location of our etc/
   ## read in etc/langs/plugin/myplugin-english.yml:
   my $prefix = $etc . "/langs/plugin/myplugin-";
-  my $rpl_hash = Cobalt::Lang->load_langset('english', $prefix);
+  my $rpl_hash = $self->load_langset('english', $prefix);
 
 It is generally advisable that plugins don't modify the $core->lang 
 hash unless they are also part of the core distribution.
@@ -71,7 +72,8 @@ That being said, if you do so, you may want to check for rehashes
 
 =head1 EMITTED EVENTS
 
-Events are emitted if load_langset is accessed via Cobalt::Core.
+Events are emitted if load_langset is accessed via a Cobalt::Core 
+instance.
 
 =head2 langset_loaded
 

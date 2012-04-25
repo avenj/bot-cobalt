@@ -13,14 +13,14 @@ our $VERSION = '0.102';
 ## Also doesn't make very many guarantees regarding consequences ...
 
 use 5.10.1;
-
+use Moo;
 use Cobalt::Common;
 use Cobalt::Conf;
 
 ## dclone used so we can easily throw away unwanted Cobalt::Conf hashes:
 use Storable qw/dclone/;
 
-sub new { bless {}, shift }
+with 'Cobalt::Lang';
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -217,7 +217,7 @@ sub _rehash_langset {
   my $lang = $newcfg->{core}->{Language} // 'english' ;
   my $prefix = $core->etc ."/langs/" ;
   
-  my $new_rpl = Cobalt::Lang->load_langset($lang, $prefix);
+  my $new_rpl = $self->load_langset($lang, $prefix);
   
   unless ($new_rpl && ref $new_rpl eq 'HASH') {
     $core->log->warn("Cobalt::Lang did not return a hash.");

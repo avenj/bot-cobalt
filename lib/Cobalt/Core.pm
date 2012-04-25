@@ -95,8 +95,9 @@ has 'Provided' => (
   default => sub { {} },
 );
 
-extends 'POE::Component::Syndicator',
-        'Cobalt::Lang';
+extends 'POE::Component::Syndicator';
+
+with 'Cobalt::Lang';
 
 with 'Cobalt::Core::Role::Auth';
 with 'Cobalt::Core::Role::Ignore';
