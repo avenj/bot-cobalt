@@ -1318,8 +1318,6 @@ You could, of course, write a simple accessor:
   ## later, when you need it:
   $self->core->send_event( ... );
 
-... or let Moo do it for you, see L</"Using Moo">.
-
 =head2 Non-reloadable plugins
 
 By default, a plugin can be unloaded/reloaded at any time, typically via 
@@ -1370,35 +1368,6 @@ about the new object:
     ## plugin is NOT reloadable
     ## internal state has been updated to note same
   }
-
-
-=head2 Using Moo
-
-Cobalt::Core makes use of L<Moo> -- it's perfectly valid to use 
-Moo for your plugins, as well:
-
-  package Cobalt::Plugin::User::MyPlugin;
-  
-  ## Cobalt::Common will import types:
-  use Cobalt::Common;
-  
-  use Moo;
-  
-  has 'core' => ( is => 'rw', isa => Object );
-  
-  sub Cobalt_register {
-    my ($self, $core) = splice @_, 0, 2;
-    $self->core( $core );
-    # ...
-    
-    return PLUGIN_EAT_NONE
-  }
-  
-L<Moo> is a lightweight class builder for Perl with 
-largely Moose-compatible syntax. It can significantly simplify your 
-plugins.
-
-See L<MooX::Types::MooseLike::Base> for details on imported types.
 
 
 =head1 ADVANCED CONCEPTS

@@ -14,9 +14,10 @@ Cobalt::Lang -- A role for language set loading
 =head1 DESCRIPTION
 
 Provides language set loading for the Cobalt core (and plugins that want 
-to load their own langset, if you'd like -- just consume this role)
+to load their own langset, if you'd like -- just use 
+L</load_langset>as a class method or consume this role).
 
-Langsets should be in a YAML format readable by L<YAML::XS>.
+Langsets should be in a YAML format readable by L<YAML::XS> (YAML1.1).
 
 B<IMPORTANT>: 
 Langset names are automatically lowercased. 
@@ -55,13 +56,12 @@ If passed two arguments, the second argument is considered to be a
 path prefix.
 Plugins can use this to read in a langset file, if they like:
 
-  ## using Cobalt::Lang outside of $core
-  use Moo;
-  with 'Cobalt::Lang';
+  ## using Cobalt::Lang outside of $core (as a class)
+  require Cobalt::Lang;
   my $etc = $core->cfg->{path};  ## location of our etc/
   ## read in etc/langs/plugin/myplugin-english.yml:
   my $prefix = $etc . "/langs/plugin/myplugin-";
-  my $rpl_hash = $self->load_langset('english', $prefix);
+  my $rpl_hash = Cobalt::Lang->load_langset('english', $prefix);
 
 It is generally advisable that plugins don't modify the $core->lang 
 hash unless they are also part of the core distribution.

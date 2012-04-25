@@ -22,7 +22,7 @@ use Cobalt::Plugin::RDB::Database;
 use Moo;
 ## marked non-reloadable .. shouldfix
 ## ought to feed our external RDB:: modules to unloader_cleanup
-has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1, 
+has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {1},
 );
 
