@@ -1,10 +1,12 @@
 package Cobalt::IRC;
-our $VERSION = '0.240';
+our $VERSION = '0.242';
 
 use 5.10.1;
 use strictures 1;
 use Moo;
 use Cobalt::Common;
+
+use Cobalt::IRC::FloodChk;
 
 use Cobalt::IRC::Server;
 
@@ -37,6 +39,19 @@ has 'core' => ( is => 'rw', isa => Object );
 
 has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
   default => sub { {} },
+);
+
+has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub { 
+    my ($self) = @_;
+    my $cfg = $self->core->get_core_cfg;
+    my $count = $cfg->{Opts}->{FloodCount} || 6;
+    my $secs  = $cfg->{Opts}->{FloodTime}  || 3;
+    Cobalt::IRC::FloodChk->new(
+      count => $count,
+      in    => $secs,
+    )
+  },
 );
 
 sub Cobalt_register {
@@ -312,6 +327,10 @@ sub irc_public {
   
   ## Bot_public_msg / Bot_public_cmd_$cmd  
   if (my $cmd = $msg_obj->cmd) {
+    if ( $self->flood->check($context, $src) ) {
+      $self->flood_ignore($context, $src);
+      return
+    }
     $core->send_event( 'public_cmd_'.$cmd, $msg_obj);
   } else {
     $core->send_event( 'public_msg', $msg_obj );
@@ -330,6 +349,13 @@ sub irc_msg {
   my $casemap = $core->get_irc_casemap( $context );
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
+  }
+
+  if ( $self->flood->check($context, $src) ) {
+    my $nick = parse_user($src);
+    $self->flood_ignore($context, $src)
+      unless $core->auth_level($context, $nick);
+    return
   }
 
   my $msg_obj = Cobalt::IRC::Message->new(
@@ -355,7 +381,7 @@ sub irc_notice {
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
-  
+
   my $msg_obj = Cobalt::IRC::Message->new(
     core    => $core,
     context => $context,
@@ -379,7 +405,7 @@ sub irc_ctcp_action {
   for my $mask ( $core->ignore_list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
-  
+
   my $msg_obj = Cobalt::IRC::Message->new(
     core    => $core,
     context => $context,
@@ -907,6 +933,43 @@ sub Bot_rehash {
   ## FIXME rehash nickservids if needed?
   
   return PLUGIN_EAT_NONE
+}
+
+sub Bot_ircplug_flood_rem_ignore {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  my $mask    = ${ $_[1] };
+  ## Internal timer-fired event to remove temp ignores.
+
+  $core->log->info("Clearing temp ignore: $mask ($context)");
+  $core->ignore_del( $context, $mask );  
+}
+
+sub flood_ignore {
+  ## Pass me a context and a mask
+  ## Set a temporary ignore and a timer to remove it
+  my ($self, $context, $mask) = @_;
+  
+  my $core   = $self->core;
+  my $corecf = $core->get_core_cfg;
+  my $ignore_time = $corecf->{Opts}->{FloodIgnore} || 20;
+  
+  $self->flood->clear($context, $mask);
+  
+  $core->log->info(
+    "Issuing temporary ignore due to flood: $mask ($context)"
+  );
+  
+  my $added = $core->ignore_add(
+    $context, __PACKAGE__, $mask, "FLOOD"
+  );
+  
+  $core->timer_set( $ignore_time,
+    {
+      Event => 'ircplug_flood_rem_ignore',
+      Args  => [ $context, $mask ],
+    },
+  );
 }
 
 sub _reset_ajoins {

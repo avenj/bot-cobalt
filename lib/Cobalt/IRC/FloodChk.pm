@@ -6,7 +6,7 @@ package Cobalt::IRC::FloodChk;
 use Moo;
 use Cobalt::Common qw/:types/;
 
-## fqueue->{$context}->{$nick} = []
+## fqueue->{$context}->{$key} = []
 has 'fqueue' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
@@ -14,10 +14,11 @@ has 'fqueue' => ( is => 'rw', isa => HashRef,
 has 'count' => ( is => 'rw', isa => Int, required => 1 );
 has 'in'    => ( is => 'rw', isa => Int, required => 1 );
 
-sub floodchk {
-  my ($self, $context, $nick) = @_;
+sub check {
+  my ($self, $context, $key) = @_;
+  return unless defined $context and defined $key; 
   
-  my $this_ref = ($self->fqueue->{$context}->{$nick}//[]);
+  my $this_ref = ($self->fqueue->{$context}->{$key}//=[]);
   
   if (@$this_ref >= $self->count) {
     ## Have at least RateCount tracked events.
@@ -37,7 +38,18 @@ sub floodchk {
   ## Safe to push this ev.
   push @$this_ref, time;
 
-  return
+  return 0
+}
+
+sub clear {
+  my ($self, $context, $key) = @_;
+  return unless defined $context and defined $key;
+  
+  return unless exists $self->fqueue->{$context};
+  
+  return delete $self->fqueue->{$context}->{$key}
+    if $key;
+  return delete $self->fqueue->{$context}
 }
 
 1;
@@ -51,14 +63,14 @@ Cobalt::IRC::FloodChk - Flood check utils for Cobalt::IRC
 
 =head1 SYNOPSIS
 
-  my $fcheck = Cobalt::IRC::FloodChk->new(
+  my $flood = Cobalt::IRC::FloodChk->new(
     count => 5,
     in    => 4,
   );
   
   ## Incoming IRC message, f.ex
   ## Throttle user to 5 messages in 4 seconds
-  if ( $fcheck->floodchk( $context, $nick ) ) {
+  if ( $flood->check( $context, $nick ) ) {
     ## Flood detected
   } else {
     ## No flood, continue
@@ -76,14 +88,18 @@ The object's constructor takes two mandatory parameters, B<count> and
 B<in>, indicating that B<count> messages (or events, or whatever) are 
 allowed in a window of B<in> seconds.
 
-=head2 floodchk
+=head2 check
 
-  $flood->floodchk( $context, $nick );
+  $flood->check( $context, $key );
 
 If there appears to be a flood in progress, returns the number of 
 seconds until it would be permissible to process more events.
 
 Returns boolean false if there is no flood detected.
+
+=head1 SEE ALSO
+
+Conceptually borrowed from L<Algorithm::FloodControl>
 
 =head1 AUTHOR
 

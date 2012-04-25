@@ -32,6 +32,8 @@ sub ignore_add {
     AddedAt => time(),
     Reason  => $reason,
   };
+  
+  return $mask
 }
 
 sub ignore_del {
