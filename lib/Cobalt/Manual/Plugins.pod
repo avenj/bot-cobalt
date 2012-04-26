@@ -4,10 +4,6 @@
 
 Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
 
-=head1 VERSION
-
-Last updated for cobalt B<2.00_43>
-
 =head1 DESCRIPTION
 
 This POD attempts to be a reasonably complete guide to writing useful 
@@ -51,10 +47,6 @@ For a quick-start guide, try L<Cobalt::Manual::Plugins::Tutorial>.
     ## Log that we're here now:
     $core->log->info("Registered");
 
-    ## We could save $core to $self->{core} to make life easier 
-    ## on our internal methods, perhaps:
-    $self->{core} = $core;
-    
     ## ALWAYS return an Object::Pluggable::Constants value
     ## (Importing Cobalt::Common will also pull _NONE and _ALL in)
     ## See "Returning proper values" under "Handling events"
@@ -77,7 +69,10 @@ For a quick-start guide, try L<Cobalt::Manual::Plugins::Tutorial>.
   ## (when calling send_event, leave the prefix out)
   sub Bot_public_msg {
     my ($self, $core) = splice @_, 0, 2;
+
+    ## Receives a Cobalt::IRC::Message::Public object:
     my $msg     = ${ $_[0] };
+
     my $context  = $msg->context;
     my $as_array = $msg->message_array;
 
@@ -328,7 +323,7 @@ some criteria.
 
 =head3 Understanding server context
 
-IRC-driven events typically come with a server context attached, mapping 
+IRC-driven events always come with a server context attached, mapping 
 the server's configured "name" to server state information and allowing a 
 plugin to make sure responses get to the right place.
 
@@ -555,7 +550,7 @@ See L<Cobalt::IRC> for event argument syntax and details.
 =head3 Accessing the IRC component directly
 
 The IRC backend for the core distribution is L<POE::Component::IRC>,
-more specifically the C<State> subclass.
+more specifically the L<POE::Component::IRC::State> subclass.
 
 L<POE::Component::IRC> is a very mature and complete IRC framework.
 
@@ -588,10 +583,14 @@ on the methods you can call against C<$irc> -- they are very complete.
 
 The Cobalt core provides various useful accessors and methods for plugins.
 
-B<NOTE:> The object reference to the Cobalt core object is referred to here 
-as C<$core>. How you keep track of $core is your business; see 
-L</"Keeping track of $core">
+The object reference to the Cobalt core object is referred to here 
+as C<$core>.
 
+L<Cobalt::Core> is actually an instanced singleton; it can be retrieved 
+from any loaded plugin via B<instance>:
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
 
 =head3 Attributes
 
@@ -702,7 +701,7 @@ own directories under B<< $core->var >> for storage.
 
 =head4 version
 
-Returns the current Cobalt::Core version.
+Returns the current L<Cobalt::Core> version.
 
 This can be used to require a specific Cobalt version for a 3rd-party 
 plugin (via die()/croak() in Cobalt_register).
@@ -1276,46 +1275,21 @@ boolean true:
   }
 
 
-=head2 Keeping track of $core
+=head2 Retrieving $core
 
-It's frequently useful to maintain a reference to the Cobalt::Core 
-object within your plugin, so that discrete methods can easily refer 
-to core attributes and methods outside of an event handler.
+It may be necessary or convenient to use L<Cobalt::Core> methods from 
+outside of a syndicated event handler.
 
-The easiest way is to grab $core from Cobalt_register and store it 
-somewhere in $self:
-  
-  sub Cobalt_register {
-    ## get self and Cobalt::Core objects:
-    my ($self, $core) = splice @_, 0, 2;
+L<Cobalt::Core> is an instanced singleton; loaded plugins can always 
+retrieve the running L<Cobalt::Core> via the B<instance> method:
+
+  sub my_routine {
+    my ($self, @args) = @_;
     
-    ## stash $core in $self to make it available to internals:
-    $self->{core} = $core;
-    
-    # ... do normal plugin registration ...
+    require Cobalt::Core;
+    my $core = Cobalt::Core->instance;
   }
 
-  sub _my_method {
-    my ($self) = @_;
-    
-    ## get $core back for ease of use:
-    my $core = $self->{core};
-  }
-
-You could, of course, write a simple accessor:
-
-  sub core {
-    my ($self, $core) = @_;
-    return $self->{CORE} = $core if $core and ref $core;
-    return $self->{CORE}
-  }
-  
-  ## in Cobalt_register:
-  my ($self, $core) = splice @_, 0, 2;
-  $self->core( $core );
-  
-  ## later, when you need it:
-  $self->core->send_event( ... );
 
 =head2 Non-reloadable plugins
 
