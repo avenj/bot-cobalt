@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bot::Cobalt::Manual::PluginDist - packaging Cobalt plugins
+Bot::Cobalt::Manual::Plugins::Dist - Packaging Cobalt plugins
 
 =head1 DESCRIPTION
 
@@ -11,7 +11,6 @@ except that you can (if you like) install them to the Bot::Cobalt::Plugin::User
 namespace.
 
 Typically, the easiest way to do so is via L<Module::Build>.
-
 
 =head2 Layout
 
@@ -68,7 +67,7 @@ Here's a simple one based around one centralized plugin:
     license => 'perl',
     create_makefile_pl => 'small',
     requires => {
-      'Bot::Cobalt::Core' => '2.00',
+      'Bot::Cobalt::Core' => '0.200',
     },
   );
   $build->create_build_script;
@@ -85,7 +84,7 @@ You could distribute a plugin set with a B<Build.PL> along these lines:
     license => 'perl',
     create_makefile_pl => 'small',
     requires => {
-      'Bot::Cobalt::Core' => '2.00',
+      'Bot::Cobalt::Core' => '0.200',
     },
   );
   $build->create_build_script;

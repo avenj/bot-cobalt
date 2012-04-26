@@ -44,12 +44,10 @@ lib/Bot/Cobalt/IRC/Server.pm
 lib/Bot/Cobalt/Lang.pm.in
 lib/Bot/Cobalt/Lang.pm.PL
 lib/Bot/Cobalt/Lang.pod
-lib/Bot/Cobalt/Manual/INSTALL.pod
-lib/Bot/Cobalt/Manual/PluginConf.pod
-lib/Bot/Cobalt/Manual/PluginDist.pod
+lib/Bot/Cobalt/Manual/Plugins/Config.pod
+lib/Bot/Cobalt/Manual/Plugins/Dist.pod
 lib/Bot/Cobalt/Manual/Plugins.pod
 lib/Bot/Cobalt/Manual/Plugins/Tutorial.pod
-lib/Bot/Cobalt/Manual/README.pod
 lib/Bot/Cobalt/Manual/UserTutorial.pod
 lib/Bot/Cobalt/Plugin/Alarmclock.pm
 lib/Bot/Cobalt/Plugin/Auth.pm
@@ -87,8 +85,6 @@ lib/Bot/Cobalt/Timer.pm
 lib/Bot/Cobalt/Utils.pm
 Makefile.PL
 MANIFEST			This list of files
-META.json
-META.yml
 t/01_core/01_loadable.t
 t/01_core/02_flood.t
 t/02_utils/01_mkpasswd.t
