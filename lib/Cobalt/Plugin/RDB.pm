@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.313';
+our $VERSION = '0.314';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##
@@ -44,7 +44,6 @@ has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
     Cobalt::Plugin::RDB::Database->new(
       CacheKeys => $cachekeys,
       RDBDir    => $rdbdir,
-      core => $self->core,
     )
   }, 
 );

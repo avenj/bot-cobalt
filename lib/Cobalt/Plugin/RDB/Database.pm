@@ -54,10 +54,8 @@ sub new {
 
   my %opts = @_;
   
-  unless ( ref $opts{core} ) {
-    croak "new() needs a core => parameter"
-  }  
-  my $core = $opts{core};
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
   $self->{core} = $core;
 
   my $rdbdir = $opts{RDBDir};  
