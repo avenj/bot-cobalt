@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Alarmclock;
-our $VERSION = '2.00_45';
+our $VERSION = '0.200';
 
 use 5.10.1;
 use strict;

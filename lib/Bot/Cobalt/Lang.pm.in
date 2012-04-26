@@ -1,5 +1,5 @@
 package Bot::Cobalt::Lang;
-our $VERSION = '2.00_45';
+our $VERSION = '0.200';
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)

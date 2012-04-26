@@ -49,7 +49,7 @@ my $class = Module::Build->subclass(
           if ($_ =~ /\.pm(.in)?$/) {
             my $path = $File::Find::name;
             open my $fh, '<', $path
-              or die "open: $!";
+              or die "open: $path $!";
             my @thisf = readline($fh);
             close $fh;
             
@@ -74,7 +74,7 @@ my $class = Module::Build->subclass(
             unshift(@thisf, $package_l);
             
             open $fh, '>', $path
-              or die "open: $!";
+              or die "open: $path $!";
             print $fh @thisf;
             close $fh;
           }

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Timer;
-our $VERSION = '2.00_45';
+our $VERSION = '0.200';
 
 use strict; use warnings;
 use 5.10.1;
