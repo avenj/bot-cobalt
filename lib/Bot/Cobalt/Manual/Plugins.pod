@@ -756,8 +756,11 @@ plugin:
 
 =head4 get_plugin_alias
 
-As of 2.00_19 a plugin can be instanced many times with discrete conf 
-values. Sometimes it's useful to know the name of your current alias.
+A plugin can be instanced many times with discrete conf 
+values (although many plugins won't play very nice with multiple 
+instances). 
+
+Sometimes it's useful to know the name of your current alias.
 
 Your plugin's $self object must be specified:
 

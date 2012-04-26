@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.200';
+our $VERSION = '0.200_46';
 
 use 5.10.1;
 use Bot::Cobalt::Common;
