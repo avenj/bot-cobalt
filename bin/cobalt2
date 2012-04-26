@@ -13,6 +13,8 @@ my ($etcdir, $vardir, $basedir);
 
 use Proc::PID::File;
 
+use Bot::Cobalt::Frontend::RC;
+
 use Getopt::Long;
 GetOptions(
   ## Path to .cobalt2rc
@@ -82,55 +84,20 @@ sub _rc_check {
   }
 }
 
-sub _rc_read {
-  ## read in vars from a rcfile
-  open(my $fh, '<', $rcfile) 
-    or die ">! Unable to open specified rcfile: $rcfile: $!";
-  my $str;
-  { local $/; $str = <$fh>; }
-  close($fh);
-
-  my ($BASE, $ETC, $VAR);
-  eval $str;
-  if ($@) {
-    die "Errors reported during rc parsing; $@";
-  }
-
-  ## my ($base, $etc, $var) = _rc_read()
-  return ($BASE, $ETC, $VAR);
-}
-
 sub _check_dirs {
-  ## Check if etcdir and vardir are set and exist
-  unless ($etcdir) {
-    say ">! etcdir $etcdir is not set.";
+  unless (-e $etcdir) {
+    say ">! etcdir $etcdir doesn't appear to exist.";
     say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! You can override the rcfile via --etc=";
-    say ">! Otherwise, you may want to try `cobalt2-installer`";
-    die "no etcdir set"
-  }
-
-  unless ($vardir) {
-    say ">! vardir $vardir is not set.";
-    say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! You can override the rcfile via --var= or try `cobalt2-installer`";
-    die "no vardir set"
-  }
-
-  unless (-d $etcdir) { ## FIXME symlinks ...?
-    say ">! etcdir $etcdir doesn't appear to be a directory.";
-    say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! You can override via --etc=DIR or try `cobalt2-installer`";
+    say ">! Perhaps try `cobalt2-installer`";
     die "etcdir not a directory"
   }
 
-  unless (-d $vardir) {
-    say ">! vardir $vardir doesn't appear to be a directory.";
+  unless (-e $vardir) {
+    say ">! vardir $vardir doesn't appear to exist.";
     say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! You can override via --var=DIR or try `cobalt2-installer`";
+    say ">! Perhaps try `cobalt2-installer`";
     die "vardir not a directory"
   }
-
 }
 
 sub _check_cfs {
@@ -235,8 +202,9 @@ if ($basedir) {
 } else {
   ## no basedir specified, try rcfile
   _rc_check();
-  ($basedir, $etcdir, $vardir) = _rc_read();
+  ($basedir, $etcdir, $vardir) = rc_read($rcfile);
 }
+
 
 _check_dirs();
 _check_cfs();
@@ -248,7 +216,7 @@ __END__
 
 =head1 NAME
 
-cobalt2 - Cobalt IRC bot
+cobalt2 - Bot::Cobalt IRC bot frontend
 
 =head1 SYNOPSIS
 
@@ -277,17 +245,21 @@ cobalt2 - Cobalt IRC bot
 
 =head1 DESCRIPTION
 
-Cobalt is a pluggable IRC bot framework coupled with a core set of plugins 
-vaguely replicating classic B<darkbot> behavior and a great deal more.
-
-See L<http://www.cobaltirc.org/dev/bots> for more information on 
-Cobalt and the complete documentation.
+L<Bot::Cobalt> is a pluggable IRC bot framework coupled with a core set 
+of plugins vaguely replicating classic B<darkbot> and B<cobalt1> 
+behavior (and a great deal more).
 
 This is the core frontend; it uses C<.cobalt2rc> files to find the 
 relevant configuration & data directories to start a particular 
 Cobalt instance.
 
+See L<cobalt2-installer> for more on getting started. The installer can 
+set up directories and example configuration files for a fresh instance.
+
 See L</SYNOPSIS> for usage information.
+
+See L<http://www.cobaltirc.org/dev/bots> for more information on 
+Cobalt and the complete documentation.
 
 =head1 SEE ALSO
 
