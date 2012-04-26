@@ -5,7 +5,7 @@ use Fcntl qw/ :flock /;
 use File::Temp qw/ tempfile tempdir /;
 
 BEGIN {
-  use_ok( 'Cobalt::Serializer' );
+  use_ok( 'Bot::Cobalt::Serializer' );
 }
 
 my $hash = {
@@ -16,7 +16,7 @@ my $hash = {
 };
 
 JSONRW: {
-  my $js_ser = Cobalt::Serializer->new( 'JSON' );
+  my $js_ser = Bot::Cobalt::Serializer->new( 'JSON' );
   can_ok($js_ser, 'readfile', 'writefile' );
 
   my ($fh, $fname) = _newtemp();
@@ -29,7 +29,7 @@ JSONRW: {
 }
 
 YAMLRW: {
-  my $yml_ser = Cobalt::Serializer->new();
+  my $yml_ser = Bot::Cobalt::Serializer->new();
   can_ok($yml_ser, 'readfile', 'writefile' );
 
   my ($fh, $fname) = _newtemp();

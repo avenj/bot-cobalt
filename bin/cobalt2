@@ -1,5 +1,5 @@
 #!perl
-## simplistic cobalt2 Cobalt::Core frontend
+## simplistic cobalt2 Bot::Cobalt::Core frontend
 
 use 5.10.1;
 use strict;
@@ -31,8 +31,8 @@ GetOptions(
 
   ## Informational
   version => sub {
-    require Cobalt::Core;
-    print("cobalt $Cobalt::Core::VERSION\n"); 
+    require Bot::Cobalt::Core;
+    print("cobalt $Bot::Cobalt::Core::VERSION\n"); 
     exit 0
   },
 
@@ -43,7 +43,7 @@ sub show_help {
   print(
     "cobalt2 invocation help \n",
     "   --version \n",
-    "     Display current Cobalt::Core version \n",
+    "     Display current Bot::Cobalt::Core version \n",
 
     "\n",
     "  Execution:\n",
@@ -178,10 +178,10 @@ sub _start_cobalt {
   }
   $pid->touch();
 
-  require Cobalt::Conf;
-  require Cobalt::Core;
-  my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
-  Cobalt::Core->instance(
+  require Bot::Cobalt::Conf;
+  require Bot::Cobalt::Core;
+  my $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg;
+  Bot::Cobalt::Core->instance(
     cfg => $cfg,
     var => $vardir,
     loglevel => $loglevel, 
@@ -194,8 +194,8 @@ sub _start_cobalt {
 
 
 sub _dumpcfg {
-  require Cobalt::Conf;
-  my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
+  require Bot::Cobalt::Conf;
+  my $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg;
   require Data::Dumper;
   no warnings;
   $Data::Dumper::Sortkeys = 1;
@@ -206,7 +206,7 @@ sub _dumpcfg {
 }
 
 say "-> debug ON, overrides loglevel" if $opt_debug;
-## Cobalt::Core does this anyway, but just for the validator:
+## Bot::Cobalt::Core does this anyway, but just for the validator:
 $loglevel = $opt_debug ? 'debug' : lc $loglevel ;
 ## Check specified loglevel
 my @loglevels = qw/debug info notice warn warning
@@ -293,15 +293,15 @@ See L</SYNOPSIS> for usage information.
 
 =head2 Getting started
 
-L<Cobalt::Manual::README>
+L<Bot::Cobalt::Manual::README>
 
-L<Cobalt::Manual::INSTALL>
+L<Bot::Cobalt::Manual::INSTALL>
 
 =head2 Plugin authoring
 
-L<Cobalt::Manual::Plugins>
+L<Bot::Cobalt::Manual::Plugins>
 
-L<Cobalt::IRC>
+L<Bot::Cobalt::IRC>
 
 =head1 AUTHOR
 

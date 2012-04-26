@@ -1,0 +1,274 @@
+=pod
+
+=head1 NAME
+
+README - Getting started with Cobalt
+
+=head1 VERSION
+
+README revision B<0004>
+
+Last updated for Cobalt B<2.00_8>
+
+L<http://www.cobaltirc.org/dev/bots/cobalt>
+
+=head1 QUICK START
+
+=head2 Installing the distribution
+
+Installing B<cobalt2> is just like installing any other Perl distribution.
+
+The saying goes that perl5 is a VM and CPAN is the language ;-)
+
+That being the case, B<Cobalt> requires a goodly handful of modules.
+B<The easiest way to install Cobalt AND all dependencies is via cpan>:
+
+  ## Installing Cobalt and dependencies using CPAN
+  ## This assumes your CPAN is properly configured.
+  ## Try entering the cpan shell (`cpan`) if not.
+  $ tar xvzf Cobalt2-2.00.tar.gz
+  $ cd Cobalt2-2.00
+  $ cpan .
+
+It is highly recommended that you allow L<CPAN> to pull in 
+'recommended' dependencies; these are typically modules used by plugins in 
+the core set.
+
+Often it is better to use a local lib dir; see B<INSTALL> for more detailed 
+instructions on various approaches to installing B<Cobalt>.
+
+If you have the prerequisites or would like to obtain them yourself:
+
+  ## A simple install using Build.PL:
+  ~/cobalt-2.00 $ perl Build.PL
+  ~/cobalt-2.00 $ ./Build && ./Build test
+  ## If you want a site-wide install, you may need to be root to install
+  ## See INSTALL for more information on using a local perl5lib
+  ~/cobalt-2.00 $ ./Build install
+
+
+=head2 Initializing a new instance
+
+A B<cobalt2> instance needs its own C<etc/> and C<var/> directories. These 
+are specified via a simple B<rcfile> for each particular instance.
+
+B<cobalt2-installer> will initialize a new rcfile for a Cobalt bot and 
+try to help you set up an initial set of core configuration files:
+
+  $ cobalt2-installer
+
+See L</CONFIGURATION> for more on configuring Cobalt.
+
+You can, of course, run multiple B<cobalt2> instances; each just needs its 
+own B<rcfile>:
+
+  $ cobalt2-installer --rcfile=${HOME}/CobaltRCs/MyCobalt1.rc
+  $ cobalt2 --rcfile=${HOME}/CobaltRCs/MyCobalt1.rc
+
+
+=head2 Starting the bot
+
+That's it! You should be ready to start B<cobalt2> -- you may want to use 
+some debug options the first time:
+
+  # Launch cobalt2 in the foreground w/ debug logging:
+   $ cobalt2 --nodetach --debug
+
+Normally, you'd just launch cobalt2 in the background and forget about it:
+
+  # Launch cobalt2 in the background w/ normal log output:
+   $ cobalt2
+
+
+=head2 Using crontab
+
+If your system has a running C<crond>, it's easy to use C<crontab> to 
+check to make sure your bot is running.
+
+B<cobalt2> will track its PID via the bot's C<var/> directory and refuse 
+to start if it is already running. That means a very basic crontab job only 
+has to call cobalt2 again:
+
+  ## Find out where cobalt2 lives
+  ## (That way we can feed cron a full path)
+   $ which cobalt2
+   /path/to/bin/cobalt2
+
+  ## Add to crontab (10 minute check delays)
+  ## This example sends output nowhere
+   $ crontab -e
+   */10 * * * * /path/to/bin/cobalt2 >/dev/null 2>&1
+
+
+=head1 USAGE
+
+=head2 Informational options
+
+   --version 
+     Display current Cobalt version
+
+   --help
+     Display invocation help
+
+
+=head2 Run-related options
+
+   --nodetach / --nodaemon 
+     Run in the foreground (do not daemonize) 
+  
+   --loglevel=LOGLEVEL 
+     Specify log verbosity. Defaults to 'info'
+
+     Valid levels, most verbose to least: 
+       debug info notice warn err crit alert emerg 
+
+     Most Cobalt log messages are logged to 'debug' or 'info'
+  
+   --debug 
+     Enable debug output. Overrides loglevel. 
+
+=head2 Path-related options
+
+   --rcfile=/path/to/rcfile
+     Path to cobalt2 rcfile
+     Defaults to ${HOME}/.cobalt2rc
+
+   --base=/path/to/cobalt/basedir
+     Set a base path for bot's 'etc/' and 'var/' dirs
+     Overrides rcfile
+
+
+=head1 CONFIGURATION
+
+This section will likely be moved out to Bot::Cobalt::Manual:: namespace soon.
+
+B<cobalt2> will search for configuration files in the directory specified by 
+the '$ETC' entry in the B<rcfile> (see L</"Initializing a new instance">).
+
+Configuration files are stored in YAML1.0.
+
+Cobalt needs at least the following files:
+
+=over
+
+=item *
+
+etc/cobalt.conf
+
+=item *
+
+etc/channels.conf
+
+=item *
+
+etc/plugins.conf
+
+=back
+
+
+Running B<cobalt2-installer> may be enough to get started; however, it is 
+B<HIGHLY> recommended that you review the files thoroughly. They are 
+typically reasonably well-commented.
+
+
+=head2 cobalt.conf
+
+C<etc/cobalt.conf> contains the Cobalt core configuration, including IRC-related 
+configuration for the core single-server IRC plugin, L<Bot::Cobalt::IRC>.
+
+The default example cobalt.conf should be enough to get started; simply 
+edit the B<IRC:> section appropriately. Defaults should be safe for the 
+remaining directives.
+
+A few tips:
+
+=over
+
+=item *
+
+If you're unsure, quote your strings. See L<http://yaml.org/spec/1.0/> for 
+more about YAML syntax. YAML will tell you when you've gone wrong, but it 
+may not be the most verbose of error messages . . .
+
+=item * 
+
+If you choose to use B<AltServers>, pay close attention to the comments in 
+the example C<cobalt.conf>; if the AltServers aren't compatible with your 
+UseSSL/IPv6 settings, you may have failures upon reconnect attempts.
+
+=item *
+
+If your bot is having difficulty connecting, you may want to ensure that 
+you do not mistakenly have B<UseSSL> enabled on a non-SSL server/port or 
+vice-versa.
+
+=back
+
+
+=head2 channels.conf
+
+C<etc/channels.conf> FIXME
+
+
+=head2 plugins.conf
+
+C<etc/plugins.conf> configures the plugin loader.
+
+The format is:
+
+  ---
+  <PluginName>:
+    Module: Bot::Cobalt::Plugin::<Module>
+
+    ## Optional per-plugin
+    ## 'Config' is considered relative to our 'etc/'
+    Config: plugin/<Config_file>
+
+    ## Optional per-plugin
+    ## 'Opts' may specify a set of options for the plugin
+    Opts:
+      <Option>: <Value>
+
+Here's an example and very basic plugins.conf:
+
+  ---
+  Auth:
+    Module: Bot::Cobalt::Plugin::Auth
+    Config: auth.conf
+
+  Alarmclock:
+    Module: Bot::Cobalt::Plugin::Alarmclock
+    Opts:
+      LevelRequired: 1
+
+The default Cobalt2 C<plugins.conf> comes configured with a fairly 
+standard set of plugins replicating the significant pieces of older 
+monolithic implementations of C<cobalt>. It should be more than enough 
+to get started with; new plugins will be added with future releases.
+
+Writing your own plugins is easy with just a bit of basic Perl experience.
+Core modules are mostly well-commented and easy to use as a learning tool.
+See L</DOCUMENTATION> for some help getting going with plugin authoring.
+
+
+=head1 DOCUMENTATION
+
+FIXME
+
+=head2 Usage-related
+
+FIXME
+
+=head2 Writing plugins
+
+FIXME
+
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

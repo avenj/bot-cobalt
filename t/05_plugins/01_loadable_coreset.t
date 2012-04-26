@@ -1,7 +1,7 @@
 use Test::More tests => 48;
 my @core;
 BEGIN {
-  my $prefix = 'Cobalt::Plugin::';
+  my $prefix = 'Bot::Cobalt::Plugin::';
   @core = map { $prefix.$_ } qw/
     Alarmclock
     Auth

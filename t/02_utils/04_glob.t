@@ -1,7 +1,7 @@
 use Test::More tests => 9;
 
 BEGIN {
-  use_ok( 'Cobalt::Utils', qw/
+  use_ok( 'Bot::Cobalt::Utils', qw/
     glob_grep glob_to_re glob_to_re_str
   / );
 }

@@ -2,7 +2,7 @@ use 5.12.1;
 use Test::More tests => 9;
 
 BEGIN {
-  use_ok( 'Cobalt::Serializer' );
+  use_ok( 'Bot::Cobalt::Serializer' );
 }
 
 my $hash = {
@@ -13,7 +13,7 @@ my $hash = {
 };
 
 JSON: {
-  my $js_ser = Cobalt::Serializer->new( 'JSON' );
+  my $js_ser = Bot::Cobalt::Serializer->new( 'JSON' );
   can_ok($js_ser, 'freeze', 'thaw');
   my $json = $js_ser->freeze($hash);
   ok( $json, 'JSON freeze');
@@ -25,7 +25,7 @@ JSON: {
 }
 
 YAML: {
-  my $yml_ser = Cobalt::Serializer->new();
+  my $yml_ser = Bot::Cobalt::Serializer->new();
   can_ok($yml_ser, 'freeze', 'thaw');
   my $yml = $yml_ser->freeze($hash);
   ok( $yml, 'YAML freeze');

@@ -4,7 +4,7 @@ use Fcntl qw/ :flock /;
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
 
-BEGIN { use_ok( 'Cobalt::DB' ); }
+BEGIN { use_ok( 'Bot::Cobalt::DB' ); }
 
 my $workdir = File::Spec->tmpdir;
 my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
@@ -12,7 +12,7 @@ my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
 my ($fh, $path) = _newtemp();
 my $db;
 
-ok( $db = Cobalt::DB->new( File => $path ), 'Cobalt::DB new()' );
+ok( $db = Bot::Cobalt::DB->new( File => $path ), 'Cobalt::DB new()' );
 can_ok( $db, 'dbopen', 'dbclose', 'put', 'get', 'dbkeys' );
 
 ok( $db->dbopen, 'Temp database open' );

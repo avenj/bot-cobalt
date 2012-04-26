@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
-   "name" : "Cobalt",
+   "name" : "Bot::Cobalt",
    "prereqs" : {
       "configure" : {
          "requires" : {
@@ -44,7 +44,6 @@
             "HTTP::Response" : "0",
             "IRC::Utils" : "0.12",
             "JSON" : "2.00",
-            "LWP::UserAgent" : "0",
             "Log::Handler" : "0.71",
             "Moo" : "0.009",
             "MooX::Types::MooseLike" : "0.03",
@@ -52,173 +51,230 @@
             "Object::Pluggable" : "1.27",
             "POE" : "1.311",
             "POE::Component::Client::DNS" : "0",
+            "POE::Component::Client::HTTP" : "0.945",
             "POE::Component::IRC::State" : "6.78",
             "POE::Component::Syndicator" : "0.06",
-            "POE::Filter::Reference" : "0",
-            "POE::Wheel::Run" : "0",
             "Proc::PID::File" : "1.26",
+            "Scalar::Util" : "0",
             "Storable" : "0",
             "Term::ReadLine" : "0",
             "Term::UI" : "0",
             "URI::Escape" : "0",
             "YAML::Syck" : "1.18",
             "YAML::XS" : "0.34",
-            "perl" : "v5.10.1"
+            "perl" : "v5.10.1",
+            "strictures" : "1"
          }
       }
    },
    "provides" : {
-      "Cobalt::Common" : {
-         "file" : "lib/Cobalt/Common.pm",
-         "version" : "0.300"
+      "Bot::Cobalt::Common" : {
+         "file" : "lib/Bot/Cobalt/Common.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Conf" : {
-         "file" : "lib/Cobalt/Conf.pm",
-         "version" : "1.01"
+      "Bot::Cobalt::Conf" : {
+         "file" : "lib/Bot/Cobalt/Conf.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Core" : {
-         "file" : "lib/Cobalt/Core.pm",
-         "version" : "2.00_40"
+      "Bot::Cobalt::Core" : {
+         "file" : "lib/Bot/Cobalt/Core.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::DB" : {
-         "file" : "lib/Cobalt/DB.pm",
-         "version" : "0.25"
+      "Bot::Cobalt::Core::Role::Auth" : {
+         "file" : "lib/Bot/Cobalt/Core/Role/Auth.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::HTTP" : {
-         "file" : "lib/Cobalt/HTTP.pm",
-         "version" : "0.04"
+      "Bot::Cobalt::Core::Role::IRC" : {
+         "file" : "lib/Bot/Cobalt/Core/Role/IRC.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::IRC" : {
-         "file" : "lib/Cobalt/IRC.pm",
-         "version" : "0.220"
+      "Bot::Cobalt::Core::Role::Ignore" : {
+         "file" : "lib/Bot/Cobalt/Core/Role/Ignore.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::IRC::Message" : {
-         "file" : "lib/Cobalt/IRC/Message.pm",
-         "version" : 0
+      "Bot::Cobalt::Core::Role::Timers" : {
+         "file" : "lib/Bot/Cobalt/Core/Role/Timers.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::IRC::Message::Public" : {
-         "file" : "lib/Cobalt/IRC/Message/Public.pm",
-         "version" : 0
+      "Bot::Cobalt::Core::Role::Unloader" : {
+         "file" : "lib/Bot/Cobalt/Core/Role/Unloader.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Alarmclock" : {
-         "file" : "lib/Cobalt/Plugin/Alarmclock.pm",
-         "version" : "0.143"
+      "Bot::Cobalt::DB" : {
+         "file" : "lib/Bot/Cobalt/DB.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Auth" : {
-         "file" : "lib/Cobalt/Plugin/Auth.pm",
-         "version" : "0.300"
+      "Bot::Cobalt::IRC" : {
+         "file" : "lib/Bot/Cobalt/IRC.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::DNS" : {
-         "file" : "lib/Cobalt/Plugin/Extras/DNS.pm",
-         "version" : "0.001"
+      "Bot::Cobalt::IRC::Event" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Debug" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Debug.pm",
-         "version" : "0.002"
+      "Bot::Cobalt::IRC::Event::Channel" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Channel.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Ignore" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Ignore.pm",
-         "version" : "0.10"
+      "Bot::Cobalt::IRC::Event::Kick" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Kick.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Karma" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Karma.pm",
-         "version" : "0.202"
+      "Bot::Cobalt::IRC::Event::Mode" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Mode.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Logger" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Logger.pm",
-         "version" : "0.001"
+      "Bot::Cobalt::IRC::Event::Nick" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Nick.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Money" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Money.pm",
-         "version" : "0.071"
+      "Bot::Cobalt::IRC::Event::Quit" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Quit.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Relay" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Relay.pm",
-         "version" : "0.006"
+      "Bot::Cobalt::IRC::Event::Topic" : {
+         "file" : "lib/Bot/Cobalt/IRC/Event/Topic.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::Shorten" : {
-         "file" : "lib/Cobalt/Plugin/Extras/Shorten.pm",
-         "version" : "0.08"
+      "Bot::Cobalt::IRC::FloodChk" : {
+         "file" : "lib/Bot/Cobalt/IRC/FloodChk.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Extras::TempConv" : {
-         "file" : "lib/Cobalt/Plugin/Extras/TempConv.pm",
-         "version" : "1.04"
+      "Bot::Cobalt::IRC::Message" : {
+         "file" : "lib/Bot/Cobalt/IRC/Message.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Games" : {
-         "file" : "lib/Cobalt/Plugin/Games.pm",
-         "version" : "0.16"
+      "Bot::Cobalt::IRC::Message::Public" : {
+         "file" : "lib/Bot/Cobalt/IRC/Message/Public.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Games::Dice" : {
-         "file" : "lib/Cobalt/Plugin/Games/Dice.pm",
-         "version" : "0.03"
+      "Bot::Cobalt::IRC::Server" : {
+         "file" : "lib/Bot/Cobalt/IRC/Server.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Games::Magic8" : {
-         "file" : "lib/Cobalt/Plugin/Games/Magic8.pm",
-         "version" : "0.03"
+      "Bot::Cobalt::Plugin::Alarmclock" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Alarmclock.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Games::RockPaperScissors" : {
-         "file" : "lib/Cobalt/Plugin/Games/RockPaperScissors.pm",
-         "version" : "0.02"
+      "Bot::Cobalt::Plugin::Auth" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Auth.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Games::Roulette" : {
-         "file" : "lib/Cobalt/Plugin/Games/Roulette.pm",
-         "version" : "0.006"
+      "Bot::Cobalt::Plugin::Extras::DNS" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/DNS.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Info3" : {
-         "file" : "lib/Cobalt/Plugin/Info3.pm",
-         "version" : "0.230"
+      "Bot::Cobalt::Plugin::Extras::Debug" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Debug.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Master" : {
-         "file" : "lib/Cobalt/Plugin/Master.pm",
-         "version" : "0.02"
+      "Bot::Cobalt::Plugin::Extras::Ignore" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Ignore.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::OutputFilters::StripColor" : {
-         "file" : "lib/Cobalt/Plugin/OutputFilters/StripColor.pm",
-         "version" : "0.12"
+      "Bot::Cobalt::Plugin::Extras::Karma" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Karma.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::OutputFilters::StripFormat" : {
-         "file" : "lib/Cobalt/Plugin/OutputFilters/StripFormat.pm",
-         "version" : "0.12"
+      "Bot::Cobalt::Plugin::Extras::Logger" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Logger.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::PluginMgr" : {
-         "file" : "lib/Cobalt/Plugin/PluginMgr.pm",
-         "version" : "1.09"
+      "Bot::Cobalt::Plugin::Extras::Money" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Money.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::RDB" : {
-         "file" : "lib/Cobalt/Plugin/RDB.pm",
-         "version" : "0.310"
+      "Bot::Cobalt::Plugin::Extras::Relay" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Relay.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::RDB::Database" : {
-         "file" : "lib/Cobalt/Plugin/RDB/Database.pm",
-         "version" : "0.32"
+      "Bot::Cobalt::Plugin::Extras::Shorten" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/Shorten.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::RDB::SearchCache" : {
-         "file" : "lib/Cobalt/Plugin/RDB/SearchCache.pm",
-         "version" : "0.22"
+      "Bot::Cobalt::Plugin::Extras::TempConv" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Extras/TempConv.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Rehash" : {
-         "file" : "lib/Cobalt/Plugin/Rehash.pm",
-         "version" : "0.102"
+      "Bot::Cobalt::Plugin::Games" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Games.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Seen" : {
-         "file" : "lib/Cobalt/Plugin/Seen.pm",
-         "version" : "0.002"
+      "Bot::Cobalt::Plugin::Games::Dice" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Games/Dice.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::Version" : {
-         "file" : "lib/Cobalt/Plugin/Version.pm",
-         "version" : "1.03"
+      "Bot::Cobalt::Plugin::Games::Magic8" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Games/Magic8.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Plugin::WWW" : {
-         "file" : "lib/Cobalt/Plugin/WWW.pm",
-         "version" : "0.008"
+      "Bot::Cobalt::Plugin::Games::RockPaperScissors" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Games/RockPaperScissors.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Serializer" : {
-         "file" : "lib/Cobalt/Serializer.pm",
-         "version" : "0.19"
+      "Bot::Cobalt::Plugin::Games::Roulette" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Games/Roulette.pm",
+         "version" : "2.00_45"
       },
-      "Cobalt::Utils" : {
-         "file" : "lib/Cobalt/Utils.pm",
-         "version" : "0.24"
+      "Bot::Cobalt::Plugin::Info3" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Info3.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::Master" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Master.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::OutputFilters::StripColor" : {
+         "file" : "lib/Bot/Cobalt/Plugin/OutputFilters/StripColor.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::OutputFilters::StripFormat" : {
+         "file" : "lib/Bot/Cobalt/Plugin/OutputFilters/StripFormat.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::PluginMgr" : {
+         "file" : "lib/Bot/Cobalt/Plugin/PluginMgr.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::RDB" : {
+         "file" : "lib/Bot/Cobalt/Plugin/RDB.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::RDB::Database" : {
+         "file" : "lib/Bot/Cobalt/Plugin/RDB/Database.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::RDB::SearchCache" : {
+         "file" : "lib/Bot/Cobalt/Plugin/RDB/SearchCache.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::Rehash" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Rehash.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::Seen" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Seen.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::Version" : {
+         "file" : "lib/Bot/Cobalt/Plugin/Version.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Plugin::WWW" : {
+         "file" : "lib/Bot/Cobalt/Plugin/WWW.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Serializer" : {
+         "file" : "lib/Bot/Cobalt/Serializer.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Timer" : {
+         "file" : "lib/Bot/Cobalt/Timer.pm",
+         "version" : "2.00_45"
+      },
+      "Bot::Cobalt::Utils" : {
+         "file" : "lib/Bot/Cobalt/Utils.pm",
+         "version" : "2.00_45"
       }
    },
    "release_status" : "testing",
@@ -227,5 +283,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "2.00_40"
+   "version" : "2.00_45"
 }

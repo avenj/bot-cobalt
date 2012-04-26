@@ -3,5 +3,5 @@ require 5.010001;
     use Module::Build::Compat 0.02;
     use lib '_build/lib';
     Module::Build::Compat->run_build_pl(args => \@ARGV);
-    require Cobalt::Builder;
-    Module::Build::Compat->write_makefile(build_class => 'Cobalt::Builder');
+    require Bot::Cobalt::Builder;
+    Module::Build::Compat->write_makefile(build_class => 'Bot::Cobalt::Builder');

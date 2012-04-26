@@ -8,9 +8,9 @@ use warnings;
 
 use Time::HiRes qw/gettimeofday tv_interval/;
 
-use Cobalt::DB;
+use Bot::Cobalt::DB;
 
-use Cobalt::Utils qw/
+use Bot::Cobalt::Utils qw/
   glob_to_re_str
   glob_to_re
 /;
@@ -82,7 +82,7 @@ my $count = scalar keys %$info3ref;
 say "Output path: $output_path";
 say "Pushing $count topics to Info3 DB";
 
-my $cdb = Cobalt::DB->new(
+my $cdb = Bot::Cobalt::DB->new(
   File => $output_path,
 );
 my $timer0 = [gettimeofday];

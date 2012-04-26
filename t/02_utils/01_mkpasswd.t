@@ -1,7 +1,7 @@
 use Test::More tests => 5;
 
 BEGIN {
-  use_ok( 'Cobalt::Utils', qw/
+  use_ok( 'Bot::Cobalt::Utils', qw/
     mkpasswd passwdcmp 
   / );
 }

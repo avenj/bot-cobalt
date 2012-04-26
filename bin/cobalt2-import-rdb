@@ -9,7 +9,7 @@ use Cwd;
 
 use File::Path;
 
-use Cobalt::DB;
+use Bot::Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
 
@@ -125,7 +125,7 @@ for my $rdb (keys %$rdbref) {
 
   say "Creating $dbfile";
 
-  my $cdb = Cobalt::DB->new(
+  my $cdb = Bot::Cobalt::DB->new(
     File => $dbfile,
   );
 

@@ -1,0 +1,102 @@
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Lang -- A role for language set loading
+
+=head1 SYNOPSIS
+
+  use Moo;
+  with 'Bot::Cobalt::Lang';
+  ## Load an initial langset out of $etcdir/langs/ :
+  $self->lang( $self->load_langset('english') );
+
+=head1 DESCRIPTION
+
+Provides language set loading for the Cobalt core (and plugins that want 
+to load their own langset, if you'd like -- just use 
+L</load_langset>as a class method or consume this role).
+
+Langsets should be in a YAML format readable by L<YAML::XS> (YAML1.1).
+
+B<IMPORTANT>: 
+Langset names are automatically lowercased. 
+Bear this in mind when naming langsets for plugins. 
+They should always be lowercase.
+
+Responses are expected to be found in the YAML langset's 'RPL:' key.
+(The corresponding hash is what is actually returned when loading a set.)
+
+Typically the keys of the 'RPL' hash contain values which are strings 
+potentially containing variables formattable by C<rplprintf> from 
+L<Bot::Cobalt::Utils>.
+
+Inspect C<etc/langs/english.yml> for an example.
+
+B<The core English langset is built in to this module at install time.>
+Missing values in the loaded language set will be automatically filled 
+by the compiled-in English set, unless this is a prefixed plugin set.
+
+Be sure to read the L<Bot::Cobalt::Utils> documentation for more on variable 
+replacement with C<rplprintf>.
+
+=head1 METHODS
+
+=head2 load_langset
+
+Load a specified language set, converting it into a hash.
+
+If passed a single argument, loads the specified .yml file 
+out of $etcdir/langs/:
+
+  ## done by cobalt core to (re)load the ->lang hash:
+  $core->lang( $core->load_langset('english') );
+
+If passed two arguments, the second argument is considered to be a 
+path prefix.
+Plugins can use this to read in a langset file, if they like:
+
+  ## using Bot::Cobalt::Lang outside of $core (as a class)
+  require Bot::Cobalt::Lang;
+  my $etc = $core->cfg->{path};  ## location of our etc/
+  ## read in etc/langs/plugin/myplugin-english.yml:
+  my $prefix = $etc . "/langs/plugin/myplugin-";
+  my $rpl_hash = Bot::Cobalt::Lang->load_langset('english', $prefix);
+
+It is generally advisable that plugins don't modify the $core->lang 
+hash unless they are also part of the core distribution.
+
+That being said, if you do so, you may want to check for rehashes 
+(if the core reloads ->lang, your changes will go missing).
+
+
+=head1 EMITTED EVENTS
+
+Events are emitted if load_langset is accessed via a Bot::Cobalt::Core 
+instance.
+
+=head2 langset_loaded
+
+Syndicated when a language set is loaded.
+
+${$_[0]} is the (lowercased) langset name.
+
+${$_[1]} is the path to the set that was loaded.
+
+=head2 langset_error
+
+Syndicated when there is some problem loading a langset.
+
+A string describing the general problem is the only argument.
+
+If an appropriate logger is available, the error will also be logged to 
+the 'debug' loglevel.
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

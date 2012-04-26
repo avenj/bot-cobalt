@@ -4,7 +4,7 @@ use warnings;
 use Module::Build;
 
 my $class = Module::Build->subclass(
-  class => 'Cobalt::Builder',
+  class => 'Bot::Cobalt::Builder',
   code => q{
 
     sub ACTION_release {
@@ -88,10 +88,10 @@ my $class = Module::Build->subclass(
 );
 
 my $build = $class->new(
-  dist_name => 'Cobalt',
+  dist_name => 'Bot::Cobalt',
   dist_abstract => 'Pluggable IRC bot (cobalt2)',
   dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
-  dist_version_from => 'lib/Cobalt/Core.pm',
+  dist_version_from => 'lib/Bot/Cobalt/Core.pm',
   license => 'perl',
 
   recursive_test_files => 1,
@@ -100,7 +100,7 @@ my $build = $class->new(
   create_makefile_pl => 'small',
   
   PL_files => {
-    'lib/Cobalt/Lang.pm.PL' => 'lib/Cobalt/Lang.pm',
+    'lib/Bot/Cobalt/Lang.pm.PL' => 'lib/Bot/Cobalt/Lang.pm',
     'bin/cobalt2-installer.PL' => 'bin/cobalt2-installer',
   },
 
@@ -192,6 +192,6 @@ my $build = $class->new(
   },
 );
 
-$build->add_to_cleanup("lib/Cobalt/Lang.pm");
+$build->add_to_cleanup("lib/Bot/Cobalt/Lang.pm");
 $build->add_to_cleanup("bin/cobalt2-installer");
 $build->create_build_script;

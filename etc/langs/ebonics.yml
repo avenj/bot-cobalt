@@ -34,7 +34,7 @@ RPL:
   RPL_TIMER_ERR: "nigga I be hittin' too much rock to set no timer!"
 
 
- ## Cobalt::IRC:
+ ## Bot::Cobalt::IRC:
 
   ## RPL_CHAN_SYNC: %chan
   RPL_CHAN_SYNC: "now about my paper on %chan"

@@ -6,8 +6,8 @@ use warnings;
 
 STDOUT->autoflush(1);
 
-use Cobalt::DB;
-use Cobalt::Serializer;
+use Bot::Cobalt::DB;
+use Bot::Cobalt::Serializer;
 
 my($dbpath, $outpath);
 
@@ -29,8 +29,8 @@ GetOptions(
 );
 
 ## Format check
-die "$format is not a valid export format; see perldoc Cobalt::Serializer"
-  unless Cobalt::Serializer->_check_if_avail($format);
+die "$format is not a valid export format; see perldoc Bot::Cobalt::Serializer"
+  unless Bot::Cobalt::Serializer->_check_if_avail($format);
 
 unless ($dbpath) {
   print "Path to database to be exported: \n > ";
@@ -54,7 +54,7 @@ if (-f $outpath) {
   print "\n";
 }
 
-my $db = Cobalt::DB->new(
+my $db = Bot::Cobalt::DB->new(
   File => $dbpath,
   LockFile => ".dbdump.lock",
 );
@@ -76,7 +76,7 @@ __END__
 
 =head1 NAME
 
-cobalt2-dbdump - export Cobalt::DB databases to YAML
+cobalt2-dbdump - export Bot::Cobalt::DB databases to YAML
 
 =head1 SYNOPSIS
 
@@ -84,11 +84,11 @@ cobalt2-dbdump - export Cobalt::DB databases to YAML
 
 =head1 DESCRIPTION
 
-A simple frontend to the dbdump functionality found in L<Cobalt::DB>.
+A simple frontend to the dbdump functionality found in L<Bot::Cobalt::DB>.
 
-Exports specified Cobalt::DB databases to YAML by default; the 
+Exports specified Bot::Cobalt::DB databases to YAML by default; the 
 B<--format> option can be used to specify any other format supported by 
-L<Cobalt::Serializer>:
+L<Bot::Cobalt::Serializer>:
 
   cobalt2-dbdump --format=XML
   cobalt2-dbdump --format=JSON --database=/path/to/db --output=out.json

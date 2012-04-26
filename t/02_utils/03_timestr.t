@@ -1,9 +1,9 @@
 use Test::More tests => 5;
 
-## Cobalt::Utils tests
+## Bot::Cobalt::Utils tests
 
 BEGIN {
-  use_ok( 'Cobalt::Utils', qw/
+  use_ok( 'Bot::Cobalt::Utils', qw/
     timestr_to_secs
     secs_to_timestr
   / );

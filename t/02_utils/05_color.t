@@ -2,7 +2,7 @@ use Test::More tests => 4;
 
 
 BEGIN {
-  use_ok( 'Cobalt::Utils', qw/
+  use_ok( 'Bot::Cobalt::Utils', qw/
     color
   / );
 }

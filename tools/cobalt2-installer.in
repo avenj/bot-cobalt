@@ -9,7 +9,7 @@ use File::Path;
 
 use JSON;
 
-use Cobalt::Utils qw/ rplprintf mkpasswd /;
+use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
 
 STDOUT->autoflush(1);
 

@@ -1,7 +1,7 @@
 use Test::More tests => 3;
 
 BEGIN {
-  use_ok( 'Cobalt::Utils', qw/
+  use_ok( 'Bot::Cobalt::Utils', qw/
     rplprintf 
   / );
 }
