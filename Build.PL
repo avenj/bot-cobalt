@@ -40,9 +40,11 @@ my $class = Module::Build->subclass(
       my $self = shift;
       my $base = $self->base_dir;
       my $vers = $self->dist_version;
-      
+      ++$|;
+      print "Versionifying ";
       require File::Find;
       File::Find->import('find');
+      my $x;
       find(sub {
           if ($_ =~ /\.pm(.in)?$/) {
             my $path = $File::Find::name;
@@ -54,9 +56,12 @@ my $class = Module::Build->subclass(
             my $package_l = shift @thisf || return;
             my $pkg;
             unless (($pkg) = $package_l =~ /^package\s+(\S+)$/) {
-              warn "Skipping, no package: $path\n";
+              warn "\nSkipping, no package: $path\n";
               return
             }
+            
+            ++$x;
+            print ". ";
             
             my $v_line = "our \$VERSION = '$vers';\n";
             
@@ -76,6 +81,7 @@ my $class = Module::Build->subclass(
         },
         $base
       );
+      print "\n$x modules\n";
     }
 
   },
