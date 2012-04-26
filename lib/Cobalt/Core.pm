@@ -31,7 +31,10 @@ has 'loglevel' => (
   default => sub { 'info' } 
 );
 
-has 'detached' => ( is => 'ro', isa => Int, required => 1 );
+has 'detached' => ( is => 'ro', isa => Int, lazy => 1,
+  default => sub { 0 },
+);
+
 has 'debug'    => ( 
   is => 'rw', isa => Int, 
   default => sub { 0 } 

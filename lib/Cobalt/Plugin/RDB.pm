@@ -26,7 +26,13 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {1},
 );
 
-has 'core'  => ( is => 'rw', isa => Object );
+has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub {
+    require Cobalt::Core; Cobalt::Core->instance
+  }, 
+);
+
+
 has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
     my ($self) = @_;
@@ -47,7 +53,6 @@ has 'rand_delay' => ( is => 'rw', isa => Int );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->core($core);
 
   $core->plugin_register($self, 'SERVER',
     [ 

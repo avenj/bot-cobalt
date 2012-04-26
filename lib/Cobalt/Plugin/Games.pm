@@ -30,6 +30,7 @@ sub Cobalt_unregister {
 }
 
 sub _handle_auto {
+  ## Handler for autoviv'd methods. See _load_games
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
  
@@ -59,9 +60,10 @@ sub _handle_auto {
 
 sub _load_games {
   my ($self) = @_;
-  my $core = $self->{core};
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
   
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg  = $core->get_plugin_cfg( $self );
   my $games = $pcfg->{Games} // {};
 
   $core->log->debug("Loading games");

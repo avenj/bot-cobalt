@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 ## handles and eats: !plugin
 
@@ -16,7 +16,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
   $core->plugin_register( $self, 'SERVER',
     'public_cmd_plugin',
   );
@@ -32,8 +31,12 @@ sub Cobalt_unregister {
 
 sub _unload {
   my ($self, $alias) = @_;
-  my $core = $self->{core};
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
+
   my $resp;
+
   my $plug_obj = $core->plugin_get($alias);
   my $plugisa = ref $plug_obj || return "_unload broken, no PLUGISA?";
 
@@ -82,7 +85,9 @@ sub _load_module {
   ## _load_module( 'Auth', 'Cobalt::Plugin::Auth' ) f.ex
   ## returns a response string for irc
   my ($self, $alias, $module) = @_;
-  my $core = $self->{core};
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
 
   eval "require $module";
   if ($@) {
@@ -153,7 +158,9 @@ sub _load_module {
 
 sub _load {
   my ($self, $alias, $module, $reload) = @_;
-  my $core = $self->{core};
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
 
   return "Bad syntax; usage: load <alias> [module]"
     unless $alias;
@@ -204,7 +211,9 @@ sub _load {
 
 sub _load_conf {
   my ($self, $alias, $pkgname, $pluginscf) = @_;
-  my $core = $self->{core};
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
 
   $pluginscf = $self->_read_core_plugins_conf unless $pluginscf;
 

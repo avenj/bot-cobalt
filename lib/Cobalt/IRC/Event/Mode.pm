@@ -16,14 +16,14 @@ has 'is_umode' => ( is => 'ro', isa => Bool, lazy => 1,
     my $casemap = $core->get_irc_casemap( $self->context );
     my $irc_obj = $core->get_irc_object( $self->context );
     my $me = $irc_obj->nick_name;
-    eq_irc($me, $self->target) ? 1 : 0 ;
+    eq_irc($me, $self->target) ? 1 : 0
   },
 );
 
 has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub {
     my ($self) = @_;
-    $self->is_umode ? undef : $self->target ;
+    $self->is_umode ? undef : $self->target
   },
 );
 

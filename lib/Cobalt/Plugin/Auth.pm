@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Auth;
-our $VERSION = '0.301';
+our $VERSION = '0.302';
 
 use 5.10.1;
 
@@ -79,7 +79,13 @@ use constant {
 };
 
 
-has 'core'    => ( is => 'rw', isa => Object );
+has 'core'    => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub {
+    require Cobalt::Core; Cobalt::Core->instance;
+  },
+);
+
+
 has 'DB_Path' => ( is => 'rw', isa => Str );
 
 has 'AccessList' => ( is => 'rw', isa => HashRef,
@@ -91,8 +97,6 @@ has 'NON_RELOADABLE' => ( is => 'ro', default => sub { 1 } );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  ## Set $self->core to make life easier on our internals:
-  $self->core($core);
 
   my $p_cfg = $core->get_plugin_cfg( $self );
 
