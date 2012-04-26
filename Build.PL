@@ -15,13 +15,10 @@ my $class = Module::Build->subclass(
     }
 
     sub ACTION_wikidocs {
-      ## FIXME doesn't grab README / INSTALL PODs
-      ## move them to Cobalt::Manual::
-      ## create top-level plaintext README referencing online POD
       ## FIXME stick cobalt2-installer POD somewhere?
       my $self = shift;
       my $base = $self->base_dir;
-      my $remote = 'eris.cobaltirc.org';
+      my $remote = $ENV{DOC_UPLOAD} || die "Need ENV DOC_UPLOAD";
       chdir($base."/tools/release/docs");
       $self->do_system(qw{"./pod2doku"});
       $self->do_system(
@@ -92,6 +89,8 @@ my $build = $class->new(
   dist_abstract => 'Pluggable IRC bot (cobalt2)',
   dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
   license => 'perl',
+  
+  create_readme => 1,
 
   recursive_test_files => 1,
 
@@ -101,6 +100,15 @@ my $build = $class->new(
   PL_files => {
     'lib/Bot/Cobalt/Lang.pm.PL' => 'lib/Bot/Cobalt/Lang.pm',
     'bin/cobalt2-installer.PL' => 'bin/cobalt2-installer',
+  },
+  
+  configure_requires => {
+    'Module::Build' => '0.38',
+  },
+  
+  build_requires => {
+    'Test::More' => 0,
+    'Test::Cmd'  => 0,
   },
 
   requires => {

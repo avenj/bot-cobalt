@@ -265,13 +265,15 @@ Cobalt and the complete documentation.
 
 =head2 Getting started
 
-L<Bot::Cobalt::Manual::README>
+L<Bot::Cobalt>
 
-L<Bot::Cobalt::Manual::INSTALL>
+L<cobalt2-installer>
 
 =head2 Plugin authoring
 
 L<Bot::Cobalt::Manual::Plugins>
+
+L<Bot::Cobalt::Core>
 
 L<Bot::Cobalt::IRC>
 

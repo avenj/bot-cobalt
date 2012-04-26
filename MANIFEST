@@ -104,3 +104,4 @@ t/05_plugins/01_loadable_coreset.t
 tools/cobalt2-installer.in
 var/db/.keep
 var/.keep
+README

@@ -46,7 +46,16 @@ Bot::Cobalt - IRC darkbot-alike plus plugin authoring sugar
 
 =head1 SYNOPSIS
 
-FIXME quickstart instructions
+  ## Set up example confs and a simple ~/.cobalt2rc :
+  sh$ cobalt2-installer
+
+  sh$ cobalt2 --help
+  
+  ## Launch in foreground:
+  sh$ cobalt2 --nodetach
+  
+  ## Launch in background:
+  sh$ cobalt2
 
 =head1 DESCRIPTION
 
@@ -54,24 +63,92 @@ B<Bot::Cobalt> is the 2nd generation of the (not released on CPAN)
 B<cobalt> IRC bot.
 
 Cobalt was originally a Perl reimplementation of Jason Hamilton's 
-B<darkbot> behavior.
+B<darkbot> behavior (darkbot's last release was in 2001).
 
 Bot::Cobalt is a much-improved (and CPAN-able!) revision, providing a 
 pluggable IRC bot framework coupled with a core set of plugins 
 replicating classic darkbot and Cobalt behavior.
 
-The included plugin set provides a wide range of behavior.
-FIXME link a doc covering core plugin summary?
+The included plugin set provides a wide range of behavior; see 
+L</"Included plugins"> below.
 
-IRC functionality is provided via L<POE::Component::IRC>.
-The bridge to L<POE::Component::IRC> is also a plugin and can be 
-easily subclassed or replaced entirely; see L<Bot::Cobalt::IRC>.
+IRC functionality is provided via L<POE::Component::IRC>; the bot can 
+comfortably handle multiple servers/networks (referred to as 
+"contexts").
+
+Bot::Cobalt tries to be friendly to developers. The bridge to 
+L<POE::Component::IRC> exists as a plugin and 
+can be easily subclassed or replaced entirely; see L<Bot::Cobalt::IRC>.
 
 Plugin authoring is intended to be as easy as possible. Modules are 
 included to provide simple frontends to IRC-related 
 utilities, logging, plugin configuration, asynchronous HTTP 
 sessions, data serialization and on-disk databases, and more. See 
 L<Bot::Cobalt::Manual::Plugins> for more about plugin authoring.
+
+Complete documentation is also available in an easy-to-navigate Wiki 
+format at L<http://www.cobaltirc.org/dev/bots>
+
+=head2 Initializing a new instance
+
+A Cobalt instance needs its own I<etc/> and I<var/> directories. With 
+the default frontend (C<cobalt2>), these are specified in a simple 
+'rcfile' for each particular instance.
+
+  sh$ cobalt2-installer
+
+L<cobalt2-installer> will ask some questions, initialize a new rcfile 
+for an instance and try to create the relevant directory layout with 
+some example configuration files.
+
+You can, of course, run multiple instances with the default frontend; 
+each just needs its own rcfile:
+
+  sh$ cobalt2-installer --rcfile=${HOME}/cobalts/mycobalt.rc
+  sh$ cobalt2 --rcfile=${HOME}/cobalts/mycobalt.rc
+
+After reviewing/editing the example configuration files, you should be 
+ready to try starting your Cobalt instance:
+
+  ## Launch in foreground with verbose debug output:
+  sh$ cobalt2 --nodetach --debug
+  
+  ## Launch in background with configured log options:
+  sh$ cobalt2
+
+=head2 Included plugins
+
+The example C<etc/plugins.conf> installed by L<cobalt2-installer> has 
+most of these:
+
+L<Bot::Cobalt::Plugin::Alarmclock> -- IRC highlight timers
+
+L<Bot::Cobalt::Plugin::Auth> -- User authentication
+
+L<Bot::Cobalt::Plugin::Games> -- Simple IRC games
+
+L<Bot::Cobalt::Plugin::Info3> -- Flexible text-triggered responses
+
+L<Bot::Cobalt::Plugin::Master> -- Simple bot control from IRC
+
+L<Bot::Cobalt::Plugin::PluginMgr> -- Load/unload plugins from IRC
+
+L<Bot::Cobalt::Plugin::RDB> -- "Random stuff" databases for quotebots 
+or randomized chatter on a timer
+
+L<Bot::Cobalt::Plugin::Extras::DNS> -- DNS lookups
+
+L<Bot::Cobalt::Plugin::Extras::Karma> -- Karma bot
+
+L<Bot::Cobalt::Plugin::Extras::Money> -- Currency conversion via 
+WebServiceX
+
+L<Bot::Cobalt::Plugin::Extras::Relay> -- Cross-network relay
+
+L<Bot::Cobalt::Plugin::Extras::Shorten> -- Shorten URLs via Metamark
+
+L<Bot::Cobalt::Plugin::Extras::TempConv> -- Temperature units conversion 
+
 
 =head1 SEE ALSO
 
