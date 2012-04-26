@@ -62,7 +62,7 @@ Here's a simple one based around one centralized plugin:
   ## Simple example Build.PL
   my $build = Module::Build->new(
     module_name   => "Bot::Cobalt::Plugin::User::MyPlugin",
-    dist_abstract => "My Cobalt2 plugin",
+    dist_abstract => "My Bot::Cobalt plugin",
     dist_author   => "Me <myself@example.ext>",
     license => 'perl',
     create_makefile_pl => 'small',
@@ -79,7 +79,7 @@ You could distribute a plugin set with a B<Build.PL> along these lines:
     dist_version  => '0.01',
     module_name   => 'Bot::Cobalt::Plugin::User::MyPlugins',
     dist_name     => 'Cobalt-Plugin-User-MyPlugins',
-    dist_abstract => 'My Cobalt2 plugin set',
+    dist_abstract => 'My Bot::Cobalt plugin set',
     dist_author   => 'Me <myself@example.ext>',
     license => 'perl',
     create_makefile_pl => 'small',

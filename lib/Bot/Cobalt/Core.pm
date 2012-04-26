@@ -385,12 +385,12 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Core - Cobalt2 IRC bot core
+Bot::Cobalt::Core - Bot::Cobalt core and event syndicator
 
 =head1 DESCRIPTION
 
-This module is the core of B<Cobalt2>, tying an event syndicator (via 
-L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
+This module is the core of L<Bot::Cobalt>, tying an event syndicator 
+(via L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
 L<Log::Handler> instance, configuration manager, and other useful tools.
 
 Core is a singleton; within a running Cobalt instance, you can always 

@@ -997,7 +997,7 @@ The following variables are valid:
   t~  == Unix epoch seconds (unixtime)
   T~  == Human-readable date and time
   V~  == Current bot version
-  W~  == Cobalt2 website
+  W~  == Cobalt website
 
 Additionally, words in the original string that triggered the response can 
 be pulled out individually by their relative position. The first word is 

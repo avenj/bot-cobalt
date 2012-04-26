@@ -501,7 +501,7 @@ An example relay.conf:
         Context: Paradox
         Channel: '#perl'
 
-See etc/plugins/relay.conf in the core Cobalt2 distribution.
+See etc/plugins/relay.conf in the L<Bot::Cobalt> distribution.
 
 =head1 COMMANDS
 

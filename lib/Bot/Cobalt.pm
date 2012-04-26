@@ -163,7 +163,7 @@ L<POE> Components:
 
 L<POE::Component::IRC>
 
-L<POE::Component::Syndicator>
+L<POE::Component::Syndicator> (and L<Object::Pluggable>)
 
 Consult their documentation for all the gory details.
 

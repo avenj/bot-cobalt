@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-Bot::Cobalt::Manual::Plugins - Cobalt2 plugin-writing fundamentals guide
+Bot::Cobalt::Manual::Plugins - Bot::Cobalt plugin authoring reference
 
 =head1 DESCRIPTION
 
 This POD attempts to be a reasonably complete guide to writing useful 
-B<Cobalt2> plugins.
+L<Bot::Cobalt> plugins.
 
 Refer to L</SEE ALSO> for other relevant documentation.
 
