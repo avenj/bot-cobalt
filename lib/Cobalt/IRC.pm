@@ -1,5 +1,5 @@
 package Cobalt::IRC;
-our $VERSION = '0.242';
+our $VERSION = '0.244';
 
 use 5.10.1;
 use strictures 1;
@@ -35,7 +35,9 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
   default => sub { 1 },
 );
 
-has 'core' => ( is => 'rw', isa => Object );
+has 'core' => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub { require Cobalt::Core; Cobalt::Core->instance },
+);
 
 has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
   default => sub { {} },
@@ -56,8 +58,6 @@ has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
 
 sub Cobalt_register {
   my ($self, $core) = @_;
-
-  $self->core( $core );
 
   ## register for events
   $core->plugin_register($self, 'SERVER',

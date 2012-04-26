@@ -1,8 +1,5 @@
 package Cobalt::IRC::FloodChk;
 
-## Generic flood check.
-## Conceptually borrowed from Algorithm::FloodControl
-
 use Moo;
 use Cobalt::Common qw/:types/;
 
@@ -98,6 +95,11 @@ If there appears to be a flood in progress, returns the number of
 seconds until it would be permissible to process more events.
 
 Returns boolean false if there is no flood detected.
+
+=head2 clear
+
+Clear the tracked state for a specified context and key; if the key is 
+omitted, the entire context is cleared.
 
 =head1 SEE ALSO
 

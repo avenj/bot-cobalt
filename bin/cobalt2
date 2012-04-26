@@ -181,7 +181,7 @@ sub _start_cobalt {
   require Cobalt::Conf;
   require Cobalt::Core;
   my $cfg = Cobalt::Conf->new(etc => $etcdir)->read_cfg;
-  Cobalt::Core->new(
+  Cobalt::Core->instance(
     cfg => $cfg,
     var => $vardir,
     loglevel => $loglevel, 

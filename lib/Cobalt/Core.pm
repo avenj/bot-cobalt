@@ -1,10 +1,7 @@
 package Cobalt::Core;
-our $VERSION = '2.00_44';
+our $VERSION = '2.00_45';
 
-## This is the core Syndicator.
-## It is something of a "god object" ... but such is the nature of 
-## this particular beast; the Core ties together logging, conf, 
-## langsets, global state, and the plugin pipeline.
+## This is the core Syndicator singleton.
 
 use 5.10.1;
 use strictures 1;
@@ -99,6 +96,23 @@ with 'Cobalt::Core::Role::Unloader';
 with 'Cobalt::Core::Role::Timers';
 with 'Cobalt::Core::Role::IRC';
 
+sub instance {
+  ## Return the singleton instance (or create one)
+  my $class = shift;
+  
+  no strict 'refs';
+  my $instance = \${$class.'::_instance'};
+  
+  return defined $$instance ? 
+    $$instance 
+    : ( $$instance = $class->new(@_) );
+}
+
+sub is_instanced {
+  my $class = ref $_[0] || $_[0];
+  no strict 'refs';
+  return ${$class.'::_instance'}  
+}
 
 sub init {
   my ($self) = @_;
@@ -428,8 +442,9 @@ A configuration hash is typically created by L<Cobalt::Conf>:
 
 . . . then passed to Cobalt::Core before the POE kernel is started:
 
-  ## Set up Cobalt::Core's POE session:
-  Cobalt::Core->new(
+  ## Instance a Cobalt::Core singleton
+  ## Further instance() calls will return the singleton
+  Cobalt::Core->instace(
     cfg => $cfg_hash,
     var => $path_to_var_dir,
     
