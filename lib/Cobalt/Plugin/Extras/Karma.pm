@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.202';
+our $VERSION = '2.00_45';
 
 ## simple karma++/-- tracking
 

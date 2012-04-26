@@ -1,4 +1,5 @@
 package Cobalt::Core::Role::Ignore;
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 use strict;

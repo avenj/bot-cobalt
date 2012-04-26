@@ -1,4 +1,5 @@
 package Cobalt::Timer;
+our $VERSION = '2.00_45';
 
 use strict; use warnings;
 use 5.10.1;

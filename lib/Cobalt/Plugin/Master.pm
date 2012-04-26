@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Master;
-our $VERSION = '0.02';
+our $VERSION = '2.00_45';
 ## FIXME:
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die

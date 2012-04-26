@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Logger;
-our $VERSION = '0.001';
+our $VERSION = '2.00_45';
 
 ## FIXME
 ##  - push ourselves up towards right after Cobalt::IRC

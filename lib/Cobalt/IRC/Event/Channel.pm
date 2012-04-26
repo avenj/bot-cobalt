@@ -1,4 +1,5 @@
 package Cobalt::IRC::Event::Channel;
+our $VERSION = '2.00_45';
 
 ## Generic channel events.
 

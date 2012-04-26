@@ -1,4 +1,5 @@
 package Cobalt::Plugin::Games::Dice;
+our $VERSION = '2.00_45';
 
 our $VERSION = '0.03';
 

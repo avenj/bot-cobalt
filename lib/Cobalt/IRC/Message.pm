@@ -1,4 +1,5 @@
 package Cobalt::IRC::Message;
+our $VERSION = '2.00_45';
 
 ## Message class. Inherits from Event
 

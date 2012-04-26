@@ -1,4 +1,5 @@
 package Cobalt::IRC::Server;
+our $VERSION = '2.00_45';
 
 ## A server context.
 

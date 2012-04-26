@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Rehash;
-our $VERSION = '0.103';
+our $VERSION = '2.00_45';
 
 ## HANDLES AND EATS:
 ##  !rehash

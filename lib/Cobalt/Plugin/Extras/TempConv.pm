@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::TempConv;
-our $VERSION = '1.04';
+our $VERSION = '2.00_45';
 
 ## RECEIVES AND EATS:
 ##  _public_cmd_tempconv  ( !tempconv )

@@ -1,4 +1,5 @@
 package Cobalt::IRC::Event::Kick;
+our $VERSION = '2.00_45';
 
 use Moo;
 use Cobalt::Common qw/:types/;

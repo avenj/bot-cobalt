@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Ignore;
-our $VERSION = '0.10';
+our $VERSION = '2.00_45';
 
 
 use 5.10.1;

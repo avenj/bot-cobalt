@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Money;
-our $VERSION = '0.071';
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 use Cobalt::Common;

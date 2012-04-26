@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::DNS;
-our $VERSION = '0.001';
+our $VERSION = '2.00_45';
 
 ## Mostly borrowed from POE::Component::IRC::Plugin::QueryDNS by BinGOs
 

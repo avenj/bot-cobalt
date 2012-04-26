@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Games::Magic8;
-our $VERSION = '0.04';
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 use strict;

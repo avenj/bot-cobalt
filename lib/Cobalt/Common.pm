@@ -1,5 +1,5 @@
 package Cobalt::Common;
-our $VERSION = '0.300';
+our $VERSION = '2.00_45';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##

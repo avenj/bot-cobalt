@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Seen;
-our $VERSION = '0.002';
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 

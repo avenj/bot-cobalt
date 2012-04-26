@@ -1,5 +1,6 @@
 package Cobalt::Conf;
-our $VERSION = '1.02';
+our $VERSION = '2.00_45';
+
 ## Cobalt::Conf
 ## Looks for the following YAML confs:
 ##   etc/cobalt.conf

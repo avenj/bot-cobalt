@@ -1,5 +1,5 @@
 package Cobalt::Serializer;
-our $VERSION = '0.19';
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 use strict;

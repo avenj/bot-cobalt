@@ -1,5 +1,5 @@
 package Cobalt::Plugin::PluginMgr;
-our $VERSION = '1.10';
+our $VERSION = '2.00_45';
 
 ## handles and eats: !plugin
 

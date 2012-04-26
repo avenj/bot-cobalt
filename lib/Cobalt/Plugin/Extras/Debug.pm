@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Extras::Debug;
-our $VERSION = '0.002';
+our $VERSION = '2.00_45';
 
 ## Simple 'dump to stdout' debug functions
 ##

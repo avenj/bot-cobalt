@@ -1,5 +1,5 @@
 package Cobalt::Plugin::Info3;
-our $VERSION = '0.230';
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 

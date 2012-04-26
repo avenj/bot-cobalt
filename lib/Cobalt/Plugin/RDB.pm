@@ -1,5 +1,5 @@
 package Cobalt::Plugin::RDB;
-our $VERSION = '0.314';
+our $VERSION = '2.00_45';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 ##

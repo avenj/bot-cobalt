@@ -1,4 +1,5 @@
 package Cobalt::Plugin::RDB::Database;
+our $VERSION = '2.00_45';
 
 ## Frontend to managing RDB-style Cobalt::DB instances
 ##

@@ -1,4 +1,5 @@
 package Cobalt::DB;
+our $VERSION = '2.00_45';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:

@@ -1,4 +1,5 @@
 package Cobalt::IRC::Event;
+our $VERSION = '2.00_45';
 
 ## Base class for IRC events.
 

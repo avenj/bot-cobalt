@@ -51,14 +51,14 @@ my $class = Module::Build->subclass(
             my @thisf = readline($fh);
             close $fh;
             
-            my $package_l = shift @thisf;
+            my $package_l = shift @thisf || return;
             my $pkg;
             unless (($pkg) = $package_l =~ /^package\s+(\S+)$/) {
               warn "Skipping, no package: $path\n";
               return
             }
             
-            my $v_line = "our \$VERSION = '$vers';";
+            my $v_line = "our \$VERSION = '$vers';\n";
             
             if ($thisf[0] =~ /VERSION/) {
               $thisf[0] = $v_line

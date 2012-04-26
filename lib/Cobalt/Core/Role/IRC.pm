@@ -1,4 +1,5 @@
 package Cobalt::Core::Role::IRC;
+our $VERSION = '2.00_45';
 
 use 5.10.1;
 use strictures 1;
