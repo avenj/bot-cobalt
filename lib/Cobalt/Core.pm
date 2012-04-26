@@ -390,6 +390,18 @@ This module is the core of B<Cobalt2>, tying an event syndicator (via
 L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
 L<Log::Handler> instance, configuration manager, and other useful tools.
 
+Core is a singleton; within a running Cobalt instance, you can always 
+retrieve the Core via the B<instance> method:
+
+  require Cobalt::Core;
+  my $core = Cobalt::Core->instance;
+
+You can also query to find out if Core has been properly instanced:
+
+  if ( Cobalt::Core->is_instanced ) {
+  
+  }
+
 Public methods are documented in L<Cobalt::Manual::Plugins/"Core 
 methods"> and the classes & roles listed below.
 

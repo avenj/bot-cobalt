@@ -7,14 +7,20 @@ use Moo;
 use Cobalt::Common qw/:types/;
 
 ## my $timer = Cobalt::Core::Item::Timer->new(
-##   core  => $core,
 ##   delay => $secs,
 ##   event => $event,
 ##   args  => $args,
 ##   alias => $alias
 ## );
 
-has 'core'  => ( is => 'rw', isa => Object, required => 1 );
+has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub { 
+    require Cobalt::Core;
+    die "Cannot find aactive Cobalt::Core instance"
+      unless Cobalt::Core->is_instanced;
+    Cobalt::Core->instance 
+  },
+);
 
 ## May have a timer ID specified at construction for use by 
 ## timer pool managers; if not, creating IDs is up to them.
@@ -142,7 +148,6 @@ Cobalt::Timer - Cobalt timer objects
 =head1 SYNOPSIS
 
   my $timer = Cobalt::Timer->new(
-    core   => $core,
     event  => 'my_timed_event',
     args   => [ $one, $two ],
   );
@@ -159,12 +164,9 @@ A B<Cobalt::Timer> instance represents a single timed event.
 These are usually constructed for use by the L<Cobalt::Core> TimerPool; 
 also see L<Cobalt::Core::Role::Timers/timer_set>.
 
-When constructed, a Timer should be provided a B<core> object that can 
-B<send_event> -- this is usually the running L<Cobalt::Core> instance:
+  my $timer = Cobalt::Timer->new;
 
-  my $timer = Cobalt::Timer->new(
-    core => $core,
-  );
+Cannot be constructed without an instanced Cobalt::Core singleton.
 
 =head1 METHODS
 

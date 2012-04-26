@@ -80,9 +80,7 @@ sub timer_set_hashref {
     }
   }
   
-  my $timer = Cobalt::Timer->new(
-    core => $self,
-  );
+  my $timer = Cobalt::Timer->new;
 
   $timer->id($id) if $id;
 
