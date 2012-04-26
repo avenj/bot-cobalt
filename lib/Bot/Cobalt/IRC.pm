@@ -1,9 +1,10 @@
 package Bot::Cobalt::IRC;
-our $VERSION = '0.200';
+our $VERSION = '0.200_46';
 
 use 5.10.1;
 use strictures 1;
 use Moo;
+
 use Bot::Cobalt::Common;
 
 use Bot::Cobalt::IRC::FloodChk;
@@ -49,6 +50,7 @@ has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
 );
 
 has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
+  predicate => 'has_flood',
   default => sub { 
     my ($self) = @_;
     my $cfg = $self->core->get_core_cfg;
@@ -62,7 +64,7 @@ has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
 );
 
 sub Cobalt_register {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
 
   ## register for events
   $core->plugin_register($self, 'SERVER',
@@ -71,12 +73,18 @@ sub Cobalt_register {
 
   $core->send_event( 'initialize_irc' );
 
+  ## Start a lazy cleanup timer for flood->expire
+  $core->timer_set( 180,
+    { Event => 'ircplug_chk_floodkey_expire' },
+    'IRCPLUG_CHK_FLOODKEY_EXPIRE'
+  );
+
   $core->log->info("Loaded");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
-  my ($self, $core) = @_;
+  my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering IRC plugin");
 
   $core->log->debug("disconnecting");
@@ -928,6 +936,26 @@ sub Bot_rehash {
   return PLUGIN_EAT_NONE
 }
 
+### Internals.
+
+sub Bot_ircplug_chk_floodkey_expire {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  ## Lazy flood tracker cleanup.
+  ## These are just arrays of timestamps, but they gotta be cleaned up 
+  ## when they're stale.
+  ## Check every couple of minutes.
+
+  $self->flood->expire if $self->has_flood;
+
+  $core->timer_set( 120,
+    { Event => 'ircplug_chk_floodkey_expire' },
+    'IRCPLUG_CHK_FLOODKEY_EXPIRE'
+  );
+  
+  return PLUGIN_EAT_ALL
+}
+
 sub Bot_ircplug_flood_rem_ignore {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
@@ -935,7 +963,10 @@ sub Bot_ircplug_flood_rem_ignore {
   ## Internal timer-fired event to remove temp ignores.
 
   $core->log->info("Clearing temp ignore: $mask ($context)");
+
   $core->ignore_del( $context, $mask );  
+  
+  return PLUGIN_EAT_ALL
 }
 
 sub flood_ignore {

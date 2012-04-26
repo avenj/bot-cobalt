@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::FloodChk;
-our $VERSION = '0.200';
+our $VERSION = '0.200_46';
 
 use Moo;
 use Bot::Cobalt::Common qw/:types/;
@@ -52,6 +52,28 @@ sub clear {
   return delete $self->fqueue->{$context}
 }
 
+sub expire {
+  ## Clear keys when recent_event_time - time > $self->in
+  my ($self) = @_;
+  CONTEXT: for my $context (keys %{ $self->fqueue } ) {
+    KEY: for my $key (keys %{ $self->fqueue->{$context} } ) {
+      my @events = @{ $self->fqueue->{$context}->{$key} };
+      my $latest_time = $events[-1] // next KEY;
+      
+      if (time - $latest_time > $self->in) {
+        ## It's been more than ->in seconds since latest event was
+        ## noted. We can clear() this entry.
+        $self->clear($context, $key);
+      }
+    } ## KEY
+    
+    unless (keys %{ $self->fqueue->{$context} }) {
+      ## Nothing left for this context.
+      $self->clear($context);
+    }
+  }
+}
+
 1;
 __END__
 
@@ -101,6 +123,12 @@ Returns boolean false if there is no flood detected.
 
 Clear the tracked state for a specified context and key; if the key is 
 omitted, the entire context is cleared.
+
+=head2 expire
+
+Check all contexts and keys in the object for stale entries that can be 
+safely removed; in other words, entries whose latest recorded event was 
+more than the specified B<in> seconds ago.
 
 =head1 SEE ALSO
 
