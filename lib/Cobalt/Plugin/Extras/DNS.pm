@@ -149,3 +149,34 @@ sub dns_issue_query {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Cobalt::Plugin::Extras::DNS - Issue DNS queries from IRC
+
+=head1 SYNOPSIS
+
+   !dns www.cobaltirc.org
+  
+  ## Same as:
+   !nslookup www.cobaltirc.org
+  
+  ## Optionally specify a type:
+   !dns irc.cobaltirc.org aaaa
+
+=head1 DESCRIPTION
+
+A Cobalt plugin providing DNS query results on IRC.
+
+Uses L<POE::Component::Client::DNS> for asynchronous lookups.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
