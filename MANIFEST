@@ -18,6 +18,7 @@ etc/plugins/info3.conf
 etc/plugins/rdb.conf
 etc/plugins/relay.conf
 etc/plugins/www.conf
+lib/Bot/Cobalt.pm
 lib/Bot/Cobalt/Common.pm
 lib/Bot/Cobalt/Conf.pm
 lib/Bot/Cobalt/Core.pm
@@ -27,6 +28,7 @@ lib/Bot/Cobalt/Core/Role/Ignore.pm
 lib/Bot/Cobalt/Core/Role/Timers.pm
 lib/Bot/Cobalt/Core/Role/Unloader.pm
 lib/Bot/Cobalt/DB.pm
+lib/Bot/Cobalt/Frontend/RC.pm
 lib/Bot/Cobalt/IRC.pm
 lib/Bot/Cobalt/IRC/Event.pm
 lib/Bot/Cobalt/IRC/Event/Channel.pm

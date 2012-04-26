@@ -91,7 +91,6 @@ my $build = $class->new(
   dist_name => 'Bot::Cobalt',
   dist_abstract => 'Pluggable IRC bot (cobalt2)',
   dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
-  dist_version_from => 'lib/Bot/Cobalt/Core.pm',
   license => 'perl',
 
   recursive_test_files => 1,
