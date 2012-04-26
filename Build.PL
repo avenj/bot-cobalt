@@ -44,7 +44,7 @@ my $class = Module::Build->subclass(
       require File::Find;
       File::Find->import('find');
       find(sub {
-          if ($_ =~ /\.pm$/) {
+          if ($_ =~ /\.pm(.in)?$/) {
             my $path = $File::Find::name;
             open my $fh, '<', $path
               or die "open: $!";
