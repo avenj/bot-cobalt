@@ -15,7 +15,7 @@ sub Cobalt_register {
 
   my $count = $self->_load_games();
 
-  $core->log->info("$VERSION loaded - $count games");
+  $core->log->info("Loaded - $count games");
   return PLUGIN_EAT_NONE
 }
 

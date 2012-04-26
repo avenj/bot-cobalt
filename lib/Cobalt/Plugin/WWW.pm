@@ -86,7 +86,7 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("Loaded WWW interface; $VERSION");
+  $core->log->info("Loaded WWW interface");
 
   return PLUGIN_EAT_NONE
 }

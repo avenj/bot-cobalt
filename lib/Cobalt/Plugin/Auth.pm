@@ -190,7 +190,7 @@ sub Cobalt_register {
   ## (assuming the plugin unloaded cleanly, there should be none)
   $self->_clear_all;
 
-  $core->log->info("$VERSION loaded");
+  $core->log->info("Loaded");
 
   return PLUGIN_EAT_NONE
 }

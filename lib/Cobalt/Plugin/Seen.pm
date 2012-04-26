@@ -142,7 +142,7 @@ sub Cobalt_register {
     'SEENDB_WRITE'
   );
   
-  $core->log->info("Loaded ($VERSION)");
+  $core->log->info("Loaded");
   
   return PLUGIN_EAT_NONE
 }

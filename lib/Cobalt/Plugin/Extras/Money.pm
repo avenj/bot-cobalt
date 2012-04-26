@@ -23,7 +23,7 @@ sub Cobalt_register {
       'currencyconv_expire_cache',
     ],
   );
-  $core->log->info("$VERSION loaded");
+  $core->log->info("Loaded: cc money currency");
 
   $core->timer_set( 1200,
     {

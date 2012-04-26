@@ -86,7 +86,7 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("$VERSION loaded");
+  $core->log->info("Loaded relay system");
 
   $core->timer_set( 3,
     { 

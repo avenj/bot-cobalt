@@ -88,7 +88,7 @@ sub Cobalt_register {
     );
   }
 
-  $core->log->info("Registered - $VERSION");
+  $core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 

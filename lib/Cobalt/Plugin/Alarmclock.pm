@@ -29,7 +29,7 @@ sub Cobalt_register {
     ] 
   );
 
-  $core->log->info("Registered");
+  $core->log->info("Loaded alarm clock");
   return PLUGIN_EAT_NONE
 }
 

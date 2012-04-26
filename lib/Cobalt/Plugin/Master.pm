@@ -28,7 +28,7 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("$VERSION loaded");  
+  $core->log->info("Loaded");  
   return PLUGIN_EAT_NONE
 }
 

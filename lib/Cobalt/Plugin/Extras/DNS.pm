@@ -31,7 +31,7 @@ sub Cobalt_register {
     [ 'public_cmd_dns', 'public_cmd_nslookup' ],
   );
   
-  $core->log->info("Loaded - $VERSION");
+  $core->log->info("Loaded: dns nslookup");
   return PLUGIN_EAT_NONE
 }
 

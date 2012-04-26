@@ -72,7 +72,7 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("Registered - $VERSION");
+  $core->log->info("Loaded, topics: ".$core->Provided->{info_topics});
   return PLUGIN_EAT_NONE
 }
 

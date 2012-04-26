@@ -64,7 +64,7 @@ sub Cobalt_register {
     ]
   );
   
-  $core->log->info("Loaded ($VERSION)");
+  $core->log->info("Loaded logger");
   
   $core->timer_set( 10,
     {

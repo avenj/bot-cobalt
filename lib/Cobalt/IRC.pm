@@ -71,7 +71,7 @@ sub Cobalt_register {
 
   $core->send_event( 'initialize_irc' );
 
-  $core->log->info("$VERSION registered");
+  $core->log->info("Loaded");
   return PLUGIN_EAT_NONE
 }
 
