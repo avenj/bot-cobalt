@@ -88,7 +88,7 @@ my $class = Module::Build->subclass(
 );
 
 my $build = $class->new(
-  dist_name => 'Bot::Cobalt',
+  module_name => 'Bot::Cobalt',
   dist_abstract => 'Pluggable IRC bot (cobalt2)',
   dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
   license => 'perl',

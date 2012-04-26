@@ -1,5 +1,5 @@
 package Bot::Cobalt::Frontend::RC;
-our $VERSION = 0;
+our $VERSION = '0.200_46';
 
 use strictures 1;
 use Carp;
