@@ -28,7 +28,8 @@ sub execute {
   if ($loaded == 0) {
     delete $self->{Cylinder}->{$context}->{$nick};
     
-    my $core = $msg->core;
+    require Cobalt::Core;
+    my $core = Cobalt::Core->instance;
     my $irc  = $core->get_irc_obj($context);
     my $bot  = $irc->nick_name;
     my $chan = $msg->channel;

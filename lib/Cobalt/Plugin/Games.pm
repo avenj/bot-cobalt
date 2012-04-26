@@ -82,7 +82,7 @@ sub _load_games {
 
     push(@{ $self->{ModuleNames} }, $module);
 
-    my $obj = $module->new(core => $core);
+    my $obj = $module->new;
     $self->{Objects}->{$game} = $obj;
     ## build a hash of commands we should handle
     for my $cmd (@{ $games->{$game}->{Cmds} }) {
@@ -138,11 +138,6 @@ in a configuration file (usually C<etc/plugins/games.conf>).
 On the backend, commands specified in our config are mapped to 
 modules that are automatically loaded when this plugin is.
 
-Games modules are given a 'core' argument in new() that tells them 
-where to find the core instance:
-
-  sub new { my %args = @_; bless { core => $args{core} }, shift }
-
 When the specified command is handled, the game module's B<execute> 
 method is called and passed the original message hash (as specified 
 in L<Cobalt::IRC/Bot_public_msg>) and the stripped string without 
@@ -150,11 +145,14 @@ the command:
 
   sub execute {
     my ($self, $msg, $str) = @_;
-    ## We saved {core} in new():
-    my $core = $self->{core};
+
+    ## Get Cobalt::Core singleton
+    require Cobalt::Core;
+    my $core = Cobalt::Core->instance;
+    
     my $src_nick = $msg->src_nick;
     
-    ...
+    . . . 
 
     ## We can return a response to the channel:
     return $some_response

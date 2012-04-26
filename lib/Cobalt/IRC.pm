@@ -36,7 +36,12 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
 );
 
 has 'core' => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub { require Cobalt::Core; Cobalt::Core->instance },
+  default => sub { 
+    require Cobalt::Core; 
+    die "Needs a Cobalt::Core instance"
+      unless Cobalt::Core->is_instanced;
+    Cobalt::Core->instance 
+  },
 );
 
 has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
@@ -318,7 +323,6 @@ sub irc_public {
   }
 
   my $msg_obj = Cobalt::IRC::Message::Public->new(
-    core    => $core,
     context => $context,
     src     => $src,
     targets => $where,
@@ -359,7 +363,6 @@ sub irc_msg {
   }
 
   my $msg_obj = Cobalt::IRC::Message->new(
-    core    => $core,
     context => $context,
     src     => $src,
     targets => $target,
@@ -383,7 +386,6 @@ sub irc_notice {
   }
 
   my $msg_obj = Cobalt::IRC::Message->new(
-    core    => $core,
     context => $context,
     src     => $src,
     targets => $target,
@@ -407,7 +409,6 @@ sub irc_ctcp_action {
   }
 
   my $msg_obj = Cobalt::IRC::Message->new(
-    core    => $core,
     context => $context,
     src     => $src,
     targets => $target,
@@ -512,7 +513,6 @@ sub irc_kick {
   my $core    = $self->core;
 
   my $kick = Cobalt::IRC::Event::Kick->new(
-    core    => $core,
     context => $context,
     channel => $channel,
     src     => $src,
@@ -540,7 +540,6 @@ sub irc_mode {
   my $core    = $self->core;
 
   my $mode_obj = Cobalt::IRC::Event::Mode->new(
-    core    => $core,
     context => $context,
     src     => $src,
     target  => $changed_on,
@@ -571,7 +570,6 @@ sub irc_topic {
   my $core    = $self->core;
 
   my $topic_obj = Cobalt::IRC::Event::Topic->new(
-    core    => $core,
     context => $context,
     src     => $src,
     channel => $channel,
@@ -599,7 +597,6 @@ sub irc_nick {
   my $old = parse_user($src);
     
   my $nchg = Cobalt::IRC::Event::Nick->new(
-    core    => $core,
     context => $context,
     src     => $src,
     old_nick => $old,
@@ -620,7 +617,6 @@ sub irc_join {
   my $core    = $self->core;
 
   my $join = Cobalt::IRC::Event::Channel->new(
-    core    => $core,
     context => $context,
     src     => $src,
     channel => $channel,
@@ -645,7 +641,6 @@ sub irc_part {
   my $core    = $self->core;
   
   my $part = Cobalt::IRC::Event::Channel->new(
-    core    => $core,
     context => $context,
     src     => $src,
     channel => $channel,
@@ -674,7 +669,6 @@ sub irc_quit {
   my $core    = $self->core;
 
   my $quit = Cobalt::IRC::Event::Quit->new(
-    core    => $core,
     context => $context,
     src     => $src,
     reason  => $msg,
@@ -694,7 +688,6 @@ sub irc_invite {
   my $core    = $self->core;
 
   my $invite = Cobalt::IRC::Event::Channel->new(
-    core    => $core,
     context => $context,
     src     => $src,
     channel => $channel,

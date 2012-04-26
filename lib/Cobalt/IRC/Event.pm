@@ -6,7 +6,15 @@ use 5.10.1;
 use Cobalt::Common;
 use Moo;
 
-has 'core'    => ( is => 'rw', isa => Object, required => 1 );
+has 'core'    => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub {
+    require Cobalt::Core;
+    die "Needs a Cobalt::Core instance"
+      unless Cobalt::Core->is_instanced;
+    Cobalt::Core->instance
+  }
+);
+
 has 'context' => ( is => 'rw', isa => Str, required => 1 );
 has 'src'     => ( is => 'rw', isa => Str, required => 1 );
 
