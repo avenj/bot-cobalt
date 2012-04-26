@@ -9,9 +9,9 @@ my $class = Module::Build->subclass(
 
     sub ACTION_release {
       my $self = shift;
+      $self->dispatch('versionify');
       $self->dispatch('wikidocs');
-      ## FIXME target to pod2textify doc/ ?
-      ## FIXME dispatch dist ?
+      $self->dispatch('dist');
     }
 
     sub ACTION_wikidocs {
@@ -34,6 +34,48 @@ my $class = Module::Build->subclass(
          ':public_html/docs/wiki/data/pages/bots/cobalt/docs',
       );
       chdir($base);
+    }
+    
+    sub ACTION_versionify {
+      my $self = shift;
+      my $base = $self->base_dir;
+      my $vers = $self->dist_version;
+      
+      require File::Find;
+      File::Find->import('find');
+      find(sub {
+          if ($_ =~ /\.pm$/) {
+            my $path = $File::Find::name;
+            open my $fh, '<', $path
+              or die "open: $!";
+            my @thisf = readline($fh);
+            close $fh;
+            
+            my $package_l = shift @thisf;
+            my $pkg;
+            unless (($pkg) = $package_l =~ /^package\s+(\S+)$/) {
+              warn "Skipping, no package: $path\n";
+              return
+            }
+            
+            my $v_line = "our \$VERSION = '$vers';";
+            
+            if ($thisf[0] =~ /VERSION/) {
+              $thisf[0] = $v_line
+            } else {
+              unshift(@thisf, $v_line)
+            }
+            
+            unshift(@thisf, $package_l);
+            
+            open $fh, '>', $path
+              or die "open: $!";
+            print $fh @thisf;
+            close $fh;
+          }
+        },
+        $base
+      );
     }
 
   },
