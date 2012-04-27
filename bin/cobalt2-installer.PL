@@ -7,7 +7,7 @@ use warnings;
 use File::Find;
 use File::Spec;
 
-use JSON;
+use Data::Dumper;
 
 my $bin_in  = 'tools/cobalt2-installer.in';
 die "Input $bin_in not found" unless -f $bin_in;
@@ -43,9 +43,7 @@ for my $addable_path (@paths_to_add) {
   $cfref->{$relative_path} = $slurped;
 }
 
-## Serialize our files to JSON
-## (it's compact, fast (w/ ::XS), and core as of 5.14)
-my $json_cfs = encode_json($cfref);
+my $dump_cfs = Data::Dumper->new([$cfref])->Terse(1)->Purity(1)->Dump;
 
 ## Read cobalt2-installer.in
 my $installer_bin;
@@ -56,7 +54,7 @@ close $bin_in_fh;
 
 die "empty installer_bin?" unless $installer_bin;
 
-my $compiled_installer = $installer_bin . $json_cfs . "\n" ;
+my $compiled_installer = $installer_bin . $dump_cfs . "\n" ;
 
 open my $bin_out_fh, '>:encoding(UTF-8)', $bin_out
   or die "could not open $bin_out: $!";

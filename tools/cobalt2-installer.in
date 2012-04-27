@@ -1,13 +1,11 @@
 #!perl
-my $version = '0.12';
+my $version = '0.13';
 
 use 5.12.1;
 use strict;
 use warnings;
 
 use File::Path;
-
-use JSON;
 
 use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
 
@@ -40,10 +38,17 @@ GetOptions(
 
 sub _deserialize_etc {
   ## Pulls our /etc from our DATA handle
-  my $json;
-  {  local $/ ; $json = <DATA>;  }
-  my $ref = decode_json $json; 
-  return ref $ref eq 'HASH' ? $ref : () ;
+  my $cfs;
+  { local $/ ; $cfs = <DATA>;  }
+
+  my $ref;
+  { local $@;
+    $ref = eval $cfs;
+    die "Could not reconstitute example confs" if $@;
+  }
+
+  return ref $ref eq 'HASH' ? $ref 
+    : die "Reconstituted example confs not a HASH";
 }
 
 sub _slurp {

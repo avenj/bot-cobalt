@@ -109,6 +109,10 @@ my $build = $class->new(
   build_requires => {
     'Test::More' => 0,
     'Test::Cmd'  => 0,
+
+    'Data::Dumper'   => 0,
+    'File::Find'     => 0,
+    'File::Spec'     => 0,
   },
 
   requires => {
@@ -119,10 +123,10 @@ my $build = $class->new(
       'Data::Dumper'   => 0,
       'DB_File'        => 0,
       'Digest::SHA'    => 0,
-      'File::Basename' => 0,
       'File::Find'     => 0,
-      'File::Path'     => '2.00',
       'File::Spec'     => 0,
+      'File::Basename' => 0,
+      'File::Path'     => '2.00',
       'Getopt::Long'   => 0,
       'Scalar::Util'   => 0,
       'Storable'       => 0,
@@ -156,7 +160,7 @@ my $build = $class->new(
       'MooX::Types::MooseLike' => '0.03',
       
      # Network
-       'Net::IP::Minimal' => '0.02',
+      'Net::IP::Minimal' => '0.02',
 
      # POE::
       'POE'            => '1.311',

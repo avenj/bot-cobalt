@@ -178,7 +178,7 @@ sub _format_link {
   $to =~ s/:{2}/:/g;
 
   ## if this is a Cobalt:: or cobalt2* page, link within cobalt:docs:
-  if ($attr->{to} =~ /^(Bot::Cobalt::|cobalt2-)/) {
+  if ($attr->{to} =~ /^(Bot::Cobalt(::)?|cobalt2-)/) {
     $to = "bots:cobalt:docs:" . $to
   } else {
     ## if this isn't a Cobalt:: or Manual:: page it's probably CPANable:
