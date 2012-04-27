@@ -508,7 +508,7 @@ sub irc_socketerr {
   my $context = $_[HEAP]->{Context};
   $self->core->log->info("irc_socketerr: $context: $err");
   $self->core->Servers->{$context}->connected(0);
-  $self->core->send_event( 'server_error', $context, $reason );
+  $self->core->send_event( 'server_error', $context, $err );
 }
 
 sub irc_error {
