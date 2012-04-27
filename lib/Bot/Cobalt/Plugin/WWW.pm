@@ -133,6 +133,7 @@ sub Bot_www_request {
     Event     => $event,
     Args      => $args,
     Request   => $request,
+    Time      => time(),
   };
 
   ## Push to pending

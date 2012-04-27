@@ -176,6 +176,7 @@ sub Bot_initialize_irc {
           'irc_connected',
           'irc_disconnected',
           'irc_error',
+          'irc_socketerr',
   
           'irc_chan_sync',
   
@@ -497,16 +498,24 @@ sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
   $self->core->log->info("IRC disconnected: $context");
-  $self->core->Servers->{$context}->clear_connected;
+  $self->core->Servers->{$context}->connected(0);
   ## Bot_disconnected event, similar to Bot_connected:
   $self->core->send_event( 'disconnected', $context, $server );
+}
+
+sub irc_socketerr {
+  my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
+  my $context = $_[HEAP]->{Context};
+  $self->core->log->info("irc_socketerr: $context: $err");
+  $self->core->Servers->{$context}->connected(0);
+  $self->core->send_event( 'server_error', $context, $reason );
 }
 
 sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
-  $self->core->Servers->{$context}->clear_connected;
+  $self->core->Servers->{$context}->connected(0);
   $self->core->log->warn("IRC error: $context: $reason");
   $self->core->send_event( 'server_error', $context, $reason );
 }
