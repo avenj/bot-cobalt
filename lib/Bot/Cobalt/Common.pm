@@ -128,7 +128,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Common - import commonly-used tools and constants
+Bot::Cobalt::Common - Import commonly-used tools and constants
 
 =head1 SYNOPSIS
 
@@ -145,7 +145,7 @@ Bot::Cobalt::Common - import commonly-used tools and constants
 =head1 DESCRIPTION
 
 This is a small exporter module providing easy inclusion of commonly 
-used tools and constants.
+used tools and constants to make life easier on plugin authors.
 
 By default, B<strict> and B<warnings> are also enabled.
 
@@ -228,10 +228,6 @@ See L<Bot::Cobalt::Utils> for details.
 =head4 Errors
 
   croak
-
-=head1 BUGS
-
-Your namespace will be full of Stuff.
 
 =head1 AUTHOR
 

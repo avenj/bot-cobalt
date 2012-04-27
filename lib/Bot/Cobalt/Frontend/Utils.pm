@@ -117,11 +117,8 @@ Bot::Cobalt::Frontend::Utils - Helper utils for Bot::Cobalt frontends
 
 =head1 SYNOPSIS
 
-  use Bot::Cobalt::Frontend::Utils qw/
-    ask_question
-    ask_yesno
-  /;
-
+  use Bot::Cobalt::Frontend::Utils qw/ :all /;
+  
   my $do_something = ask_yesno(
     prompt  => "Do some stuff?"
     default => 'y',
