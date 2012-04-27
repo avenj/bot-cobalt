@@ -8,6 +8,7 @@ use base 'Exporter';
 
 our @EXPORT_OK = qw/
   rc_read
+  rc_write
 /;
 
 sub rc_read {
@@ -38,7 +39,7 @@ sub rc_read {
 }
 
 sub rc_write {
-  
+
 }
 
 1;

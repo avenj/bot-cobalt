@@ -6,7 +6,10 @@ use strictures 1;
 use File::Copy;
 
 use Bot::Cobalt::Frontend::RC qw/rc_read/;
-use Bot::Cobalt::Frontend::Utils qw/ask_yesno/;
+use Bot::Cobalt::Frontend::Utils qw/
+  ask_yesno
+  ask_question
+/;
 
 my($path_dest, $this_plugin);
 my $path_rcfile = $ENV{HOME} . "/.cobalt2rc" ;
@@ -27,15 +30,20 @@ GetOptions(
 
 $this_plugin = $ARGV[0] unless $this_plugin;
 unless ($this_plugin) {
-  ## FIXME prompt for plugin name
   die "No plugin specified.\n";
 }
 
 ## set up path_dest
 unless ($path_dest) {
   my ($base, $etc) = rc_read();
-  ## FIXME prompt for filename
-  $path_dest = $etc ."/plugins/". $fname;
+
+  print "Current etcdir: $etc\n",
+        "No path was specified\n",
+        "Attempting to write one under etcdir\n";
+  
+  $path_dest = ask_question(
+    prompt => "Write file (under etc/plugins/)",
+  );
 }
 
 sub try_load_cf {
