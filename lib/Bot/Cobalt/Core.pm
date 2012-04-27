@@ -111,6 +111,7 @@ sub instance {
     : ( $$instance = $class->new(@_) );
 }
 
+sub has_instance { is_instanced(@_) }
 sub is_instanced {
   my $class = ref $_[0] || $_[0];
   no strict 'refs';
