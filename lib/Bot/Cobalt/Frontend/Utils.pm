@@ -12,12 +12,26 @@ our @EXPORT_OK = qw/
   ask_question
 /;
 
+our %EXPORT_TAGS;
+
+{ 
+  my %seen;
+  push @{$EXPORT_TAGS{all}}, grep {!$seen{$_}++} @EXPORT_OK
+}
+
 sub ask_question {
   my %args = @_;
   
-  my $question = $args{prompt} || croak "No prompt => specified";
-  my $default  = $args{default};
+  my $question = delete $args{prompt} || croak "No prompt => specified";
+  my $default  = delete $args{default};
   
+  my $validate_sub;
+  if (defined $args{validate}) { 
+    $validate_sub = ref $args{validate} eq 'CODE' ?
+        delete $args{validate}
+        : croak "validate => should be a coderef";
+  }
+    
   STDOUT->autoflush(1);
   
   my $input;
@@ -42,6 +56,19 @@ sub ask_question {
     $print_and_grab->();
   }
   
+  if ($validate_sub) {
+    my $validated = $validate_sub->($input);
+    
+    if ($args{die_if_invalid} || $args{die_unless_valid}) {
+      die "Invalid input; $validated\n";
+    }
+    
+    until (not defined $validated) {
+      print "Invalid input; $validated\n";
+      $print_and_grab->();
+    }
+  }
+    
   return $input
 }
 
@@ -80,3 +107,92 @@ sub ask_yesno {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Frontend::Utils - Helper utils for Bot::Cobalt frontends
+
+=head1 SYNOPSIS
+
+  use Bot::Cobalt::Frontend::Utils qw/
+    ask_question
+    ask_yesno
+  /;
+
+  my $do_something = ask_yesno(
+    prompt  => "Do some stuff?"
+    default => 'y',
+  );
+  
+  if ($do_something) {
+    ## Yes
+  } else {
+    ## No
+  }
+
+  ## Ask a question with a default answer
+  ## Keep asking until validate => returns undef
+  my $answer = ask_question(
+    prompt  => "Tastiest snack?"
+    default => "cake",
+    validate => sub {
+      $_[0] ~~ ['cake', 'pie', 'cheese'] ?
+        undef : "Snack options are cake, pie, cheese"
+    },
+  );
+
+=head1 DESCRIPTION
+
+This module exports simple helper functions for use by L<Bot::Cobalt> 
+frontends.
+
+The exported functions are fairly simplistic; take a gander at 
+L<Term::UI> if you're looking for a rather more solid terminal/user 
+interaction module.
+
+=head1 EXPORTED
+
+=head2 ask_yesno
+
+Prompt the user for a yes or no answer.
+
+A default 'y' or 'n' answer must be specified:
+
+  my $yesno = ask_yesno(
+    prompt  => "Do stuff?"
+    default => "n"
+  );
+
+Returns false on a "no" answer, true on a "yes."
+
+=head2 ask_question
+
+Prompt the user with a question, possibly with a default answer, and 
+optionally with a code reference to validate.
+
+  my $ans = ask_question(
+    prompt  => "Color of the sky?"
+    default => "blue",
+    validate => sub {
+      $_[0] ~~ [qw/blue pink orange red/] ?
+        undef : "Valid colors: blue, pink, orange, red"
+    },
+    die_if_invalid => 0,
+  );
+
+If a validation coderef is specified, it should return undef to signify 
+successful validation or an error string describing the problem.
+
+If B<die_if_invalid> is specified, an invalid answer will die() 
+out rather than asking again.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
