@@ -35,7 +35,7 @@ our %EXPORT_TAGS = (
 
 
 ## mostly borrowed from IRC::Utils
-my %COLORS = (
+our %COLORS = (
     NORMAL      => "\x0f",
 
     BOLD        => "\x02",
