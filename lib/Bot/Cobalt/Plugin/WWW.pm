@@ -8,7 +8,10 @@ use Moo;
 
 use Bot::Cobalt::Common;
 
-use POE qw/Component::Client::HTTP/;
+use POE qw/
+  Component::Client::HTTP
+  Component::Client::Keepalive
+/;
 
 has 'core' => ( is => 'rw', isa => Object, predicate => 'has_core' );
 
@@ -39,14 +42,14 @@ has 'proxy' => ( is => 'rw', lazy => 1,
 has 'timeout'   => ( is => 'rw', lazy => 1,
   default => sub {
     my ($self) = @_;
-    $self->opts->{Timeout} || 60
+    $self->opts->{Timeout} || 90
   },
 );
 
 has 'max_workers' => ( is => 'rw', isa => Int, lazy => 1,
   default => sub { 
     my ($self) = @_;
-    $self->opts->{MaxWorkers} || 20
+    $self->opts->{MaxWorkers} || 25
   },
 );
 
@@ -58,10 +61,6 @@ has 'Waiting' => ( is => 'rw', isa => ArrayRef,
   default => sub { [] },
 );
 
-has 'PendingResponse' => ( is => 'rw', isa => Int,
-  default => sub { 0 },
-);
-
 has 'NON_RELOADABLE' => ( is => 'rw', default => sub { 1 } );
 
 sub Cobalt_register {
@@ -70,10 +69,7 @@ sub Cobalt_register {
   $self->core( $core );
 
   $core->plugin_register( $self, 'SERVER',
-    [ 
-      'www_request',
-      'www_push_pending',
-    ],
+    [  'www_request'  ],
   );
     
   POE::Session->create(
@@ -136,55 +132,13 @@ sub Bot_www_request {
     Time      => time(),
   };
 
-  ## Push to pending
-  my $pending = $self->Waiting;
-  push(@$pending, $tag);
-
   $core->log->debug("www_request issue $tag -> $event");
   
-  $core->send_event( 'www_push_pending' );
-  
-  return PLUGIN_EAT_ALL
-}
-
-sub Bot_www_push_pending {
-  my ($self, $core) = splice @_, 0, 2;
-
-  my $pending = $self->Waiting;
-  return unless @$pending;
-  
-  my $ccount = $self->PendingResponse;
-
-  if ($ccount >= $self->max_workers) {
-    my $pcount = @$pending;
-    $core->log->debug(
-      "Throttling (r $ccount / w $pcount)"
-    );
-    $core->timer_set( 2,
-      { Event => 'www_push_pending' },
-      'WWWPLUG_PUSH_PENDING'
-    );
-  } else {
-    my $tag = shift @$pending;
-    
-    my $this_req = $self->Requests->{$tag};
-    my $request  = $this_req->{Request};
-
-    $core->log->debug("www_request push $tag");
-    
-    my $sess_alias = 'www_'.$core->get_plugin_alias($self);
-    $poe_kernel->call( $sess_alias, 
+  my $sess_alias = 'www_'.$core->get_plugin_alias($self);
+  $poe_kernel->call( $sess_alias, 
       'ht_post_request',
       $request, $tag
-    );
-  
-    $self->increase_pending;
-    
-    if (@$pending) {
-      ## push_pending until we're either done or hit our limit
-      $core->send_event( 'www_push_pending' );
-    }
-  }
+  );
 
   return PLUGIN_EAT_ALL
 }
@@ -206,8 +160,6 @@ sub ht_response {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($req_pk, $resp_pk) = @_[ARG0, ARG1];
 
-  $self->decrease_pending;
-  
   my $core = $self->core;
   
   my $response = $resp_pk->[0];
@@ -242,27 +194,23 @@ sub _start {
   $opts{Timeout}  = $self->timeout;
 
   ## Create "ht_${plugin_alias}" session
+  ## We use a very short keepalive; HTTP reqs are usually one-offs
   POE::Component::Client::HTTP->spawn(
     FollowRedirects => 5,
     Agent => __PACKAGE__,
     Alias => 'ht_'.$core->get_plugin_alias($self),
+    ConnectionManager => POE::Component::Client::Keepalive->new(
+      keep_alive => 2,
+      max_per_host => 4,
+      max_open => $self->max_workers,
+      timeout  => $self->timeout,
+    ),
+    
     %opts,
+
   );
   
   $core->Provided->{www_request} = __PACKAGE__ ;
-}
-
-sub decrease_pending {
-  my ($self) = @_;
-  my $pending = $self->PendingResponse;
-  return if !$pending or $pending == 0;
-  $self->PendingResponse( --$pending )
-}
-
-sub increase_pending {
-  my ($self) = @_;
-  my $pending = $self->PendingResponse;
-  $self->PendingResponse( ++$pending );
 }
 
 1;
