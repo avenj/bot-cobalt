@@ -210,7 +210,7 @@ sub ht_response {
   my $core = $self->core;
   
   my $response = $resp_pk->[0];
-  my $tag  = $req_pk->[1];
+  my $tag      = $req_pk->[1];
 
   my $this_req = delete $self->Requests->{$tag};
   return unless $this_req;

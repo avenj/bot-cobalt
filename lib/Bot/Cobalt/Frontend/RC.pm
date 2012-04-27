@@ -6,7 +6,7 @@ use Carp;
 
 use base 'Exporter';
 
-my @EXPORT = qw/
+our @EXPORT = qw/
   rc_read
 /;
 
