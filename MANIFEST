@@ -93,6 +93,7 @@ t/02_utils/02_rplprintf.t
 t/02_utils/03_timestr.t
 t/02_utils/04_glob.t
 t/02_utils/05_color.t
+t/02_utils/06_frontend.t
 t/03_serial/01_freezethaw.t
 t/03_serial/02_file_rw.t
 t/04_db/01_db.t
