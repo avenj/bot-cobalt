@@ -28,6 +28,7 @@ lib/Bot/Cobalt/Core/Role/Ignore.pm
 lib/Bot/Cobalt/Core/Role/Timers.pm
 lib/Bot/Cobalt/Core/Role/Unloader.pm
 lib/Bot/Cobalt/DB.pm
+lib/Bot/Cobalt/Frontend/Utils.pm
 lib/Bot/Cobalt/Frontend/RC.pm
 lib/Bot/Cobalt/IRC.pm
 lib/Bot/Cobalt/IRC/Event.pm
@@ -97,6 +98,9 @@ t/03_serial/02_file_rw.t
 t/04_db/01_db.t
 t/04_db/02_dbdump.t
 t/05_plugins/01_loadable_coreset.t
+t/06_cmds/01_cobalt2.t
+t/06_cmds/02_installer.t
+t/06_cmds/03_dbdump.t
 tools/cobalt2-installer.in
 var/db/.keep
 var/.keep

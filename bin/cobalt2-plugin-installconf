@@ -1,12 +1,14 @@
 #!perl
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 
 use File::Copy;
 
-my $path_dest;
+use Bot::Cobalt::Frontend::RC qw/rc_read/;
+use Bot::Cobalt::Frontend::Utils qw/ask_yesno/;
+
+my($path_dest, $this_plugin);
 my $path_rcfile = $ENV{HOME} . "/.cobalt2rc" ;
 
 use Getopt::Long;
@@ -16,12 +18,14 @@ GetOptions(
     exit 0
   },
   
+  'plugin=s'   => $this_plugin,
+  
   'rcfile=s'   => \$path_rcfile,
 
   'destination=s' => \$path_dest,
 );
 
-my $this_plugin = $ARGV[0];
+$this_plugin = $ARGV[0] unless $this_plugin;
 unless ($this_plugin) {
   ## FIXME prompt for plugin name
   die "No plugin specified.\n";
@@ -34,44 +38,47 @@ unless ($path_dest) {
   $path_dest = $etc ."/plugins/". $fname;
 }
 
-#print try_load_cf($this_plugin);  # debug
+sub try_load_cf {
+  my ($plugin) = @_;
 
-## FIXME
+  my $plugincf = $plugin . '::Conf' ;
 
-## if no plugin name specified, prompt for it
+  eval "require $plugincf";
+  return if $@;
 
-## if no try_load_cf, exit w/ warning
+  die "No conf() method found for $plugincf\n"
+    unless $plugincf->can('conf');
 
-sub rc_read {
-  open(my $fh, '<', $path_rcfile)
-    or die "Could not open rcfile: $_pathrcfile: $!";
-  my $str;
-  { local $/; $str = <$fh> }
-  close($fh);
-  
-  my ($base, $etc, $var);
-  eval $str;
-  if ($@) {
-    die "Errors reported during rc parsing; $@";
-  }
-
-  return ($base, $etc, $var);
+  return 
+    $plugincf->conf || die "$plugincf did not return a true value"
 }
 
 sub write_conf {
-  ## pass me the result of try_load_cf()
   my ($thiscf) = @_;
-  ## if no path specified, write to 
+  
+  die "write_conf not passed a conf" unless $thiscf;
+
+  if (-e $path_dest) {
+    print "Warning! The destination file appears to exist.\n";
+    print "Path: $path_dest\n";
+    my $overwrite = ask_yesno(
+      prompt  => "Overwrite destination path?",
+      default => "n",
+    );
+    
+    die "Exiting, destination exists.\n"
+      unless $overwrite;
+  }
+
+  open my $fh, '>', $path_dest
+    or die "open: $path_dest: $!";
+  print $fh $thiscf;
+  close $fh;
+  return 1
 }
 
-sub try_load_cf {
-  my ($plugin) = @_;
-  my $plugincf = $plugin . '::Conf' ;
-  eval "require $plugincf";
-  return if $@;
-  my $thiscf = $plugincf->conf;
-  return $thiscf
-}
+## FIXME offer to try appending to plugins.conf ?
+##  -> copy to .bak
 
 ## look for This::Plugin::Conf::ExampleConf
 ## load it and look for example conf from 

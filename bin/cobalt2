@@ -13,7 +13,7 @@ my ($etcdir, $vardir, $basedir);
 
 use Proc::PID::File;
 
-use Bot::Cobalt::Frontend::RC;
+use Bot::Cobalt::Frontend::RC qw/rc_read/;
 
 use Getopt::Long;
 GetOptions(

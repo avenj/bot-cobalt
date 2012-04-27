@@ -173,10 +173,6 @@ my $build = $class->new(
 
      # Process mgmt
       'Proc::PID::File' => '1.26',
-      
-     # Terminal interaction
-      'Term::UI'       => 0,
-      'Term::ReadLine' => 0,
   },
 
   recommends => {
