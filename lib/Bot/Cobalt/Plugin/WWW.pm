@@ -57,10 +57,6 @@ has 'Requests' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
-has 'Waiting' => ( is => 'rw', isa => ArrayRef,
-  default => sub { [] },
-);
-
 has 'NON_RELOADABLE' => ( is => 'rw', default => sub { 1 } );
 
 sub Cobalt_register {
