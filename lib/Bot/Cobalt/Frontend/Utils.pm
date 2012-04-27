@@ -56,16 +56,21 @@ sub ask_question {
     $print_and_grab->();
   }
   
-  if ($validate_sub) {
-    my $validated = $validate_sub->($input);
+  VALID: {
+    if ($validate_sub) {
+      my $invalid = $validate_sub->($input);
     
-    if ($args{die_if_invalid} || $args{die_unless_valid}) {
-      die "Invalid input; $validated\n";
-    }
+      last VALID unless defined $invalid;
     
-    until (not defined $validated) {
-      print "Invalid input; $validated\n";
-      $print_and_grab->();
+      if ( $args{die_if_invalid} || $args{die_unless_valid} ) {
+        die "Invalid input; $invalid\n";
+      }
+    
+      until (not defined $invalid) {
+        print "Invalid input; $invalid\n";
+        $print_and_grab->();
+        redo VALID
+      }
     }
   }
     
