@@ -21,7 +21,7 @@ GetOptions(
     exit 0
   },
   
-  'plugin=s'   => $this_plugin,
+  'plugin=s'   => \$this_plugin,
   
   'rcfile=s'   => \$path_rcfile,
 
@@ -45,6 +45,10 @@ unless ($path_dest) {
     prompt => "Write file (under etc/plugins/)",
   );
 }
+
+write_conf( try_load_cf($this_plugin) );
+print "Config for $this_plugin\n",
+      "Written to: $path_dest\n",
 
 sub try_load_cf {
   my ($plugin) = @_;
@@ -87,12 +91,3 @@ sub write_conf {
 
 ## FIXME offer to try appending to plugins.conf ?
 ##  -> copy to .bak
-
-## look for This::Plugin::Conf::ExampleConf
-## load it and look for example conf from 
-##  class method This::Plugin::Conf->conf
-##   -or-
-##  $This::Plugin::Conf::CONF
-## -> either should return example conf as string
-## -> write example conf to either specified path, or use rcfile & 
-##    prompt
