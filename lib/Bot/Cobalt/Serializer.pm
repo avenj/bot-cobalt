@@ -183,8 +183,7 @@ sub readfile {
     return
   }
   my $data = $self->_read_serialized($path, $opts);
-  my $thawed = $self->thaw($data);
-  return $thawed;
+  return $self->thaw($data);
 }
 
 sub version {
@@ -217,7 +216,7 @@ sub _check_if_avail {
     $self->_log("$type specified but $module not available");
     return
   } else {
-    return 1
+    return $module
   }
 }
 
@@ -236,18 +235,18 @@ sub _read_serialized {
   }
 
   open(my $in_fh, '<', $path)
-    or ($self->_log("open failed for $path: $!") and return);
+    or $self->_log("open failed for $path: $!") and return;
   
   if ($lock) {
     flock($in_fh, LOCK_SH)  # blocking call
-    or ($self->_log("LOCK_SH failed for $path: $!") and return);
+      or $self->_log("LOCK_SH failed for $path: $!") and return;
    }
 
   my $data = join('', <$in_fh>);
 
   if ($lock) {
     flock($in_fh, LOCK_UN)
-    or $self->_log("LOCK_UN failed for $path: $!");
+      or $self->_log("LOCK_UN failed for $path: $!");
   }
 
   close($in_fh)
@@ -270,23 +269,23 @@ sub _write_serialized {
   utf8::decode($data);
 
   open(my $out_fh, '>>', $path)
-    or ($self->_log("open failed for $path: $!") and return);
+    or $self->_log("open failed for $path: $!") and return;
 
   if ($lock) {
     flock($out_fh, LOCK_EX | LOCK_NB)
-    or ($self->_log("LOCK_EX failed for $path: $!") and return);
+      or $self->_log("LOCK_EX failed for $path: $!") and return;
   }
 
   seek($out_fh, 0, 0)
-    or ($self->_log("seek failed for $path: $!") and return);
+    or $self->_log("seek failed for $path: $!") and return;
   truncate($out_fh, 0)
-    or ($self->_log("truncate failed for $path") and return);
+    or $self->_log("truncate failed for $path") and return;
 
   print $out_fh $data;
 
   if ($lock) {
     flock($out_fh, LOCK_UN)
-    or $self->_log("LOCK_UN failed for $path: $!");
+      or $self->_log("LOCK_UN failed for $path: $!");
   }
 
   close($out_fh)
