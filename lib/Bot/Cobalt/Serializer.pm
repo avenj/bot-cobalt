@@ -2,22 +2,116 @@ package Bot::Cobalt::Serializer;
 our $VERSION = '0.200_46';
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
+
+use Moo;
 use Carp;
+
+use Bot::Cobalt::Common qw/:types/;
 
 use Fcntl qw/:flock/;
 
-my $Modules = {
-  YAML   => 'YAML::Syck',
-  YAMLXS => 'YAML::XS',
+has 'Format' => ( is => 'rw', isa => Str,
+  default => sub { 'YAMLXS' },
+  trigger => sub {
+    my ($self, $format) = @_;
 
-  JSON   => 'JSON',
-  
-  XML    => 'XML::Dumper',
-};
+    $format = uc($format);
 
-sub new {
+    croak "Unknown format $format"
+      unless $format ~~ [ keys %{ $self->Types } ];
+
+    croak "Requested format $format but can't find a module for it"
+      unless $self->_check_if_avail($format)
+  },
+);
+
+has 'Types' => ( is => 'ro', isa => HashRef, lazy => 1,
+  default => sub {
+    {
+      YAML   => 'YAML::Syck',
+      YAMLXS => 'YAML::XS',
+      JSON   => 'JSON',
+      XML    => 'XML::Dumper',
+    }
+  },
+);
+
+has 'Logger' => ( is => 'rw', isa => Object,
+  trigger => sub {
+    my ($self, $logobj) = @_;
+    my $method = $self->LogMethod;
+
+    die "Logger specified but method $method not found"
+      unless $logobj->can($method);
+  },
+);
+
+has 'LogMethod' => ( is => 'rw', isa => Str, lazy => 1,
+  default => sub { 'error' },
+);
+
+
+has 'yamlxs_from_ref' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require YAML::XS;
+    YAML::XS::Dump($_[0])
+  },
+);
+
+has 'ref_from_yamlxs' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require YAML::XS;
+    YAML::XS::Load($_[0])
+  },
+);
+
+has 'yaml_from_ref' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require YAML::Syck;
+    YAML::Syck::Dump($_[0])
+  },
+);
+
+has 'ref_from_yaml' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require YAML::Syck;
+    YAML::Syck::Load($_[0])
+  },
+);
+
+has 'json_from_ref' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require JSON;
+    my $jsify = JSON->new->allow_nonref;
+    $jsify->utf8->encode($_[0]);
+  },
+);
+
+has 'ref_from_json' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require JSON;
+    my $jsify = JSON->new->allow_nonref;
+    $jsify->utf8->decode($_[0])
+  },
+);
+
+has 'xml_from_ref' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require XML::Dumper;
+    XML::Dumper->new->pl2xml($_[0])
+  },
+);
+
+has 'ref_from_xml' => ( is => 'rw', lazy => 1,
+  coerce => sub {
+    require XML::Dumper;
+    XML::Dumper->new->xml2pl($_[0])
+  },
+);
+
+sub BUILDARGS {
+  my ($class, @args) = @_;
   ## my $serializer = Bot::Cobalt::Serializer->new( %opts )
   ## Serialize to YAML using YAML::XS:
   ## ->new()
@@ -32,38 +126,12 @@ sub new {
   ## Specify something with a LogMethod method, default 'error':
   ## ->new( Logger => $core->log );
   ## ->new( Logger => $core->log, LogMethod => 'crit' );
-  my $self = {};
-  my $class = shift;
-  bless $self, $class;
-  my %args;
-  if (@_ > 1) {
-     %args = @_;
+  
+  if (@args == 1) {
+    return { Format => shift @args }
   } else {
-    $args{Format} = shift;
+    return { @args }
   }
-
-  if ($args{Logger}) {
-    $self->{LogMethod} = $args{LogMethod} ? $args{LogMethod} : 'error';
-    my $logmethod = $self->{LogMethod};
-    my $logger = $args{Logger};
-    unless (ref $logger && $logger->can($logmethod) ) {
-      carp "'Logger' specified but log method $logmethod not found";
-    } else { 
-      $self->{logger} = $logger; 
-    }
-  }
-
-  $self->{Format} = $args{Format} ? uc($args{Format}) : 'YAMLXS' ;
-
-  unless ($self->{Format} ~~ [ keys %$Modules ]) {
-    croak "unknown format $self->{Format} specified";
-  }
-
-  unless ($self->_check_if_avail($self->{Format}) ) {
-    croak "format $self->{Format} not available";
-  }
-
-  return $self;
 }
 
 sub freeze {
@@ -71,11 +139,10 @@ sub freeze {
   ## serialize arbitrary data structure
   my ($self, $ref) = @_;
   return unless defined $ref;
-  ## _dump_yaml _dump_yamlxs etc
-  my $method = lc( $self->{Format} );
-  $method = "_dump_".$method;
-  my $frozen = $self->$method($ref);
-  return $frozen;
+
+  my $method = lc( $self->Format );
+  $method = $method . "_from_ref";
+  return $self->$method($ref);
 }
 
 sub thaw {
@@ -83,10 +150,10 @@ sub thaw {
   ## deserialize data in specified Format
   my ($self, $data) = @_;
   return unless defined $data;
-  my $method = lc( $self->{Format} );
-  $method = "_load_".$method;
-  my $thawed = $self->$method($data);
-  return $thawed;
+
+  my $method = lc( $self->Format );
+  $method = "ref_from_" . $method ;
+  return $self->$method($data);
 }
 
 sub writefile {
@@ -122,7 +189,7 @@ sub readfile {
 
 sub version {
   my ($self) = @_;
-  my $module = $Modules->{ $self->{Format} };
+  my $module = $self->Types->{ $self->Format };
   eval "require $module";
   return($module, $module->VERSION);
 }
@@ -131,11 +198,11 @@ sub version {
 
 sub _log {
   my ($self, $message) = @_;
-  my $method = $self->{LogMethod};
-  unless ($self->{logger} && $self->{logger}->can($method) ) {
+  my $method = $self->LogMethod;
+  unless ($self->Logger && $self->Logger->can($method) ) {
     carp "$message\n";
   } else {
-    $self->{logger}->$method($message);
+    $self->Logger->$method($message);
   }
 }
 
@@ -143,85 +210,15 @@ sub _log {
 sub _check_if_avail {
   my ($self, $type) = @_;
   ## see if we have this serialization method available to us
-  return unless exists $Modules->{$type};
-  my $module = $Modules->{$type};
+  my $module;
+  return unless $module = $self->Types->{$type};
   eval "require $module";
   if ($@) {
     $self->_log("$type specified but $module not available");
-    return 0
+    return
   } else {
     return 1
   }
-}
-
-sub _dump_xml {
-  my ($self, $data) = @_;
-  require XML::Dumper;
-  my $xml = XML::Dumper->new()->pl2xml($data);
-  return $xml
-}
-
-sub _load_xml {
-  my ($self, $xml) = @_;
-  require XML::Dumper;
-  my $data = XML::Dumper->new()->xml2pl($xml);
-  return $data
-}
-
-sub _dump_yaml {
-  my ($self, $data) = @_;
-  ## turn a data structure into YAML1.0
-  require YAML::Syck;
-  no warnings;
-  $YAML::Syck::ImplicitTyping = 1;
-  $YAML::Syck::ImplicitUnicode = 1;
-  use warnings;
-  my $yaml = YAML::Syck::Dump($data);
-  return $yaml
-}
-
-sub _load_yaml {
-  my ($self, $yaml) = @_;
-  ## turn YAML1.0 into a data structure
-  require YAML::Syck;
-  no warnings;
-  $YAML::Syck::ImplicitTyping = 1;
-  $YAML::Syck::ImplicitUnicode = 1;
-  use warnings;
-  my $data = YAML::Syck::Load($yaml);
-  return $data
-}
-
-sub _dump_yamlxs {
-  my ($self, $data) = @_;
-  ## turn data into YAML1.1
-  require YAML::XS;
-  my $yaml = YAML::XS::Dump($data);
-  return $yaml
-}
-
-sub _load_yamlxs {
-  my ($self, $yaml) = @_;
-  require YAML::XS;
-  my $data = YAML::XS::Load($yaml);
-  return $data
-}
-
-sub _dump_json {
-  my ($self, $data) = @_;
-  require JSON;
-  my $jsify = JSON->new->allow_nonref;
-  my $json = $jsify->utf8->encode($data);
-  return $json
-}
-
-sub _load_json {
-  my ($self, $json) = @_;
-  require JSON;
-  my $jsify = JSON->new->allow_nonref;
-  $jsify->utf8(1);
-  my $data = $jsify->utf8->decode($json);
-  return $data
 }
 
 
