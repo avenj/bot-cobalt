@@ -1,16 +1,17 @@
 #!perl
 my $version = '0.14';
 
+## This is still a disaster.  :|
+
 use 5.10.1;
 use strictures 1;
 
 use File::Path;
 
-use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
-
-use Bot::Cobalt::Frontend::Utils qw/:all/;
-
 use Term::ReadKey qw/ReadMode/;
+
+use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
+use Bot::Cobalt::Frontend::Utils qw/:all/;
 
 my $rcfile = $ENV{HOME} . "/.cobalt2rc";
 
@@ -36,7 +37,7 @@ GetOptions(
   'config=s' => \$rcfile,
 );
 
-my $config_q = [
+my $config_q = {
 
   info => [
     {
@@ -115,7 +116,7 @@ my $config_q = [
   
   ],  
 
-];
+};
 
 sub ask_from_ref {
   my ($hash_r) = @_;
@@ -203,12 +204,11 @@ sub RC_Write {
 sub Conf_write_confs {
   ## Conf_write_confs($vars_replacement_hash)
   my ($vars_h) = @_;
-  my ($base, $etc, $var) = RC_Read();
+  my ($base, $etc, $var) = rc_read($rcfile);
   File::Path::mkpath( $var ."/db" );
   File::Path::mkpath( $var ."/tmp" );
   my $ref = _deserialize_etc();
   STDOUT->autoflush(1);
-  ## should have a vars hash for rplprintf, and RC_Read can give us an etc dir path
   ## use File::Path to create our dir structure
   ## write our deserialized confs back out
   ## run rplprintf against each file before writing
@@ -336,9 +336,10 @@ say ">! using rcfile: $rcfile";
 say "> Cobalt needs a place for etc/ and var/ to live.";
 say "> Normally this would be somewhere in your HOME directory.";
 say "> Specify a directory relative to your HOME for cobalt to live:";
-print "[cobalt2] ";
-my $relative_basedir = <STDIN> ; chomp($relative_basedir);
-$relative_basedir //= 'cobalt2';
+my $relative_basedir = ask_question(
+  prompt  => "Base directory",
+  default => "cobalt2",
+);
 
 if (-e $rcfile) {
   say ">! $rcfile seems to already exist.";
