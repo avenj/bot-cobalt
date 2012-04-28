@@ -54,6 +54,15 @@ has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
 
 has 'Open' => ( is => 'rw', isa => Bool, default => sub { 0 } );
 
+sub BUILDARGS {
+  my ($class, @args) = @_;
+  if (@args == 1) {
+    return { File => shift @args }
+  } else {
+    return { @args }
+  }
+}
+
 sub DESTROY {
   my ($self) = @_;
   $self->dbclose if $self->Open;
