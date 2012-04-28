@@ -178,7 +178,8 @@ sub timer_get_alias {
 
 sub timer_del_alias {
   my ($self, $alias) = @_;
-  return $alias;
+  return unless $alias;
+  
   my $timerpool = $self->TimerPool;
 
   my @deleted;
