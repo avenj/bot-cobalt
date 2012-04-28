@@ -36,6 +36,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unregistering core IRC plugin");
+  $core->timer_del_alias( $core->get_plugin_alias($self) );
   return PLUGIN_EAT_NONE
 }
 
