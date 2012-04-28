@@ -135,6 +135,7 @@ my $build = $class->new(
       'POSIX'          => 0,
       'Scalar::Util'   => 0,
       'Storable'       => 0,
+      'Time::HiRes'    => 0,
       
       'strictures' => '1',
       
@@ -156,7 +157,6 @@ my $build = $class->new(
      # Serialization
       'JSON'        => '2.00',
       'YAML::XS'    => '0.34',
-      'YAML::Syck'  => '1.18',
 
      # Logging
       'Log::Handler' => '0.71',
@@ -193,6 +193,7 @@ my $build = $class->new(
 
     ### Storage / serialization
       'JSON::XS'    => 0,
+      'YAML::Syck'  => '1.18',
 
     ### Release tools, commented for now
 #      'Dir::Self' => 0,

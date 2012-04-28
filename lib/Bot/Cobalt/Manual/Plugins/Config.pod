@@ -129,8 +129,8 @@ L<http://www.cobaltirc.org>
 
 =head1 SEE ALSO
 
-L<http://yaml.org/spec/1.0/>
+L<http://yaml.org/spec/1.1/>
 
-L<YAML::Syck>
+L<YAML::XS>
 
 =cut

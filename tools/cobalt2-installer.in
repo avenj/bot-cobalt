@@ -239,7 +239,7 @@ sub Conf_write_confs {
     open(my $fh, '>', $output_path) or die "open failed: $output_path: $!";
     print $fh $output;
     close($fh) or warn "close failed on $output_path: $!\n";
-
+    chmod(0600, $output_path) if $output_path =~ /auth\.conf$/;
     print "OK\n";
   }
 
@@ -301,7 +301,6 @@ sub Conf_interactive {
     $cf->{$var} = $value;
   }
 
-  ## FIXME chmod auth.conf ?
   print "\n";
 
   return $cf
@@ -374,17 +373,13 @@ B<cobalt2-installer> [ --rcfile=PATH ]
 
 =head1 DESCRIPTION
 
-A simple walk-through installer for the cobalt2 IRC bot.
+A simple walk-through installer for fresh L<Bot::Cobalt> instances.
 
-Asks a few questions and copies initial confs and langsets to a specified 
-directory, giving your cobalt2 bot a convenient home.
+Asks a few questions & copies initial confs and langsets to a specified 
+directory.
 
 Typically you would run this installer before starting Cobalt:
 
-  ## From a shell
-  ## Build and install normally via build or makefile ...
-  ~/cobalt2 $ perl Build.PL
-  ~/cobalt2 $ perl Build && perl Build install
   ## Initiate a new cobalt2 instance
   ## Each instance has its own rcfile
   $ cobalt2-installer

@@ -181,7 +181,7 @@ sub dbdump {
   my ($self, $format) = @_;
   croak "attempted dbdump on unopened db"
     unless $self->is_open;
-  $format = 'YAML' unless $format;
+  $format = 'YAMLXS' unless $format;
   ## 'cross-serialize' to some other format and dump it
   
   my $copy = { };

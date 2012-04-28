@@ -11,7 +11,7 @@ use Bot::Cobalt::Serializer;
 
 my($dbpath, $outpath);
 
-my $format = 'YAML';
+my $format = 'YAMLXS';
 
 use Getopt::Long;
 GetOptions(
