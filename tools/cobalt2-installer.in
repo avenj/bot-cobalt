@@ -1,15 +1,16 @@
 #!perl
-my $version = '0.13';
+my $version = '0.14';
 
-use 5.12.1;
-use strict;
-use warnings;
+use 5.10.1;
+use strictures 1;
 
 use File::Path;
 
 use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
 
-STDOUT->autoflush(1);
+use Bot::Cobalt::Frontend::Utils qw/:all/;
+
+use Term::ReadKey qw/ReadMode/;
 
 my $rcfile = $ENV{HOME} . "/.cobalt2rc";
 
@@ -35,6 +36,119 @@ GetOptions(
   'config=s' => \$rcfile,
 );
 
+my $config_q = [
+
+  info => [
+    {
+      ## For normal questions ask_question and set Var in hash
+      Question => "Bot's nickname",
+      Default  => "cobalt2",
+      Var => "CFG_BOT_NICK",
+    },
+  
+    {
+      Question => "Bot's username",
+      Default  => "cobalt",
+      Var => "CFG_BOT_USERNAME",
+    },
+  
+    {
+      Question => "Bot's 'realname'",
+      Default  => "Bot::Cobalt",
+      Var => "CFG_BOT_REALNAME",
+    },
+    
+    {
+      Question => "Command character for this bot",
+      Default  => '!',
+      Var      => "CFG_CMD_CHAR",
+    },
+  ],
+  
+  server => [
+    {
+      Question => "Remote server address",
+      Default  => "irc.cobaltirc.org",
+      Var => "CFG_SERVER_ADDR",
+    },
+    
+    {
+      ## For YesNo => use ask_yesno and default to YesNo value
+      Question => "Use SSL for this server?",
+      YesNo => 'n',
+      Var => "CFG_USE_SSL",
+    },
+    
+    {
+      Question => "Remote IRC port",
+      Default  => 6667,
+      Var => "CFG_SERVER_PORT",
+    },
+  ],
+  
+  channel => [
+    {
+      Question => "Channel name",
+      Default  => '#eris',
+      Var => "CHAN",
+    },
+  ],
+  
+  auth => [
+    {
+      Question => "Username for your superuser",
+      Default  => "MyUser",
+      Var => "AUTH_USER",
+    },
+    
+    {
+      Question => "Password",
+      Hide => 1,
+      Var  => "AUTH_PASS",
+    },
+    
+    {
+      Question => "Hostmask",
+      Default  => '*nobody@example.org',
+      Var => "AUTH_MASK",
+    },
+  
+  ],  
+
+];
+
+sub ask_from_ref {
+  my ($hash_r) = @_;
+  
+  ## my ($var, $value) = ask_from_ref($itemref);
+  
+  unless ($hash_r->{Question} && $hash_r->{Var}) {
+    die "Missing Question or Var"
+  }
+  
+  my $type = $hash_r->{YesNo} ? 'yesno' : 'question' ;
+
+  my $var = $hash_r->{Var};
+  my $q   = $hash_r->{Question};
+  
+  my $value;
+  
+  if ($type eq 'yesno') {
+    $value = ask_yesno(
+      prompt  => $q,
+      default => $hash_r->{Default},
+    );
+  } else {
+    ReadMode('noecho') if $hash_r->{Hide};
+    $value = ask_question(
+      prompt  => $q,
+      default => $hash_r->{Default},
+    );
+    ReadMode(0) if $hash_r->{Hide};
+  } 
+  
+  return($var, $value)
+}
 
 sub _deserialize_etc {
   ## Pulls our /etc from our DATA handle
@@ -59,26 +173,6 @@ sub _slurp {
   {  local $/ ; $str = <$fh>;  }
   close($fh) or warn "failed to close $path: $!\n";
   return $str
-}
-
-sub _ans {
-  ## f.ex: my $default_yes = _ans(my $in = <STDIN>, 'Y')
-  my ($stdin, $default) = @_;
-  chomp($stdin);
-  $stdin = $stdin ? $stdin : $default ;
-  return unless $stdin =~ /^Y/i;
-}
-
-## RC_* funcs
-sub RC_Read {
-  ## Read the current $rcfile
-  my $str = _slurp($rcfile);
-  my ($BASE, $ETC, $VAR);
-  eval $str;
-  if ($@) {
-    die "Errors reported during rc parsing; $@";
-  }
-  return ($BASE, $ETC, $VAR);
 }
 
 sub RC_Write {
@@ -113,6 +207,7 @@ sub Conf_write_confs {
   File::Path::mkpath( $var ."/db" );
   File::Path::mkpath( $var ."/tmp" );
   my $ref = _deserialize_etc();
+  STDOUT->autoflush(1);
   ## should have a vars hash for rplprintf, and RC_Read can give us an etc dir path
   ## use File::Path to create our dir structure
   ## write our deserialized confs back out
@@ -131,10 +226,14 @@ sub Conf_write_confs {
 
     if (-e $output_path) {
       say ">! Exists already: $output_path";
-      print "Should I overwrite it? [y/N] ";
-      if ( _ans(my $in = <STDIN>, 'N') ) {
+      
+      my $yesno = ask_yesno(
+        prompt  => "Overwrite this file?",
+        default => 'n',
+      );
+      if ($yesno) {
         say ">! Overwriting $output_path";
-      } else { next }
+      } else { say "Skipped $output_path"; next }
     }
 
     open(my $fh, '>', $output_path) or die "open failed: $output_path: $!";
@@ -160,54 +259,15 @@ sub Conf_interactive {
 
   say ">! Configuring cobalt.conf";
 
-  print "Bot's nickname [cobalt2] ";
-  $cf->{CFG_BOT_NICK} = <STDIN>;
-  chomp $cf->{CFG_BOT_NICK} ;
-  $cf->{CFG_BOT_NICK} ||= 'cobalt2';
+  for my $itemref (@{ $config_q->{info} }) {
+    my ($var, $value) = ask_from_ref( $itemref );
+    $cf->{$var} = $value;
+  }
 
-  print "\n";
-
-  print "Bot's username [cobalt] ";
-  $cf->{CFG_BOT_USERNAME} = <STDIN>;
-  chomp $cf->{CFG_BOT_USERNAME} ;
-  $cf->{CFG_BOT_USERNAME} ||= 'cobalt';
-
-  print "\n";
-
-  print "Bot's 'realname' [cobalt2 bot] ";
-  $cf->{CFG_BOT_REALNAME} = <STDIN>;
-  chomp $cf->{CFG_BOT_REALNAME} ;
-  $cf->{CFG_BOT_REALNAME} ||= 'cobalt2 bot';
-
-  print "\n";
-
-  print "Remote ServerAddr [irc.cobaltirc.org] ";
-  $cf->{CFG_SERVER_ADDR} = <STDIN>;
-  chomp $cf->{CFG_SERVER_ADDR} ;
-  $cf->{CFG_SERVER_ADDR} ||= 'irc.cobaltirc.org';
-
-  print "\n";
-
-  print "Use SSL for this server? [y/N] ";
-  my $usessl = _ans(my $in = <STDIN>, 'n');
-  $cf->{CFG_USE_SSL} = $usessl ? 1 : 0 ;
-
-  print "\n";
-
-  my $default_irc_port = $usessl ? 6697 : 6667 ;
-  print "Remote port [$default_irc_port] ";
-  $cf->{CFG_SERVER_PORT} = <STDIN>;
-  chomp $cf->{CFG_SERVER_PORT} ;
-  $cf->{CFG_SERVER_PORT} ||= $default_irc_port;
-
-  print "\n";
-
-  say "You need to specify a command character for the bot.";
-  say "This is used to prefix various plugin-provided commands.";
-  print "Bot's command character [ ! ] ";
-  $cf->{CFG_CMD_CHAR} = <STDIN>;
-  chomp $cf->{CFG_CMD_CHAR};
-  $cf->{CFG_CMD_CHAR} ||= '!' ;
+  for my $itemref (@{ $config_q->{server} }) {
+    my ($var, $value) = ask_from_ref($itemref);
+    $cf->{$var} = $value;
+  }
 
   print "\n";
 
@@ -221,10 +281,10 @@ sub Conf_interactive {
   say ">! Configuring channels.conf\n";
   say "You're going to want to set up an initial channel.";
 
-  print "Channel name [#otw] ";
-  $cf->{CHAN} = <STDIN>;
-  chomp $cf->{CHAN};
-  $cf->{CHAN} ||= '#otw';
+  for my $itemref (@{ $config_q->{channel} }) {
+    my ($var, $value) = ask_from_ref($itemref);
+    $cf->{$var} = $value;
+  }
 
   print "\n";
 
@@ -235,40 +295,12 @@ sub Conf_interactive {
 
   say "You'll want at least one SuperUser to control the bot.";
   say "Authorized users have a username that may or may not be their IRC nick.";
-  print "Username for your superuser: ";
-  $cf->{AUTH_USER} = <STDIN>;
-  chomp $cf->{AUTH_USER};
-  $cf->{AUTH_USER} ||= 'MyUser';
 
-  print "\n";
-
-  say "By default, passwords are encrypted using bcrypt.";
-  say "bcrypt is a pretty secure way to generate password hashes.";
-
-  eval "require Term::ReadKey";
-  if ($@) {
-    say ">! WARNING: No Term::ReadKey found.";
-    say ">! Cannot blank passwd prompts!"; 
-  } else {
-    Term::ReadKey->import('ReadMode');
+  for my $itemref (@{ $config_q->{auth} }) {
+    my ($var, $value) = ask_from_ref($itemref);
+    $cf->{$var} = $value;
   }
-  print "Passwd for user ".$cf->{AUTH_USER}.": ";
-  ReadMode('noecho') if exists &ReadMode;
-  my $clearpwd = <STDIN>;
-  ReadMode(0) if exists &ReadMode;
-  chomp $clearpwd;
-  $cf->{AUTH_PASS} = mkpasswd($clearpwd || rand);
 
-  print "\n";
-  say "This user needs at least one hostmask to match on.";
-  say "For example: *avenj@*.oppresses.us";
-  say "(You can add others to auth.conf later.)";
-  print "Mask: ";
-  $cf->{AUTH_MASK} = <STDIN>;
-  chomp $cf->{AUTH_MASK};
-  $cf->{AUTH_MASK} ||= '*nobody@nowhere.org';
-  say "\nAdded mask $cf->{AUTH_MASK} for user $cf->{AUTH_USER}";
-  say "You may want to edit auth.conf to add/edit superusers and masks.";
   ## FIXME chmod auth.conf ?
   print "\n";
 
@@ -288,12 +320,14 @@ print(
 say "> Default rcfile: $rcfile";
 
 ## prompt user for a rcfile path
-print "> Enter a different rcfile location? [y/N] ";
-if ( _ans(my $in = <STDIN>, 'N') ) {
-  do {
-    print "> Path to rcfile: ";
-    $rcfile = <STDIN>; chomp($rcfile);
-  } until $rcfile;
+my $enter_diff_yn = ask_yesno(
+  prompt  => "Enter a different rcfile location?",
+  default => 'n',
+);
+if ( $enter_diff_yn ) {
+  $rcfile = ask_question(
+    prompt => "Path to rcfile",
+  );
 }
 
 say ">! using rcfile: $rcfile";
@@ -308,8 +342,11 @@ $relative_basedir //= 'cobalt2';
 
 if (-e $rcfile) {
   say ">! $rcfile seems to already exist.";
-  say ">! Should I overwrite it? [y/N] ";
-  if ( _ans(my $in = <STDIN>, 'N') ) {
+  my $overwrite_yn = ask_yesno(
+    prompt => "Overwrite existing rcfile?",
+    default => 'n',    
+  );
+  if ( $overwrite_yn ) {
     RC_Write($relative_basedir);
   } else {
     say ">! Skipping rcfile write; attempting to use existing.";
