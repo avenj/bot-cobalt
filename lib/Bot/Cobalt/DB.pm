@@ -10,56 +10,64 @@ our $VERSION = '0.200_46';
 ## a better 'DB2' interface using BerkeleyDB.pm is planned ...
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
+
 use Carp;
+
+use Moo;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock/;
 
 use Bot::Cobalt::Serializer;
+use Bot::Cobalt::Common qw/:types/;
 
-sub new {
-  my $self = {};
-  my $class = shift;
-  bless $self, $class;
-  
-  my %args = @_;
-  unless ($args{File}) {
-    croak "Constructor requires a specified File";
-  }
+has 'File' => ( is => 'rw', isa => Str, required => 1 );
 
-  $self->{Serializer} = Bot::Cobalt::Serializer->new(Format => 'JSON');
+has 'LockFile' => ( is => 'rw', isa => Str, lazy => 1,
+  default => sub {
+    $_[0]->File .".lock" ;
+  },
+);
 
-  my $path = $args{File};
+has 'Perms'   => ( is => 'rw', default => sub { 0644 } );
+has 'Timeout' => ( is => 'rw', default => sub { 5 } );
+has 'Raw'     => ( is => 'rw', default => sub { 0 } );
 
-  $self->{DatabasePath} = $path;
- 
-  $self->{LockFile} = $args{LockFile} // $path . ".lock";
+has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
+  default => sub {
+    Bot::Cobalt::Serializer->new(Format => 'JSON');
+  },
+);
 
-  $self->{Perms}   = $args{Perms}   ? $args{Perms}   : 0644 ;
-  $self->{Timeout} = $args{Timeout} ? $args{Timeout} : 5 ;
-  $self->{RawDB}   = $args{Raw}     ? $args{Raw}     : 0 ;
+has 'Tied'   => ( is => 'rw', isa => HashRef, lazy => 1 );
+has 'LockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
+  predicate => 'has_LockFH',
+  clearer   => 'clear_LockFH', 
+);
+has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
+  predicate => 'has_DB',
+  clearer   => 'clear_DB',
+);
 
-  return $self
-}
+has 'Open' => ( is => 'rw', isa => Bool, default => { 0 } );
 
 sub DESTROY {
   my ($self) = @_;
-  $self->dbclose if $self->is_open;
+  $self->dbclose if $self->Open;
 }
-
 
 sub dbopen {
   my ($self) = @_;
-  my $path = $self->{DatabasePath};
+  my $path = $self->File;
 
-  open my $lockf_fh, '>', $self->{LockFile}
-    or warn "could not open lockfile $self->{LockFile}: $!\n"
+  open my $lockf_fh, '>', $self->LockFile
+    or warn "could not open lockfile $self->LockFile: $!\n"
     and return;
 
   my $timer = 0;
-  my $timeout = $self->{Timeout} || 5;
+  my $timeout = $self->Timeout || 5;
+
   until ( flock $lockf_fh, LOCK_EX | LOCK_NB ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
@@ -68,130 +76,135 @@ sub dbopen {
     select undef, undef, undef, 0.1;
     $timer += 0.1;
   }
-  print $lockf_fh $$;
-  $self->{LockFH} = $lockf_fh;
 
-  $self->{DB} = tie %{ $self->{Tied} }, "DB_File", $path,
-      O_CREAT|O_RDWR, $self->{Perms}, $DB_HASH
-      or croak "failed db open: $path: $!"
-  ;
+  print $lockf_fh $$;
+  $self->LockFH( $lockf_fh );
+
+  my $db = tie %{ $self->Tied }, "DB_File", $path,
+      O_CREAT|O_RDWR, $self->Perms, $DB_HASH
+      or croak "failed db open: $path: $!" ;
+
+  $self->DB($db);
 
   ## null-terminated to be C-compat
-  $self->{DB}->filter_fetch_key(
+  $self->DB->filter_fetch_key(
     sub { s/\0$// }
   );
-  $self->{DB}->filter_store_key(
+  $self->DB->filter_store_key(
     sub { $_ .= "\0" }
   );
 
   ## Storable is probably faster
   ## ... but has no backwards compat guarantee
-  $self->{DB}->filter_fetch_value(
+  $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
-      $_ = $self->{Serializer}->thaw($_) unless $self->{RawDB};
+      $_ = $self->Serializer->thaw($_) unless $self->Raw;
     }
   );
-  $self->{DB}->filter_store_value(
+  $self->DB->filter_store_value(
     sub {
-      $_ = $self->{Serializer}->freeze($_) unless $self->{RawDB};
+      $_ = $self->Serializer->freeze($_) unless $self->Raw;
       $_ .= "\0";
     }
   );
-  $self->is_open(1);
+  $self->Open(1);
   return 1
 }
 
 sub dbclose {
   my ($self) = @_;
-  unless ($self->is_open) {
+  unless ($self->Open) {
     carp "attempted dbclose on unopened db";
     return
   }
-  $self->{DB} = undef;
-  untie %{ $self->{Tied} };
-  my $lockfh = $self->{LockFH};
-  close $lockfh;
-  delete $self->{LockFH};
-  unlink $self->{LockFile};
-  $self->is_open(0);
-  return 1
-}
 
-sub is_open {
-  my ($self, $val) = @_;
-  $self->{DB_IS_OPEN} = $val if defined $val;
-  return $self->{DB_IS_OPEN} //= 0
+  $self->clear_DB;
+
+  untie %{ $self->Tied };
+
+  my $lockfh = $self->LockFH;
+  close $lockfh;
+  $self->clear_LockFH;
+
+  unlink $self->LockFile;
+
+  $self->Open(0);
+
+  return 1
 }
 
 sub get_tied {
   my ($self) = @_;
   croak "attempted to get_tied on unopened db"
-    unless $self->is_open;
-  return $self->{Tied}
+    unless $self->Open;
+
+  return $self->Tied
 }
 
 sub get_db {
   my ($self) = @_;
   croak "attempted to get_db on unopened db"
-    unless $self->is_open;
-  return $self->{DB}
+    unless $self->Open;
+
+  return $self->DB
 }
 
-sub get_path {
-  my ($self) = @_;
-  return $self->{DatabasePath};
-}
+sub get_path { $_[0]->File }
 
 sub dbkeys {
   my ($self) = @_;
   croak "attempted 'dbkeys' on unopened db"
-    unless $self->is_open;
-  return wantarray ? (keys %{ $self->{Tied} })
-                   : scalar keys %{ $self->{Tied} };
+    unless $self->Open;
+
+  return wantarray ? (keys %{ $self->Tied })
+                   : scalar keys %{ $self->Tied };
 }
 
 sub get {
   my ($self, $key) = @_;
   croak "attempted 'get' on unopened db"
-    unless $self->is_open;
-  return undef unless exists $self->{Tied}{$key};
-  my $value = $self->{Tied}{$key};
-  return $value
+    unless $self->Open;
+  return undef unless exists $self->Tied->{$key};
+
+  return $self->Tied->{$key}
 }
 
 sub put {
   my ($self, $key, $value) = @_;
   croak "attempted 'put' on unopened db"
-    unless $self->is_open;
-  $self->{Tied}{$key} = $value;
-  return $value
+    unless $self->Open;
+
+  return $self->Tied->{$key} = $value;
 }
 
 sub del {
   my ($self, $key) = @_;
   croak "attempted 'del' on unopened db"
-    unless $self->is_open;
-  return undef unless exists $self->{Tied}{$key};
-  delete $self->{Tied}{$key};
+    unless $self->Open;
+  return undef unless exists $self->Tied->{$key};
+  delete $self->Tied->{$key};
   return 1
+}
+
+sub is_open {
+  ## backwards compat, meh, whatever.
+  shift->Open(@_)
 }
 
 sub dbdump {
   my ($self, $format) = @_;
   croak "attempted dbdump on unopened db"
-    unless $self->is_open;
+    unless $self->Open;
   $format = 'YAMLXS' unless $format;
-  ## 'cross-serialize' to some other format and dump it
   
   my $copy = { };
-  while (my ($key, $value) = each %{ $self->{Tied} }) {
+  while (my ($key, $value) = each %{ $self->Tied }) {
     $copy->{$key} = $value;
   }
   
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
-  my $serial = $dumper->freeze($copy);
-  return $serial
+  return $dumper->freeze($copy);
 }
 
 1;
