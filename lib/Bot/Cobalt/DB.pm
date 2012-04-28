@@ -7,7 +7,6 @@ our $VERSION = '0.200_47';
 ##
 ## Interface to a DB_File (berkdb1.x interface)
 ## Very simplistic, no readonly locking etc.
-## a better 'DB2' interface using BerkeleyDB.pm is planned ...
 
 use 5.10.1;
 use strictures 1;
@@ -52,7 +51,7 @@ has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
   clearer   => 'clear_DB',
 );
 
-has 'Open' => ( is => 'rw', isa => Bool, default => sub { 0 } );
+has 'is_open' => ( is => 'rw', isa => Bool, default => sub { 0 } );
 
 sub BUILDARGS {
   my ($class, @args) = @_;
@@ -65,7 +64,7 @@ sub BUILDARGS {
 
 sub DESTROY {
   my ($self) = @_;
-  $self->dbclose if $self->Open;
+  $self->dbclose if $self->is_open;
 }
 
 sub dbopen {
@@ -119,13 +118,13 @@ sub dbopen {
       $_ .= "\0";
     }
   );
-  $self->Open(1);
+  $self->is_open(1);
   return 1
 }
 
 sub dbclose {
   my ($self) = @_;
-  unless ($self->Open) {
+  unless ($self->is_open) {
     carp "attempted dbclose on unopened db";
     return
   }
@@ -140,7 +139,7 @@ sub dbclose {
 
   unlink $self->LockFile;
 
-  $self->Open(0);
+  $self->is_open(0);
 
   return 1
 }
@@ -148,7 +147,7 @@ sub dbclose {
 sub get_tied {
   my ($self) = @_;
   croak "attempted to get_tied on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
 
   return $self->Tied
 }
@@ -156,7 +155,7 @@ sub get_tied {
 sub get_db {
   my ($self) = @_;
   croak "attempted to get_db on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
 
   return $self->DB
 }
@@ -166,7 +165,7 @@ sub get_path { $_[0]->File }
 sub dbkeys {
   my ($self) = @_;
   croak "attempted 'dbkeys' on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
 
   return wantarray ? (keys %{ $self->Tied })
                    : scalar keys %{ $self->Tied };
@@ -175,7 +174,7 @@ sub dbkeys {
 sub get {
   my ($self, $key) = @_;
   croak "attempted 'get' on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
   return undef unless exists $self->Tied->{$key};
 
   return $self->Tied->{$key}
@@ -184,7 +183,7 @@ sub get {
 sub put {
   my ($self, $key, $value) = @_;
   croak "attempted 'put' on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
 
   return $self->Tied->{$key} = $value;
 }
@@ -192,30 +191,23 @@ sub put {
 sub del {
   my ($self, $key) = @_;
   croak "attempted 'del' on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
   return undef unless exists $self->Tied->{$key};
   delete $self->Tied->{$key};
   return 1
 }
 
-sub is_open {
-  ## backwards compat, meh, whatever.
-  shift->Open(@_)
-}
-
 sub dbdump {
   my ($self, $format) = @_;
   croak "attempted dbdump on unopened db"
-    unless $self->Open;
+    unless $self->is_open;
   $format = 'YAMLXS' unless $format;
   
-  my $copy = { };
-  while (my ($key, $value) = each %{ $self->Tied }) {
-    $copy->{$key} = $value;
-  }
+  ## shallow-copy in case chosen serializer chokes on tied() ..
+  my %copy = %{ $self->Tied };
   
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
-  return $dumper->freeze($copy);
+  return $dumper->freeze(\%copy);
 }
 
 1;
