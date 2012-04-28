@@ -94,7 +94,7 @@ sub load_langset {  ## load_langset(language)
   return $langset->{RPL}
 }
 
-### THIS MODULE WILL HAVE A LANGSET APPENDED AT BUILD-TIME ###
+### this module will have a langset appended at build-time ###
 
 no Moo; 1;
 __DATA__

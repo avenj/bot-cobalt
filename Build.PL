@@ -113,6 +113,8 @@ my $build = $class->new(
     'Data::Dumper'   => 0,
     'File::Find'     => 0,
     'File::Spec'     => 0,
+    'File::Temp'     => 0,
+    'Fcntl' => 0,
   },
 
   requires => {
@@ -120,6 +122,8 @@ my $build = $class->new(
       'perl' => '5.10.1',
       'Carp' => 0,
       'Cwd'  => 0,
+      'Exporter' => 0,
+      'Fcntl'    => 0,
       'Data::Dumper'   => 0,
       'DB_File'        => 0,
       'Digest::SHA'    => 0,
@@ -128,6 +132,7 @@ my $build = $class->new(
       'File::Basename' => 0,
       'File::Path'     => '2.00',
       'Getopt::Long'   => 0,
+      'POSIX'          => 0,
       'Scalar::Util'   => 0,
       'Storable'       => 0,
       
@@ -136,7 +141,8 @@ my $build = $class->new(
    ### Cobalt set ###
      # Crypt
       'App::bmkpasswd' => 0,
-      'Crypt::Eksblowfish' => '0.003',
+      'Crypt::Eksblowfish'         => '0.003',
+      'Crypt::Eksblowfish::Bcrypt' => 0,
 
      # HTTP
       'HTTP::Request'  => 0,
