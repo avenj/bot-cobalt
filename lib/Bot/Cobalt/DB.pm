@@ -1,5 +1,5 @@
 package Bot::Cobalt::DB;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 ## ->new(File => $path)
 ##  To use a different lockfile:

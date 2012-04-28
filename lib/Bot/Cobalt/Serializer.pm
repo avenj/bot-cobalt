@@ -1,11 +1,15 @@
 package Bot::Cobalt::Serializer;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 use 5.10.1;
 use strictures 1;
 
 use Moo;
 use Carp;
+
+## These two must be present anyway:
+use YAML::XS ();
+use JSON ();
 
 use Bot::Cobalt::Common qw/:types/;
 
@@ -54,14 +58,12 @@ has 'LogMethod' => ( is => 'rw', isa => Str, lazy => 1,
 
 has 'yamlxs_from_ref' => ( is => 'rw', lazy => 1,
   coerce => sub {
-    require YAML::XS;
     YAML::XS::Dump($_[0])
   },
 );
 
 has 'ref_from_yamlxs' => ( is => 'rw', lazy => 1,
   coerce => sub {
-    require YAML::XS;
     YAML::XS::Load($_[0])
   },
 );
@@ -82,7 +84,6 @@ has 'ref_from_yaml' => ( is => 'rw', lazy => 1,
 
 has 'json_from_ref' => ( is => 'rw', lazy => 1,
   coerce => sub {
-    require JSON;
     my $jsify = JSON->new->allow_nonref;
     $jsify->utf8->encode($_[0]);
   },
@@ -90,7 +91,6 @@ has 'json_from_ref' => ( is => 'rw', lazy => 1,
 
 has 'ref_from_json' => ( is => 'rw', lazy => 1,
   coerce => sub {
-    require JSON;
     my $jsify = JSON->new->allow_nonref;
     $jsify->utf8->decode($_[0])
   },

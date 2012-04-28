@@ -76,7 +76,7 @@ my $class = Module::Build->subclass(
             close $fh;
           }
         },
-        $base
+        $base."/lib", $base."/tools"
       );
       print "\n$x modules\n";
     }

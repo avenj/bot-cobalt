@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Logger;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 ## FIXME
 ##  - push ourselves up towards right after Bot::Cobalt::IRC

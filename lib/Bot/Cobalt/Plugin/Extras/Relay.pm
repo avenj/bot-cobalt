@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Relay;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 ## Simplistic relaybot plugin
 use 5.10.1;

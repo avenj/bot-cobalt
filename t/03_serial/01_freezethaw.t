@@ -12,6 +12,8 @@ my $hash = {
   Hash  => { Some => { Deep => 'Hash' } },
 };
 
+## JSON and YAMLXS (default) are the only ones we use
+
 JSON: {
   my $js_ser = Bot::Cobalt::Serializer->new( 'JSON' );
   can_ok($js_ser, 'freeze', 'thaw');

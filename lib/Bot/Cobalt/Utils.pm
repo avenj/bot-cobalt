@@ -1,5 +1,5 @@
 package Bot::Cobalt::Utils;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 use 5.10.1;
 use strict;

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB::SearchCache;
-our $VERSION = '0.200_46';
+our $VERSION = '0.200_47';
 
 ## This is a fairly generic in-memory cache object.
 ##
