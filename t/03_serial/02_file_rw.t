@@ -1,4 +1,3 @@
-use 5.12.1;
 use Test::More tests => 9;
 
 use Fcntl qw/ :flock /;

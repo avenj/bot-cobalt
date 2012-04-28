@@ -1,9 +1,11 @@
-use 5.12.1;
-use Test::More tests => 9;
+use Test::More tests => 13;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Serializer' );
 }
+
+new_ok( 'Bot::Cobalt::Serializer' => [ Format => 'JSON' ] );
+new_ok( 'Bot::Cobalt::Serializer' => [ Format => 'YAMLXS' ] );
 
 my $hash = {
   Scalar => "A string",
@@ -15,7 +17,7 @@ my $hash = {
 ## JSON and YAMLXS (default) are the only ones we use
 
 JSON: {
-  my $js_ser = Bot::Cobalt::Serializer->new( 'JSON' );
+  my $js_ser = new_ok( 'Bot::Cobalt::Serializer' => [ 'JSON' ] );
   can_ok($js_ser, 'freeze', 'thaw');
   my $json = $js_ser->freeze($hash);
   ok( $json, 'JSON freeze');
@@ -27,7 +29,7 @@ JSON: {
 }
 
 YAML: {
-  my $yml_ser = Bot::Cobalt::Serializer->new();
+  my $yml_ser = new_ok( 'Bot::Cobalt::Serializer' );
   can_ok($yml_ser, 'freeze', 'thaw');
   my $yml = $yml_ser->freeze($hash);
   ok( $yml, 'YAML freeze');
