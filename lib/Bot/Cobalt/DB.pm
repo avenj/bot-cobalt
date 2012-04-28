@@ -40,17 +40,19 @@ has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
   },
 );
 
-has 'Tied'   => ( is => 'rw', isa => HashRef, lazy => 1 );
+has 'Tied'   => ( is => 'rw', isa => HashRef, default => sub { {} } );
+
 has 'LockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
   predicate => 'has_LockFH',
   clearer   => 'clear_LockFH', 
 );
+
 has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
   predicate => 'has_DB',
   clearer   => 'clear_DB',
 );
 
-has 'Open' => ( is => 'rw', isa => Bool, default => { 0 } );
+has 'Open' => ( is => 'rw', isa => Bool, default => sub { 0 } );
 
 sub DESTROY {
   my ($self) = @_;
