@@ -1,5 +1,6 @@
-use Test::More tests => 15;
+use Test::More tests => 25;
 
+use 5.10.1;
 use Fcntl qw/ :flock /;
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
@@ -17,8 +18,13 @@ can_ok( $db, 'dbopen', 'dbclose', 'put', 'get', 'dbkeys' );
 
 ok( $db->dbopen, 'Temp database open' );
 
+ok( $db->get_path, 'Temp database get_path');
+
+ok( $db->is_open, 'Temp database is_open' );
+
 ok( $db->put('testkey', { Deep => { Hash => 1 } }), 'Database ref put()');
 
+ok( ($db->dbkeys)[0] eq 'testkey', 'DB has expected dbkeys()');
 my $ref;
 ok( $ref = $db->get('testkey'), 'Database get()' );
 ok( $ref->{Deep}->{Hash}, 'Database put() vs get()' );
@@ -28,6 +34,8 @@ undef $ref;
 ok( $db->dbkeys, 'Database dbkeys()' );
 
 $db->dbclose;
+
+ok( !$db->is_open, 'Temp database !is_open' );
 
 ok( $db->dbopen, 'Temp database reopen' );
 
@@ -47,6 +55,20 @@ ok( $db->put('intkey', 2),
 ok( $db->get('intkey') == 2, 
   'Retrieve and compare int'
 );
+
+cmp_ok( $db->dbkeys, '==', 3, "DB has expected num. of keys");
+ok( 
+  my @keys = $db->dbkeys
+  && 'testkey' ~~ @keys
+  && 'scalarkey' ~~ @keys
+  && 'intkey' ~~ @keys,
+  'DB has expected keys'
+);
+
+ok( $db->del('intkey'), 'Database del() 1' );
+ok( $db->del('testkey'), 'Database del() 2' );
+cmp_ok( $db->dbkeys, '==', 1, "DB has expected keys after del");
+is( ($db->dbkeys)[0], 'scalarkey', "DB has expected key after del");
 
 $db->dbclose;
 
