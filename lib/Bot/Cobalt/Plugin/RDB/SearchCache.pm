@@ -15,7 +15,7 @@ our $VERSION = '0.200_47';
 
 use 5.10.1;
 use strictures 1;
-
+use Carp;
 use Time::HiRes;
 
 sub new {
@@ -36,16 +36,23 @@ sub cache {
   ## should be passed rdb, search str, and array of matching indices
   
   return unless $ckey and $match;
-  $resultset = [ ] unless $resultset and ref $resultset eq 'ARRAY';
+  
+  if (! ref $resultset) {
+    ## Add single item.
+    push(@{ $self->{Cache}->{$ckey}->{$match}->{Results} }, $resultset )
+      unless $resultset ~~ $self->{Cache}->{$ckey}->{$match}->{Results};
+  } elsif (ref $resultset eq 'ARRAY') {
+    $self->{Cache}->{$ckey}->{$match}->{Results} = $resultset;
+  } else {
+    carp "->cache passed an unknown ref type, resetting resultset";
+    $resultset = [ ];
+  }
+  
+  $self->{Cache}->{$ckey}->{$match}->{TS} = Time::HiRes::time;
 
   ## _shrink will do the right thing depending on size of cache
   ## (MaxKeys can be used to adjust cachesize per-rdb 'on the fly')
   $self->_shrink($ckey);
-  
-  $self->{Cache}->{$ckey}->{$match} = {
-    TS => Time::HiRes::time(),
-    Results => $resultset,
-  };
 }
 
 sub fetch {
