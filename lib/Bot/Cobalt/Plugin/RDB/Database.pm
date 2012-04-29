@@ -47,6 +47,7 @@ use File::Path qw/mkpath/;
 
 use Time::HiRes;
 
+use List::Util qw/shuffle/;
 
 sub new {
   my $self = {};
@@ -418,7 +419,7 @@ sub random {
 }
 
 sub search {
-  my ($self, $rdb, $glob) = @_;
+  my ($self, $rdb, $glob, $wantone) = @_;
 
   $self->Error(0);
   unless ( $self->{RDBPaths}->{$rdb} ) {
@@ -441,7 +442,11 @@ sub search {
   my $cache = $self->{CacheObj};
   my @matches = $cache->fetch($rdb, $glob);
   if (@matches) {
-    return wantarray ? @matches : [ @matches ] ;
+    if ($wantone) {
+      return pop(@{[shuffle @matches]})
+    } else {
+      return wantarray ? @matches : [ @matches ] ;
+    }
   }
 
   my $re = glob_to_re_str($glob);
@@ -453,13 +458,26 @@ sub search {
     return 0
   }
   
-  for my $dbkey ($db->dbkeys) {
+  my @dbkeys = $db->dbkeys;
+  for my $dbkey (shuffle @dbkeys) {
     my $ref = $db->get($dbkey) // next;
     my $str = $ref->{String} // '';
+    if ($str =~ $re) {
+      if ($wantone) {
+        ## plugin only cares about one match, short-circuit
+        $db->dbclose;
+        return $dbkey
+      } else {
+        push(@matches, $dbkey);
+      }
+    }
     push(@matches, $dbkey) if $str =~ $re;
   }
   
   $db->dbclose;
+
+  ## WANTONE but we didn't find any, return
+  return undef if $wantone;
   
   ## push back to cache
   $cache->cache($rdb, $glob, [ @matches ] );

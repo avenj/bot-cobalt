@@ -277,10 +277,10 @@ sub _cmd_randq {
 
   $core->log->debug("dispatching search for $str in $rdb");
 
-  my $matches = $dbmgr->search($rdb, $str);
+  my $match = $dbmgr->search($rdb, $str, 'WANTONE');
 
-  unless ($matches && ref $matches eq 'ARRAY') {
-    $core->log->debug("Error status from search(): $matches");
+  if (!$match && $dbmgr->Error) {
+    $core->log->debug("Error status from search(): $dbmgr->Error");
     my $rpl;
     given ($dbmgr->Error) {
       $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
@@ -293,24 +293,11 @@ sub _cmd_randq {
     );
   }
 
-  ## pick one at random:
-  my $selection = @$matches ? 
-                   @$matches[rand @$matches]
-                   : return 'No match' ;
+  return 'No match' if not defined $match;
   
-  if ($self->{LastRandq} 
-      && $self->{LastRandq} eq $selection 
-      && @$matches > 1) 
-  {
-    ## we probably just spit this randq out
-    ## give it one more shot
-    $selection = @$matches[rand@$matches];
-  }
-  $self->{LastRandq} = $selection;
+  $core->log->debug("dispatching get() for $match in $rdb");
 
-  $core->log->debug("dispatching get() for $selection in $rdb");
-
-  my $item = $dbmgr->get($rdb, $selection);
+  my $item = $dbmgr->get($rdb, $match);
   unless ($item && ref $item eq 'HASH') {
     $core->log->debug("Error status from get(): $item");
     my $rpl;
@@ -323,7 +310,7 @@ sub _cmd_randq {
       { 
         nick  => $msg->src_nick//'',
         rdb   => $rdb, 
-        index => $selection 
+        index => $match 
       }
     );
   }
