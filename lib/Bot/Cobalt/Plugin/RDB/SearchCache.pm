@@ -14,8 +14,7 @@ our $VERSION = '0.200_47';
 ## module will become a placeholder.
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 
 use Time::HiRes;
 
@@ -57,12 +56,13 @@ sub fetch {
          and $self->{Cache}->{$ckey}->{$match};
 
   my $ref = $self->{Cache}->{$ckey}->{$match};
+
   wantarray ? return @{ $ref->{Results} } 
             : return $ref->{Results}  ;
 }
 
 sub invalidate {
-  my ($self, $ckey) = @_;
+  my ($self, $ckey, $match) = @_;
   ## should be called on add/del operations 
 
   unless ($ckey) {
@@ -74,13 +74,16 @@ sub invalidate {
   return unless $self->{Cache}->{$ckey}
          and scalar keys %{ $self->{Cache}->{$ckey} } ;
 
+  return delete $self->{Cache}->{$ckey}->{$match}
+    if defined $match;
   return delete $self->{Cache}->{$ckey};
 }
 
 sub MaxKeys {
   my ($self, $max) = @_;
   $self->{MAX_KEYS} = $max if defined $max;
-  return $self->{MAX_KEYS};
+
+  return $self->{MAX_KEYS}
 }
 
 sub _shrink {
@@ -100,6 +103,7 @@ sub _shrink {
     my $nextkey = shift @cached;
     ++$deleted if delete $cacheref->{$nextkey};
   }
+
   return $deleted
 }
 
@@ -130,6 +134,9 @@ Bot::Cobalt::Plugin::RDB::SearchCache - generic limited-key memory caching
   
   ## Data changed, invalidate this cache:
   $cache->invalidate('MyCache');
+  
+  ## Invalidate one entry:
+  $cache->invalidate('MyCache', $key);
 
   ## Change the maximum number of keys on the fly:
   $cache->MaxKeys('40');

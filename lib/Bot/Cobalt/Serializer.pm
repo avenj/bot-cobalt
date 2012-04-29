@@ -30,7 +30,7 @@ has 'Format' => ( is => 'rw', isa => Str,
   },
 );
 
-has 'Types' => ( is => 'ro', isa => HashRef,
+has 'Types' => ( is => 'ro', isa => HashRef, lazy => 1,
   default => sub {
     {
       YAML   => 'YAML::Syck',
@@ -51,7 +51,7 @@ has 'Logger' => ( is => 'rw', isa => Object,
   },
 );
 
-has 'LogMethod' => ( is => 'rw', isa => Str,
+has 'LogMethod' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub { 'error' },
 );
 
