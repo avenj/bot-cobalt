@@ -203,7 +203,7 @@ sub dbdump {
     unless $self->is_open;
   $format = 'YAMLXS' unless $format;
   
-  ## shallow-copy in case chosen serializer chokes on tied() ..
+  ## shallow copy to drop tied()
   my %copy = %{ $self->Tied };
   
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );

@@ -389,7 +389,10 @@ See below for descriptions.
 
 =head3 Format
 
-Specify an input and output serialization format.
+Specify an input and output serialization format; this determines the 
+serialization method used by L</writefile>, L</readfile>, L</thaw>, and 
+L</freeze> methods. (You can change formats on the fly by calling 
+B<Format> as a method.)
 
 Currently available formats are:
 
@@ -576,13 +579,6 @@ Returns a list of two values: the module name and its version.
   $VAR2 = 1.19;
 
 
-=head1 AUTHOR
-
-Jon Portnoy <avenj@cobaltirc.org>
-
-L<http://www.cobaltirc.org>
-
-
 =head1 SEE ALSO
 
 =over
@@ -604,6 +600,13 @@ L<JSON>, L<JSON::XS> -- JSON: L<http://www.json.org/>
 L<XML::Dumper>
 
 =back
+
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 
 =cut

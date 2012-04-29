@@ -47,9 +47,6 @@ sub timer_set {
   
   my $id = $timer->id;
 
-  ## FIXME sanity check ?
-
-  
   ## Add to our TimerPool.
   $self->TimerPool->{$id} = $timer;
   
