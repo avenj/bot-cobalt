@@ -306,8 +306,8 @@ Database operations should be contained within a dbopen/dbclose:
   $db->put($key, $data);
   $db->dbclose;
   
-  ## open, read, close:
-  $db->dbopen || croak "dbopen failure";
+  ## open for read-only, read, close:
+  $db->dbopen(ro => 1) || croak "dbopen failure";
   my $data = $db->get($key);
   $db->dbclose;
 
@@ -335,7 +335,8 @@ calls and attempt to close as quickly as possible.
 =head3 dbopen
 
 B<dbopen> opens and locks the database (via an external lockfile, 
-see the B<LockFile> constructor argument).
+see the B<LockFile> constructor argument). If 'ro => 1' is specified, 
+this is a LOCK_SH lock; otherwise it is a LOCK_EX.
 
 Try to call a B<dbclose> as quickly as possible to reduce locking 
 contention.
@@ -348,7 +349,6 @@ open and locked.
 =head3 dbclose
 
 B<dbclose> closes and unlocks the database.
-
 
 =head3 put
 
