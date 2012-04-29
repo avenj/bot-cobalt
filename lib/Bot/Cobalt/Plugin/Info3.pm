@@ -765,12 +765,17 @@ sub _info_match {
         ## not an action topic
         next if $isaction;
       }
+  
       $self->{DB}->dbopen || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;
+  
       $str = $ref->{Response} // 'Error retrieving Response string';
+  
+      last
     }
   }
+  
   return $str if $str;
 
   ## negative searchcache if there's no match
