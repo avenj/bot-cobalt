@@ -59,7 +59,7 @@ my $db = Bot::Cobalt::DB->new(
   LockFile => ".dbdump.lock",
 );
 
-$db->dbopen or die "dbopen failure";
+$db->dbopen(ro => 1) or die "dbopen failure";
 my $yaml = $db->dbdump($format) or die "dbdump failure";
 $db->dbclose;
 
