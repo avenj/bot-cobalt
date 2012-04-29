@@ -30,7 +30,7 @@ GetOptions(
 
 ## Format check
 die "$format is not a valid export format; see perldoc Bot::Cobalt::Serializer"
-  unless Bot::Cobalt::Serializer->_check_if_avail($format);
+  unless Bot::Cobalt::Serializer->new->_check_if_avail($format);
 
 unless ($dbpath) {
   print "Path to database to be exported: \n > ";
