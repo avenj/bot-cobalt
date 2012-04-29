@@ -338,13 +338,21 @@ sub irc_public {
     message => $txt,
   );
   
-  ## Bot_public_msg / Bot_public_cmd_$cmd  
-  if (my $cmd = $msg_obj->cmd) {
-    if ( $self->flood->check($context, $src) ) {
+  my $floodchk = sub {
+    if ( $self->flood->check(@_) ) {
       $self->flood_ignore($context, $src);
-      return
+      return 1
     }
+  };
+  
+  ## Bot_public_msg / Bot_public_cmd_$cmd  
+  ## FloodChk cmds and highlights
+  if (my $cmd = $msg_obj->cmd) {
+    return if $floodchk->($context, $src);
     $core->send_event( 'public_cmd_'.$cmd, $msg_obj);
+  } elsif ($msg_obj->highlight) {
+    return if $floodchk->($context, $src);
+    $core->send_event( 'public_msg', $msg_obj);    
   } else {
     $core->send_event( 'public_msg', $msg_obj );
   }
