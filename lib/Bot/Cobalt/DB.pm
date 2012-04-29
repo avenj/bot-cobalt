@@ -68,7 +68,19 @@ sub DESTROY {
 }
 
 sub dbopen {
-  my ($self) = @_;
+  my ($self, %args) = @_;
+  $args{lc $_} = delete $args{$_} for keys %args;
+  
+  
+  my ($lflags, $fflags);
+  if ($args{ro} || $args{readonly}) {
+    $lflags = LOCK_SH | LOCK_NB  ;
+    $fflags = O_CREAT | O_RDONLY ;
+  } else {
+    $lflags = LOCK_EX | LOCK_NB;
+    $fflags = O_CREAT | O_RDWR ;
+  }
+  
   my $path = $self->File;
 
   open my $lockf_fh, '>', $self->LockFile
@@ -78,7 +90,7 @@ sub dbopen {
   my $timer = 0;
   my $timeout = $self->Timeout || 5;
 
-  until ( flock $lockf_fh, LOCK_EX | LOCK_NB ) {
+  until ( flock $lockf_fh, $lflags ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
       return
@@ -91,7 +103,7 @@ sub dbopen {
   $self->LockFH( $lockf_fh );
 
   my $db = tie %{ $self->Tied }, "DB_File", $path,
-      O_CREAT|O_RDWR, $self->Perms, $DB_HASH
+      $fflags, $self->Perms, $DB_HASH
       or croak "failed db open: $path: $!" ;
 
   $self->DB($db);

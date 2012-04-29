@@ -1,4 +1,4 @@
-use Test::More tests => 25;
+use Test::More tests => 27;
 
 use 5.10.1;
 use Fcntl qw/ :flock /;
@@ -70,6 +70,10 @@ ok( $db->del('testkey'), 'Database del() 2' );
 cmp_ok( $db->dbkeys, '==', 1, "DB has expected keys after del");
 is( ($db->dbkeys)[0], 'scalarkey', "DB has expected key after del");
 
+$db->dbclose;
+
+ok( $db->dbopen(ro => 1), 'Database RO open' );
+ok( $db->get('scalarkey'), 'Database RO get' );
 $db->dbclose;
 
 sub _newtemp {
