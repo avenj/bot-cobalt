@@ -382,6 +382,7 @@ sub _info_add {
 
   ## invalidate info3 cache:
   $self->{Cache}->invalidate('info3');
+  $self->{Cache}->invalidate('info3_neg');
   
   ## add to internal hashes:
   my $compiled_re = qr/$re/i;
@@ -443,6 +444,7 @@ sub _info_del {
   $self->{DB}->dbclose;
   
   $self->{Cache}->invalidate('info3');
+  $self->{Cache}->invalidate('info3_neg');
 
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
@@ -498,6 +500,7 @@ sub _info_replace {
   $core->log->debug("replace called for $glob by $nick ($auth_user)");
   
   $self->{Cache}->invalidate('info3');
+  $self->{Cache}->invalidate('info3_neg');
 
   unless ($self->{DB}->dbopen) {
     $core->log->warn("DB open failure");
@@ -724,7 +727,6 @@ sub _info_exec_dsearch {
 
   my $cache = $self->{Cache};
   my @matches = $cache->fetch('info3', $str) || ();
-
   ## matches found in searchcache
   return @matches if @matches;
 
@@ -751,6 +753,7 @@ sub _info_match {
   my $core = $self->{core};
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
+  my $str;
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ $re) {
       my $glob = $self->{Regexes}->{$re};
@@ -765,10 +768,14 @@ sub _info_match {
       $self->{DB}->dbopen || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;
-      my $str = $ref->{Response};
-      return $str // 'Error retrieving info topic';
+      $str = $ref->{Response} // 'Error retrieving Response string';
     }
   }
+  return $str if $str;
+
+  ## negative searchcache if there's no match
+  ## really only helps in case of flood ...
+  $self->{Cache}->cache('info3_neg', $str, []);
   return
 }
 
