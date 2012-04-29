@@ -520,10 +520,16 @@ sub _cmd_rdb {
       return 'Syntax: rdb get <RDB> <index key>'
         unless $rdb and $idx;
 
+      return "Invalid item index ID"
+        unless $idx =~ /^[0-9a-f]+$/;
+      $idx = lc($idx);
+
       my $rplvars = {
         nick => $nickname,
         rdb  => $rdb,
-        index => $idx,
+        ## Cut the index ID in response string to 16 chars
+        ## Gives some flex without making flooding too easy
+        index => substr($idx, 0, 16),
       };
       
       my $dbmgr = $self->DBmgr;
@@ -570,9 +576,13 @@ sub _cmd_rdb {
       unless ($idx) {
         my $n_keys = $dbmgr->get_keys($rdb);
         return "RDB $rdb has $n_keys items"
+      } else {
+        return "Invalid item index ID"
+          unless $idx =~ /^[0-9a-f]+$/;
+        $idx = lc($idx);
       }
       
-      $rplvars->{index} = $idx;
+      $rplvars->{index} = substr($idx, 0, 16);
 
       my $item = $dbmgr->get($rdb, $idx);
       unless ($item && ref $item eq 'HASH') {
@@ -591,15 +601,10 @@ sub _cmd_rdb {
         epoch => $item->{AddedAt} // 0
       );
       my $added_by = $item->{AddedBy} // '(undef)';
-  
-      $rplvars = {
-        nick  => $nickname,
-        rdb   => $rdb,
-        index => $idx,
-        date  => $added_dt->date,
-        time  => $added_dt->time,
-        addedby => $added_by,
-      };
+
+      $rplvars->{date} = $added_dt->date;
+      $rplvars->{time} = $added_dt->time;
+      $rplvars->{addedby} = $added_by;  
 
       $resp = rplprintf( $core->lang->{RDB_ITEM_INFO}, $rplvars );
     }
