@@ -124,12 +124,13 @@ sub dbopen {
 
 sub dbclose {
   my ($self) = @_;
+
+  $self->clear_DB;
+
   unless ($self->is_open) {
     carp "attempted dbclose on unopened db";
     return
   }
-
-  $self->clear_DB;
 
   untie %{ $self->Tied };
 
