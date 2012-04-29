@@ -994,7 +994,7 @@ sub flood_ignore {
   );
   
   my $added = $core->ignore_add(
-    $context, __PACKAGE__, $mask, "FLOOD"
+    $context, $mask, "flood_ignore", __PACKAGE__
   );
   
   $core->timer_set( $ignore_time,
