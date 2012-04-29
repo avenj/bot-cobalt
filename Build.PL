@@ -210,3 +210,6 @@ my $build = $class->new(
 $build->add_to_cleanup("lib/Bot/Cobalt/Lang.pm");
 $build->add_to_cleanup("bin/cobalt2-installer");
 $build->create_build_script;
+
+__END__
+Bacon.
