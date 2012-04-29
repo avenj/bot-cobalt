@@ -717,13 +717,12 @@ sub irc_invite {
 
  ### COBALT EVENTS ###
 
+sub Bot_message { Bot_send_message(@_) }
 sub Bot_send_message {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
-
-  ## core->send_event( 'send_message', $context, $target, $string );
 
   unless ( $context
            && $self->ircobjs->{$context}
@@ -748,13 +747,12 @@ sub Bot_send_message {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_notice { Bot_send_notice(@_) }
 sub Bot_send_notice {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
-
-  ## core->send_event( 'send_notice', $context, $target, $string );
 
   unless ( $context
            && $self->ircobjs->{$context}
@@ -778,13 +776,12 @@ sub Bot_send_notice {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_action { Bot_send_action(@_) }
 sub Bot_send_action {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
-
-  ## core->send_event( 'send_action', $context, $target, $string );
 
   unless ( $context
            && $self->ircobjs->{$context}
@@ -1219,7 +1216,7 @@ return an empty string.
 =head3 Bot_message_sent
 
 Broadcast when a PRIVMSG has been sent to the server via an event;
-in other words, when a 'send_message' event was sent.
+in other words, when a 'message' event was sent.
 
 Carries a copy of the target and text:
 
@@ -1232,14 +1229,14 @@ This being IRC, there is no guarantee that the message actually went out.
 
 =head3 Bot_notice_sent
 
-Broadcast when a NOTICE has been sent out via a send_notice event.
+Broadcast when a NOTICE has been sent out via a 'notice' event.
 
 Same syntax as L</Bot_message_sent>.
 
 =head3 Bot_ctcp_sent
 
 Broadcast when a CTCP has been sent via a CTCP handler such as 
-L</send_action>.
+L</action>.
 
   my $context   = ${$_[0]};
   my $ctcp_type = ${$_[1]};  ## 'ACTION' for example
@@ -1537,20 +1534,19 @@ The following B<USER> events are emitted:
 
 =head3 Outgoing_message
 
-Syndicated when a send_message event has been received.
+Syndicated when a L</message> event has been received.
 
 Event arguments are references to the context, target, and message 
 string, respectively.
 
 =head3 Outgoing_notice
 
-Syndicated when a send_notice event has been received; arguments are the 
-same as L</Outgoing_message>.
-
+Syndicated when a L</notice> event has been received; arguments are 
+the same as L</Outgoing_message>.
 
 =head3 Outgoing_ctcp
 
-Syndicated when a CTCP is about to be sent via L</send_action> or a 
+Syndicated when a CTCP is about to be sent via L</action> or a 
 similar CTCP handler.
 
   my $context   = ${ $_[0] };
@@ -1564,32 +1560,32 @@ similar CTCP handler.
 
 =head2 Outgoing IRC commands
 
-=head3 send_message
+=head3 message
 
-A C<send_message> event for our context triggers a PRIVMSG send.
+A C<message> event for our context triggers a PRIVMSG send.
 
-  $core->send_event( 'send_message', $context, $target, $string );
+  $core->send_event( 'message', $context, $target, $string );
 
 An L</Outgoing_message> USER event will be issued prior to sending.
 
 Upon completion a L</Bot_message_sent> event will be broadcast.
 
-=head3 send_notice
+=head3 notice
 
-A C<send_notice> event for our context triggers a NOTICE.
+A C<notice> event for our context triggers a NOTICE.
 
-  $core->send_event( 'send_notice', $context, $target, $string );
+  $core->send_event( 'notice', $context, $target, $string );
 
 An L</Outgoing_notice> USER event will be issued prior to sending.
 
 Upon completion a L</Bot_notice_sent> event will be broadcast.
 
-=head3 send_action
+=head3 action
 
-A C<send_action> event sends a CTCP ACTION (also known as '/me') to a 
+A C<action> event sends a CTCP ACTION (also known as '/me') to a 
 channel or nickname.
 
-  $core->send_event( 'send_action', $context, $target, $string );
+  $core->send_event( 'action', $context, $target, $string );
 
 An L</Outgoing_ctcp> USER event will be issued prior to sending.
 
@@ -1601,7 +1597,7 @@ Quote a raw string to the IRC server.
 
 Does no parsing or sanity checking.
 
-  $core->send_event( 'quote', $raw );
+  $core->send_event( 'send_raw', $raw );
 
 A L</Bot_raw_sent> will be broadcast.
 
