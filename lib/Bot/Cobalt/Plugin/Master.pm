@@ -82,7 +82,7 @@ sub Bot_public_cmd_join {
   
   $core->log->info("JOIN ($channel) issued by $src_nick");
   
-  $core->send_event( 'send_message', $context, $msg->channel,
+  $core->send_event( 'message', $context, $msg->channel,
     "Joining $channel"
   );
   $core->send_event( 'join', $context, $channel );
@@ -107,7 +107,7 @@ sub Bot_public_cmd_part {
   
   $core->log->info("PART ($channel) issued by $src_nick");
   
-  $core->send_event( 'send_message', $context, $msg->channel,
+  $core->send_event( 'message', $context, $msg->channel,
       "Leaving $channel"
   );
   $core->send_event( 'part', $context, $channel, "Requested by $src_nick" );

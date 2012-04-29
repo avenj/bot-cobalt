@@ -131,7 +131,7 @@ sub Bot_relay_push_join_queue {
       
       RELAY: for my $relay (@relays) {
         my ($to_context, $to_channel) = @$relay;
-        $core->send_event( 'send_message',
+        $core->send_event( 'message',
           $to_context,
           $to_channel,
           $str
@@ -179,7 +179,7 @@ sub _push_left_queue {
       
       RELAY: for my $relay (@relays) {
         my ($to_context, $to_channel) = @$relay;
-        $core->send_event( 'send_message',
+        $core->send_event( 'message',
           $to_context,
           $to_channel,
           $str
@@ -222,7 +222,7 @@ sub Bot_public_msg {
     my $to_channel = $relay->[1];
   
     ## should be good to relay away ...
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $to_context,
       $to_channel,
       $str
@@ -250,7 +250,7 @@ sub Bot_ctcp_action {
     my $to_context = $relay->[0];
     my $to_channel = $relay->[1];
   
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $to_context,
       $to_channel,
       $str
@@ -310,7 +310,7 @@ sub Bot_user_kicked {
   
     my $str = 
       "<kick:${channel}> $kicked_u was kicked by $src_nick ($reason)";  
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $to_context,
       $to_channel,
       $str
@@ -369,7 +369,7 @@ sub Bot_nick_changed {
       my ($to_context, $to_channel) = @$relay;
       my $str = 
         "[relay: $channel] $old_nick changed nickname to $src_nick";
-      $core->send_event( 'send_message', $to_context, $to_channel, $str );
+      $core->send_event( 'message', $to_context, $to_channel, $str );
     }
   }
   
@@ -387,7 +387,7 @@ sub Bot_public_cmd_relay {
   my @relays = $self->get_relays($context, $channel);
   
   unless (@relays) {
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,
       $channel,
       "There are no relays for $channel on context $context"
@@ -403,7 +403,7 @@ sub Bot_public_cmd_relay {
     $str .= "${to_context}:${to_channel} ";
   }
 
-  $core->send_event( 'send_message', $context, $channel, $str );
+  $core->send_event( 'message', $context, $channel, $str );
   return PLUGIN_EAT_ALL
 }
 
@@ -417,7 +417,7 @@ sub Bot_public_cmd_rwhois {
   my ($remotenet, $remoteuser) = @{ $msg->message_array };
   unless ($remotenet && $remoteuser) {
     my $src_nick = $msg->src_nick;
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,
       $channel,
       "${src_nick}: Usage: rwhois <context> <nickname>"
@@ -426,7 +426,7 @@ sub Bot_public_cmd_rwhois {
   }
 
   unless ( $self->get_relays($context, $channel) ) {
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,
       $channel,
       "There are no active relays for $channel on context $context"
@@ -436,7 +436,7 @@ sub Bot_public_cmd_rwhois {
 
   my $irc_obj = $core->get_irc_obj($remotenet);
   unless ( $self->{Relays}->{$remotenet} and ref $irc_obj ) {
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,
       $channel,
       "We don't seem to have a relay for $remotenet"
@@ -456,7 +456,7 @@ sub Bot_public_cmd_rwhois {
     my $userhost = "${nick}!${user}\@${host}";
     $resp = "$remoteuser ($userhost) [$real]"
   }
-  $core->send_event( 'send_message', $context, $channel, $resp );
+  $core->send_event( 'message', $context, $channel, $resp );
   
   return PLUGIN_EAT_ALL
 }

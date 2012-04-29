@@ -717,8 +717,8 @@ sub irc_invite {
 
  ### COBALT EVENTS ###
 
-sub Bot_message { Bot_send_message(@_) }
-sub Bot_send_message {
+sub Bot_send_message { Bot_message(@_) }
+sub Bot_message {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
@@ -747,8 +747,8 @@ sub Bot_send_message {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_notice { Bot_send_notice(@_) }
-sub Bot_send_notice {
+sub Bot_send_notice { Bot_notice(@_) }
+sub Bot_notice {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
@@ -776,8 +776,8 @@ sub Bot_send_notice {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_action { Bot_send_action(@_) }
-sub Bot_send_action {
+sub Bot_send_action { Bot_action(@_) }
+sub Bot_action {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $target  = ${$_[1]};

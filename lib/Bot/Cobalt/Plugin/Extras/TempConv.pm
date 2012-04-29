@@ -60,7 +60,7 @@ sub Bot_public_cmd_temp {
              . " == " .
              color( 'bold', "(${k}K)" );
   my $channel = $msg->channel;
-  $core->send_event( 'send_message', $context, $channel, $resp );
+  $core->send_event( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
 }

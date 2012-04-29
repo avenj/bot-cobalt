@@ -293,7 +293,7 @@ sub Bot_public_cmd_seen {
   my $targetnick = $msg->message_array->[0];
   
   unless ($targetnick) {
-    $core->send_event( 'send_message', 
+    $core->send_event( 'message', 
       $context,
       $channel,
       "Need a nickname to look for, $nick"
@@ -304,7 +304,7 @@ sub Bot_public_cmd_seen {
   my @ret = $self->retrieve($context, $targetnick);
   
   unless (@ret) {
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,
       $channel,
       "${nick}: I don't know anything about $targetnick"
@@ -350,7 +350,7 @@ sub Bot_public_cmd_seen {
     }
   }  
 
-  $core->send_event( 'send_message', 
+  $core->send_event( 'message', 
     $context,
     $channel,
     $resp

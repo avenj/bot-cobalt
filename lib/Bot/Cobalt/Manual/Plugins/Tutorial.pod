@@ -100,7 +100,7 @@ know.
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       $response_string
     );
   
@@ -183,7 +183,7 @@ B<DATA> -- this is nice and simple:
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       $response_string
     );
   

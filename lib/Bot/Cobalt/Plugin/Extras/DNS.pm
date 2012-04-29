@@ -78,7 +78,7 @@ sub dns_resp_recv {
 
   my $nsresp;
   unless ($nsresp = $response->{response}) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "DNS error."
     );
     return
@@ -114,7 +114,7 @@ sub dns_resp_recv {
     $str = "nslookup: No answer for $host";
   }
   
-  $core->send_event('send_message', $context, $channel, $str) if $str;
+  $core->send_event('message', $context, $channel, $str) if $str;
 }
 
 sub _run_query {

@@ -155,7 +155,7 @@ sub Bot_public_cmd_resetkarma {
   my $karma_for = lc($msg->message_array->[0] || return PLUGIN_EAT_ALL);
 
   unless ( $self->_get($karma_for) ) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "That user has no karma as it is.",
     );
     return PLUGIN_EAT_ALL
@@ -163,7 +163,7 @@ sub Bot_public_cmd_resetkarma {
   
   $self->{Cached}->{$karma_for} = 0;
   
-  $core->send_event( 'send_message', $context, $channel,
+  $core->send_event( 'message', $context, $channel,
     "Cleared karma for $karma_for",
   );
   
@@ -187,7 +187,7 @@ sub Bot_public_cmd_karma {
     $resp = "$karma_for currently has no karma, good or bad.";
   }
 
-  $core->send_event( 'send_message', $context, $channel, $resp );
+  $core->send_event( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
 }

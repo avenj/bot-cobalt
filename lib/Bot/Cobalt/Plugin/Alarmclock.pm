@@ -72,7 +72,7 @@ sub Bot_public_cmd_alarmdel {
   my $channel = $msg->channel;
   
   unless (exists $self->{Active}->{$timerid}) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       rplprintf( $core->lang->{ALARMCLOCK_NOSUCH},
         { nick => $nick, timerid => $timerid },
       )
@@ -86,7 +86,7 @@ sub Bot_public_cmd_alarmdel {
     my $auth_lev = $core->auth_level($context, $nick);
     ## superusers can override:
     unless ($auth_lev == 9999) {
-      $core->send_event( 'send_message', $context, $channel,
+      $core->send_event( 'message', $context, $channel,
         rplprintf( $core->lang->{ALARMCLOCK_NOTYOURS},
           { nick => $nick, timerid => $timerid },
         )
@@ -98,7 +98,7 @@ sub Bot_public_cmd_alarmdel {
   $core->timer_del($timerid);
   delete $self->{Active}->{$timerid};
   
-  $core->send_event( 'send_message', $context, $channel,
+  $core->send_event( 'message', $context, $channel,
     rplprintf( $core->lang->{ALARMCLOCK_DELETED},
       { nick => $nick, timerid => $timerid },
     )
@@ -161,7 +161,7 @@ sub Bot_public_cmd_alarmclock {
   }
 
   if ($resp) {
-    $core->send_event( 'send_message', $context, $channel, $resp );
+    $core->send_event( 'message', $context, $channel, $resp );
   }
 
   return PLUGIN_EAT_ALL

@@ -49,7 +49,7 @@ sub _handle_auto {
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
 
-  $core->send_event( 'send_message',
+  $core->send_event( 'message',
     $context,
     $msg->target,
     $resp
@@ -160,7 +160,7 @@ the command:
     return $some_response
     
     ## ...or use $core and return nothing:
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $msg->context,
       $msg->channel,
       $some_response

@@ -82,7 +82,7 @@ sub Bot_shorten_response_recv {
 
   $core->log->debug("url; $url");
 
-  $core->send_event( 'send_message', $context, $channel,
+  $core->send_event( 'message', $context, $channel,
     "url for ${nick}: $url",
   );
   
@@ -106,7 +106,7 @@ sub _request_shorturl {
     );
 
   } else {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "No async HTTP available, try loading Bot::Cobalt::Plugin::WWW"
     );
   }
@@ -129,7 +129,7 @@ sub _request_longurl {
     );
 
   } else {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "No async HTTP available, try loading Bot::Cobalt::Plugin::WWW"
     );
   }

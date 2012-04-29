@@ -129,7 +129,7 @@ sub Bot_public_msg {
     ## We have a response . . .
     ## Send it back to the relevant location.
     my $target = $msg->channel;
-    $core->send_event( 'send_message', $context, $target, $resp );
+    $core->send_event( 'message', $context, $target, $resp );
   }
 
   ## Always return an Object::Pluggable::Constants value

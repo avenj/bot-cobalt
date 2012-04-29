@@ -286,7 +286,7 @@ sub Bot_public_cmd_plugin {
         } else {
           ## call _unload and send any response from there
           my $unload_resp = $self->_unload($alias);
-          $core->send_event( 'send_message', $context, $chan, $unload_resp );
+          $core->send_event( 'message', $context, $chan, $unload_resp );
           ## call _load on our alias and plug_obj, send that in $resp
           my $pkgisa = ref $plug_obj;
           $resp = $self->_load($alias, $pkgisa);
@@ -302,7 +302,7 @@ sub Bot_public_cmd_plugin {
           $str .= ' ' . $plugin_alias;
           if ($str && (length($str) > 300 || !@loaded) ) {
             ## either this string has gotten long or we're done
-            $core->send_event( 'send_message', $context, $chan, $str );
+            $core->send_event( 'message', $context, $chan, $str );
             $str = '';
           }
         }
@@ -314,7 +314,7 @@ sub Bot_public_cmd_plugin {
     }
   }
 
-  $core->send_event('send_message', $context, $chan, $resp) if $resp;
+  $core->send_event('message', $context, $chan, $resp) if $resp;
 
   return PLUGIN_EAT_ALL
 }

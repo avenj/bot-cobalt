@@ -172,7 +172,7 @@ sub Bot_public_msg {
           ## (without highlight or command)
           ## ...which may be nothing, up to the handler to send syntax RPL
           my $resp = $self->$method($msg, @args);
-          $core->send_event( 'send_message', 
+          $core->send_event( 'message', 
             $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
         } else {
@@ -260,10 +260,10 @@ sub Bot_info3_relay_string {
   if ( index($resp, '+') == 0 ) {
     $resp = substr($resp, 1);
     $core->log->debug("Dispatching action -> $channel");
-    $core->send_event('send_action', $context, $channel, $resp);
+    $core->send_event('action', $context, $channel, $resp);
   } else {
     $core->log->debug("Dispatching msg -> $channel");
-    $core->send_event('send_message', $context, $channel, $resp);
+    $core->send_event('message', $context, $channel, $resp);
   }
 
   return PLUGIN_EAT_NONE
@@ -783,7 +783,7 @@ sub _info_varhelp {
     .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
   ;
   
-  $core->send_event( 'send_notice',
+  $core->send_event( 'notice',
     $msg->context,
     $msg->src_nick,
     $help

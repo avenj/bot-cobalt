@@ -313,8 +313,8 @@ sub Bot_private_msg {
 
   if (defined $resp) {
     my $target = $msg->src_nick;
-    $core->log->debug("dispatching send_notice to $target");
-    $core->send_event( 'send_notice', $context, $target, $resp );
+    $core->log->debug("dispatching notice to $target");
+    $core->send_event( 'notice', $context, $target, $resp );
   }
 
   return PLUGIN_EAT_NONE
@@ -422,7 +422,7 @@ sub _cmd_chpass {
     $self->core->log->warn(
       "Couldn't _write_access_list in _cmd_chpass",
     );
-    $self->core->send_event( 'send_message',
+    $self->core->send_event( 'message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
     );
@@ -658,7 +658,7 @@ sub _user_add {
   
   unless ( $self->_write_access_list ) {
     $core->log->warn("Couldn't _write_access_list in _user_add");
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
     );
@@ -747,7 +747,7 @@ sub _user_del {
   ## call a list sync
   unless ( $self->_write_access_list ) {
     $core->log->warn("Couldn't _write_access_list in _user_add");
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context, $nick,
       "Failed access list write! Admin should check logs."
     );
@@ -776,7 +776,7 @@ sub _user_list {
     $respstr .= "$username ($lev)   ";
     
     if ( length($respstr) > 250 ) {
-      $core->send_event( 'send_message',
+      $core->send_event( 'message',
         $context,
         $nick,
         $respstr

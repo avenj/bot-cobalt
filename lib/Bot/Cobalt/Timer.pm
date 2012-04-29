@@ -95,7 +95,7 @@ sub _process_type {
   
   if ($type ~~ [qw/msg message privmsg action/]) {
     my $ev_name = $type eq 'action' ? 
-          'send_action' : 'send_message' ;
+          'action' : 'message' ;
     my @ev_args = ( $self->context, $self->target, $self->text );
     $self->args( \@ev_args );
     $self->event( $ev_name );

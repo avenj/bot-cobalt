@@ -64,7 +64,7 @@ sub Bot_public_cmd_rehash {
     my $resp = rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $nick }
     );
-    $core->send_event( 'send_message', $context, $nick, $resp );
+    $core->send_event( 'message', $context, $nick, $resp );
     return PLUGIN_EAT_ALL
   }
   
@@ -124,7 +124,7 @@ sub Bot_public_cmd_rehash {
     ## FIXME langsets
   }
 
-  $core->send_event( 'send_message', $context, $channel, $resp ) if $resp;
+  $core->send_event( 'message', $context, $channel, $resp ) if $resp;
 
   return PLUGIN_EAT_ALL
 }

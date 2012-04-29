@@ -140,7 +140,7 @@ sub Bot_public_msg {
 
   my $channel = $msg->channel;
   $core->log->debug("dispatching msg -> $channel");
-  $core->send_event( 'send_message', $context, $channel, $resp );
+  $core->send_event( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_NONE
 }
@@ -715,10 +715,10 @@ sub Bot_rdb_broadcast {
         $core->log->debug(
           "rdb_broadcast (action) -> $context -> $channel"
         );
-        $core->send_event( 'send_action', $context, $channel, $random_action );
+        $core->send_event( 'action', $context, $channel, $random_action );
       } else {
         $core->log->debug("rdb_broadcast -> $context -> $channel");
-        $core->send_event( 'send_message', $context, $channel, $random );
+        $core->send_event( 'message', $context, $channel, $random );
       }
  
     } # CHAN

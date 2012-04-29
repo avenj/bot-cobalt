@@ -75,7 +75,7 @@ sub Bot_public_cmd_currency {
   my ($value, $from, undef, $to) = @$message;
   
   unless ($value && $from && $to) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "Syntax: !cc <value> <abbrev> TO <abbrev>"
     );
     return PLUGIN_EAT_ALL
@@ -85,14 +85,14 @@ sub Bot_public_cmd_currency {
   my $valid_abbrev = qr/^[a-zA-Z]{3}$/;
 
   unless ($value =~ $valid_val) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "$value is not a valid quantity."
     );  
     return PLUGIN_EAT_ALL
   }
   
   unless ($from =~ $valid_abbrev && $to =~ $valid_abbrev) {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "Currency codes must be three-letter abbreviations."
     );
     return PLUGIN_EAT_ALL
@@ -116,11 +116,11 @@ sub Bot_currencyconv_rate_recv {
   
   unless ($response->is_success) {
     if ($response->code == 500) {
-      $core->send_event( 'send_message', $context, $channel,
+      $core->send_event( 'message', $context, $channel,
         "Received error 500; is your currency code valid?"
       );
     } else {
-      $core->send_event( 'send_message', $context, $channel,
+      $core->send_event( 'message', $context, $channel,
         "HTTP failed: ".$response->code
       );
     }
@@ -134,7 +134,7 @@ sub Bot_currencyconv_rate_recv {
     $rate = $1||1;
     $converted = $value * $rate ;
   } else {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "Failed to retrieve currency conversion ($from -> $to)"
     );
     return PLUGIN_EAT_ALL
@@ -146,7 +146,7 @@ sub Bot_currencyconv_rate_recv {
     TS   => time,
   };
   
-  $core->send_event( 'send_message', $context, $channel,
+  $core->send_event( 'message', $context, $channel,
     "$value $from == $converted $to"
   );
   
@@ -164,7 +164,7 @@ sub _request_conversion_rate {
   if ($self->{Cached}->{$cachekey}) {
     my $cachedrate = $self->{Cached}->{$cachekey}->{Rate};
     my $converted = $value * $cachedrate;
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "$value $from == $converted $to"
     );
     return 1
@@ -182,7 +182,7 @@ sub _request_conversion_rate {
       [ $value, $context, $channel, $from, $to ],
     );
   } else {
-    $core->send_event( 'send_message', $context, $channel,
+    $core->send_event( 'message', $context, $channel,
       "No async HTTP available; try loading Bot::Cobalt::Plugin::WWW"
     );
   }
