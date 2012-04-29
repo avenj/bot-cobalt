@@ -339,7 +339,7 @@ For example, when receiving a public message:
     ## ... later, when sending a response ...
     my $channel = $msg->channel;
 
-    $core->send_event( 'send_message',
+    $core->send_event( 'message',
       $context,    ## make sure it goes to the right server
       $channel,    ## destination channel on specified context
       $response,   ## some response string
@@ -481,15 +481,15 @@ L<Bot::Cobalt::IRC> receives the following commonly-used events:
 
 =head3 Sending messages
 
-=head4 send_message
+=head4 message
 
-The B<send_message> event triggers an IRC PRIVMSG to either a channel 
+The B<message> event triggers an IRC PRIVMSG to either a channel 
 or user.
 
 The arguments specify the server context, target (user or channel), and 
 string, respectively:
 
-  $core->send_event( 'send_message',
+  $core->send_event( 'message',
     $context, $target, $string
   );
 
@@ -497,19 +497,19 @@ The message will be sent after being processed by any B<Outgoing_message>
 handlers in the pipeline. See L<Bot::Cobalt::IRC> for more about Outgoing_* 
 handlers.
 
-=head4 send_notice
+=head4 notice
 
-B<send_notice> operates essentially the same as L</send_message>, except 
+B<notice> operates essentially the same as L</message>, except 
 a NOTICE is sent (rather than PRIVMSG).
 
 Event arguments are the same.
 
-=head4 send_action
+=head4 action
 
-B<send_action> sends a CTCP ACTION rather than a normal PRIVMSG or 
+B<action> sends a CTCP ACTION rather than a normal PRIVMSG or 
 NOTICE string.
 
-Event arguments are the same as L</send_message> and L</send_notice>.
+Event arguments are the same as L</message> and L</notice>.
 
 
 =head3 Channel-related commands
@@ -910,7 +910,7 @@ do when the delay has elapsed.
 
   ## New 60 second 'msg' timer with a random unique ID:
   ## Send $string to $channel on $context
-  ## (A triggered 'msg' timer broadcasts a 'send_message' event)
+  ## (A triggered 'msg' timer broadcasts a 'message' event)
   my $id = $core->timer_set( 60,
     {
       ## The type of timer; 'msg', 'action' or 'event':
