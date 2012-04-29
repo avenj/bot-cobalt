@@ -465,7 +465,6 @@ sub search {
     if ($str =~ $re) {
       if ($wantone) {
         ## plugin only cares about one match, short-circuit
-        $cache->cache($rdb, $glob, $dbkey);
         $db->dbclose;
         return $dbkey
       } else {
