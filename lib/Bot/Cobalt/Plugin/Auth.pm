@@ -431,7 +431,7 @@ sub _cmd_whoami {
                  // 'Not Authorized';
   return rplprintf( $self->core->lang->{AUTH_STATUS},
     {
-      username => $auth_usr,
+      user => $auth_usr,
       nick => $nick,
       lev  => $auth_lev,
     }
@@ -613,7 +613,7 @@ sub _user_add {
     );
     return rplprintf( $core->lang->{AUTH_USER_EXISTS},
       ## old/new username/user syntax:
-      { nick => $nick, username => $target_usr, user => $target_usr }
+      { nick => $nick,  user => $target_usr }
     );
   }
   
@@ -654,7 +654,6 @@ sub _user_add {
     { 
       nick => $nick, 
       user => $target_usr,
-      username => $target_usr, 
       mask => $mask,
       lev => $target_lev
     }
@@ -701,7 +700,7 @@ sub _user_del {
   my $this_alist = $self->AccessList->{$context};
   unless (exists $this_alist->{$target_usr}) {
     return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_usr, username => $target_usr }
+      { nick => $nick, user => $target_usr }
     );
   }
   
@@ -740,7 +739,7 @@ sub _user_del {
   }
 
   return rplprintf( $core->lang->{AUTH_USER_DELETED},
-    { nick => $nick, user => $target_usr, username => $target_usr }
+    { nick => $nick, user => $target_usr }
   );
 }
 
@@ -816,7 +815,7 @@ sub _user_info {
   
   unless (exists $alist_context->{$target_usr}) {
     return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_usr, username => $target_usr }
+      { nick => $nick, user => $target_usr }
     );
   }
 
@@ -892,7 +891,7 @@ sub _user_chmask {
   my $alist_ref;  
   unless ( $alist_ref = $self->AccessList->{$context}->{$target_user}) {
     return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_user, username => $target_user }
+      { nick => $nick, user => $target_user }
     );
   }
   
@@ -949,7 +948,7 @@ sub _user_chpass {
   my $this_alist = $self->AccessList->{$context};
   unless ($this_alist->{$target_user}) {
     return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_user, username => $target_user },
+      { nick => $nick, user => $target_user },
     );
   }
   
@@ -963,7 +962,7 @@ sub _user_chpass {
   
   if ( $self->_write_access_list ) {
     return rplprintf( $core->lang->{AUTH_CHPASS_SUCCESS},
-      { nick => $nick, user => $target_user, username => $target_user },
+      { nick => $nick, user => $target_user },
     );
   } else {
     $self->core->log->warn(

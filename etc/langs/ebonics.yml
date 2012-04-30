@@ -86,29 +86,29 @@ RPL:
   AUTH_CHPASS_BADPASS: "yo that nickname aint a match son (%user%)"
   AUTH_CHPASS_SUCCESS: "word dawg you gots a new passwd now (%user%)"
 
-  ## AUTH_STATUS, %nick, %username, %lev
-  AUTH_STATUS: "%nick% (%username%) be level %lev%"
+  ## AUTH_STATUS, %nick, %user, %lev
+  AUTH_STATUS: "%nick% (%user%) be level %lev%"
 
-  ## AUTH_USER_ADDED, %nick, %username, %mask, %lev
-  AUTH_USER_ADDED: "aight I gots username %username% (%mask%) at level %lev%"
+  ## AUTH_USER_ADDED, %nick, %user, %mask, %lev
+  AUTH_USER_ADDED: "aight I gots username %user% (%mask%) at level %lev%"
 
-  ## AUTH_MASK_ADDED, %nick, %mask, %username
-  AUTH_MASK_ADDED: "aight I gots new mask (%mask%) fo' %username%"
+  ## AUTH_MASK_ADDED, %nick, %mask, %user
+  AUTH_MASK_ADDED: "aight I gots new mask (%mask%) fo' %user%"
 
-  ## AUTH_MASK_EXISTS, %nick, %mask, %username
-  AUTH_MASK_EXISTS: "dawg %username% already gots mask %mask%"
+  ## AUTH_MASK_EXISTS, %nick, %mask, %user
+  AUTH_MASK_EXISTS: "dawg %user% already gots mask %mask%"
 
-  ## AUTH_MASK_DELETED, %nick, %mask, %username
-  AUTH_MASK_DELETED: "aight aint got mask %mask% fo' user %username% no more"
+  ## AUTH_MASK_DELETED, %nick, %mask, %user
+  AUTH_MASK_DELETED: "aight aint got mask %mask% fo' user %user% no more"
 
-  ## AUTH_USER_DELETED, %nick, %username
-  AUTH_USER_DELETED: "aight I aint got user %username% no more"
+  ## AUTH_USER_DELETED, %nick, %user
+  AUTH_USER_DELETED: "aight I aint got user %user% no more"
 
-  ## AUTH_USER_NOSUCH, %nick, %username
-  AUTH_USER_NOSUCH: "I ain't be findin' %username%"
+  ## AUTH_USER_NOSUCH, %nick, %user
+  AUTH_USER_NOSUCH: "I ain't be findin' %user%"
 
-  ## AUTH_USER_EXISTS, %nick, %username
-  AUTH_USER_EXISTS: "we already gots user %username% homie"
+  ## AUTH_USER_EXISTS, %nick, %user
+  AUTH_USER_EXISTS: "we already gots user %user% homie"
   
   ## AUTH_NOT_ENOUGH_ACCESS, %nick, %lev
   AUTH_NOT_ENOUGH_ACCESS: "you aint got the juice fo'dat! (current: %lev)"

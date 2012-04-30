@@ -59,8 +59,8 @@ Bot::Cobalt - IRC darkbot-alike plus plugin authoring sugar
 
 =head1 DESCRIPTION
 
-B<Bot::Cobalt> is the 2nd generation of the (not released on CPAN) 
-B<cobalt> IRC bot.
+B<Bot::Cobalt> is the 2nd generation of the (previously not released on 
+CPAN) B<cobalt> IRC bot.
 
 Cobalt was originally a Perl reimplementation of Jason Hamilton's 
 B<darkbot> behavior (darkbot's last release was in 2001).

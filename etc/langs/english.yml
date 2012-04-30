@@ -99,26 +99,26 @@ RPL:
   AUTH_CHPASS_BADPASS: "Specified password doesn't match (%user%)"
   AUTH_CHPASS_SUCCESS: "Password changed (%user%)"
 
-  ## AUTH_STATUS, %nick, %username, %lev
-  AUTH_STATUS: "%nick% (%username%) is level %lev%"
+  ## AUTH_STATUS, %nick, %user, %lev
+  AUTH_STATUS: "%nick% (%user%) is level %lev%"
 
-  ## AUTH_USER_ADDED, %nick, %username, %mask, %lev
-  AUTH_USER_ADDED: "Added username %username% (%mask%) at level %lev%"
+  ## AUTH_USER_ADDED, %nick, %user, %mask, %lev
+  AUTH_USER_ADDED: "Added username %user% (%mask%) at level %lev%"
 
-  ## AUTH_MASK_ADDED, %nick, %mask, %username
-  AUTH_MASK_ADDED: "Added new mask (%mask%) to %username%"
+  ## AUTH_MASK_ADDED, %nick, %mask, %user
+  AUTH_MASK_ADDED: "Added new mask (%mask%) to %user%"
 
-  ## AUTH_MASK_EXISTS, %nick, %mask, %username
-  AUTH_MASK_EXISTS: "User %username% appears to have mask %mask% already"
+  ## AUTH_MASK_EXISTS, %nick, %mask, %user
+  AUTH_MASK_EXISTS: "User %user% appears to have mask %mask% already"
 
-  ## AUTH_MASK_DELETED, %nick, %mask, %username
-  AUTH_MASK_DELETED: "Deleted mask %mask% from user %username%"
+  ## AUTH_MASK_DELETED, %nick, %mask, %user
+  AUTH_MASK_DELETED: "Deleted mask %mask% from user %user%"
 
-  ## AUTH_USER_DELETED, %nick, %username
-  AUTH_USER_DELETED: "Deleted user %username%"
+  ## AUTH_USER_DELETED, %nick, %user
+  AUTH_USER_DELETED: "Deleted user %user%"
 
-  ## AUTH_USER_NOSUCH, %nick, %username
-  AUTH_USER_NOSUCH: "Could not find user %username%"
+  ## AUTH_USER_NOSUCH, %nick, %user
+  AUTH_USER_NOSUCH: "Could not find user %user%"
 
   ## AUTH_USER_EXISTS, %nick, %user
   AUTH_USER_EXISTS: "User %user% already exists"
