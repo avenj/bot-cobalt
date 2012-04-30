@@ -80,6 +80,16 @@ sub drop_flag {
   delete $self->_list->{$context}->{$nickname}->{$flag}
 }
 
+sub has_flag {
+  my ($self, $context, $nickname, $flag) = @_;
+  return unless defined $context and defined $nickname and $flag;  
+  
+  return unless exists $self->_list->{$context} 
+         and exists $self->_list->{$context}->{$nickname};
+
+  return $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
+}
+
 sub flags {
   my ($self, $context, $nickname) = @_;
 
@@ -202,6 +212,12 @@ unknown.
   ->flags($context, $nickname)
 
 Return flags HASH for a specified nickname, or empty list for unknown.
+
+=head2 has_flag
+
+  ->has_flag($context, $nickname, $flag)
+
+Return boolean value indicating whether a flag is named flag is enabled.
 
 =head2 set_flag
 
