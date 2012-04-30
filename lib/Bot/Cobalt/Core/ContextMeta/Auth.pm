@@ -8,6 +8,8 @@ use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
 
+extends 'Bot::Cobalt::Core::ContextMeta';
+
 around 'add' => sub {
   my $orig = shift;
   my $self = shift;
@@ -43,7 +45,7 @@ around 'add' => sub {
     Flags => $args{flags},
   };
 
-  $orig->($self, $context, $nickname, $meta);
+  $orig->($self, $args{context}, $args{nickname}, $meta);
 };
 
 sub level {
