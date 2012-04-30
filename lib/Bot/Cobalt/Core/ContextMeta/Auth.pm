@@ -67,7 +67,7 @@ sub set_flag {
   return unless exists $self->_list->{$context} 
          and exists $self->_list->{$context}->{$nickname};
   
-  $self->_list->{$context}->{$nickname}->{$flag} = 1;
+  $self->_list->{$context}->{$nickname}->{Flags}->{$flag} = 1;
 }
 
 sub drop_flag {
@@ -77,7 +77,7 @@ sub drop_flag {
   return unless exists $self->_list->{$context} 
          and exists $self->_list->{$context}->{$nickname};
 
-  delete $self->_list->{$context}->{$nickname}->{$flag}
+  delete $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
 }
 
 sub has_flag {
