@@ -54,8 +54,8 @@ sub Bot_public_cmd_rehash {
   my $context = $msg->context;
 
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
 
   my $pcfg = $core->get_plugin_cfg($self);
   my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;

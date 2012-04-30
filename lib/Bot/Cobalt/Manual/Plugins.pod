@@ -821,7 +821,13 @@ against server context objects.
 
 =head3 Auth-related methods
 
-=head4 auth_level
+The Core provides access to a L<Bot::Cobalt::Core::ContextMeta::Auth> 
+object; methods can be called to determine user authorization levels. 
+These are the most commonly used methods; see 
+L<Bot::Cobalt::Core::ContextMeta> and 
+L<Bot::Cobalt::Core::ContextMeta::Auth> for more.
+
+=head4 level
 
 Retrieves the user's authorized level (or '0' for unauthorized users).
 
@@ -832,33 +838,28 @@ Requires a context and a nickname:
   my $msg     = ${ $_[0] };
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
-  my $level   = $core->auth_level($context, $nick);
+  my $level   = $core->auth->level($context, $nick);
 
 Auth levels are fairly flexible; it is generally a good idea for your 
 plugin to provide some method of configuring required access levels.
 
 FIXME link to info on plugin conf / PluginOpts
 
-=head4 auth_username
+=head4 username
 
 Retrieves the "username" for an authorized user (or empty list if the user 
 is not currently authorized).
 
 Requires a context and a nickname, similar to L</auth_level>:
 
-  my $username = $core->auth_username($context, $nick);
+  my $username = $core->auth->username($context, $nick);
   unless ($username) {
     ## this user isn't authorized
   }
 
-=head4 auth_flags
+=head3 Ignore-related methods
 
 FIXME
-
-=head4 auth_pkg
-
-FIXME
-
 
 =head3 Logging
 
@@ -1110,7 +1111,7 @@ The first argument is the timer ID.
 
 The second argument is the removed L<Bot::Cobalt::Timer> object.
 
-=head3 Ignore list related events
+=head3 Ignore related events
 
 FIXME
 

@@ -143,7 +143,7 @@ sub Bot_public_cmd_resetkarma {
   
   my $nick    = $msg->src_nick;
   
-  my $usr_lev = $core->auth_level($context, $nick)
+  my $usr_lev = $core->auth->level($context, $nick)
                 || return PLUGIN_EAT_ALL;
 
   my $pcfg = $core->get_plugin_cfg($self);

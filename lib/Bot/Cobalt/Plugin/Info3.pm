@@ -332,8 +332,8 @@ sub _info_add {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth_username($context, $nick);
-  my $auth_level = $core->auth_level($context, $nick);
+  my $auth_user  = $core->auth->username($context, $nick);
+  my $auth_level = $core->auth->level($context, $nick);
 
   my $pcfg = $core->get_plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{AddTopic} // 2;
@@ -410,8 +410,8 @@ sub _info_del {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth_username($context, $nick);
-  my $auth_level = $core->auth_level($context, $nick);
+  my $auth_user  = $core->auth->username($context, $nick);
+  my $auth_level = $core->auth->level($context, $nick);
   
   my $pcfg = $core->get_plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{DelTopic} // 2;
@@ -471,8 +471,8 @@ sub _info_replace {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth_username($context, $nick);
-  my $auth_level = $core->auth_level($context, $nick);
+  my $auth_user  = $core->auth->username($context, $nick);
+  my $auth_level = $core->auth->level($context, $nick);
   
   my $pcfg = $core->get_plugin_cfg( $self );
   my $req_del = $pcfg->{RequiredLevels}->{DelTopic} // 2;
@@ -704,7 +704,7 @@ sub _info_dsearch {
 
   my $pcfg = $core->get_plugin_cfg( $self );
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
-  my $usr_lev = $core->auth_level($msg->context, $msg->src_nick);
+  my $usr_lev = $core->auth->level($msg->context, $msg->src_nick);
   unless ($usr_lev >= $req_lev) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $msg->src_nick }

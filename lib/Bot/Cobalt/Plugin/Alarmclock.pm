@@ -62,7 +62,7 @@ sub Bot_public_cmd_alarmdel {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
   
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   return PLUGIN_EAT_NONE unless $auth_usr;
 
   my $msg_arr = $msg->message_array;
@@ -83,7 +83,7 @@ sub Bot_public_cmd_alarmdel {
   my $thistimer = $self->{Active}->{$timerid};
   my ($ctxt_set, $ctxt_by) = @$thistimer;
   unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
-    my $auth_lev = $core->auth_level($context, $nick);
+    my $auth_lev = $core->auth->level($context, $nick);
     ## superusers can override:
     unless ($auth_lev == 9999) {
       $core->send_event( 'message', $context, $channel,
@@ -119,8 +119,8 @@ sub Bot_public_cmd_alarmclock {
 
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE 
-    unless $core->auth_level($context, $setter) >= $minlevel;
-  my $auth_usr = $core->auth_username($context, $setter);
+    unless $core->auth->level($context, $setter) >= $minlevel;
+  my $auth_usr = $core->auth->username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my $args = $msg->message_array;

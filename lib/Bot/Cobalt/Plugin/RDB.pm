@@ -163,7 +163,7 @@ sub _cmd_randstuff {
   my $rplvars;
   $rplvars->{nick} = $src_nick;
 
-  unless ( $core->auth_level($context, $src_nick) >= $required_level ) {
+  unless ( $core->auth->level($context, $src_nick) >= $required_level ) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS}, $rplvars );
   }
   
@@ -189,7 +189,7 @@ sub _cmd_randstuff {
   }
 
   ## call _add_item
-  my $username = $core->auth_username($context, $src_nick);
+  my $username = $core->auth->username($context, $src_nick);
   my ($newidx, $err) =
     $self->_add_item($rdb, $randstuff_str, $username);
   $rplvars->{index} = $newidx;
@@ -369,8 +369,8 @@ sub _cmd_rdb {
     
   my $context  = $msg->context;
   my $nickname = $msg->src_nick;
-  my $user_lev = $core->auth_level($context, $nickname) // 0;
-  my $username = $core->auth_username($context, $nickname);
+  my $user_lev = $core->auth->level($context, $nickname) // 0;
+  my $username = $core->auth->username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $nickname }
