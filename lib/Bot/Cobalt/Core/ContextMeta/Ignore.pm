@@ -38,6 +38,23 @@ around 'add' => sub {
   $orig->($self, $context, $mask, $meta)
 };
 
+sub reason {
+  my ($self, $context, $mask) = @_;
+  
+  return unless exists $self->_list->{$context}
+            and exists $self->_list->{$context}->{$mask};
+
+  return $self->_list->{$context}->{$mask}->{Reason}
+}
+
+sub addedby {
+  my ($self, $context, $mask) = @_;
+  return unless exists $self->_list->{$context}
+            and exists $self->_list->{$context}->{$mask};
+  
+  return $self->_list->{$context}->{$mask}->{AddedBy}
+}
+
 1;
 __END__
 
@@ -60,7 +77,26 @@ This is used by L<Bot::Cobalt::Core> to
 provide a global ignore list for use by L<Cobalt::IRC> and the core 
 plugin set.
 
-FIXME
+=head2 add
+
+  ->add($context, $mask, $reason, $addedby)
+
+Add a new ignore list entry for a specified mask.
+
+At least a mask and reason must be specified; 'Reason' and 'AddedBy' can 
+be used to tag ignore entries.
+
+=head2 reason
+
+  ->reason($context, $mask)
+
+Returns preserved Reason for specified mask.
+
+=head2 addedby
+
+  ->addedby($context, $mask)
+
+Returns preserved AddedBy for specified mask.
 
 =head1 AUTHOR
 

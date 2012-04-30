@@ -69,4 +69,61 @@ sub list {
 }
 
 1;
+__END__
 
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Core::ContextMeta - Base class for context-related metadata
+
+=head1 SYNOPSIS
+
+See DESCRIPTION for a complete description of available methods.
+
+=head1 DESCRIPTION
+
+This is the ContextMeta base class, providing some easy per-context hash 
+management methods to subclasses such as 
+L<Bot::Cobalt::Core::ContextMeta::Auth> and 
+L<Bot::Cobalt::Core::ContextMeta::Ignore>.
+
+=head2 add
+
+  ->add($context, $key, $meta_ref)
+
+Add a new item; subclasses will usually use a custom constructor to 
+provide a custom metadata hashref as the third argument.
+
+=head2 del
+
+  ->del($context, $key)
+
+Delete a specific item.
+
+=head2 clear
+
+  ->clear()
+  
+  ->clear($context)
+
+Clear a specified context entirely.
+
+With no arguments, clear everything we know about every context.
+
+=head2 list
+
+In list context, returns the list of keys:
+
+  my @contexts = $cmeta->list;
+  my @ckeys    = $cmeta->list($context);
+
+In scalar context, returns the actual hash reference (if it exists).
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

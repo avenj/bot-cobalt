@@ -117,3 +117,82 @@ sub move {
 
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Core::ContextMeta::Auth - ContextMeta class for Auth
+
+=head1 SYNOPSIS
+
+  my $auth_lev = $core->auth->level($context, $nickname);
+  my $auth_usr = $core->auth->username($context, $nickname);
+
+See below for a complete description of available methods.
+
+=head1 DESCRIPTION
+
+A ContextMeta subclass providing context-specific authorization state 
+information.
+
+FIXME
+
+=head2 add
+
+  ->add(
+    Alias    => $alias,
+    Context  => $context,
+    Nickname => $nickname,
+    Username => $username,
+    Host     => $host,
+    Level    => $lev,
+    Flags    => \%flags,
+  );
+
+Add a newly-authorized user.
+
+Alias should generally be the result of a Core C<get_plugin_alias> 
+method call.
+
+=head2 level
+
+  ->level($context, $nickname)
+
+Return recognized level for specified nickname, or 0 for unknown 
+nicknames.
+
+=head2 username
+
+  ->username($context, $nickname)
+
+Return authorized username for a specified nickname, or empty list for 
+unknown.
+
+=head2 host
+
+  ->host($context, $nickname)
+
+Return recognized hostname for a specified nickname, or empty list for 
+unknown.
+
+=head2 flags
+
+  ->flags($context, $nickname)
+
+Return flags HASH for a specified nickname, or empty list for unknown.
+
+=head2 move
+
+  ->move($context, $old, $new)
+
+Move an authorized state, such as when a user changes nicknames.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
