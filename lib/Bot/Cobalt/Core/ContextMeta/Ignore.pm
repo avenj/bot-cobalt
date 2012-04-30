@@ -1,4 +1,4 @@
-package Bot::Cobalt::Core::ContextMeta::Ignores;
+package Bot::Cobalt::Core::ContextMeta::Ignore;
 
 use 5.10.1;
 use strictures 1;
@@ -7,7 +7,7 @@ use Carp;
 use Moo;
 
 use IRC::Utils qw/normalize_mask/;
-use Cobalt::Common;
+use Cobalt::Common qw/:types/;
 
 extends 'Bot::Cobalt::Core::ContextMeta';
 
