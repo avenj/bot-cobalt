@@ -22,9 +22,10 @@ lib/Bot/Cobalt.pm
 lib/Bot/Cobalt/Common.pm
 lib/Bot/Cobalt/Conf.pm
 lib/Bot/Cobalt/Core.pm
-lib/Bot/Cobalt/Core/Role/Auth.pm
+lib/Bot/Cobalt/Core/ContextMeta.pm
+lib/Bot/Cobalt/Core/ContextMeta/Auth.pm
+lib/Bot/Cobalt/Core/ContextMeta/Ignore.pm
 lib/Bot/Cobalt/Core/Role/IRC.pm
-lib/Bot/Cobalt/Core/Role/Ignore.pm
 lib/Bot/Cobalt/Core/Role/Timers.pm
 lib/Bot/Cobalt/Core/Role/Unloader.pm
 lib/Bot/Cobalt/DB.pm

@@ -539,6 +539,7 @@ sub _do_login {
   $self->core->auth->add(
     Context  => $context,
     Username => $username,
+    Nickname => $nick,
     Host     => $host,
     Level    => $level,
     Flags    => \%flags,
