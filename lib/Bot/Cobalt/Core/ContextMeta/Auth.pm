@@ -30,7 +30,7 @@ around 'add' => sub {
   
   for my $required (qw/context nickname username host level/) {
     unless (defined $args{$required}) {
-      carp "add() needs at least a Context, Username, Host, and Level";
+      carp "add() missing mandatory opt $required";
       return
     }
   }
@@ -58,6 +58,26 @@ sub level {
          and ref $self->_list->{$context}->{$nickname};
   
   return $self->_list->{$context}->{$nickname}->{Level} // 0
+}
+
+sub set_flag {
+  my ($self, $context, $nickname, $flag) = @_;
+  return unless defined $context and defined $nickname and $flag;  
+  
+  return unless exists $self->_list->{$context} 
+         and exists $self->_list->{$context}->{$nickname};
+  
+  $self->_list->{$context}->{$nickname}->{$flag} = 1;
+}
+
+sub drop_flag {
+  my ($self, $context, $nickname, $flag) = @_;
+  return unless defined $context and defined $nickname and $flag;  
+  
+  return unless exists $self->_list->{$context} 
+         and exists $self->_list->{$context}->{$nickname};
+
+  delete $self->_list->{$context}->{$nickname}->{$flag}
 }
 
 sub flags {
@@ -182,6 +202,18 @@ unknown.
   ->flags($context, $nickname)
 
 Return flags HASH for a specified nickname, or empty list for unknown.
+
+=head2 set_flag
+
+  ->set_flag($context, $nickname, $flag)
+
+Turn a named flag on for the specified nickname.
+
+=head2 drop_flag
+
+  ->drop_flag($context, $nickname, $flag)
+
+Remove a named flag from the specified nickname.
 
 =head2 move
 
