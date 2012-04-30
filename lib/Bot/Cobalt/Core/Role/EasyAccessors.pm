@@ -60,8 +60,7 @@ sub get_plugin_cfg {
   }
 
   unless ($alias) {
-    $self->log->error("get_plugin_cfg: no plugin alias? ".scalar 
-caller);
+    $self->log->error("get_plugin_cfg: no plugin alias? ".scalar caller);
     return
   }
 
@@ -85,6 +84,52 @@ __END__
 
 =pod
 
-FIXME
+=head1 NAME
+
+Bot::Cobalt::Core::Role::EasyAccessors - Easy configuration accessors
+
+=head1 SYNOPSIS
+
+  ## Inside a Cobalt plugin
+  my $current_alias = $core->get_plugin_alias($self);
+
+  my $chan_cf_hash = $core->get_channels_cfg($context);
+  
+  my $plugin_cf = $core->get_plugin_cfg($self);
+  
+  my $core_cf = $core->get_core_cfg;
+  
+=head1 DESCRIPTION
+
+Simple methods for accessing some of the configuration state tracked by 
+L<Bot::Cobalt::Core>.
+
+=head2 get_plugin_alias
+
+Takes an object (or a stringified object, but this happens 
+automatically) and returns the registered alias for the plugin if it is 
+loaded.
+
+=head2 get_channels_cfg
+
+Returns a copy of the channel configuration hash for the specified 
+context.
+
+=head2 get_plugin_cfg
+
+Retrieves the current configuration hash for the specified plugin.
+
+Takes either a plugin object (as a reference only) or a plugin alias (as 
+a string).
+
+=head2 get_core_cfg
+
+Returns a copy of the 'core' configuration hash.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
 
 =cut
