@@ -79,7 +79,13 @@ Bot::Cobalt::Core::ContextMeta - Base class for context-related metadata
 
 =head1 SYNOPSIS
 
-See DESCRIPTION for a complete description of available methods.
+  $cmeta->add($context, $key, $ref);
+  
+  $cmeta->del($context, $key);
+  
+  $cmeta->clear($context);
+  
+  $cmeta->list($context);
 
 =head1 DESCRIPTION
 
@@ -87,6 +93,9 @@ This is the ContextMeta base class, providing some easy per-context hash
 management methods to subclasses such as 
 L<Bot::Cobalt::Core::ContextMeta::Auth> and 
 L<Bot::Cobalt::Core::ContextMeta::Ignore>.
+
+L<Bot::Cobalt::Core> uses ContextMeta subclasses to provide B<auth> and 
+B<ignore> attributes.
 
 =head2 add
 
