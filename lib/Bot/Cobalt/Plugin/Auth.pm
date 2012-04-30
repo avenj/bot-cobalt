@@ -852,6 +852,55 @@ sub _user_chmask {
   my $nick = $msg->src_nick;
   my $auth_lev = $core->auth->level($context, $nick);
   my $auth_usr = $core->auth->username($context, $nick);
+  
+  my $pcfg = $core->get_plugin_cfg($self);
+  ## If you can't delete users, you probably shouldn't be permitted 
+  ## to delete their masks, either
+  my $req_lev = $pcfg->{RequiredPrivs}->{DeletingUsers};
+  
+  ## You also should have higher access than your target
+  ## (unless you're a superuser)
+  my $target_user    = $msg->message_array->[2];
+  my $mask_specified = $msg->message_array->[3];
+  
+  unless ($target_user && $mask_specified) {
+    return "Usage: user chmask <user> [+/-]<mask>"
+  }
+
+  my $alist_ref;  
+  unless ( $alist_ref = $self->AccessList->{$context}->{$target_user}) {
+    return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
+      { nick => $nick, user => $target_user, username => $target_user }
+    );
+  }
+  
+  my $target_user_lev = $alist_ref->{Level};
+  my $flags = $core->auth->flags($context, $nick);
+  
+  unless ($auth_lev >= $req_lev 
+    && ($auth_lev > $target_user_lev || $flags->{SUPERUSER}) ) {
+    
+    my $src = $msg->src;
+    $core->log->warn(
+      "Access denied in chmask: $src tried to chmask $target_user"
+    );
+    
+    return rplprintf( $core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
+  
+  my ($oper, $host) = $mask_specified =~ /^(\+|\-)(\S+)/;
+  unless ($oper && $host) {
+    return "Bad mask specification, should be operator (+ or -) followed by mask"
+  }
+
+  if ($oper eq '+') {
+    ## Add a mask
+  } else {
+    ## Remove a mask
+  }
+  
   ## [+/-]mask syntax
   ## FIXME normalize masks before adding 
   ## call a list sync
@@ -864,20 +913,44 @@ sub _user_chpass {
   my $auth_lev = $core->auth->level($context, $nick);
   my $auth_usr = $core->auth->username($context, $nick);
   
-  my $auth_flags = $core->auth->flags($context, $nick);
-  unless ($auth_flags->{SUPERUSER}) {
+  unless ($core->auth->has_flag($context, $nick, 'SUPERUSER')) {
     return "Must be flagged SUPERUSER to use user chpass"
   }
   
   my $target_user = $msg->message_array->[2];
   my $new_passwd  = $msg->message_array->[3];
   
-  ## FIXME adjust AccessList
+  unless ($target_user && $new_passwd) {
+    return "Usage: user chpass <username> <new_passwd>"
+  }
   
-  ## superuser (or configurable level.. ?) chpass ability
-  ## return a formatted response to _cmd_user handler
+  my $this_alist = $self->AccessList->{$context};
+  unless ($this_alist->{$target_user}) {
+    return rplprintf( $core->lang->{AUTH_USER_NOSUCH},
+      { nick => $nick, user => $target_user, username => $target_user },
+    );
+  }
+  
+  my $hashed = $self->_mkpasswd($new_passwd);
+  
+  $core->log->info(
+    "$nick ($auth_usr) CHPASS for $target_user"
+  );
+  
+  $this_alist->{$target_user}->{Password} = $hashed;
+  
+  if ( $self->_write_access_list ) {
+    return rplprintf( $core->lang->{AUTH_CHPASS_SUCCESS},
+      { nick => $nick, user => $target_user, username => $target_user },
+    );
+  } else {
+    $self->core->log->warn(
+      "Couldn't _write_access_list in _cmd_chpass",
+    );
+    
+    return "Failed access list write! Admin should check logs."
+  }
 }
-
 
 
 ### Utility methods:
