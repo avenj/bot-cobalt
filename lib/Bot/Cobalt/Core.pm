@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.200_47';
+our $VERSION = '0.200_48';
 
 ## This is the core Syndicator singleton.
 

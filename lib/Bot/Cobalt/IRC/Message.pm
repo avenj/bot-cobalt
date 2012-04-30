@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Message;
-our $VERSION = '0.200_47';
+our $VERSION = '0.200_48';
 
 ## Message class. Inherits from Event
 
