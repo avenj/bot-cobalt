@@ -7,7 +7,6 @@ BEGIN{
 
 my $ev = new_ok('Bot::Cobalt::IRC::Event::Nick' =>
   [ context => 'Main', src => 'yomomma!your@mother.org',
-    old_nick => 'yomomma',
     new_nick => 'bob',
     channels => [ '#otw', '#unix' ]
   ]

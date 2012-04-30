@@ -621,12 +621,9 @@ sub irc_nick {
     return
   }
 
-  my $old = parse_user($src);
-    
   my $nchg = Bot::Cobalt::IRC::Event::Nick->new(
     context => $context,
     src     => $src,
-    old_nick => $old,
     new_nick => $new,
     channels => $common,
   );

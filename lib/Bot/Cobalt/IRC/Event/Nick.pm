@@ -7,7 +7,10 @@ use IRC::Utils qw/eq_irc/;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'old_nick' => ( is => 'rw', isa => Str, required => 1 );
+has 'old_nick' => ( is => 'rw', isa => Str, lazy => 1,
+  default => sub { $_[0]->src_nick }, 
+);
+
 has 'new_nick' => ( is => 'rw', isa => Str, required => 1 );
 
 has 'channels' => ( is => 'rw', isa => ArrayRef, required => 1 );

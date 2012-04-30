@@ -12,6 +12,12 @@ has 'SessionID' => ( is => 'rw', lazy => 1
   predicate => 'has_session',
 );
 
+## hnn..
+## .. rather than a forked worker, which sucks ..
+## provide simple POE session interface to running extended searches?
+## DB::SearchAsync ?
+
+
 sub BUILD {
   my ($self) = @_;
   
