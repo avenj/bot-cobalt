@@ -13,8 +13,11 @@ use Log::Handler;
 use POE;
 use Object::Pluggable::Constants qw(:ALL);
 
-use Bot::Cobalt::IRC;
 use Bot::Cobalt::Common;
+use Bot::Cobalt::IRC;
+
+use Bot::Cobalt::Core::ContextMeta::Auth;
+use Bot::Cobalt::Core::ContextMeta::Ignore;
 
 use Storable qw/dclone/;
 
@@ -66,9 +69,6 @@ has 'State' => (
       Counters  => {
         Sent => 0,
       },
-      # each server context should set up its own Auth->{$context} hash:
-      Auth => { },    ## ->{$context}->{$nickname} = { . . .}
-      Ignored => { }, ##             ->{$mask} = { . . . }
       
       # nonreloadable plugin list keyed on alias for plugin mgrs:
       NonReloadable => { },
@@ -89,12 +89,22 @@ has 'Provided' => (
   default => sub { {} },
 );
 
+has 'auth' => ( is => 'rw', isa => Object,
+  default => sub {
+    Bot::Cobalt::Core::ContextMeta::Auth->new
+  },
+);
+
+has 'ignore' => ( is => 'rw', isa => Object,
+  default => sub {
+    Bot::Cobalt::Core::ContextMeta::Ignore->new
+  },
+);
+
 extends 'POE::Component::Syndicator';
 
 with 'Bot::Cobalt::Lang';
 
-with 'Bot::Cobalt::Core::Role::Auth';
-with 'Bot::Cobalt::Core::Role::Ignore';
 with 'Bot::Cobalt::Core::Role::Unloader';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
@@ -424,14 +434,6 @@ L<Bot::Cobalt::IRC> - IRC bridge / events
 =item *
 
 L<Bot::Cobalt::Core::Role::IRC>
-
-=item *
-
-L<Bot::Cobalt::Core::Role::Auth>
-
-=item *
-
-L<Bot::Cobalt::Core::Role::Ignore>
 
 =item *
 
