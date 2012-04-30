@@ -163,7 +163,7 @@ my $build = $class->new(
       'Log::Handler' => '0.71',
 
      # Moo + related
-      'Moo'         => '0.009',
+      'Moo'         => '0.091',
       'MooX::Types::MooseLike' => '0.03',
       
      # Network
