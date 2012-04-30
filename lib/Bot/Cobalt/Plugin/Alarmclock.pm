@@ -5,6 +5,8 @@ use 5.10.1;
 use strict;
 use warnings;
 
+use Bot::Cobalt;
+
 use Bot::Cobalt::Utils qw/ timestr_to_secs rplprintf /;
 
 use Object::Pluggable::Constants qw/ :ALL /;
@@ -20,7 +22,7 @@ sub Cobalt_register {
   ## {Active}->{$timerid} = [ $context, $username ]
   $self->{Active} = {};
 
-  $core->plugin_register($self, 'SERVER', 
+  register($self, 'SERVER', 
     [ 
       'public_cmd_alarmclock',
       'public_cmd_alarmdelete',
@@ -72,7 +74,7 @@ sub Bot_public_cmd_alarmdel {
   my $channel = $msg->channel;
   
   unless (exists $self->{Active}->{$timerid}) {
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       rplprintf( $core->lang->{ALARMCLOCK_NOSUCH},
         { nick => $nick, timerid => $timerid },
       )
@@ -86,7 +88,7 @@ sub Bot_public_cmd_alarmdel {
     my $auth_lev = $core->auth->level($context, $nick);
     ## superusers can override:
     unless ($auth_lev == 9999) {
-      $core->send_event( 'message', $context, $channel,
+      broadcast( 'message', $context, $channel,
         rplprintf( $core->lang->{ALARMCLOCK_NOTYOURS},
           { nick => $nick, timerid => $timerid },
         )
@@ -98,7 +100,7 @@ sub Bot_public_cmd_alarmdel {
   $core->timer_del($timerid);
   delete $self->{Active}->{$timerid};
   
-  $core->send_event( 'message', $context, $channel,
+  broadcast( 'message', $context, $channel,
     rplprintf( $core->lang->{ALARMCLOCK_DELETED},
       { nick => $nick, timerid => $timerid },
     )
@@ -161,7 +163,7 @@ sub Bot_public_cmd_alarmclock {
   }
 
   if ($resp) {
-    $core->send_event( 'message', $context, $channel, $resp );
+    broadcast( 'message', $context, $channel, $resp );
   }
 
   return PLUGIN_EAT_ALL

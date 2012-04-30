@@ -338,6 +338,14 @@ You can also query to find out if Core has been properly instanced:
   
   }
 
+If you 'use Bot::Cobalt;' you can also access the Core singleton 
+instance via the C<core()> exported sugar:
+
+  use Bot::Cobalt;
+  core->log->info("I'm here now!")
+
+See L<Bot::Cobalt::Core::Sugar> for details.
+
 Public methods are documented in L<Bot::Cobalt::Manual::Plugins/"Core 
 methods"> and the classes & roles listed below.
 

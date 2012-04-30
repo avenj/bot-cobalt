@@ -5,6 +5,7 @@ use 5.10.1;
 use strict;
 use warnings;
 
+use Bot::Cobalt;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 sub new { bless {}, shift }
@@ -49,7 +50,7 @@ sub _handle_auto {
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
 
-  $core->send_event( 'message',
+  broadcast( 'message',
     $context,
     $msg->target,
     $resp
@@ -160,7 +161,7 @@ the command:
     return $some_response
     
     ## ...or use $core and return nothing:
-    $core->send_event( 'message',
+    broadcast( 'message',
       $msg->context,
       $msg->channel,
       $some_response

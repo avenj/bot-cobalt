@@ -13,6 +13,7 @@ use 5.10.1;
 ##
 ## Also handles darkbot-style variable replacement
 
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
 ## borrow RDB's SearchCache
@@ -117,7 +118,7 @@ sub Bot_ctcp_action {
     my $rdb = (split ' ', $match)[0];
     $rdb = substr($rdb, 1);
     if ($rdb) {
-      $core->send_event( 'rdb_triggered',
+      broadcast( 'rdb_triggered',
         $context,
         $channel,
         $nick,
@@ -131,7 +132,7 @@ sub Bot_ctcp_action {
   }
 
   $core->log->debug("issuing info3_relay_string in response to action");
-  $core->send_event( 'info3_relay_string', 
+  broadcast( 'info3_relay_string', 
     $context, $channel, $nick, $match, join(' ', @message)
   );
   return PLUGIN_EAT_NONE
@@ -172,7 +173,7 @@ sub Bot_public_msg {
           ## (without highlight or command)
           ## ...which may be nothing, up to the handler to send syntax RPL
           my $resp = $self->$method($msg, @args);
-          $core->send_event( 'message', 
+          broadcast( 'message', 
             $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
         } else {
@@ -218,7 +219,7 @@ sub Bot_public_msg {
     $rdb = substr($rdb, 1);
     if ($rdb) {
       $core->log->debug("issuing rdb_triggered");
-      $core->send_event( 'rdb_triggered',
+      broadcast( 'rdb_triggered',
         $context,
         $channel,
         $nick,
@@ -232,7 +233,7 @@ sub Bot_public_msg {
 
   $core->log->debug("issuing info3_relay_string");
   
-  $core->send_event( 'info3_relay_string', 
+  broadcast( 'info3_relay_string', 
     $context, $channel, $nick, $match, $str
   );
 
@@ -260,10 +261,10 @@ sub Bot_info3_relay_string {
   if ( index($resp, '+') == 0 ) {
     $resp = substr($resp, 1);
     $core->log->debug("Dispatching action -> $channel");
-    $core->send_event('action', $context, $channel, $resp);
+    broadcast('action', $context, $channel, $resp);
   } else {
     $core->log->debug("Dispatching msg -> $channel");
-    $core->send_event('message', $context, $channel, $resp);
+    broadcast('message', $context, $channel, $resp);
   }
 
   return PLUGIN_EAT_NONE
@@ -587,7 +588,7 @@ sub _info_tell {
     $rdb = substr($rdb, 1);
     if ($rdb) {
       ## rdb_triggered will take it from here
-      $core->send_event( 'rdb_triggered',
+      broadcast( 'rdb_triggered',
         $msg->context,
         $msg->channel,
         $target,
@@ -603,7 +604,7 @@ sub _info_tell {
   
   $core->log->debug("issuing info3_relay_string for tell");
 
-  $core->send_event( 'info3_relay_string', 
+  broadcast( 'info3_relay_string', 
     $msg->context, $channel, $target, $match, $str_to_match
   );
 
@@ -795,7 +796,7 @@ sub _info_varhelp {
     .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
   ;
   
-  $core->send_event( 'notice',
+  broadcast( 'notice',
     $msg->context,
     $msg->src_nick,
     $help

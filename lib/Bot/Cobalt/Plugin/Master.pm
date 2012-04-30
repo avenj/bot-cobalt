@@ -5,6 +5,7 @@ our $VERSION = '0.200_48';
 ##  !restart(?) / !die
 
 use 5.10.1;
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 sub new { bless {}, shift }
@@ -58,8 +59,8 @@ sub Bot_public_cmd_cycle {
   $core->log->info("CYCLE issued by $src_nick");
   
   my $channel = $msg->channel;  
-  $core->send_event( 'part', $context, $channel, "Cycling $channel" );
-  $core->send_event( 'join', $context, $channel );
+  broadcast( 'part', $context, $channel, "Cycling $channel" );
+  broadcast( 'join', $context, $channel );
 
   return PLUGIN_EAT_ALL
 }
@@ -82,10 +83,10 @@ sub Bot_public_cmd_join {
   
   $core->log->info("JOIN ($channel) issued by $src_nick");
   
-  $core->send_event( 'message', $context, $msg->channel,
+  broadcast( 'message', $context, $msg->channel,
     "Joining $channel"
   );
-  $core->send_event( 'join', $context, $channel );
+  broadcast( 'join', $context, $channel );
   
   return PLUGIN_EAT_ALL
 }
@@ -107,10 +108,10 @@ sub Bot_public_cmd_part {
   
   $core->log->info("PART ($channel) issued by $src_nick");
   
-  $core->send_event( 'message', $context, $msg->channel,
+  broadcast( 'message', $context, $msg->channel,
       "Leaving $channel"
   );
-  $core->send_event( 'part', $context, $channel, "Requested by $src_nick" );
+  broadcast( 'part', $context, $channel, "Requested by $src_nick" );
   
   return PLUGIN_EAT_ALL
 }
@@ -132,7 +133,7 @@ sub Bot_public_cmd_op {
   
   my $target_usr = $msg->message_array->[0] // $msg->src_nick;
   my $channel = $msg->channel;
-  $core->send_event( 'mode', $context, $channel, "+o $target_usr" );
+  broadcast( 'mode', $context, $channel, "+o $target_usr" );
   
   return PLUGIN_EAT_ALL
 }
@@ -153,7 +154,7 @@ sub Bot_public_cmd_deop {
   my $target_usr = $msg->message_array->[0] // $msg->src_nick;
   my $channel = $msg->channel;
   
-  $core->send_event( 'mode', $context, $channel, "-o $target_usr" );
+  broadcast( 'mode', $context, $channel, "-o $target_usr" );
   
   return PLUGIN_EAT_ALL
 }
@@ -176,7 +177,7 @@ sub Bot_public_cmd_voice {
   my $target_usr = $msg->message_array->[0] // $msg->src_nick;
   my $channel = $msg->channel;
   
-  $core->send_event( 'mode', $context, $channel, "+v $target_usr" );
+  broadcast( 'mode', $context, $channel, "+v $target_usr" );
   
   return PLUGIN_EAT_ALL
 }
@@ -197,7 +198,7 @@ sub Bot_public_cmd_devoice {
   my $target_usr = $msg->message_array->[0] // $msg->src_nick;
   my $channel = $msg->channel;
   
-  $core->send_event( 'mode', $context, $channel, "-v $target_usr" );
+  broadcast( 'mode', $context, $channel, "-v $target_usr" );
   
   return PLUGIN_EAT_ALL
 }

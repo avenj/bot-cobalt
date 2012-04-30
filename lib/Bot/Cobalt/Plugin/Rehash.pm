@@ -13,6 +13,7 @@ our $VERSION = '0.200_48';
 ## Also doesn't make very many guarantees regarding consequences ...
 
 use 5.10.1;
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Conf;
 
@@ -64,7 +65,7 @@ sub Bot_public_cmd_rehash {
     my $resp = rplprintf( $core->lang->{RPL_NO_ACCESS},
       { nick => $nick }
     );
-    $core->send_event( 'message', $context, $nick, $resp );
+    broadcast( 'message', $context, $nick, $resp );
     return PLUGIN_EAT_ALL
   }
   
@@ -124,7 +125,7 @@ sub Bot_public_cmd_rehash {
     ## FIXME langsets
   }
 
-  $core->send_event( 'message', $context, $channel, $resp ) if $resp;
+  broadcast( 'message', $context, $channel, $resp ) if $resp;
 
   return PLUGIN_EAT_ALL
 }
@@ -165,7 +166,7 @@ sub _rehash_plugins_cf {
   
   $core->cfg->{plugins} = dclone($newcfg->{plugins});
   $core->log->info("Reloaded plugins.conf");
-  $core->send_event( 'rehashed', 'plugins' );
+  broadcast( 'rehashed', 'plugins' );
   return 1
 }
 
@@ -186,7 +187,7 @@ sub _rehash_core_cf {
   $core->cfg->{core} = dclone($newcfg->{core});
   $core->log->info("Reloaded core config.");
   ## Bot_rehash ($type) :
-  $core->send_event( 'rehashed', 'core' );
+  broadcast( 'rehashed', 'core' );
   return 1
 }
 
@@ -206,7 +207,7 @@ sub _rehash_channels_cf {
 
   $core->cfg->{channels} = dclone($newcfg->{channels});
   $core->log->info("Reloaded channels config.");
-  $core->send_event( 'rehashed', 'channels' );
+  broadcast( 'rehashed', 'channels' );
   return 1
 }
 
@@ -238,7 +239,7 @@ sub _rehash_langset {
     $core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
   }
   $core->log->info("Reloaded core langset ($lang)");
-  $core->send_event( 'rehashed', 'langset' );
+  broadcast( 'rehashed', 'langset' );
   return 1
 }
 

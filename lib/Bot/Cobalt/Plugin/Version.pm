@@ -23,6 +23,10 @@ use 5.10.1;
 use strict;
 use warnings;
 
+## You can get functional-style Core sugar from Bot::Cobalt
+## (register, unregister, broadcast, core ...)
+use Bot::Cobalt;
+
 ## You should always import the PLUGIN_ constants.
 ## Event handlers should return one of:
 ##  - PLUGIN_EAT_NONE
@@ -129,7 +133,7 @@ sub Bot_public_msg {
     ## We have a response . . .
     ## Send it back to the relevant location.
     my $target = $msg->channel;
-    $core->send_event( 'message', $context, $target, $resp );
+    broadcast( 'message', $context, $target, $resp );
   }
 
   ## Always return an Object::Pluggable::Constants value

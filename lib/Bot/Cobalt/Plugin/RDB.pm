@@ -15,8 +15,8 @@ our $VERSION = '0.200_48';
 
 use 5.10.1;
 
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
-
 use Bot::Cobalt::Plugin::RDB::Database;
 
 use Moo;
@@ -26,19 +26,12 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {1},
 );
 
-has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub {
-    require Bot::Cobalt::Core; Bot::Cobalt::Core->instance
-  }, 
-);
-
-
 has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $cfg = $self->core->get_plugin_cfg($self);
+    my $cfg = core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
-    my $rdbdir = $self->core->var ."/". 
+    my $rdbdir = core->var ."/". 
                 ($cfg->{Opts}->{RDBDir} || "db/rdb");
 
     Bot::Cobalt::Plugin::RDB::Database->new(
@@ -53,7 +46,7 @@ has 'rand_delay' => ( is => 'rw', isa => Int );
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  $core->plugin_register($self, 'SERVER',
+  register($self, 'SERVER',
     [ 
       'public_msg',
       'rdb_broadcast',
@@ -67,35 +60,35 @@ sub Cobalt_register {
   my $dbmgr = $self->DBmgr;
 
   my $keys_c = $dbmgr->get_keys('main');
-  $core->Provided->{randstuff_items} = $keys_c;
-  $core->log->debug("initialized: $keys_c main RDB keys");
+  core->Provided->{randstuff_items} = $keys_c;
+  core->log->debug("initialized: $keys_c main RDB keys");
 
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
   ## (0 turns off timer)
-  my $cfg = $core->get_plugin_cfg( $self );
+  my $cfg = core->get_plugin_cfg( $self );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
-  $core->log->debug("randdelay: $randdelay");
+  core->log->debug("randdelay: $randdelay");
   $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
   $self->rand_delay( $randdelay );
   if ($randdelay) {
-    $core->timer_set( $randdelay, 
+    core->timer_set( $randdelay, 
       { 
         Event => 'rdb_broadcast', 
-        Alias => $core->get_plugin_alias($self) 
+        Alias => core->get_plugin_alias($self) 
       }, 
       'RANDSTUFF'
     );
   }
 
-  $core->log->info("Registered");
+  core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistering random stuff");
-  delete $core->Provided->{randstuff_items};
+  core->log->info("Unregistering random stuff");
+  delete core->Provided->{randstuff_items};
   return PLUGIN_EAT_NONE
 }
 
@@ -123,7 +116,7 @@ sub Bot_public_msg {
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
 
-  $core->log->debug("Dispatching $cmd");
+  core->log->debug("Dispatching $cmd");
 
   ## dispatcher:
   my ($id, $resp);
@@ -139,8 +132,8 @@ sub Bot_public_msg {
   $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->channel;
-  $core->log->debug("dispatching msg -> $channel");
-  $core->send_event( 'message', $context, $channel, $resp );
+  core->log->debug("dispatching msg -> $channel");
+  broadcast( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_NONE
 }
@@ -156,15 +149,14 @@ sub _cmd_randstuff {
   my $src_nick = $msg->src_nick;
   my $context  = $msg->context;
 
-  my $core = $self->core;
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = core->get_plugin_cfg( $self );
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
   my $rplvars;
   $rplvars->{nick} = $src_nick;
 
-  unless ( $core->auth->level($context, $src_nick) >= $required_level ) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS}, $rplvars );
+  unless ( core->auth->level($context, $src_nick) >= $required_level ) {
+    return rplprintf( core->lang->{RPL_NO_ACCESS}, $rplvars );
   }
   
   my $rdb = 'main';      # randstuff is 'main', darkbot legacy
@@ -176,7 +168,7 @@ sub _cmd_randstuff {
     my $dbmgr = $self->DBmgr;
     unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
-      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
+      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
     }
   }
 
@@ -185,11 +177,11 @@ sub _cmd_randstuff {
   $randstuff_str = decode_irc($randstuff_str);
 
   unless ($randstuff_str) {
-    return rplprintf( $core->lang->{RDB_ERR_NO_STRING}, $rplvars );
+    return rplprintf( core->lang->{RDB_ERR_NO_STRING}, $rplvars );
   }
 
   ## call _add_item
-  my $username = $core->auth->username($context, $src_nick);
+  my $username = core->auth->username($context, $src_nick);
   my ($newidx, $err) =
     $self->_add_item($rdb, $randstuff_str, $username);
   $rplvars->{index} = $newidx;
@@ -198,23 +190,22 @@ sub _cmd_randstuff {
 
   unless ($newidx) {
     given ($err) {
-      return rplprintf( $core->lang->{RPL_DB_ERR}, $rplvars )
+      return rplprintf( core->lang->{RPL_DB_ERR}, $rplvars )
         when "RDB_DBFAIL";
       
-      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
         when "RDB_NOSUCH";
       
       default { return "Unknown error status: $err" }
     }
   } else {
-    return rplprintf( $core->lang->{RDB_ITEM_ADDED}, $rplvars );
+    return rplprintf( core->lang->{RDB_ITEM_ADDED}, $rplvars );
   }
   
 }
 
 sub _select_random {
   my ($self, $msg, $rdb, $quietfail) = @_;
-  my $core   = $self->core;
   my $dbmgr  = $self->DBmgr;
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
@@ -243,7 +234,7 @@ sub _select_random {
       ## unknown error status?
       default { $rpl = "RPL_DB_ERR" }
     }
-    return rplprintf( $core->lang->{$rpl},
+    return rplprintf( core->lang->{$rpl},
       {
         nick => $msg->src_nick//'',
         rdb  => $rdb,
@@ -259,7 +250,6 @@ sub _cmd_randq {
 
   ## also handler for 'rdb search rdb str'
   my $dbmgr = $self->DBmgr;
-  my $core  = $self->core;
 
   my($str, $rdb);
   if    ($type eq 'random') {
@@ -275,12 +265,12 @@ sub _cmd_randq {
     $str = shift @message // '<*>';
   }
 
-  $core->log->debug("dispatching search for $str in $rdb");
+  core->log->debug("dispatching search for $str in $rdb");
 
   my $match = $dbmgr->search($rdb, $str, 'WANTONE');
 
   if (!$match && $dbmgr->Error) {
-    $core->log->debug("Error status from search(): $dbmgr->Error");
+    core->log->debug("Error status from search(): $dbmgr->Error");
     my $rpl;
     given ($dbmgr->Error) {
       $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
@@ -288,25 +278,25 @@ sub _cmd_randq {
       ## not an arrayref and not a known error status, wtf?
       default { $rpl = "RPL_DB_ERR" }
     }
-    return rplprintf( $core->lang->{$rpl},
+    return rplprintf( core->lang->{$rpl},
       { nick => $msg->src_nick, rdb => $rdb }
     );
   }
 
   return 'No match' if not defined $match;
   
-  $core->log->debug("dispatching get() for $match in $rdb");
+  core->log->debug("dispatching get() for $match in $rdb");
 
   my $item = $dbmgr->get($rdb, $match);
   unless ($item && ref $item eq 'HASH') {
-    $core->log->debug("Error status from get(): $item");
+    core->log->debug("Error status from get(): $item");
     my $rpl;
     given ($dbmgr->Error) {
       $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
       ## an unknown non-hashref $item is also a DB_ERR:
       default { "RPL_DB_ERR" }
     }
-    return rplprintf( $core->lang->{$rpl},
+    return rplprintf( core->lang->{$rpl},
       { 
         nick  => $msg->src_nick//'',
         rdb   => $rdb, 
@@ -336,10 +326,9 @@ sub _cmd_rdb {
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg) = @_;
-  my $core = $self->core;
   my @message = @{ $parsed_msg_a };
 
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = core->get_plugin_cfg( $self );
   my $required_levs = $pcfg->{RequiredLevels} // {};
   ## this hash maps commands to levels.
   ## commands not found here aren't recognized.
@@ -369,10 +358,10 @@ sub _cmd_rdb {
     
   my $context  = $msg->context;
   my $nickname = $msg->src_nick;
-  my $user_lev = $core->auth->level($context, $nickname) // 0;
-  my $username = $core->auth->username($context, $nickname);
+  my $user_lev = core->auth->level($context, $nickname) // 0;
+  my $username = core->auth->username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nickname }
     );
   }
@@ -412,7 +401,7 @@ sub _cmd_rdb {
         }
       }
       
-      return rplprintf( $core->lang->{$rpl}, $rplvars );
+      return rplprintf( core->lang->{$rpl}, $rplvars );
     }
 
     when ("dbdel") {
@@ -443,7 +432,7 @@ sub _cmd_rdb {
         }
       }
       
-      return rplprintf( $core->lang->{$rpl}, $rplvars );
+      return rplprintf( core->lang->{$rpl}, $rplvars );
     }
     
     when ("add") {
@@ -471,7 +460,7 @@ sub _cmd_rdb {
         }
       }
 
-      return rplprintf( $core->lang->{$rpl}, $rplvars );
+      return rplprintf( core->lang->{$rpl}, $rplvars );
     }
     
     when ("del") {
@@ -499,7 +488,7 @@ sub _cmd_rdb {
         }
       }
 
-      return rplprintf( $core->lang->{$rpl}, $rplvars ) ;      
+      return rplprintf( core->lang->{$rpl}, $rplvars ) ;      
     }
 
     when ("get") {
@@ -521,7 +510,7 @@ sub _cmd_rdb {
       
       my $dbmgr = $self->DBmgr;
       unless ( $dbmgr->dbexists($rdb) ) {
-        return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
+        return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
       }
       
       my $item = $dbmgr->get($rdb, $idx);
@@ -539,7 +528,7 @@ sub _cmd_rdb {
           $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
           default { return "Error: $err" }
         }
-        return rplprintf( $core->lang->{$rpl}, $rplvars );
+        return rplprintf( core->lang->{$rpl}, $rplvars );
       }
 
     }
@@ -557,7 +546,7 @@ sub _cmd_rdb {
         rdb  => $rdb,
       };
 
-      return rplprintf( $core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
         unless $dbmgr->dbexists($rdb);
 
       unless ($idx) {
@@ -581,7 +570,7 @@ sub _cmd_rdb {
           $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
           default { return "Error: $err" }
         }
-        return rplprintf( $core->lang->{$rpl}, $rplvars );
+        return rplprintf( core->lang->{$rpl}, $rplvars );
       }
 
       my $added_dt = DateTime->from_epoch(
@@ -593,7 +582,7 @@ sub _cmd_rdb {
       $rplvars->{time} = $added_dt->time;
       $rplvars->{addedby} = $added_by;  
 
-      $resp = rplprintf( $core->lang->{RDB_ITEM_INFO}, $rplvars );
+      $resp = rplprintf( core->lang->{RDB_ITEM_INFO}, $rplvars );
     }
 
     when ("search") {
@@ -647,7 +636,7 @@ sub Bot_rdb_triggered {
   ## grab a random response and throw it back at the pipeline
   ## info3 plugin can pick it up and do variable replacement on it 
 
-  $core->log->debug("received rdb_triggered");
+  core->log->debug("received rdb_triggered");
 
   my $dbmgr = $self->DBmgr;
   
@@ -659,7 +648,6 @@ sub Bot_rdb_triggered {
   
   ## construct fake msg obj for _select_random
   my $new_msg = Bot::Cobalt::IRC::Message::Public->new(
-    core    => $core,
     context => $context,
     src     => $nick . '!fake@host',
     targets => [ $channel ],
@@ -669,7 +657,7 @@ sub Bot_rdb_triggered {
   my $random = $send_orig ? $orig 
                : $self->_select_random($new_msg, $rdb, 'quietfail') ;
 
-  $core->send_event( 
+  broadcast( 
     'info3_relay_string', $context, $channel, $nick, $random, $questionstr
   );
 
@@ -707,10 +695,10 @@ sub Bot_rdb_broadcast {
         $core->log->debug(
           "rdb_broadcast (action) -> $context -> $channel"
         );
-        $core->send_event( 'action', $context, $channel, $random_action );
+        broadcast( 'action', $context, $channel, $random_action );
       } else {
         $core->log->debug("rdb_broadcast -> $context -> $channel");
-        $core->send_event( 'message', $context, $channel, $random );
+        broadcast( 'message', $context, $channel, $random );
       }
  
     } # CHAN
@@ -743,7 +731,7 @@ sub _searchidx {
   
   unless (ref $ret eq 'ARRAY') {
     my $err = $dbmgr->Error;
-    $self->core->log->warn("searchidx failure: retval: $err");
+    core->log->warn("searchidx failure: retval: $err");
     return wantarray ? () : $err ;
   }
   return wantarray ? @$ret : $ret ;
@@ -752,12 +740,11 @@ sub _searchidx {
 sub _add_item {
   my ($self, $rdb, $item, $username) = @_;
   return unless $rdb and defined $item;
-  my $core = $self->core;
   $username = '-undefined' unless $username;
   
   my $dbmgr = $self->DBmgr;
   unless ( $dbmgr->dbexists($rdb) ) {
-    $core->log->debug("cannot add item to nonexistant rdb: $rdb");
+    core->log->debug("cannot add item to nonexistant rdb: $rdb");
     return (0, 'RDB_NOSUCH')
   }
   
@@ -777,19 +764,19 @@ sub _add_item {
   }
 
   ## otherwise we should've gotten the new key back:
-  ++$core->Provided->{randstuff_items} if $rdb eq 'main';
+  my $pref = core->Provided;
+  ++$pref->{randstuff_items} if $rdb eq 'main';
   return $status
 }
 
 sub _delete_item {
   my ($self, $rdb, $item_idx, $username) = @_;
   return unless $rdb and defined $item_idx;
-  my $core = $self->core;
 
   my $dbmgr = $self->DBmgr;
   
   unless ( $dbmgr->dbexists($rdb) ) {
-    $core->log->debug("cannot delete from nonexistant rdb: $rdb");
+    core->log->debug("cannot delete from nonexistant rdb: $rdb");
     return (0, 'RDB_NOSUCH')
   }
 
@@ -797,11 +784,11 @@ sub _delete_item {
   
   unless ($status) {
     my $err = $dbmgr->Error;
-    $core->log->debug("cannot _delete_item: $rdb $item_idx ($err)");
+    core->log->debug("cannot _delete_item: $rdb $item_idx ($err)");
     return (0, $err)
   }
-
-  --$core->Provided->{randstuff_items} if $rdb eq 'main';
+  my $pref = core->Provided;
+  --$pref->{randstuff_items} if $rdb eq 'main';
   return $item_idx
 }
 
@@ -809,20 +796,19 @@ sub _delete_item {
 sub _delete_rdb {
   my ($self, $rdb) = @_;
   return unless $rdb;
-  my $core = $self->core;
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = core->get_plugin_cfg( $self );
 
   my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
 
   unless ($can_delete) {
-    $core->log->debug("attempted delete but AllowDelete = 0");
+    core->log->debug("attempted delete but AllowDelete = 0");
     return (0, 'RDB_NOTPERMITTED')
   }
 
   my $dbmgr = $self->DBmgr;
 
   unless ( $dbmgr->dbexists($rdb) ) {
-    $core->log->debug("cannot delete nonexistant rdb $rdb");
+    core->log->debug("cannot delete nonexistant rdb $rdb");
     return (0, 'RDB_NOSUCH')
   }
 
@@ -832,7 +818,7 @@ sub _delete_rdb {
     ##  default to no
     my $can_del_main = $pcfg->{Opts}->{AllowDeleteMain} // 0;
     unless ($can_del_main) {
-      $core->log->debug(
+      core->log->debug(
         "attempted to delete main but AllowDelete Main = 0"
       );
       return (0, 'RDB_NOTPERMITTED')

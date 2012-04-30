@@ -6,6 +6,7 @@ use strictures 1;
 
 use Moo;
 
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use POE qw/
@@ -13,13 +14,10 @@ use POE qw/
   Component::Client::Keepalive
 /;
 
-has 'core' => ( is => 'rw', isa => Object, predicate => 'has_core' );
-
 has 'opts' => ( is => 'rw', lazy => 1,
   default => sub {
     my ($self) = @_;
-    return {} unless $self->has_core;
-    $self->core->get_plugin_cfg($self)->{Opts}
+    core->get_plugin_cfg($self)->{Opts}
   },
 );
 
@@ -61,8 +59,6 @@ has 'NON_RELOADABLE' => ( is => 'rw', default => sub { 1 } );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-
-  $self->core( $core );
 
   $core->plugin_register( $self, 'SERVER',
     [  'www_request'  ],
@@ -143,9 +139,8 @@ sub ht_post_request {
   ## Bridge to make sure response gets delivered to correct session
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($request, $tag) = @_[ARG0, ARG1];
-  my $core = $self->core;
   ## Post the ::Request
-  my $ht_alias = 'ht_'.$core->get_plugin_alias($self);
+  my $ht_alias = 'ht_'. core()->get_plugin_alias($self);
   $kernel->post( $ht_alias, 
       'request', 'ht_response', 
       $request, $tag
@@ -156,8 +151,6 @@ sub ht_response {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($req_pk, $resp_pk) = @_[ARG0, ARG1];
 
-  my $core = $self->core;
-  
   my $response = $resp_pk->[0];
   my $tag      = $req_pk->[1];
 
@@ -167,21 +160,19 @@ sub ht_response {
   my $event = $this_req->{Event};
   my $args  = $this_req->{Args};
   
-  $core->log->debug("ht_response dispatch: $event ($tag)");
+  core->log->debug("ht_response dispatch: $event ($tag)");
 
   my $content = $response->is_success ?
       $response->decoded_content
       : $response->message;
 
-  $core->send_event($event, $content, $response, $args);
+  broadcast($event, $content, $response, $args);
 }
 
 sub _start {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
 
-  my $core = $self->core;
-
-  my $sess_alias = 'www_'.$core->get_plugin_alias($self);
+  my $sess_alias = 'www_'. core()->get_plugin_alias($self);
   $kernel->alias_set( $sess_alias );
 
   my %opts;
@@ -194,7 +185,7 @@ sub _start {
   POE::Component::Client::HTTP->spawn(
     FollowRedirects => 5,
     Agent => __PACKAGE__,
-    Alias => 'ht_'.$core->get_plugin_alias($self),
+    Alias => 'ht_'. core()->get_plugin_alias($self),
     ConnectionManager => POE::Component::Client::Keepalive->new(
       keep_alive => 2,
       max_per_host => 4,
@@ -206,7 +197,7 @@ sub _start {
 
   );
   
-  $core->Provided->{www_request} = __PACKAGE__ ;
+  core()->Provided->{www_request} = __PACKAGE__ ;
 }
 
 1;
@@ -227,7 +218,7 @@ Bot::Cobalt::Plugin::WWW - Asynchronous HTTP requests from Cobalt plugins
     'http://www.cobaltirc.org'
   );
   
-  $core->send_event( 'www_request',
+  broadcast( 'www_request',
     $request,
     'myplugin_resp_recv',
     [ $some, $args ]

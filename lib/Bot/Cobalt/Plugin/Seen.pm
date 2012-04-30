@@ -3,6 +3,7 @@ our $VERSION = '0.200_48';
 
 use 5.10.1;
 
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
 
@@ -293,7 +294,7 @@ sub Bot_public_cmd_seen {
   my $targetnick = $msg->message_array->[0];
   
   unless ($targetnick) {
-    $core->send_event( 'message', 
+    broadcast( 'message', 
       $context,
       $channel,
       "Need a nickname to look for, $nick"
@@ -304,7 +305,7 @@ sub Bot_public_cmd_seen {
   my @ret = $self->retrieve($context, $targetnick);
   
   unless (@ret) {
-    $core->send_event( 'message',
+    broadcast( 'message',
       $context,
       $channel,
       "${nick}: I don't know anything about $targetnick"
@@ -350,7 +351,7 @@ sub Bot_public_cmd_seen {
     }
   }  
 
-  $core->send_event( 'message', 
+  broadcast( 'message', 
     $context,
     $channel,
     $resp
