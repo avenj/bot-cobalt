@@ -822,12 +822,34 @@ sub _user_info {
 
   my $usr = $alist_context->{$target_usr};
   my $usr_lev = $usr->{Level};
-  my $usr_maskref = $usr->{Masks};  ## FIXME
-  ## need more useful info cmd
-  ## needs to handle potentially long mask strings
-  ## also flags
-  my $maskcount = keys %$usr_maskref;
-  return "User $target_usr is level $usr_lev, $maskcount masks listed"
+
+  my $usr_maskref = $usr->{Masks};
+  my @masks = @$usr_maskref;
+  my $maskcount = @masks;
+  $core->send_event( 'message', $context, $nick,
+    "User $target_usr is level $usr_lev, $maskcount masks listed"
+  );
+  
+  my @flags = keys %{ $usr->{Flags} };
+  my $flag_repl = "Flags: ";
+  while (my $this_flag = shift @flags) {
+    $flag_repl .= $this_flag;
+    if (length $flag_repl > 300 || !@flags) {
+      $core->send_event('message', $context, $nick, $flag_repl);
+      $flag_repl = '';
+    }
+  }
+
+  my $mask_repl = "Masks: ";
+  while (my $this_mask = shift @masks) {
+    $mask_repl .= $this_mask;
+    if (length $mask_repl > 300 || !@masks) {
+      $core->send_event('message', $context, $nick, $mask_repl);
+      $mask_repl = '';
+    }
+  }
+
+  return    
 }
 
 sub _user_search {
