@@ -38,6 +38,7 @@ use MooX::Types::MooseLike::Base qw/:all/;
 ## FIXME: These sets should be documented .. eventually ..
 
 our %EXPORT_TAGS = (
+
   string => [ qw/
   
     rplprintf color

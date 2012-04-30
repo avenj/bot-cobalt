@@ -6,16 +6,22 @@ use strictures 1;
 use Carp;
 use Moo;
 
+use base 'Exporter';
+our @EXPORT = qw/core/;
+
 require Bot::Cobalt::Core;
+
+sub core {
+  require Bot::Cobalt::Core;
+  croak "core() called but no Bot::Cobalt::Core instance"
+    unless Bot::Cobalt::Core->is_instanced;
+  Bot::Cobalt::Core->instance
+}
 
 sub instance {
   if (@_) {
     ## Someone tried to create a new instance, but they really 
     ## wanted a Bot::Cobalt::Core.
-    ##
-    ## Rather than create and return something that doesn't belong to 
-    ## this package/class, die out.
-    ##
     ## Behavior may change.
     $_[0]->new(@_[1 .. $#_])
   }
