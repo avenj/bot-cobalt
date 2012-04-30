@@ -15,6 +15,15 @@ has '_list' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
+has 'core' => ( is => 'rw', isa => Object, lazy =>,
+  default => sub {
+    require Bot::Cobalt::Core;
+    croak "No Cobalt::Core instance found"
+      unless Bot::Cobalt::Core->is_instanced;
+    Bot::Cobalt::Core->instance
+  }
+);
+
 sub add {
   my ($self, $context, $key, $meta) = @_;
 
@@ -50,6 +59,11 @@ sub del {
   my $list = $self->_list->{$context} // return;
 
   return delete $list->{$item}   
+}
+
+sub list {
+  my ($self, $context) = @_;
+  $context ? $self->_list->{$context} : $self->_list
 }
 
 1;
