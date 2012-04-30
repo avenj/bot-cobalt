@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use App::bmkpasswd ();
-use Crypt::Eksblowfish::Bcrypt;
 
 require Exporter;
 our @ISA = qw(Exporter);
