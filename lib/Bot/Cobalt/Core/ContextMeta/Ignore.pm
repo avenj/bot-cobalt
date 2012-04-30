@@ -7,7 +7,7 @@ use Carp;
 use Moo;
 
 use IRC::Utils qw/normalize_mask/;
-use Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common qw/:types/;
 
 extends 'Bot::Cobalt::Core::ContextMeta';
 
@@ -20,7 +20,7 @@ around 'add' => sub {
   unless (defined $context && defined $mask) {
     $self->core->log->warn(
       "Buggy plugin; Missing arguments in ignore add()",
-      "(caller $pkg line $line)";
+      "(caller $pkg line $line)",
     );
     return
   }  
@@ -35,7 +35,7 @@ around 'add' => sub {
   };
 
   $orig->($self, $context, $mask, $meta)
-}
+};
 
 1;
 __END__
