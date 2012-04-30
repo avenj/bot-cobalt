@@ -6,19 +6,17 @@ use strictures 1;
 use Carp;
 use Moo;
 
+use Bot::Cobalt::Core::Sugar;
+
 use base 'Exporter';
-our @EXPORT = qw/core/;
+our @EXPORT = @Bot::Cobalt::Core::Sugar::EXPORT;
 
-require Bot::Cobalt::Core;
-
-sub core {
-  require Bot::Cobalt::Core;
-  croak "core() called but no Bot::Cobalt::Core instance"
-    unless Bot::Cobalt::Core->is_instanced;
-  Bot::Cobalt::Core->instance
+sub import {
+  __PACKAGE__->export_to_level(1, @_);
 }
 
 sub instance {
+  require Bot::Cobalt::Core;
   if (@_) {
     ## Someone tried to create a new instance, but they really 
     ## wanted a Bot::Cobalt::Core.
