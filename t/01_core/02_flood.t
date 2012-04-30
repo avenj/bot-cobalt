@@ -5,7 +5,7 @@ BEGIN {
   use_ok('Bot::Cobalt::IRC::FloodChk')
 }
 
-my $flood = new_ok('Bot::Cobalt::IRC::FloodChk' => [ count => 2, in => 30]);
+my $flood = new_ok('Bot::Cobalt::IRC::FloodChk' => [ count => 2, in => 180]);
 
 is( $flood->check('c', 'key'), 0, 'First OK' );
 is( $flood->check('c', 'key'), 0, 'Second OK' );
