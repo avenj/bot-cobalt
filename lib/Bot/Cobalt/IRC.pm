@@ -5,6 +5,7 @@ use 5.10.1;
 use strictures 1;
 use Moo;
 
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use Bot::Cobalt::IRC::FloodChk;
@@ -36,15 +37,6 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
   default => sub { 1 },
 );
 
-has 'core' => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub { 
-    require Bot::Cobalt::Core; 
-    die "Needs a Bot::Cobalt::Core instance"
-      unless Bot::Cobalt::Core->is_instanced;
-    Bot::Cobalt::Core->instance 
-  },
-);
-
 has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
   default => sub { {} },
 );
@@ -53,7 +45,7 @@ has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
   predicate => 'has_flood',
   default => sub { 
     my ($self) = @_;
-    my $cfg = $self->core->get_core_cfg;
+    my $cfg = core->get_core_cfg;
     my $count = $cfg->{Opts}->{FloodCount} || 5;
     my $secs  = $cfg->{Opts}->{FloodTime}  || 6;
     Bot::Cobalt::IRC::FloodChk->new(
@@ -71,7 +63,7 @@ sub Cobalt_register {
     [ 'all' ],
   );
 
-  $core->send_event( 'initialize_irc' );
+  broadcast( 'initialize_irc' );
 
   ## Start a lazy cleanup timer for flood->expire
   $core->timer_set( 180,
@@ -164,7 +156,7 @@ sub Bot_initialize_irc {
       prefer_nick => $nick,
     );
     
-    $self->core->Servers->{$context} = $server_obj;
+    core->Servers->{$context} = $server_obj;
     $self->ircobjs->{$context} = $irc;
   
     POE::Session->create(
@@ -215,13 +207,12 @@ sub _start {
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $core = $self->core;
-  my $cfg  = $core->get_core_cfg;
-  my $pcfg = $core->get_plugin_cfg($self);
+  my $cfg  = core->get_core_cfg;
+  my $pcfg = core->get_plugin_cfg($self);
 
   $pcfg->{Networks}->{Main} = $cfg->{IRC};
 
-  $core->log->debug("pocoirc plugin load");
+  core->log->debug("pocoirc plugin load");
 
   ## autoreconn plugin:
   my %connector;
@@ -243,7 +234,7 @@ sub _start {
     );
 
   if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
-    $core->log->debug("Adding NickServ ID for $context");
+    core->log->debug("Adding NickServ ID for $context");
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
         Password => $pcfg->{Networks}->{$context}->{NickServPass},
@@ -251,7 +242,7 @@ sub _start {
     );
   }
 
-  my $chanhash = $core->get_channels_cfg($context) || {};
+  my $chanhash = core->get_channels_cfg($context) || {};
   ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
   my %ajoin;
   for my $chan (%{ $chanhash }) {
@@ -272,10 +263,10 @@ sub _start {
   ## define ctcp responses
   $irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
-      version  => "cobalt ".$core->version." (perl $^V) ".$core->url,
+      version  => "cobalt ".core->version." (perl $^V) ".core->url,
       userinfo   => __PACKAGE__.'-'.$VERSION,
       clientinfo => __PACKAGE__.'-'.$VERSION,
-      source     => $core->url,
+      source     => core->url,
     ),
   );
 
@@ -283,29 +274,28 @@ sub _start {
   $irc->yield(register => 'all');
   ## initiate ze connection:
   $irc->yield(connect => {});
-  $core->log->debug("irc component connect issued");
+  core->log->debug("irc component connect issued");
 }
 
 sub irc_chan_sync {
   my ($self, $heap, $chan) = @_[OBJECT, HEAP, ARG0];
 
-  my $core    = $self->core; 
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
 
-  my $resp = rplprintf( $core->lang->{RPL_CHAN_SYNC},
+  my $resp = rplprintf( core->lang->{RPL_CHAN_SYNC},
     { 'chan' => $chan }
   );
 
   ## issue Bot_chan_sync
-  $core->send_event( 'chan_sync', $context, $chan );
+  broadcast( 'chan_sync', $context, $chan );
 
   ## ON if cobalt.conf->Opts->NotifyOnSync is true or not specified:
-  my $cf_core = $core->get_core_cfg();
+  my $cf_core = core->get_core_cfg();
   my $notify = 
     ($cf_core->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
 
-  my $chan_h = $core->get_channels_cfg( $context ) || {};
+  my $chan_h = core->get_channels_cfg( $context ) || {};
 
   ## check if we have a specific setting for this channel (override):
   if ( exists $chan_h->{$chan}
@@ -322,12 +312,11 @@ sub irc_public {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
   
-  my $core    = $self->core;
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
 
-  my $casemap = $core->get_irc_casemap( $context );
-  for my $mask ( $core->ignore->list($context) ) {
+  my $casemap = core->get_irc_casemap( $context );
+  for my $mask ( core->ignore->list($context) ) {
     ## Check against ignore list
     ## (Ignore list should be keyed by hostmask)
     return if matches_mask( $mask, $src, $casemap );
@@ -351,12 +340,12 @@ sub irc_public {
   ## FloodChk cmds and highlights
   if (my $cmd = $msg_obj->cmd) {
     return if $floodchk->($context, $src);
-    $core->send_event( 'public_cmd_'.$cmd, $msg_obj);
+    broadcast( 'public_cmd_'.$cmd, $msg_obj);
   } elsif ($msg_obj->highlight) {
     return if $floodchk->($context, $src);
-    $core->send_event( 'public_msg', $msg_obj);    
+    broadcast( 'public_msg', $msg_obj);    
   } else {
-    $core->send_event( 'public_msg', $msg_obj );
+    broadcast( 'public_msg', $msg_obj );
   }
   
 }
@@ -365,19 +354,18 @@ sub irc_msg {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $casemap = $core->get_irc_casemap( $context );
-  for my $mask ( $core->ignore->list($context) ) {
+  my $casemap = core->get_irc_casemap( $context );
+  for my $mask ( core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
   if ( $self->flood->check($context, $src) ) {
     my $nick = parse_user($src);
     $self->flood_ignore($context, $src)
-      unless $core->auth->level($context, $nick);
+      unless core->auth->level($context, $nick);
     return
   }
 
@@ -388,19 +376,18 @@ sub irc_msg {
     message => $txt,
   );
   
-  $core->send_event( 'private_msg', $msg_obj );
+  broadcast( 'private_msg', $msg_obj );
 }
 
 sub irc_notice {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
   
-  my $casemap = $core->get_irc_casemap($context);
-  for my $mask ( $core->ignore->list($context) ) {
+  my $casemap = core->get_irc_casemap($context);
+  for my $mask ( core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -411,19 +398,18 @@ sub irc_notice {
     message => $txt,
   );
   
-  $core->send_event( 'notice', $msg_obj );
+  broadcast( 'notice', $msg_obj );
 }
 
 sub irc_ctcp_action {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
-  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
-  my $casemap = $core->get_irc_casemap($context);
-  for my $mask ( $core->ignore->list($context) ) {
+  my $casemap = core->get_irc_casemap($context);
+  for my $mask ( core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -434,7 +420,7 @@ sub irc_ctcp_action {
     message => $txt,
   );
 
-  $core->send_event( 'ctcp_action', $msg_obj );
+  broadcast( 'ctcp_action', $msg_obj );
 }
 
 sub irc_connected {
@@ -450,15 +436,14 @@ sub irc_connected {
 sub irc_001 {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
 
-  my $core    = $self->core;
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
 
   ## server welcome message received.
   ## set up some stuff relevant to our server context:
-  $core->Servers->{$context}->connected( 1 );
-  $core->Servers->{$context}->connectedat( time() );
-  $core->Servers->{$context}->maxmodes( $irc->isupport('MODES') // 4 );
+  core->Servers->{$context}->connected( 1 );
+  core->Servers->{$context}->connectedat( time() );
+  core->Servers->{$context}->maxmodes( $irc->isupport('MODES') // 4 );
   ## irc comes with odd case-mapping rules.
   ## []\~ are considered uppercase equivalents of {}|^
   ##
@@ -468,7 +453,7 @@ sub irc_001 {
   ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
   ## checking ISUPPORT and setting the casemapping if available
   my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
-  $core->Servers->{$context}->casemap( $casemap);
+  core->Servers->{$context}->casemap( $casemap);
   
   ## if the server returns a fubar value IRC::Utils automagically 
   ## defaults to rfc1459 casemapping rules
@@ -490,7 +475,7 @@ sub irc_001 {
   unless ($casemap ~~ @valid_casemaps) {
     my $charset = lc( $irc->isupport('CHARSET') || '' );
     if ($charset && $charset ~~ @valid_casemaps) {
-      $core->Servers->{$context}->casemap( $charset );
+      core->Servers->{$context}->casemap( $charset );
     }
     ## we don't save CHARSET, it's deprecated per the spec
     ## also mostly unreliable and meaningless
@@ -499,35 +484,35 @@ sub irc_001 {
   }
 
   my $server = $irc->server_name;
-  $core->log->info("Connected: $context: $server");
+  core->log->info("Connected: $context: $server");
   ## send a Bot_connected event with context and visible server name:
-  $self->core->send_event( 'connected', $context, $server );
+  core->send_event( 'connected', $context, $server );
 }
 
 sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
-  $self->core->log->info("IRC disconnected: $context");
-  $self->core->Servers->{$context}->connected(0);
+  core->log->info("IRC disconnected: $context");
+  core->Servers->{$context}->connected(0);
   ## Bot_disconnected event, similar to Bot_connected:
-  $self->core->send_event( 'disconnected', $context, $server );
+  core->send_event( 'disconnected', $context, $server );
 }
 
 sub irc_socketerr {
   my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
-  $self->core->log->info("irc_socketerr: $context: $err");
-  $self->core->Servers->{$context}->connected(0);
-  $self->core->send_event( 'server_error', $context, $err );
+  core->log->info("irc_socketerr: $context: $err");
+  core->Servers->{$context}->connected(0);
+  core->send_event( 'server_error', $context, $err );
 }
 
 sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
-  $self->core->Servers->{$context}->connected(0);
-  $self->core->log->warn("IRC error: $context: $reason");
-  $self->core->send_event( 'server_error', $context, $reason );
+  core->Servers->{$context}->connected(0);
+  core->log->warn("IRC error: $context: $reason");
+  core->send_event( 'server_error', $context, $reason );
 }
 
 
@@ -537,7 +522,6 @@ sub irc_kick {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   my $kick = Bot::Cobalt::IRC::Event::Kick->new(
     context => $context,
@@ -548,14 +532,14 @@ sub irc_kick {
   );
 
   my $me = $irc->nick_name();
-  my $casemap = $core->get_irc_casemap($context);
+  my $casemap = core->get_irc_casemap($context);
   if ( eq_irc($me, $kick->src_nick, $casemap) ) {
     ## Bot_self_kicked:
-    $core->send_event( 'self_kicked', $context, $src, $channel, $reason );
+    broadcast( 'self_kicked', $context, $src, $channel, $reason );
   }
 
   ## Bot_user_kicked:
-  $core->send_event( 'user_kicked', $kick );
+  broadcast( 'user_kicked', $kick );
 }
 
 sub irc_mode {
@@ -564,7 +548,6 @@ sub irc_mode {
   
   my $irc     = $heap->{Object};
   my $context = $heap->{Context};
-  my $core    = $self->core;
 
   my $mode_obj = Bot::Cobalt::IRC::Event::Mode->new(
     context => $context,
@@ -576,7 +559,7 @@ sub irc_mode {
   
   if ( $mode_obj->is_umode ) {
     ## our umode changed
-    $core->send_event( 'umode_changed', $mode_obj );
+    broadcast( 'umode_changed', $mode_obj );
     return
   }
   ## otherwise it's mostly safe to assume mode changed on a channel
@@ -585,7 +568,7 @@ sub irc_mode {
   ## my $chantypes = $self->irc->isupport('CHANTYPES') || '#&';
   ## is_valid_chan_name($changed_on, [ split '', $chantypes ]) ? 1 : 0;
   ## ...but afaik this Should Be Fine:
-  $core->send_event( 'mode_changed', $mode_obj);
+  broadcast( 'mode_changed', $mode_obj);
 }
 
 sub irc_topic {
@@ -594,7 +577,6 @@ sub irc_topic {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   my $topic_obj = Bot::Cobalt::IRC::Event::Topic->new(
     context => $context,
@@ -604,7 +586,7 @@ sub irc_topic {
   );
 
   ## Bot_topic_changed
-  $core->send_event( 'topic_changed', $topic_obj );
+  broadcast( 'topic_changed', $topic_obj );
 }
 
 sub irc_nick {
@@ -613,11 +595,10 @@ sub irc_nick {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   ## see if it's our nick that changed, send event:
   if ($new eq $irc->nick_name) {
-    $self->core->send_event( 'self_nick_changed', $context, $new );
+    core->send_event( 'self_nick_changed', $context, $new );
     return
   }
 
@@ -629,7 +610,7 @@ sub irc_nick {
   );
 
   ## Bot_nick_changed
-  $core->send_event( 'nick_changed', $nchg );
+  broadcast( 'nick_changed', $nchg );
 }
 
 sub irc_join {
@@ -638,7 +619,6 @@ sub irc_join {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   my $join = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
@@ -647,13 +627,13 @@ sub irc_join {
   );
 
   my $me = $irc->nick_name();
-  my $casemap = $core->get_irc_casemap($context);
+  my $casemap = core->get_irc_casemap($context);
   if ( eq_irc($me, $join->src_nick, $casemap) ) {
-    $core->send_event( 'self_joined', $context, $channel );
+    broadcast( 'self_joined', $context, $channel );
   }
 
   ## Bot_user_joined
-  $core->send_event( 'user_joined', $join );
+  broadcast( 'user_joined', $join );
 }
 
 sub irc_part {
@@ -662,7 +642,6 @@ sub irc_part {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
   
   my $part = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
@@ -671,17 +650,17 @@ sub irc_part {
   );
 
   my $me = $irc->nick_name();
-  my $casemap = $core->get_irc_casemap($context);
+  my $casemap = core->get_irc_casemap($context);
   ## shouldfix? we could try an 'eq' here ... but is a part issued by
   ## force methods going to be guaranteed the same case ... ?
   if ( eq_irc($me, $part->src_nick, $casemap) ) {
     ## we were the issuer of the part -- possibly via /remove, perhaps?
     ## (autojoin might bring back us back, though)
-    $core->send_event( 'self_left', $context, $channel );
+    broadcast( 'self_left', $context, $channel );
   }
 
   ## Bot_user_left
-  $core->send_event( 'user_left', $part );
+  broadcast( 'user_left', $part );
 }
 
 sub irc_quit {
@@ -690,7 +669,6 @@ sub irc_quit {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   my $quit = Bot::Cobalt::IRC::Event::Quit->new(
     context => $context,
@@ -700,7 +678,7 @@ sub irc_quit {
   );
 
   ## Bot_user_quit
-  $core->send_event( 'user_quit', $context, $quit );
+  broadcast( 'user_quit', $context, $quit );
 }
 
 sub irc_invite {
@@ -709,7 +687,6 @@ sub irc_invite {
   
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-  my $core    = $self->core;
 
   my $invite = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
@@ -718,7 +695,7 @@ sub irc_invite {
   );
   
   ## Bot_invited
-  $core->send_event( 'invited', $invite );
+  broadcast( 'invited', $invite );
 }
 
 
@@ -747,7 +724,7 @@ sub Bot_message {
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @msg[1,2];
     $self->ircobjs->{$context}->yield(privmsg => $target => $txt);
-    $core->send_event( 'message_sent', $context, $target, $txt );
+    broadcast( 'message_sent', $context, $target, $txt );
     ++$core->State->{Counters}->{Sent};
   }
 
@@ -777,7 +754,7 @@ sub Bot_notice {
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @notice[1,2];
     $self->ircobjs->{$context}->yield(notice => $target => $txt);
-    $core->send_event( 'notice_sent', $context, $target, $txt );
+    broadcast( 'notice_sent', $context, $target, $txt );
   }
 
   return PLUGIN_EAT_NONE
@@ -806,7 +783,7 @@ sub Bot_action {
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @ctcp[2,3];
     $self->ircobjs->{$context}->yield(ctcp => $target => 'ACTION '.$txt );
-    $core->send_event( 'ctcp_sent', $context, 'ACTION', $target, $txt );
+    broadcast( 'ctcp_sent', $context, 'ACTION', $target, $txt );
   }
 
   return PLUGIN_EAT_NONE
@@ -929,7 +906,7 @@ sub Bot_send_raw {
   
   $self->ircobjs->{$context}->yield( 'quote', $raw );
 
-  $core->send_event( 'raw_sent', $context, $raw );
+  broadcast( 'raw_sent', $context, $raw );
 
   return PLUGIN_EAT_NONE
 }
@@ -987,21 +964,20 @@ sub flood_ignore {
   ## Set a temporary ignore and a timer to remove it
   my ($self, $context, $mask) = @_;
   
-  my $core   = $self->core;
-  my $corecf = $core->get_core_cfg;
+  my $corecf = core->get_core_cfg;
   my $ignore_time = $corecf->{Opts}->{FloodIgnore} || 20;
   
   $self->flood->clear($context, $mask);
   
-  $core->log->info(
+  core->log->info(
     "Issuing temporary ignore due to flood: $mask ($context)"
   );
   
-  my $added = $core->ignore->add(
+  my $added = core->ignore->add(
     $context, $mask, "flood_ignore", __PACKAGE__
   );
   
-  $core->timer_set( $ignore_time,
+  core->timer_set( $ignore_time,
     {
       Event => 'ircplug_flood_rem_ignore',
       Args  => [ $context, $mask ],
@@ -1012,14 +988,13 @@ sub flood_ignore {
 sub _reset_ajoins {
   my ($self) = @_;
   
-  my $core    = $self->core;
-  my $corecf  = $core->get_core_cfg;
-  my $servers = $core->Servers;
+  my $corecf  = core->get_core_cfg;
+  my $servers = core->Servers;
   
   CONTEXT: for my $context (keys %$servers) {
-    my $chanscf = $core->get_channels_cfg($context);
+    my $chanscf = core->get_channels_cfg($context);
     
-    my $irc = $core->get_irc_obj($context) || next CONTEXT;
+    my $irc = core->get_irc_obj($context) || next CONTEXT;
     my %ajoin;
 
     for my $channel (keys %$chanscf) {
@@ -1027,10 +1002,10 @@ sub _reset_ajoins {
       $ajoin{$channel} = $key;
     }
 
-    $core->log->debug("Removing AutoJoin plugin for $context");
+    core->log->debug("Removing AutoJoin plugin for $context");
     $irc->plugin_del('AutoJoin');
     
-    $core->log->debug("Loading new AutoJoin plugin for $context");
+    core->log->debug("Loading new AutoJoin plugin for $context");
     $irc->plugin_add('AutoJoin' =>
       POE::Component::IRC::Plugin::AutoJoin->new(
         Channels => \%ajoin,
@@ -1571,7 +1546,7 @@ similar CTCP handler.
 
 A C<message> event for our context triggers a PRIVMSG send.
 
-  $core->send_event( 'message', $context, $target, $string );
+  broadcast( 'message', $context, $target, $string );
 
 An L</Outgoing_message> USER event will be issued prior to sending.
 
@@ -1581,7 +1556,7 @@ Upon completion a L</Bot_message_sent> event will be broadcast.
 
 A C<notice> event for our context triggers a NOTICE.
 
-  $core->send_event( 'notice', $context, $target, $string );
+  broadcast( 'notice', $context, $target, $string );
 
 An L</Outgoing_notice> USER event will be issued prior to sending.
 
@@ -1592,7 +1567,7 @@ Upon completion a L</Bot_notice_sent> event will be broadcast.
 A C<action> event sends a CTCP ACTION (also known as '/me') to a 
 channel or nickname.
 
-  $core->send_event( 'action', $context, $target, $string );
+  broadcast( 'action', $context, $target, $string );
 
 An L</Outgoing_ctcp> USER event will be issued prior to sending.
 
@@ -1604,7 +1579,7 @@ Quote a raw string to the IRC server.
 
 Does no parsing or sanity checking.
 
-  $core->send_event( 'send_raw', $raw );
+  broadcast( 'send_raw', $raw );
 
 A L</Bot_raw_sent> will be broadcast.
 
@@ -1614,9 +1589,9 @@ A C<mode> event for our context attempts a mode change.
 
 Typically the target will be either a channel or the bot's own nickname.
 
-  $core->send_event( 'mode', $context, $target, $modestr );
+  broadcast( 'mode', $context, $target, $modestr );
   ## example for Main context:
-  $core->send_event( 'mode', 'Main', '#mychan', '+ik some_key' );
+  broadcast( 'mode', 'Main', '#mychan', '+ik some_key' );
 
 This being IRC, there is no guarantee that the bot has privileges to 
 effect the changes, or that the changes took place.
@@ -1625,7 +1600,7 @@ effect the changes, or that the changes took place.
 
 A C<topic> event for our context attempts to change channel topic.
 
-  $core->send_event( 'topic', $context, $channel, $new_topic );
+  broadcast( 'topic', $context, $channel, $new_topic );
 
 =head3 kick
 
@@ -1633,13 +1608,13 @@ A C<kick> event for our context attempts to kick a user.
 
 A reason can be supplied:
 
-  $core->send_event( 'kick', $context, $channel, $target, $reason );
+  broadcast( 'kick', $context, $channel, $target, $reason );
 
 =head3 join
 
 A C<join> event for our context attempts to join a channel.
 
-  $core->send_event( 'join', $context, $channel );
+  broadcast( 'join', $context, $channel );
 
 Catch L</Bot_chan_sync> to check for channel sync status.
 
@@ -1649,7 +1624,7 @@ A C<part> event for our context attempts to leave a channel.
 
 A reason can be supplied:
 
-  $core->send_event( 'part', $context, $channel, $reason );
+  broadcast( 'part', $context, $channel, $reason );
 
 There is no guarantee that we were present on the channel in the 
 first place.
