@@ -92,13 +92,15 @@ sub Cobalt_unregister {
   ## shutdown IRCs
   for my $context ( keys %{ $self->ircobjs } ) {
     $core->log->debug("shutting down irc: $context");
-    ## FIXME: Bot::Cobalt::Core needs methods for these:
+
     ## clear auths for this context
-    delete $core->State->{Auth}->{$context};
+    $core->auth->clear($context);
     ## and ignores:
-    delete $core->State->{Ignored}->{$context};
+    $core->ignore->clear($context);
+
     my $irc = $self->ircobjs->{$context};
     $irc->shutdown("IRC component shut down");
+
     $core->Servers->{$context}->clear_irc;
   }
 
@@ -325,7 +327,7 @@ sub irc_public {
   my $context = $heap->{Context};
 
   my $casemap = $core->get_irc_casemap( $context );
-  for my $mask ( $core->ignore_list($context) ) {
+  for my $mask ( $core->ignore->list($context) ) {
     ## Check against ignore list
     ## (Ignore list should be keyed by hostmask)
     return if matches_mask( $mask, $src, $casemap );
@@ -368,14 +370,14 @@ sub irc_msg {
   my $irc     = $heap->{Object};
 
   my $casemap = $core->get_irc_casemap( $context );
-  for my $mask ( $core->ignore_list($context) ) {
+  for my $mask ( $core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
   if ( $self->flood->check($context, $src) ) {
     my $nick = parse_user($src);
     $self->flood_ignore($context, $src)
-      unless $core->auth_level($context, $nick);
+      unless $core->auth->level($context, $nick);
     return
   }
 
@@ -398,7 +400,7 @@ sub irc_notice {
   my $irc     = $heap->{Object};
   
   my $casemap = $core->get_irc_casemap($context);
-  for my $mask ( $core->ignore_list($context) ) {
+  for my $mask ( $core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -421,7 +423,7 @@ sub irc_ctcp_action {
   my $irc     = $heap->{Object};
 
   my $casemap = $core->get_irc_casemap($context);
-  for my $mask ( $core->ignore_list($context) ) {
+  for my $mask ( $core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
   }
 
@@ -978,7 +980,7 @@ sub Bot_ircplug_flood_rem_ignore {
 
   $core->log->info("Clearing temp ignore: $mask ($context)");
 
-  $core->ignore_del( $context, $mask );  
+  $core->ignore->del( $context, $mask );  
   
   return PLUGIN_EAT_ALL
 }
@@ -998,7 +1000,7 @@ sub flood_ignore {
     "Issuing temporary ignore due to flood: $mask ($context)"
   );
   
-  my $added = $core->ignore_add(
+  my $added = $core->ignore->add(
     $context, $mask, "flood_ignore", __PACKAGE__
   );
   

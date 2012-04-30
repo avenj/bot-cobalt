@@ -15,13 +15,13 @@ has '_list' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
-has 'core' => ( is => 'rw', isa => Object, lazy =>,
+has 'core' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
     require Bot::Cobalt::Core;
     croak "No Cobalt::Core instance found"
       unless Bot::Cobalt::Core->is_instanced;
     Bot::Cobalt::Core->instance
-  }
+  },
 );
 
 sub add {
@@ -32,7 +32,6 @@ sub add {
 
   my $ref = {
     AddedAt => time(),
-    Package => scalar caller,
   };
 
   if (ref $meta eq 'HASH') {
@@ -63,7 +62,9 @@ sub del {
 
 sub list {
   my ($self, $context) = @_;
-  $context ? $self->_list->{$context} : $self->_list
+  my $list = $context ? $self->_list->{$context} : $self->_list ;
+  
+  return wantarray ? keys(%$list) : $list ;
 }
 
 1;
