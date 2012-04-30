@@ -137,9 +137,6 @@ sub move {
   ## User changed nicks, f.ex
   
   return unless exists $self->_list->{$context}->{$old};
-  ## FIXME check auth 'ownership' ... ?
-  
-  $self->core->log->debug("Adjusting auth nicks; $old -> $new");
   
   $self->_list->{$context}->{$new} =  
     delete $self->_list->{$context}->{$old};

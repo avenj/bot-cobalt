@@ -16,15 +16,6 @@ has '_list' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
 
-has 'core' => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub {
-    require Bot::Cobalt::Core;
-    croak "No Cobalt::Core instance found"
-      unless Bot::Cobalt::Core->is_instanced;
-    Bot::Cobalt::Core->instance
-  },
-);
-
 sub add {
   my ($self, $context, $key, $meta) = @_;
 

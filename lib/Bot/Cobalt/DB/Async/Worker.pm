@@ -7,8 +7,6 @@ use Storable qw/nfreeze thaw/;
 
 use Bot::Cobalt::DB;
 
-## FIXME catch signals and dbclose?
-
 use bytes;
 
 sub worker {

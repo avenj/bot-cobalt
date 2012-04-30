@@ -19,10 +19,7 @@ around 'add' => sub {
   my ($pkg, $line) = (caller)[0,2];
   
   unless (defined $context && defined $mask) {
-    $self->core->log->warn(
-      "Buggy plugin; Missing arguments in ignore add()",
-      "(caller $pkg line $line)",
-    );
+    carp "Missing arguments in ignore add()";
     return
   }  
   
