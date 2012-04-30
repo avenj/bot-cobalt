@@ -63,10 +63,21 @@ sub fetch {
 }
 
 sub list {
+  my $self = shift;
+  wantarray ? $self->list_as_array(@_) : $self->list_as_ref(@_)
+}
+
+## Less ambiguous list methods.
+
+sub list_as_array {
+  my $self = shift;
+  my $listref = $self->list_as_ref(@_);
+  keys %$listref
+}
+
+sub list_as_ref {
   my ($self, $context) = @_;
-  my $list = $context ? $self->_list->{$context} : $self->_list ;
-  
-  return wantarray ? keys(%$list) : $list ;
+  $context ? $self->_list->{$context} : $self->_list ;
 }
 
 1;
@@ -135,6 +146,14 @@ In list context, returns the list of keys:
   my @ckeys    = $cmeta->list($context);
 
 In scalar context, returns the actual hash reference (if it exists).
+
+=head2 list_as_ref
+
+Less-ambiguous alternative to L</list> -- always get a hash reference.
+
+=head2 list_as_array
+
+Less-ambiguous alternative to L</list> -- always get a list of keys.
 
 =head1 AUTHOR
 
