@@ -29,10 +29,6 @@ has 'connectedat' => ( is => 'rw', isa => Num, lazy => 1,
 
 has 'casemap' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub { 'rfc1459' },
-  coerce  => sub {
-    $_[0] = lc($_[0]);
-    $_[0] = 'rfc1459' unless $_[0] ~~ [qw/ascii rfc1459 strict-rfc1459/]
-  },
 ); 
 
 has 'maxmodes' => ( is => 'rw', isa => Int, lazy => 1,
