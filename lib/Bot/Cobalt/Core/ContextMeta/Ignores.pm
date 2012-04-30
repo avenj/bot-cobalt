@@ -11,15 +11,6 @@ use Cobalt::Common;
 
 extends 'Bot::Cobalt::Core::ContextMeta';
 
-has 'core' => ( is => 'rw', isa => Object, lazy =>,
-  default => sub {
-    require Bot::Cobalt::Core;
-    croak "No Cobalt::Core instance found"
-     unless Bot::Cobalt::Core->is_instanced;
-    Bot::Cobalt::Core->instance
-  }
-);
-
 around 'add' => sub {
   my $orig = shift;
   my ($self, $context, $mask, $reason, $addedby) = @_;
@@ -43,7 +34,7 @@ around 'add' => sub {
     Reason  => $reason,
   };
 
-  $self->$orig($context, $mask, $meta)
+  $orig->($self, $context, $mask, $meta)
 }
 
 1;
@@ -53,7 +44,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Core::Global::IgnoreList - The globally-shared ignore list
+Bot::Cobalt::Core::ContextMeta::Ignores - Ignore list management
 
 =head1 SYNOPSIS
 
@@ -61,47 +52,14 @@ Bot::Cobalt::Core::Global::IgnoreList - The globally-shared ignore list
 
 =head1 DESCRIPTION
 
-Simple ignore list management; this is used by L<Bot::Cobalt::Core> to 
+A L<Bot::Cobalt::Core::ContextMeta> subclass for managing an ignore 
+list.
+
+This is used by L<Bot::Cobalt::Core> to 
 provide a global ignore list for use by L<Cobalt::IRC> and the core 
 plugin set.
 
-Plugin authors can, of course, create their own IgnoreList object and 
-use it to manage ignores and similar lists internally.
-
-=head1 METHODS
-
-=head2 add
-
-  $core->ignore->add($context, $mask, $reason, $addedby)
-
-Add a new mask to a context's ignore list, possibly with some optional 
-metadata.
-
-The mask will be normalized before adding; the mask that was actually 
-added will be returned on success.
-
-=head2 del
-
-  $core->ignore->del($context, $mask)
-
-Delete a specific mask on a context's ignore list.
-
-=head2 clear
-
-  $core->ignore->clear($context)
-
-Clear a context's ignore list entirely.
-
-=head2 list
-
-  ## Retrieve list of ignored masks for a context
-  my @ignores_for_context = $core->ignore->list($context);
-
-  ## Retrieve actual ignore list hash reference for a context
-  my $ignore_ref_for_context = $core->ignore->list($context);
-
-Returns either a list of ignores in list context or the actual reference 
-to the ignore list in scalar context.
+FIXME
 
 =head1 AUTHOR
 
