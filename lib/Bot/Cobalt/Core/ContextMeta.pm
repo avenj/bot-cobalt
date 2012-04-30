@@ -42,14 +42,24 @@ sub clear {
 }
 
 sub del {
-  my ($self, $context, $item) = @_;
+  my ($self, $context, $key) = @_;
 
   croak "del() needs a context and item"
-    unless defined $context and defined $item;
+    unless defined $context and defined $key;
   
   my $list = $self->_list->{$context} // return;
 
-  return delete $list->{$item}   
+  return delete $list->{$key}   
+}
+
+sub fetch {
+  my ($self, $context, $key) = @_;
+  
+  croak "fetch() needs a context and key"
+    unless defined $context and defined $key;
+
+  return unless exists $self->_list->{$context};
+  return $self->_list->{$context}->{$key}  
 }
 
 sub list {
@@ -110,6 +120,12 @@ Delete a specific item.
 Clear a specified context entirely.
 
 With no arguments, clear everything we know about every context.
+
+=head2 fetch
+
+  ->fetch($context, $key)
+
+Retrieve the 'meta' hash reference for a specified key.
 
 =head2 list
 
