@@ -7,6 +7,8 @@ use Storable qw/nfreeze thaw/;
 
 use Bot::Cobalt::DB;
 
+## FIXME catch signals and dbclose?
+
 use bytes;
 
 sub worker {
@@ -52,6 +54,9 @@ sub worker {
           File => $args{Database},
         );
         
+        $SIG{$_} = sub { $db->dbclose; die "SIG $_, cleanup" }
+          for qw/INT HUP TERM QUIT/;
+        
         unless ( $db->dbopen(ro => $ro) ) {
           die "Failed dbopen"
         }
@@ -60,6 +65,8 @@ sub worker {
         
         $db->dbclose;
 
+        $SIG{$_} = sub { die "Fatal signal after cleanup" }
+          for qw/INT HUP TERM QUIT/;
         ## Returns:
         ##  RetVal, Event, Tag, Method, Key, Value        
         my $frozen = nfreeze( 
