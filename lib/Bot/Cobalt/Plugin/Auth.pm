@@ -44,20 +44,10 @@ use 5.10.1;
 ##   },
 ## }
 ##
-## Authenticated users exist in $core->State->{Auth}:
-##
-## {Auth}->{$context}->{$nickname} = {
-##   Package => __PACKAGE__,
-##   Username => STRING (identified username),
-##    # 'Host' may not be reliable due to stupid cloaking cmds
-##   Host => STRING (nick!user@host),
-##   Level => INT (numeric level),
-##   Flags => HASH (f.ex {SUPERUSER=>1} or other flags)
-##   ## FIXME others? (Dis)AllowedChans ...?
-## };
-##
 ## Auth hash should be adjusted when nicknames change.
 ## This plugin tracks 'lost' identified users and clears as needed
+##
+## Also see Bot::Cobalt::Core::ContextMeta::Auth
 
 use Moo;
 
@@ -283,14 +273,8 @@ sub Bot_nick_changed {
   my $context = $nchg->context;
 
   ## a nickname changed, adjust Auth accordingly:
-  if (exists $core->State->{Auth}->{$context}->{$old}) {
-    my $pkg = $core->State->{Auth}->{$context}->{$old}->{Package};
-    if ($pkg eq __PACKAGE__) {  ## only adjust auths that're ours
-      $core->log->debug("adjusting authnicks; $old -> $new");
-      $core->State->{Auth}->{$context}->{$new} =
-        delete $core->State->{Auth}->{$context}->{$old};
-    }
-  }
+  $core->auth->move($context, $old, $new);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -359,7 +343,7 @@ sub _cmd_login {
   RETVAL: {
     if ($retval == SUCCESS) {
       ## add level to rplvars:
-      $rplvars->{lev} = $self->core->auth_level($context, $nick);
+      $rplvars->{lev} = $self->core->auth->level($context, $nick);
       $resp = rplprintf( $self->core->lang->{AUTH_SUCCESS}, $rplvars );
       last RETVAL
     }
@@ -389,7 +373,7 @@ sub _cmd_chpass {
   ## 'self' chpass for logged-in users
   ##    chpass OLD NEW
   my $nick = $msg->src_nick;
-  my $auth_for_nick = $self->core->auth_username($context, $nick);
+  my $auth_for_nick = $self->core->auth->username($context, $nick);
   unless ($auth_for_nick) {
     return rplprintf( $self->core->lang->{RPL_NO_ACCESS},
       { nick => $nick },
@@ -442,8 +426,8 @@ sub _cmd_whoami {
   my ($self, $context, $msg) = @_;
   ## return current auth status
   my $nick = $msg->src_nick;
-  my $auth_lev = $self->core->auth_level($context, $nick);
-  my $auth_usr = $self->core->auth_username($context, $nick) 
+  my $auth_lev = $self->core->auth->level($context, $nick);
+  my $auth_usr = $self->core->auth->username($context, $nick) 
                  // 'Not Authorized';
   return rplprintf( $self->core->lang->{AUTH_STATUS},
     {
@@ -549,16 +533,17 @@ sub _do_login {
     return E_BADPASS
   }
 
-  ## deref from accesslist and initialize our Auth hash for this nickname:
   my $level = $user_record->{Level};
   my %flags = %{ $user_record->{Flags} // {} };
-  $self->core->State->{Auth}->{$context}->{$nick} = {
-    Package => __PACKAGE__,
+
+  $self->core->auth->add(
+    Context  => $context,
     Username => $username,
-    Host => $host,
-    Level => $level,
-    Flags => \%flags,
-  };
+    Host     => $host,
+    Level    => $level,
+    Flags    => \%flags,
+    Alias    => $self->core->get_plugin_alias($self),
+  );
 
   $self->core->log->info(
     "[$context] successful auth: $username (lev $level) ($host)"
@@ -581,8 +566,8 @@ sub _user_add {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   
   unless ($auth_usr) {
     ## not logged in, return rpl
@@ -680,8 +665,8 @@ sub _user_del {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   
   unless ($auth_usr) {
     $core->log->info("Failed user del attempt by $nick on $context");
@@ -737,7 +722,7 @@ sub _user_del {
   $core->log->info("Deletion issued by $nick ($auth_usr)");
   
   ## see if user is logged in, log them out if so
-  my $auth_context = $core->State->{Auth}->{$context};
+  my $auth_context = $core->auth->list($context);
   for my $authnick (keys %$auth_context) {
     my $this_username = $auth_context->{$authnick}->{Username};
     next unless $this_username eq $target_usr;
@@ -762,8 +747,8 @@ sub _user_list {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   
   return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } )
     unless $auth_lev;
@@ -792,8 +777,8 @@ sub _user_whois {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   
   
 }
@@ -802,8 +787,8 @@ sub _user_info {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   
   unless ($auth_lev) {
     return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
@@ -837,8 +822,8 @@ sub _user_search {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
 
 }
 
@@ -850,8 +835,8 @@ sub _user_chmask {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   ## [+/-]mask syntax
   ## FIXME normalize masks before adding 
   ## call a list sync
@@ -861,8 +846,8 @@ sub _user_chpass {
   my ($self, $context, $msg) = @_;
   my $core = $self->core;
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth_level($context, $nick);
-  my $auth_usr = $core->auth_username($context, $nick);
+  my $auth_lev = $core->auth->level($context, $nick);
+  my $auth_usr = $core->auth->username($context, $nick);
   ## superuser (or configurable level.. ?) chpass ability
   ## return a formatted response to _cmd_user handler
 }
@@ -887,13 +872,14 @@ sub _remove_if_lost {
   ## return list of removed users
 
   ## no auth for specified context? then we don't care:
-  return unless exists $self->core->State->{Auth}->{$context};
+  my $authref;
+  return unless $authref = $self->core->auth->list($context);
 
   my @removed;
 
   if ($nick) {
     ## ...does auth for this nickname in this context?
-    return unless exists $self->core->State->{Auth}->{$context}->{$nick};
+    return unless exists $authref->{$nick};
 
     unless ( $self->_check_for_shared($context, $nick) ) {
       ## we no longer share channels with this user
@@ -906,10 +892,9 @@ sub _remove_if_lost {
     }
 
   } else {
-
     ## no nickname specified
-    ## check trackable status all nicknames in State->{Auth}->{$context}
-    for $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
+    ## check trackable status for all known
+    for $nick (keys %$authref) {
       unless ( $self->_check_for_shared($context, $nick) ) {
         push(@removed, $nick) if $self->_do_logout($context, $nick);
       }
@@ -942,9 +927,8 @@ sub _check_for_shared {
 sub _clear_context {
   my ($self, $context) = @_;
   ## $self->_clear_context( $context )
-  ## Clear any State->{Auth} states for this pkg + context
   return unless $context;
-  for my $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
+  for my $nick ( $self->core->auth->list($context) ) {
     $self->_do_logout($context, $nick);
   }
 }
@@ -952,12 +936,17 @@ sub _clear_context {
 sub _clear_all {
   my ($self) = @_;
   ## $self->_clear_all()
-  ## Clear any State->{Auth} states belonging to this pkg
-  for my $context (keys %{ $self->core->State->{Auth} }) {
-    for my $nick (keys %{ $self->core->State->{Auth}->{$context} }) {
+  ## clear any states belonging to us
+  for my $context ( $self->core->auth->list() ) {
+
+    NICK: for my $nick ( $self->core->auth->list($context) ) {
+
+      next NICK unless $self->core->auth->alias($context, $nick)
+                    eq $self->core->get_plugin_alias($self);
+
       $self->core->log->debug("clearing: $nick [$context]");
       $self->_do_logout($context, $nick);
-    }
+    } ## NICK
   }
 }
 
@@ -971,18 +960,18 @@ sub _do_logout {
   ##
   ## returns the deleted user auth hash (or nothing)
   my $core = $self->core;
-  my $auth_context = $core->State->{Auth}->{$context};
+  my $auth_context = $core->auth->list($context);
 
   if (exists $auth_context->{$nick}) {
-    my $pkg = $auth_context->{$nick}->{Package};
-    my $current_pkg = __PACKAGE__;
+    my $pkg = $core->auth->alias($context, $nick);
+    my $current_pkg = $core->get_plugin_alias($self);
     if ($pkg eq $current_pkg) {
-      my $host = $auth_context->{$nick}->{Host};
-      my $username = $auth_context->{$nick}->{Username};
-      my $level =  $auth_context->{$nick}->{Level};
+      my $host     = $core->auth->host($context, $nick);
+      my $username = $core->auth->username($context, $nick);
+      my $level    = $core->auth->level($context, $nick);
 
       ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
-      $self->core->send_event( 'auth_user_logout',
+      $core->send_event( 'auth_user_logout',
         $context,
         $nick,
         $host,
@@ -991,13 +980,14 @@ sub _do_logout {
         $pkg,
       );
 
-      $self->core->log->debug(
+      $core->log->debug(
         "cleared auth state: $username ($nick on $context)"
       );
 
-      return delete $auth_context->{$nick};
+      return $core->auth->del($context, $nick);
+      
     } else {
-      $self->core->log->debug(
+      $core->log->debug(
         "skipped auth state, not ours: $nick [$context]"
       );
     }
