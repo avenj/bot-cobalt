@@ -8,9 +8,10 @@ use base 'Exporter';
 our @EXPORT = qw/
   core
   broadcast
+  logger
+  plugin_cfg
   register
   unregister
-  logger
 /;
 
 sub core {
@@ -34,6 +35,10 @@ sub register {
 
 sub unregister {
   core()->plugin_register( @_ )
+}
+
+sub plugin_cfg {
+  core()->get_plugin_cfg( @_ )
 }
 
 1;
@@ -73,6 +78,8 @@ Returns the L<Bot::Cobalt::Core> singleton for the running instance.
 
 =head2 broadcast
 
+Queue an event to send to the plugin pipeline.
+
   broadcast( $event, @args );
 
 Wraps the B<send_event> method available via L<Bot::Cobalt::Core>; 
@@ -80,9 +87,19 @@ syndicates events to the plugin pipeline.
 
 =head2 logger
 
+Returns the core singleton's logger object.
+
   logger->info("Log message");
 
 Wrapper for core->log->$method
+
+=head2 plugin_cfg
+
+Returns plugin configuration hashref for the specified plugin.
+Requires a plugin alias or blessed plugin object be specified.
+
+Wrapper for $core->get_plugin_cfg -- see 
+L<Bot::Cobalt::Core::Role::EasyAccessors>
 
 =head2 register
 
