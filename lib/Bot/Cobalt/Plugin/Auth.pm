@@ -771,7 +771,7 @@ sub _user_list {
     }
     
   } ## USER
-  return $respstr || undef;
+  return $respstr if $respstr;
 }
 
 sub _user_whois {
@@ -780,8 +780,18 @@ sub _user_whois {
   my $nick = $msg->src_nick;
   my $auth_lev = $core->auth->level($context, $nick);
   my $auth_usr = $core->auth->username($context, $nick);
+
+  return rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } )
+    unless $auth_lev;
+
+  my $target_nick = $msg->message_array->[2];
   
-  
+  if ( my $target_lev = $core->auth->level($context, $target_nick) ) {
+    my $target_usr = $core->auth->username($context, $target_nick);
+    return "$target_nick is user $target_usr with level $target_lev"
+  } else {
+    return "$target_nick is not currently logged in"
+  }
 }
 
 sub _user_info {
@@ -812,11 +822,12 @@ sub _user_info {
 
   my $usr = $alist_context->{$target_usr};
   my $usr_lev = $usr->{Level};
-#  my $usr_maskref = $usr->{Masks};  ## FIXME
+  my $usr_maskref = $usr->{Masks};  ## FIXME
   ## need more useful info cmd
   ## needs to handle potentially long mask strings
   ## also flags
-  return "User $target_usr is level $usr_lev"
+  my $maskcount = keys %$usr_maskref;
+  return "User $target_usr is level $usr_lev, $maskcount masks listed"
 }
 
 sub _user_search {
@@ -825,6 +836,9 @@ sub _user_search {
   my $nick = $msg->src_nick;
   my $auth_lev = $core->auth->level($context, $nick);
   my $auth_usr = $core->auth->username($context, $nick);
+
+  ## search by: username, host, ... ?
+  ## limit results ?
 
 }
 
@@ -849,6 +863,17 @@ sub _user_chpass {
   my $nick = $msg->src_nick;
   my $auth_lev = $core->auth->level($context, $nick);
   my $auth_usr = $core->auth->username($context, $nick);
+  
+  my $auth_flags = $core->auth->flags($context, $nick);
+  unless ($auth_flags->{SUPERUSER}) {
+    return "Must be flagged SUPERUSER to use user chpass"
+  }
+  
+  my $target_user = $msg->message_array->[2];
+  my $new_passwd  = $msg->message_array->[3];
+  
+  ## FIXME adjust AccessList
+  
   ## superuser (or configurable level.. ?) chpass ability
   ## return a formatted response to _cmd_user handler
 }
