@@ -80,6 +80,17 @@ sub username {
   return $self->_list->{$context}->{$nickname}->{Username}
 }
 
+sub host {
+  my ($self, $context, $nickname) = @_;
+  
+  return unless defined $context and defined $nickname;
+  
+  return unless exists $self->_list->{$context}
+         and ref $self->_list->{$context}->{$nickname};
+
+  return $self->_list->{$context}->{$nickname}->{Host}
+}
+
 sub alias {
   my ($self, $context, $nickname) = @_;
   return unless defined $context and defined $nickname;
