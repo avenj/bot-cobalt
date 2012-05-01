@@ -1,4 +1,4 @@
-use Test::More tests => 27;
+use Test::More tests => 28;
 
 use 5.10.1;
 use Fcntl qw/ :flock /;
@@ -17,6 +17,8 @@ ok( $db = Bot::Cobalt::DB->new( File => $path ), 'Cobalt::DB new()' );
 can_ok( $db, 'dbopen', 'dbclose', 'put', 'get', 'dbkeys' );
 
 ok( $db->dbopen, 'Temp database open' );
+
+ok( !$db->dbopen, 'Cannot reopen' );
 
 ok( $db->get_path, 'Temp database get_path');
 
