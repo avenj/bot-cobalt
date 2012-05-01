@@ -953,8 +953,10 @@ sub Bot_ircplug_flood_rem_ignore {
   ## Internal timer-fired event to remove temp ignores.
 
   $core->log->info("Clearing temp ignore: $mask ($context)");
-
+  
   $core->ignore->del( $context, $mask );  
+
+  broadcast( 'flood_ignore_deleted', $context, $mask );
   
   return PLUGIN_EAT_ALL
 }
@@ -976,6 +978,8 @@ sub flood_ignore {
   my $added = core->ignore->add(
     $context, $mask, "flood_ignore", __PACKAGE__
   );
+
+  broadcast( 'flood_ignore_added', $context, $mask );
   
   core->timer_set( $ignore_time,
     {
