@@ -512,9 +512,9 @@ Simple interface for creating hashed passwords.
 Defaults to creating a password using L<Crypt::Eksblowfish::Bcrypt> 
 with bcrypt work cost '08' -- this is a pretty sane default.
 
-Systems not using B<glibc-2.7+> may not be able to use SHA(256/512) methods.
+See L<App::bmkpasswd> for details.
 
-bcrypt is strongly recommended; MD5 is also supported.
+bcrypt is strongly recommended; SHA and MD5 methods are also supported.
 
   ## create a bcrypted password (work cost 08)
   ## bcrypt is blowfish with a work cost factor.
@@ -529,7 +529,7 @@ bcrypt is strongly recommended; MD5 is also supported.
 
   ## Available methods:
   ##  bcrypt (preferred)
-  ##  SHA-256 or -512 (glibc2.7+ only)
+  ##  SHA-256 or -512 (req. modern libc or Crypt::Passwd::XS)
   ##  MD5 (fast, portable, weak)
   my $sha_passwd = mkpasswd($password, 'sha512');
   ## same as:
