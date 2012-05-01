@@ -17,17 +17,12 @@ use Moo;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock/;
+use FileHandle;
 
 use Bot::Cobalt::Serializer;
 use Bot::Cobalt::Common qw/:types/;
 
 has 'File' => ( is => 'rw', isa => Str, required => 1 );
-
-has 'LockFile' => ( is => 'rw', isa => Str, lazy => 1,
-  default => sub {
-    $_[0]->File .".lock" ;
-  },
-);
 
 has 'Perms'   => ( is => 'rw', default => sub { 0644 } );
 has 'Timeout' => ( is => 'rw', default => sub { 5 } );
@@ -39,13 +34,26 @@ has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
   },
 );
 
-has 'Tied'   => ( is => 'rw', isa => HashRef, default => sub { {} } );
+## Orig is the original tie().
+has 'Orig'   => ( is => 'rw', isa => HashRef, default => sub { {} } );
+
+## Tied is the re-tied DB hash.
+has 'Tied'   => ( is => 'rw', isa => HashRef, 
+  default   => sub { {} },
+);
 
 has 'LockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
   predicate => 'has_LockFH',
   clearer   => 'clear_LockFH', 
 );
 
+## LOCK_EX or LOCK_SH for current open
+has 'LockMode' => ( is => 'rw', lazy => 1,
+  predicate => 'has_LockMode',
+  clearer   => 'clear_LockMode',
+);
+
+## DB object.
 has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
   predicate => 'has_DB',
   clearer   => 'clear_DB',
@@ -71,43 +79,64 @@ sub dbopen {
   my ($self, %args) = @_;
   $args{lc $_} = delete $args{$_} for keys %args;
   
+  if ( $self->is_open ) {
+    carp "Attempted dbopen() on already-open DB";
+    return
+  }
   
   my ($lflags, $fflags);
   if ($args{ro} || $args{readonly}) {
     $lflags = LOCK_SH | LOCK_NB  ;
     $fflags = O_CREAT | O_RDONLY ;
+    $self->LockMode(LOCK_SH);
   } else {
     $lflags = LOCK_EX | LOCK_NB;
     $fflags = O_CREAT | O_RDWR ;
+    $self->LockMode(LOCK_EX);
   }
   
   my $path = $self->File;
 
-  open my $lockf_fh, '>', $self->LockFile
-    or warn "could not open lockfile $self->LockFile: $!\n"
-    and return;
+ ## proper DB_File locking:
+  ## open and tie the DB to Orig
+  ## set up object
+  ## call a sync() to create if needed
+  my $orig_db = tie %{ $self->Orig }, "DB_File", $path,
+      $fflags, $self->Perms, $DB_HASH
+      or croak "failed db open: $path: $!" ;
+  $orig_db->sync();
+  
+  ## dup a FH to $db->fd for LockFH  
+  my $fd = $orig_db->fd;
+  my $fh = FileHandle->new("<&=$fd")
+    or croak "failed dup in dbopen: $!";
 
   my $timer = 0;
   my $timeout = $self->Timeout || 5;
 
-  until ( flock $lockf_fh, $lflags ) {
+  ## flock LockFH
+  until ( flock $fh, $lflags ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
+      untie %{ $self->Orig };
       return
     }
     select undef, undef, undef, 0.1;
     $timer += 0.1;
   }
 
-  print $lockf_fh $$;
-  $self->LockFH( $lockf_fh );
-
+  ## reopen DB to Tied
   my $db = tie %{ $self->Tied }, "DB_File", $path,
       $fflags, $self->Perms, $DB_HASH
-      or croak "failed db open: $path: $!" ;
+      or croak "failed db reopen: $path: $!"; 
 
+  ## preserve db obj and lock fh
+  $self->is_open(1);
+  $self->LockFH( $fh );
   $self->DB($db);
+  undef $orig_db;
 
+  ## install filters
   ## null-terminated to be C-compat
   $self->DB->filter_fetch_key(
     sub { s/\0$// }
@@ -117,7 +146,7 @@ sub dbopen {
   );
 
   ## Storable is probably faster
-  ## ... but has no backwards compat guarantee
+  ## ... but has no backwards compat guarantee, really
   $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
@@ -130,28 +159,34 @@ sub dbopen {
       $_ .= "\0";
     }
   );
-  $self->is_open(1);
   return 1
 }
 
 sub dbclose {
   my ($self) = @_;
 
-  $self->clear_DB;
-
   unless ($self->is_open) {
     carp "attempted dbclose on unopened db";
     return
   }
+  
+  if ($self->LockMode == LOCK_EX) {
+    $self->DB->sync();
+  }
 
-  untie %{ $self->Tied };
+  $self->clear_DB;
+  untie %{ $self->Tied }
+    or carp "dbclose: untie Tied: $!";
 
-  my $lockfh = $self->LockFH;
-  close $lockfh;
+  flock( $self->LockFH, LOCK_UN )
+    or carp "dbclose: unlock: $!";  
+
+  untie %{ $self->Orig }
+    or carp "dbclose: untie Orig: $!";
+
   $self->clear_LockFH;
-
-  unlink $self->LockFile;
-
+  $self->clear_LockMode;
+  
   $self->is_open(0);
 
   return 1
