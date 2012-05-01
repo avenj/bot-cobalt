@@ -177,10 +177,6 @@ a B<Config:> directive can be specified as normal, although this is
 typically counterproductive; use either an external config file or a 
 B<Opts:> directive to retain your users' sanity.
 
-=head4 Examples
-
-FIXME
-FIXME examples of required levels hash, etc
 
 =head4 Directly accessing cfg hash
 
@@ -1111,11 +1107,27 @@ Carries no arguments.
 
 =head4 Bot_plugin_error
 
-FIXME
+Broadcast when the syndicator reports an error from a plugin.
+
+The only argument is the error string reported by 
+L<POE::Component::Syndicator>.
+
+These messages are also logged to 'warn' by default.
 
 =head3 Langset related events
 
-FIXME
+=head4 langset_loaded
+
+Broadcast when a language set load appears to have succeeded.
+
+The first argument is the langset name. The second argument is the path 
+to the langset file that was loaded.
+
+=head4 langset_error
+
+Broadcast when a language set load has failed.
+
+These messages are also logged to 'warn' by default.
 
 =head3 Timer related events
 
@@ -1140,7 +1152,20 @@ The second argument is the removed L<Bot::Cobalt::Timer> object.
 
 =head3 Ignore related events
 
-FIXME
+=head4 flood_ignore_added
+
+Broadcast by L<Bot::Cobalt::IRC> when a temporary anti-flood ignore has 
+been placed.
+
+Arguments are the server context name and the mask that was added, 
+respectively.
+
+=head4 flood_ignore_deleted
+
+Broadcast by L<Bot::Cobalt::IRC> when a temporary anti-flood ignore has 
+expired and been removed.
+
+Arguments are the same as L</flood_ignore_added>.
 
 
 =head1 PLUGIN DESIGN TIPS
