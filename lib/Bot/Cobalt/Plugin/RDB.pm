@@ -29,8 +29,10 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
 has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
     my ($self) = @_;
+
     my $cfg = core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
+
     my $rdbdir = core->var ."/". 
                 ($cfg->{Opts}->{RDBDir} || "db/rdb");
 

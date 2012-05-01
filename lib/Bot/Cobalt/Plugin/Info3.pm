@@ -53,7 +53,7 @@ sub Cobalt_register {
   $self->{Regexes} = { };
   
   ## build our initial hashes:
-  $self->{DB}->dbopen || croak 'DB open failure';
+  $self->{DB}->dbopen(ro => 1) || croak 'DB open failure';
   for my $glob ($self->{DB}->dbkeys) {
     ++$core->Provided->{info_topics};
     my $ref = $self->{DB}->get($glob);
@@ -628,7 +628,7 @@ sub _info_about {
   }
 
   ## parse and display addedat/addedby info
-  $self->{DB}->dbopen || return 'DB open failure';
+  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';
   my $ref = $self->{DB}->get($glob);
   $self->{DB}->dbclose;
 
@@ -667,7 +667,7 @@ sub _info_display {
   }
   
   ##  if so, show unparsed Response
-  $self->{DB}->dbopen || return 'DB open failure';  
+  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
   my $ref = $self->{DB}->get($glob);
   $self->{DB}->dbclose;    
   my $response = $ref->{Response};
@@ -731,7 +731,7 @@ sub _info_exec_dsearch {
   ## matches found in searchcache
   return @matches if @matches;
 
-  $self->{DB}->dbopen || return 'DB open failure';  
+  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
     unless (ref $ref eq 'HASH') {
@@ -767,7 +767,7 @@ sub _info_match {
         next if $isaction;
       }
   
-      $self->{DB}->dbopen || return 'DB open failure';
+      $self->{DB}->dbopen(ro => 1) || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;
   

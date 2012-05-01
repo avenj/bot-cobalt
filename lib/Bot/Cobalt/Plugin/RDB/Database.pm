@@ -289,7 +289,7 @@ sub get {
     return 0
   }
   
-  unless ( $db->dbopen ) {
+  unless ( $db->dbopen(ro => 1) ) {
     $core->log->error("dbopen failure for $rdb in get");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -321,7 +321,7 @@ sub get_keys {
     return
   }
   
-  unless ( $db->dbopen ) {
+  unless ( $db->dbopen(ro => 1) ) {
     $core->log->error("dbopen failure for $rdb in get_keys");
     return
   }
@@ -391,7 +391,7 @@ sub random {
     return 0
   }
   
-  unless ( $db->dbopen ) {
+  unless ( $db->dbopen(ro => 1) ) {
     $core->log->error("dbopen failure for $rdb in random");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -452,7 +452,7 @@ sub search {
   my $re = glob_to_re_str($glob);
   $re = qr/$re/i;
 
-  unless ( $db->dbopen ) {
+  unless ( $db->dbopen(ro => 1) ) {
     $core->log->error("dbopen failure for $rdb in search");
     $self->Error("RDB_DBFAIL");
     return 0
