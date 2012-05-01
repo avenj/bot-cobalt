@@ -39,6 +39,7 @@ For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
     ## Handlers receive $self and $core as first two args:
     ##  $self is "this object"
     ##  $core gives us access to core attributes and methods
+    ##  (Since we have Bot::Cobalt, core() is the same thing.)
     my ($self, $core) = splice @_, 0, 2;
     
     ## Register to only receive public msg events
@@ -51,7 +52,9 @@ For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
     ## Log that we're here now:
     logger->info("Registered");
 
-    ## ALWAYS return an Object::Pluggable::Constants value
+    ## *Always* return an Object::Pluggable::Constants value from an 
+    ## event handler.
+    ##
     ## (Importing Bot::Cobalt::Common will also pull _NONE and _ALL in)
     ## See "Returning proper values" under "Handling events"
     ## 
@@ -134,7 +137,7 @@ The normal way to access a plugin's configuration structure is via the
 core method B<get_plugin_cfg>:
 
   ## Our $self object or our alias must be specified:
-  my $plug_cf = $core->get_plugin_cfg( $self );
+  my $plug_cf = core()->get_plugin_cfg( $self );
   unless ($plug_cf) {
     ## No configuration found for our plugin ...
   }
@@ -143,7 +146,7 @@ Note that B<get_plugin_cfg> returns a COPY of the plugin's
 configuration structure.
 
 If the plugin needs to modify its own configuration hash for some 
-reason, it needs to access B<< $core->cfg->{plugin_cf} >> directly. 
+reason, it needs to access B<< core()->cfg->{plugin_cf} >> directly. 
 See L</"Directly accessing cfg hash">, below.
 
 See also: L</"Core methods">
@@ -182,11 +185,11 @@ FIXME examples of required levels hash, etc
 =head4 Directly accessing cfg hash
 
 If your plugin needs to modify its configuration values directly 
-(which is often unwise!), it will need to access the B<< $core->cfg >> 
+(which is often unwise!), it will need to access the B<< core()->cfg >> 
 hash directly.
 
 Loaded configuration values for plugins are available via 
-B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
+B<< core()->cfg->{plugin_cf} >>, keyed on plugin alias:
 
   ## Ask Core for our current alias
   ## (using Bot::Cobalt sugar)
@@ -219,19 +222,22 @@ Registering for events typically happens at plugin load-time; in other
 words, inside C<Cobalt_register>:
 
   my ($self, $core) = @_;
-  
-  $core->plugin_register( $self, 'SERVER',
-    [ 'chan_sync' ],
-    [ 'public_msg' ],
-  );
-  
-  ## or to receive all events:
-  $core->plugin_register( $self, 'SERVER',
-    [ 'all' ],
+
+  ## Using Bot::Cobalt sugar:
+  register( $self, 'SERVER', 
+    [ 
+      'chan_sync',
+      'public_msg',
+    ]
   );
 
-  ## Same thing, except with 'use Bot::Cobalt'
-  register( $self, 'SERVER', [ 'all' ] );
+  ## Same thing without sugar:
+  $core->plugin_register( $self, 'SERVER',
+    [ 
+      'chan_sync',
+      'public_msg',
+    ],
+  );
 
 =head3 Event handlers
 
@@ -243,8 +249,7 @@ Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
     ...
   }
 
-B<IMPORTANT: the arguments passed to event handlers are ALWAYS references>
-
+B<The arguments passed to event handlers are ALWAYS references.>
 (Sometimes, they're references to references, such as a hashref.
 If you don't know what that means, it's time to read L<perlreftut> and 
 L<perlref> immediately.)
@@ -277,8 +282,8 @@ scalar, or it might be a reference of some sort, such as a hash:
 
 Be cautious with your argument modifications!
 
-For example, when splicing values from a C<< $msg->{message_array} >> 
-(I<< L</Messages> >>):
+For example, when splicing values from a C<< $msg->message_array >> 
+(see L</Messages>):
 
   ## copy, then splice/shift/pop
   my @message = @{ $msg->message_array };
@@ -294,15 +299,10 @@ to another plugin.)
 
 =head3 Returning proper values
 
-The plugin system is a pipeline.
-
-Unless manipulated manually, Cobalt's pipeline starts with the core 
-('Main' context) IRC plugin provided by L<Bot::Cobalt::IRC>, followed by 
-any plugins specified in plugins.conf.
-
-That being the case, events will be handed on down the pipeline, 
-B<unless> a handler for a syndicated event returns an B<EAT_ALL> or 
-B<EAT_PLUGIN> value.
+The plugin system is a pipeline, usually beginning with 
+the L<Bot::Cobalt::IRC> plugin. Events will be handed on down the 
+pipeline, B<unless> a handler for a syndicated event returns an 
+B<PLUGIN_EAT_ALL> or B<PLUGIN_EAT_PLUGIN> value.
 
 Your Bot_* event handlers should B<always> return an 
 L<Object::Pluggable::Constants> value. The two commonly used values are:
@@ -320,7 +320,7 @@ Eat the event, removing it from the plugin pipeline.
 Typically you might return PLUGIN_EAT_ALL on self-syndicated events
 (that is to say, events the plugin intends for itself to handle, 
 such as a L<Bot::Cobalt::Plugin::WWW> response, timed event, event-aware 
-loop as described in L</"ADVANCED CONCEPTS">, etc.)
+loop as described in L</"ADVANCED CONCEPTS">, etc).
 
 This can also be useful when there is a good reason to terminate an 
 event's lifetime; for example, implementing a plugin that loads itself 
@@ -333,7 +333,7 @@ some criteria.
 
 =head3 Understanding server context
 
-IRC-driven events always come with a server context attached, mapping 
+IRC-driven events always come with a 'server context' attached, mapping 
 the server's configured "name" to server state information and allowing a 
 plugin to make sure responses get to the right place.
 
