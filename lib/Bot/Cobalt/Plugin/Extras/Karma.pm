@@ -9,6 +9,7 @@ use warnings;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
+use Bot::Cobalt;
 use Bot::Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
@@ -17,7 +18,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
   
   $self->{Cache} = {};
 
@@ -57,13 +57,12 @@ sub Cobalt_unregister {
 
 sub _sync {
   my ($self) = @_;
-  my $core = $self->{core};
   my $db   = $self->{karmadb};
   
   return unless keys %{ $self->{Cache} };
   
   unless ($db->dbopen) {
-    $core->log->warn("dbopen failure for karmadb in _sync");
+    logger->warn("dbopen failure for karmadb in _sync");
     return
   }
   
@@ -78,14 +77,13 @@ sub _sync {
 
 sub _get {
   my ($self, $karma_for) = @_;
-  my $core = $self->{core};
   my $db = $self->{karmadb};
   
   return $self->{Cache}->{$karma_for}
     if exists $self->{Cache}->{$karma_for};
   
   unless ($db->dbopen) {
-    $core->log->warn("dbopen failure for karmadb in _get");
+    logger->warn("dbopen failure for karmadb in _get");
     return
   }
   

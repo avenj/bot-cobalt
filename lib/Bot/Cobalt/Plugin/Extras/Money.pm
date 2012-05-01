@@ -2,6 +2,8 @@ package Bot::Cobalt::Plugin::Extras::Money;
 our $VERSION = '0.200_48';
 
 use 5.10.1;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use URI::Escape;
@@ -11,7 +13,7 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
+
   $self->{Cached} = {};
   $core->plugin_register( $self, 'SERVER',
     [
@@ -157,14 +159,12 @@ sub _request_conversion_rate {
   my ($self, $from, $to, $value, $context, $channel) = @_;
   return unless $from and $to;
 
-  my $core = $self->{core};
-
   ## maybe cached
   my $cachekey = "${from}-${to}";
   if ($self->{Cached}->{$cachekey}) {
     my $cachedrate = $self->{Cached}->{$cachekey}->{Rate};
     my $converted = $value * $cachedrate;
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       "$value $from == $converted $to"
     );
     return 1
@@ -174,15 +174,15 @@ sub _request_conversion_rate {
      "http://www.webservicex.net/CurrencyConvertor.asmx"
     ."/ConversionRate?FromCurrency=${from}&ToCurrency=${to}";
   
-  if ($core->Provided->{www_request}) {
+  if ( core()->Provided->{www_request} ) {
     my $req = HTTP::Request->new( 'GET', $uri ) || return undef;
-    $core->send_event( 'www_request',
+    broadcast( 'www_request',
       $req,
       'currencyconv_rate_recv',
       [ $value, $context, $channel, $from, $to ],
     );
   } else {
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       "No async HTTP available; try loading Bot::Cobalt::Plugin::WWW"
     );
   }

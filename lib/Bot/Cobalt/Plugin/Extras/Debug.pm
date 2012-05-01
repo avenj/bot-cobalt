@@ -26,7 +26,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
   my @events = map { 'public_cmd_'.$_ } 
     qw/
       dumpcfg 

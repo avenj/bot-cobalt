@@ -4,6 +4,8 @@ our $VERSION = '0.200_48';
 ## Mostly borrowed from POE::Component::IRC::Plugin::QueryDNS by BinGOs
 
 use 5.10.1;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use POE;
@@ -15,7 +17,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
   
   POE::Session->create(
     object_states => [
@@ -59,17 +60,15 @@ sub Bot_public_cmd_dns {
 
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
-  $kernel->alias_set( 'p_'.$core->get_plugin_alias($self) );
+  $kernel->alias_set( 'p_'. core()->get_plugin_alias($self) );
   $self->{Resolver} = POE::Component::Client::DNS->spawn(
-    Alias => 'named'.$core->get_plugin_alias($self),
+    Alias => 'named'. core()->get_plugin_alias($self),
   );
-  $core->log->debug("Resolver session spawned");
+  logger->debug("Resolver session spawned");
 }
 
 sub dns_resp_recv {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my $core = $self->{core};
   my $response = $_[ARG0];
   my $hints    = $response->{context};
 
@@ -78,7 +77,7 @@ sub dns_resp_recv {
 
   my $nsresp;
   unless ($nsresp = $response->{response}) {
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       "DNS error."
     );
     return
@@ -114,7 +113,7 @@ sub dns_resp_recv {
     $str = "nslookup: No answer for $host";
   }
   
-  $core->send_event('message', $context, $channel, $str) if $str;
+  broadcast('message', $context, $channel, $str) if $str;
 }
 
 sub _run_query {
@@ -126,9 +125,8 @@ sub _run_query {
   $type = 'PTR' if ip_is_ipv4($host);
   ## FIXME v6 rr lookup?
   
-  my $core = $self->{core};
-  $core->log->debug("issuing dns request: $host");
-  $poe_kernel->post( 'p_'.$core->get_plugin_alias($self), 
+  logger->debug("issuing dns request: $host");
+  $poe_kernel->post( 'p_'. core()->get_plugin_alias($self), 
     'dns_issue_query',
     $context, $channel, $host, $type
   );

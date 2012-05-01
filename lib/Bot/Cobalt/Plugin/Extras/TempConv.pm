@@ -18,7 +18,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
   $core->plugin_register( $self, 'SERVER',
     [ 
       'public_cmd_temp',
@@ -46,7 +45,7 @@ sub Bot_public_cmd_temp {
   my ($temp, $type) = $str =~ /(-?\d+\.?\d*)?(\w)?/;
   $temp = 0   unless $temp;
   $temp = MAX_TEMP if $temp > MAX_TEMP;
-  $type = 'F' unless $type;
+  $type = 'F' unless $type and uc($type) ~~ [qw/F C K/];
   my ($f, $k, $c) = (0)x3;
   given (uc $type) {
     ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) when 'F';

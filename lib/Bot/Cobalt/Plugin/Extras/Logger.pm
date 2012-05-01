@@ -18,6 +18,8 @@ our $VERSION = '0.200_48';
 ##      public/private implies outgoing also
 ##      ability to combine above arbitrarily
 use 5.10.1;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use File::Path;

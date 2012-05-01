@@ -3,6 +3,8 @@ our $VERSION = '0.200_48';
 
 ## Simplistic relaybot plugin
 use 5.10.1;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 sub new { bless {}, shift }
@@ -47,7 +49,7 @@ sub add_relay {
     [ $context0, $chan0 ],
   );
 
-  $self->{core}->log->debug(
+  logger->debug(
     "relaying: $context0 $chan0 -> $context1 $chan1"
   );
   return 1
@@ -55,8 +57,6 @@ sub add_relay {
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-
-  $self->{core} = $core;
 
   my $pcfg = $core->get_plugin_cfg($self);
   my $relays = $pcfg->{Relays};
@@ -68,7 +68,7 @@ sub Cobalt_register {
     }
   }
 
-  $core->plugin_register( $self, 'SERVER',
+  register( $self, 'SERVER',
     [
       'public_msg',
       'ctcp_action',
@@ -131,7 +131,7 @@ sub Bot_relay_push_join_queue {
       
       RELAY: for my $relay (@relays) {
         my ($to_context, $to_channel) = @$relay;
-        $core->send_event( 'message',
+        broadcast( 'message',
           $to_context,
           $to_channel,
           $str
@@ -144,7 +144,7 @@ sub Bot_relay_push_join_queue {
 
   $self->{JoinQueue} = {};
   
-  $core->send_event('relay_push_left_queue');
+  broadcast('relay_push_left_queue');
 
   $core->timer_set( 3,
     { 
@@ -159,7 +159,7 @@ sub Bot_relay_push_join_queue {
 
 sub _push_left_queue {
   my ($self) = @_;
-  my $core = $self->{core};
+
   my $queue = $self->{LeftQueue}//{};
 
   SERV: for my $context (keys %$queue) {
@@ -179,7 +179,7 @@ sub _push_left_queue {
       
       RELAY: for my $relay (@relays) {
         my ($to_context, $to_channel) = @$relay;
-        $core->send_event( 'message',
+        broadcast( 'message',
           $to_context,
           $to_channel,
           $str
@@ -222,7 +222,7 @@ sub Bot_public_msg {
     my $to_channel = $relay->[1];
   
     ## should be good to relay away ...
-    $core->send_event( 'message',
+    broadcast( 'message',
       $to_context,
       $to_channel,
       $str
@@ -250,7 +250,7 @@ sub Bot_ctcp_action {
     my $to_context = $relay->[0];
     my $to_channel = $relay->[1];
   
-    $core->send_event( 'message',
+    broadcast( 'message',
       $to_context,
       $to_channel,
       $str
@@ -310,7 +310,7 @@ sub Bot_user_kicked {
   
     my $str = 
       "<kick:${channel}> $kicked_u was kicked by $src_nick ($reason)";  
-    $core->send_event( 'message',
+    broadcast( 'message',
       $to_context,
       $to_channel,
       $str
@@ -369,7 +369,7 @@ sub Bot_nick_changed {
       my ($to_context, $to_channel) = @$relay;
       my $str = 
         "[relay: $channel] $old_nick changed nickname to $src_nick";
-      $core->send_event( 'message', $to_context, $to_channel, $str );
+      broadcast( 'message', $to_context, $to_channel, $str );
     }
   }
   
@@ -387,7 +387,7 @@ sub Bot_public_cmd_relay {
   my @relays = $self->get_relays($context, $channel);
   
   unless (@relays) {
-    $core->send_event( 'message',
+    broadcast( 'message',
       $context,
       $channel,
       "There are no relays for $channel on context $context"
@@ -403,7 +403,7 @@ sub Bot_public_cmd_relay {
     $str .= "${to_context}:${to_channel} ";
   }
 
-  $core->send_event( 'message', $context, $channel, $str );
+  broadcast( 'message', $context, $channel, $str );
   return PLUGIN_EAT_ALL
 }
 
@@ -417,7 +417,7 @@ sub Bot_public_cmd_rwhois {
   my ($remotenet, $remoteuser) = @{ $msg->message_array };
   unless ($remotenet && $remoteuser) {
     my $src_nick = $msg->src_nick;
-    $core->send_event( 'message',
+    broadcast( 'message',
       $context,
       $channel,
       "${src_nick}: Usage: rwhois <context> <nickname>"
@@ -426,7 +426,7 @@ sub Bot_public_cmd_rwhois {
   }
 
   unless ( $self->get_relays($context, $channel) ) {
-    $core->send_event( 'message',
+    broadcast( 'message',
       $context,
       $channel,
       "There are no active relays for $channel on context $context"
@@ -436,7 +436,7 @@ sub Bot_public_cmd_rwhois {
 
   my $irc_obj = $core->get_irc_obj($remotenet);
   unless ( $self->{Relays}->{$remotenet} and ref $irc_obj ) {
-    $core->send_event( 'message',
+    broadcast( 'message',
       $context,
       $channel,
       "We don't seem to have a relay for $remotenet"
@@ -456,7 +456,7 @@ sub Bot_public_cmd_rwhois {
     my $userhost = "${nick}!${user}\@${host}";
     $resp = "$remoteuser ($userhost) [$real]"
   }
-  $core->send_event( 'message', $context, $channel, $resp );
+  broadcast( 'message', $context, $channel, $resp );
   
   return PLUGIN_EAT_ALL
 }

@@ -5,6 +5,7 @@ use 5.10.1;
 use strict;
 use warnings;
 
+use Bot::Cobalt;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use HTTP::Request;
@@ -14,8 +15,8 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
-  $core->plugin_register( $self, 'SERVER',
+
+  register( $self, 'SERVER',
     [
       'public_cmd_shorturl',
       'public_cmd_shorten',
@@ -24,13 +25,15 @@ sub Cobalt_register {
       'shorten_response_recv',
     ],
   );
-  $core->log->info("Loaded, cmds: !shorten / !lengthen <url>");
+
+  logger->info("Loaded, cmds: !shorten / !lengthen <url>");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistered");
+  logger->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
 
@@ -80,9 +83,9 @@ sub Bot_shorten_response_recv {
   my $args = ${ $_[2] };
   my ($context, $channel, $nick) = @$args;
 
-  $core->log->debug("url; $url");
+  logger->debug("url; $url");
 
-  $core->send_event( 'message', $context, $channel,
+  broadcast( 'message', $context, $channel,
     "url for ${nick}: $url",
   );
   
@@ -91,22 +94,21 @@ sub Bot_shorten_response_recv {
 
 sub _request_shorturl {
   my ($self, $url, $context, $channel, $nick) = @_;
-  my $core = $self->{core};
   
-  if ($core->Provided->{www_request}) {
+  if ( core()->Provided->{www_request} ) {
     my $request = HTTP::Request->new(
       'GET',
       "http://metamark.net/api/rest/simple?long_url=".$url,
     );
 
-    $core->send_event( 'www_request',
+    broadcast( 'www_request',
       $request,
       'shorten_response_recv',
       [ $context, $channel, $nick ],
     );
 
   } else {
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       "No async HTTP available, try loading Bot::Cobalt::Plugin::WWW"
     );
   }
@@ -114,22 +116,21 @@ sub _request_shorturl {
 
 sub _request_longurl {
   my ($self, $url, $context, $channel, $nick) = @_;
-  my $core = $self->{core};
   
-  if ($core->Provided->{www_request}) {
+  if ( core()->Provided->{www_request} ) {
     my $request = HTTP::Request->new(
       'GET',
       "http://metamark.net/api/rest/simple?short_url=".$url,
     );
 
-    $core->send_event( 'www_request',
+    broadcast( 'www_request',
       $request,
       'shorten_response_recv',
       [ $context, $channel, $nick ],
     );
 
   } else {
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       "No async HTTP available, try loading Bot::Cobalt::Plugin::WWW"
     );
   }
