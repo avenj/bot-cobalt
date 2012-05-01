@@ -25,6 +25,9 @@ For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
   use strict;
   use warnings;
 
+  ## Import some helpful sugar:
+  use Bot::Cobalt;
+
   ## Import lots of useful stuff:
   use Bot::Cobalt::Common;
   
@@ -40,12 +43,13 @@ For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
     
     ## Register to only receive public msg events
     ## (We could also register for a list or 'all')
-    $core->plugin_register( $self, 'SERVER',
+    ## Uses register() sugar from Bot::Cobalt
+    register( $self, 'SERVER',
       [ 'public_msg' ]
     );
     
     ## Log that we're here now:
-    $core->log->info("Registered");
+    logger->info("Registered");
 
     ## ALWAYS return an Object::Pluggable::Constants value
     ## (Importing Bot::Cobalt::Common will also pull _NONE and _ALL in)
@@ -61,7 +65,7 @@ For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
 
     . . . do some clean up, perhaps . . .
     
-    $core->log->info("Unregistering; bye!");
+    logger->info("Unregistering; bye!");
     return PLUGIN_EAT_NONE
   }
   
@@ -162,8 +166,9 @@ possible to specify options in C<plugins.conf> directly via B<Opts>:
 Any B<Opts> specified in C<plugins.conf> directly will be available to the 
 plugin via the B<PluginOpts> key:
 
-  my $plug_cf  = $core->get_plugin_cfg( $self );
-  my $some_opt = $plug_cf->{PluginOpts}->{Some_Option} // 
+  use Bot::Cobalt;
+  . . .
+  my $opt = plugin_cfg($self)->{PluginOpts}->{Some_Option};
 
 a B<Config:> directive can be specified as normal, although this is 
 typically counterproductive; use either an external config file or a 
@@ -183,14 +188,16 @@ hash directly.
 Loaded configuration values for plugins are available via 
 B<< $core->cfg->{plugin_cf} >>, keyed on plugin alias:
 
-  ## ask Core for our current alias:
-  my $alias = $core->get_plugin_alias( $self );
-  my $plug_cf = $core->cfg->{plugin_cf}->{ $alias };
+  ## Ask Core for our current alias
+  ## (using Bot::Cobalt sugar)
+  my $alias   = plugin_alias($self);
+  my $plug_cf = core()->cfg->{plugin_cf}->{ $alias };
   ## modify this plugin's conf hash directly:
   $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
 
 There is no built-in facility for writing these changes back out as of 
-this writing; plugins are on their own for configuration file modification.  
+this writing; plugins are on their own for configuration file 
+modification (and it's often a poor idea).
 
 
 =head2 Handling events
@@ -204,7 +211,7 @@ help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
 If your plugin needs to have a certain priority in the pipeline, you're 
 going to want to spend some quality time reading the L<Object::Pluggable> 
 and especially L<Object::Pluggable::Pipeline> documentation. The methods 
-described regarding pipeline manipulation are available via C<$core>.
+described regarding pipeline manipulation are available via C<core()>.
 
 =head3 Registering for events
 
@@ -223,6 +230,8 @@ words, inside C<Cobalt_register>:
     [ 'all' ],
   );
 
+  ## Same thing, except with 'use Bot::Cobalt'
+  register( $self, 'SERVER', [ 'all' ] );
 
 =head3 Event handlers
 
@@ -339,7 +348,8 @@ For example, when receiving a public message:
     ## ... later, when sending a response ...
     my $channel = $msg->channel;
 
-    $core->send_event( 'message',
+    broadcast( 
+      'message',   ## send_event 'message'
       $context,    ## make sure it goes to the right server
       $channel,    ## destination channel on specified context
       $response,   ## some response string
@@ -437,7 +447,7 @@ The command is automatically lowercased before being transformed into an event.
 A plugin can register to receive commands in this format:
 
   ## in Cobalt_register, usually:
-  $core->plugin_register( $self, 'SERVER',
+  register( $self, 'SERVER',
     ## register to receive the 'shorten' command:
     [ 'public_cmd_shorten' ],
   );
@@ -489,7 +499,7 @@ or user.
 The arguments specify the server context, target (user or channel), and 
 string, respectively:
 
-  $core->send_event( 'message',
+  broadcast( 'message',
     $context, $target, $string
   );
 
@@ -519,7 +529,7 @@ The following common IRC commands are handled.
 Like any other interaction, they are sent as events:
 
   ## (attempt to) join a channel on $context:
-  $core->send_event( 'join', $context, $channel );
+  broadcast( 'join', $context, $channel );
 
 =over
 
@@ -592,6 +602,14 @@ from any loaded plugin via B<instance>:
 
   require Bot::Cobalt::Core;
   my $core = Bot::Cobalt::Core->instance;
+
+Normally, however, you would simply 'use Bot::Cobalt' and thereby import 
+the L<Bot::Cobalt::Core::Sugar> wrappers:
+
+  my $core = core();
+
+See the documentation for L<Bot::Cobalt::Core::Sugar> for the complete 
+list of exported wrappers.
 
 =head3 Attributes
 
@@ -755,6 +773,12 @@ plugin:
   $core->log->warn("Missing config!")
     unless $core->get_plugin_cfg( $self );
 
+If you 'use Bot::Cobalt' you can make use of the exported B<plugin_cfg> 
+wrapper (see L<Bot::Cobalt::Core::Sugar>):
+
+  logger->warn("Missing config!")
+    unless plugin_cfg($self);
+
 =head4 get_plugin_alias
 
 A plugin can be instanced many times with discrete conf 
@@ -769,6 +793,11 @@ Your plugin's $self object must be specified:
 
 (Of course, this also works for getting the alias of other plugin 
 objects.)
+
+A wrapper is provided if you use 'Bot::Cobalt' (see 
+L<Bot::Cobalt::Core::Sugar>):
+
+  my $plugin_alias = plugin_alias($self);
 
 =head3 IRC-related methods
 
@@ -785,12 +814,13 @@ upon connect and can be used to establish whether or not the character sets
 information.
 
 This can be used to feed the C<lc_irc/uc_irc/eq_irc> functions from 
-L<IRC::Utils> and determine issues like nickname equivalency:
+L<IRC::Utils> (or L<Bot::Cobalt::Common> and determine issues like 
+nickname equivalency:
 
-  use IRC::Utils qw/lc_irc eq_irc/;
+  use Bot::Cobalt::Common;
   my $casemapping = $core->get_irc_casemap( $context );
-  my $irc_lower = lc_irc($nickname, $
-
+  my $irc_lower = lc_irc($nickname, $casemapping);
+  my $is_eqal   = eq_irc($old, $new, $casemapping);
 
 =head4 get_irc_obj
 
@@ -841,25 +871,21 @@ Requires a context and a nickname:
   my $level   = $core->auth->level($context, $nick);
 
 Auth levels are fairly flexible; it is generally a good idea for your 
-plugin to provide some method of configuring required access levels.
-
-FIXME link to info on plugin conf / PluginOpts
+plugin to provide some method of configuring required access levels 
+(perhaps in plugins.conf via L</PluginOpts>).
 
 =head4 username
 
 Retrieves the "username" for an authorized user (or empty list if the user 
 is not currently authorized).
 
-Requires a context and a nickname, similar to L</auth_level>:
+Requires a context and a nickname, similar to L</level>:
 
-  my $username = $core->auth->username($context, $nick);
+  my $username = core()->auth->username($context, $nick);
   unless ($username) {
     ## this user isn't authorized
   }
 
-=head3 Ignore-related methods
-
-FIXME
 
 =head3 Logging
 
@@ -869,11 +895,11 @@ specified in cobalt.conf (and possibly STDOUT, if running with --nodetach).
 This is actually a L<Log::Handler> instance, so all methods found there 
 apply. Typically, plugins should log to B<info>, B<warn>, or B<debug>:
 
-  $core->log->info("An informational message");
+  core()->log->info("An informational message");
   
-  $core->log->warn("Some error occured");
+  core()->log->warn("Some error occured");
 
-  $core->log->debug("some verbose debug output for --debug");
+  core()->log->debug("some verbose debug output for --debug");
 
 A plugin should at least log to B<info> when it is registered or 
 unregistered; that is to say, inside B<Cobalt_register> and 
@@ -881,8 +907,8 @@ B<Cobalt_unregister> handlers.
 
 =head3 Timers
 
-Core timers live in B<< $core->TimerPool >>; if need be, you can access 
-the timer pool directly. It is a hash keyed on timer ID.
+Core timers live in B<< core()->TimerPool >>; if need be, you can 
+access the timer pool directly. It is a hash keyed on timer ID.
 
 Timer methods are provided by the L<Bot::Cobalt::Core::Role::Timers> role.
 Each individual timer is a L<Bot::Cobalt::Timer> object; if you plan to 
@@ -898,11 +924,11 @@ documentation if you'd like to use the pure object interface instead.
 Set up a new timer for an event or message.
 
   ## Object interface:
-  $core->timer_set( $timer_object );
+  core()->timer_set( $timer_object );
 
   ## Hash interface:
-  $core->timer_set( $delay, $ev_hash );
-  $core->timer_set( $delay, $ev_hash, $id );
+  core()->timer_set( $delay, $ev_hash );
+  core()->timer_set( $delay, $ev_hash, $id );
 
 Returns the timer ID on success, boolean false on failure.
 
@@ -1069,7 +1095,8 @@ found).
 
 =head2 Syndicated core events
 
-These are events sent by Bot::Cobalt::Core when various core states change.
+These are events sent by L<Bot::Cobalt::Core> when various core states 
+change.
 
 You should probably return PLUGIN_EAT_NONE on all of these, unless 
 you're absolutely sure of what you're doing.
@@ -1119,6 +1146,15 @@ FIXME
 =head1 PLUGIN DESIGN TIPS
 
 =head2 Useful tools
+
+=head3 Bot::Cobalt
+
+Importing L<Bot::Cobalt> via 'use Bot::Cobalt' brings in the 
+L<Bot::Cobalt::Core::Sugar> functions.
+
+These provide simple syntax sugar for accessing the L<Bot::Cobalt::Core> 
+singleton and common methods such as B<send_event>; consult the 
+L<Bot::Cobalt::Core::Sugar> documentation for details.
 
 =head3 Bot::Cobalt::Common
 
@@ -1285,13 +1321,26 @@ boolean true:
 It may be necessary or convenient to use L<Bot::Cobalt::Core> methods from 
 outside of a syndicated event handler.
 
-L<Bot::Cobalt::Core> is an instanced singleton; loaded plugins can always 
+If your plugin imports L<Bot::Cobalt> via 'use Bot::Cobalt', the 
+C<core()> function will retrieve the instanced L<Bot::Cobalt::Core>; 
+for example:
+
+  core()->auth->level( . . . )
+
+See L<Bot::Cobalt::Core::Sugar> for details on functions exported when 
+you 'use Bot::Cobalt'.
+
+If you don't want to use the sugary functions and 
+would rather make method calls directly, L<Bot::Cobalt::Core> is an 
+instanced singleton; loaded plugins can always 
 retrieve the running L<Bot::Cobalt::Core> via the B<instance> method:
 
   sub my_routine {
     my ($self, @args) = @_;
     
     require Bot::Cobalt::Core;
+    croak "No Core instance available"
+      unless Bot::Cobalt::Core->is_instanced;
     my $core = Bot::Cobalt::Core->instance;
   }
 
@@ -1323,14 +1372,15 @@ Alternately, a method named NON_RELOADABLE will do:
 
 =head3 Plugin managers and is_reloadable
 
-All plugin load/unload frontends should make use of the Bot::Cobalt::Core 
-method B<is_reloadable>.
+All plugin load/unload frontends should make use of the 
+L<Bot::Cobalt::Core> method B<is_reloadable> (provided by 
+L<Bot::Cobalt::Core::Role::Unloader>).
 
 Before unloading a plugin, a plugin manager should check the reloadable 
 status of the plugin's alias:
 
   ## In a plugin manager of some sort, perhaps:
-  unless ( $core->is_reloadable($plugin_alias) ) {
+  unless ( core()->is_reloadable($plugin_alias) ) {
     ## plugin is not safe to reload on-the-fly
     # ... refuse to reload the plugin, log it ...
   }
@@ -1340,7 +1390,7 @@ about the new object:
 
   my $plug_obj = My::Plugin->new;
    # ... add plugin to pipeline ...
-  if ( $core->is_reloadable($plugin_alias, $plug_obj) ) {
+  if ( core()->is_reloadable($plugin_alias, $plug_obj) ) {
     ## plugin is reloadable
   } else {
     ## plugin is NOT reloadable
@@ -1456,10 +1506,9 @@ L<Object::Pluggable> allows you to manipulate the plugin pipeline order;
 that is to say, the order in which events will hit plugins.
 
 For example, when writing a plugin such as an input filter, it can be useful to move 
-your plugin towards the top of the plugin pipeline
+your plugin towards the top of the plugin pipeline.
 
 FIXME examples
-
 
 See L<Object::Pluggable::Pipeline> for details.
 
@@ -1511,8 +1560,7 @@ IRC doesn't come with a lot of guarantees regarding character encodings.
 Hopefully, you're getting either CP1252 or UTF-8.
 
 The L<IRC::Utils> POD contains an excellent discussion of the general 
-problem; see L<IRC::Utils/ENCODING>. Seriously. You really ought to read 
-it carefully.
+problem; see L<IRC::Utils/ENCODING>.
 
 L<IRC::Utils/decode_irc> is included if you 'use Bot::Cobalt::Common'.
 
