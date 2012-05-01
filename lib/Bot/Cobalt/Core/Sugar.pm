@@ -9,6 +9,7 @@ our @EXPORT = qw/
   core
   broadcast
   logger
+  plugin_alias
   plugin_cfg
   register
   unregister
@@ -39,6 +40,10 @@ sub unregister {
 
 sub plugin_cfg {
   core()->get_plugin_cfg( @_ )
+}
+
+sub plugin_alias {
+  core()->get_plugin_alias( @_ )
 }
 
 1;
@@ -93,21 +98,34 @@ Returns the core singleton's logger object.
 
 Wrapper for core->log->$method
 
+=head2 plugin_alias
+
+  my $alias = plugin_alias($self);
+
+Returns the known alias for a specified (loaded) plugin object.
+
+Wrapper for core->get_plugin_alias() -- see 
+L<Bot::Cobalt::Core::Role::EasyAccessors>
+
 =head2 plugin_cfg
 
 Returns plugin configuration hashref for the specified plugin.
 Requires a plugin alias or blessed plugin object be specified.
 
-Wrapper for $core->get_plugin_cfg -- see 
+Wrapper for core->get_plugin_cfg() -- see 
 L<Bot::Cobalt::Core::Role::EasyAccessors>
 
 =head2 register
 
   register( $self, 'SERVER', [ @events ]);
 
+Register to receive specified syndicated events.
+
 Wrapper for core->plugin_register; see L<Bot::Cobalt::Manual::Plugins>
 
 =head2 unregister
+
+Stop listening for specified syndicated events.
 
 Wrapper for core->plugin_unregister
 
