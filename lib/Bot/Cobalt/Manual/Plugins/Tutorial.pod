@@ -31,6 +31,15 @@ L<Bot::Cobalt::Common> will import them for you.
   use warnings;
   use Bot::Cobalt::Common;
 
+We probably also want the syntax sugar exported by L<Bot::Cobalt>. This 
+provides a simpler function interface to common core methods; we'll be 
+able to call C<broadcast()> to relay events and C<logger()> to log 
+messages.
+
+  use Bot::Cobalt;
+
+(See L<Bot::Cobalt::Core::Sugar> for more on exported sugar.)
+
 We can add a simple empty constructor:
 
   sub new { bless {}, shift }
@@ -43,18 +52,19 @@ it's registered to receive some kind of event, most often from
 L<Bot::Cobalt::IRC>.
 
 Let's register to receive the in-channel command 'fortune' -- we'll 
-figure out some responses to it later.
+figure out some responses to it later. Since we 'use Bot::Cobalt' we 
+have the C<register()> and C<logger()> functions available:
 
   sub Cobalt_register {
     my ($self, $core) = splice @_, 0, 2;
 
-    $core->plugin_register( $self, 'SERVER',
+    register( $self, 'SERVER',
       ## An array reference of events to catch.
       [ qw/ public_cmd_fortune /],
     );
     
     ## It's polite to log that we're here now.
-    $core->log->info("Loaded - $VERSION");
+    logger->info("Loaded - $VERSION");
     
     return PLUGIN_EAT_NONE
   }
@@ -62,7 +72,7 @@ figure out some responses to it later.
   sub Cobalt_unregister {
     my ($self, $core) = splice @_, 0, 2;
     
-    $core->log->info("Unloaded");
+    logger->info("Unloaded");
     
     return PLUGIN_EAT_NONE
   }
@@ -76,7 +86,7 @@ respectively.
 
 =head2 Handling commands
 
-Now we're loadable and registered to receive the 'SERVER' event 
+Now we're loadable and will register to receive the 'SERVER' event 
 B<public_cmd_fortune> -- we just need a handler for it.
 
 The first argument after the C<$self> and C<$core> objects will be a 
@@ -100,7 +110,7 @@ know.
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       $response_string
     );
   
@@ -142,19 +152,21 @@ B<DATA> -- this is nice and simple:
   use strict;
   use warnings;
   use Bot::Cobalt::Common;
+  
+  use Bot::Cobalt;
 
   sub new { bless {}, shift }
 
   sub Cobalt_register {
     my ($self, $core) = splice @_, 0, 2;
 
-    $core->plugin_register( $self, 'SERVER',
+    register( $self, 'SERVER',
       ## An array reference of events to catch.
       [ qw/ public_cmd_fortune /],
     );
     
     ## It's polite to log that we're here now.
-    $core->log->info("Loaded - $VERSION");
+    logger->info("Loaded - $VERSION");
     
     return PLUGIN_EAT_NONE
   }
@@ -162,7 +174,7 @@ B<DATA> -- this is nice and simple:
   sub Cobalt_unregister {
     my ($self, $core) = splice @_, 0, 2;
     
-    $core->log->info("Unloaded");
+    logger->info("Unloaded");
     
     return PLUGIN_EAT_NONE
   }
@@ -178,12 +190,11 @@ B<DATA> -- this is nice and simple:
     my $src_nick = $msg->src_nick;
     my $channel  = $msg->channel;
     
-    ## We'll write our response method fortune() later.
     my $fortune = $self->fortune;
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
-    $core->send_event( 'message', $context, $channel,
+    broadcast( 'message', $context, $channel,
       $response_string
     );
   
