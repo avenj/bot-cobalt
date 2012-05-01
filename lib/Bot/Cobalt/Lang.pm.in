@@ -33,7 +33,7 @@ sub load_langset {  ## load_langset(language)
   unless (-f $path) {
     $self->send_event( 'langset_error', "not found: ($lang) $path" )
       if $self->can('send_event');
-    $self->log->debug("langset not found: $lang ($path)")
+    $self->log->warn("langset not found: $lang ($path)")
       if $self->can('log');
     return { }
   }
@@ -83,7 +83,7 @@ sub load_langset {  ## load_langset(language)
     $self->send_event( 'langset_error', "empty langset? $lang ($path)" )
       if $self->can('send_event');
 
-    $self->log->debug("empty language set? no keys for $lang ($path)")
+    $self->log->warn("empty language set? no keys for $lang ($path)")
       if $self->can('log');
     return { }
   }
