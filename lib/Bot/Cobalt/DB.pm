@@ -117,6 +117,7 @@ sub dbopen {
   until ( flock $fh, $lflags ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
+      undef $orig_db; undef $fh;
       untie %{ $self->Orig };
       return
     }
