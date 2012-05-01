@@ -2,6 +2,8 @@ package Bot::Cobalt::IRC::Message::Public;
 our $VERSION = '0.200_48';
 
 use 5.10.1;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use Moo;
@@ -11,7 +13,7 @@ extends 'Bot::Cobalt::IRC::Message';
 has 'cmd' => ( is => 'rw', lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $cf_core = $self->core->get_core_cfg;
+    my $cf_core = core->get_core_cfg;
     my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!' ;
     my $txt = $self->stripped;
     if ($txt =~ /^${cmdchar}([^\s]+)/) {
@@ -27,7 +29,7 @@ has 'cmd' => ( is => 'rw', lazy => 1,
 has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $irc = $self->core->get_irc_obj( $self->context );
+    my $irc = core->get_irc_obj( $self->context );
     my $me = $irc->nick_name;
     my $txt = $self->stripped;
     $txt =~ /^${me}.?\s+/i

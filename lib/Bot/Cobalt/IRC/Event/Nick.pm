@@ -2,7 +2,10 @@ package Bot::Cobalt::IRC::Event::Nick;
 our $VERSION = '0.200_48';
 
 use Moo;
+
+use Bot::Cobalt;
 use Bot::Cobalt::Common qw/:types/;
+
 use IRC::Utils qw/eq_irc/;
 
 extends 'Bot::Cobalt::IRC::Event';
@@ -21,7 +24,7 @@ has 'common'   => ( is => 'ro', lazy => 1,
 has 'equal' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $casemap = $self->core->get_irc_casemap($self->context);
+    my $casemap = core->get_irc_casemap($self->context);
     eq_irc($self->old, $self->new, $casemap) ? 1 : 0
   },
 );

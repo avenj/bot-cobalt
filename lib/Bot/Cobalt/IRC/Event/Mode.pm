@@ -2,7 +2,11 @@ package Bot::Cobalt::IRC::Event::Mode;
 our $VERSION = '0.200_48';
 
 use Moo;
+
+use Bot::Cobalt;
+
 use Bot::Cobalt::Common qw/:types/;
+
 use IRC::Utils qw/parse_mode_line eq_irc/;
 
 extends 'Bot::Cobalt::IRC::Event';
@@ -13,9 +17,8 @@ has 'target' => ( is => 'rw', isa => Str, required => 1 );
 has 'is_umode' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {
     my ($self)  = @_;
-    my $core    = $self->core;
-    my $casemap = $core->get_irc_casemap( $self->context );
-    my $irc_obj = $core->get_irc_object( $self->context );
+    my $casemap = core->get_irc_casemap( $self->context );
+    my $irc_obj = core->get_irc_object( $self->context );
     my $me = $irc_obj->nick_name;
     eq_irc($me, $self->target) ? 1 : 0
   },
