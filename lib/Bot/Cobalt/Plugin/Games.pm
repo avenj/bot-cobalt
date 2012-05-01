@@ -12,7 +12,6 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
 
   my $count = $self->_load_games();
 
@@ -61,13 +60,11 @@ sub _handle_auto {
 
 sub _load_games {
   my ($self) = @_;
-  require Bot::Cobalt::Core;
-  my $core = Bot::Cobalt::Core->instance;
   
-  my $pcfg  = $core->get_plugin_cfg( $self );
+  my $pcfg  = core->get_plugin_cfg( $self );
   my $games = $pcfg->{Games} // {};
 
-  $core->log->debug("Loading games");
+  logger->debug("Loading games");
 
   my $count;
   for my $game (keys %$games) {
@@ -77,10 +74,10 @@ sub _load_games {
     ## attempt to load module
     eval "require $module";
     if ($@) {
-      $core->log->warn("Failed to load $module - $@");
+      logger->warn("Failed to load $module - $@");
       next
     } else {
-      $core->log->debug("Found: $module");
+      logger->debug("Found: $module");
     }
 
     push(@{ $self->{ModuleNames} }, $module);
@@ -102,13 +99,13 @@ sub _load_games {
           *{__PACKAGE__.'::Bot_public_cmd_'.$cmd} = $handler;
       }
       
-      $core->plugin_register( $self, 'SERVER',
+      register( $self, 'SERVER',
         [ 'public_cmd_'.$cmd ],
       );
     }
 
     ++$count;
-    $core->log->debug("Game loaded: $game");
+    logger->debug("Game loaded: $game");
   }
 
   return $count

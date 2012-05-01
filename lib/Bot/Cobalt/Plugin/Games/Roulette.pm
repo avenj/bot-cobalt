@@ -5,6 +5,7 @@ use 5.10.1;
 use strict;
 use warnings;
 
+use Bot::Cobalt;
 use Bot::Cobalt::Utils qw/color/;
 
 sub new { bless {}, shift }
@@ -28,9 +29,7 @@ sub execute {
   if ($loaded == 0) {
     delete $self->{Cylinder}->{$context}->{$nick};
     
-    require Bot::Cobalt::Core;
-    my $core = Bot::Cobalt::Core->instance;
-    my $irc  = $core->get_irc_obj($context);
+    my $irc  = core->get_irc_obj($context);
     my $bot  = $irc->nick_name;
     my $chan = $msg->channel;
 
@@ -41,7 +40,7 @@ sub execute {
          || $irc->is_channel_admin($chan, $bot)
          || $irc->is_channel_owner($chan, $bot) )
     {
-      $core->send_event( 'kick', $context, $chan, $nick,
+      broadcast( 'kick', $context, $chan, $nick,
         "BANG!"
       );
       return color('bold', "$nick did themselves in!")
