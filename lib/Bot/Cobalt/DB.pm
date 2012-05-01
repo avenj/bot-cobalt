@@ -2,11 +2,9 @@ package Bot::Cobalt::DB;
 our $VERSION = '0.200_48';
 
 ## ->new(File => $path)
-##  To use a different lockfile:
-## ->new(File => $path, LockFile => $lockpath)
 ##
 ## Interface to a DB_File (berkdb1.x interface)
-## Very simplistic, no readonly locking etc.
+## Uses proper retie-after-lock technique for locking
 
 use 5.10.1;
 use strictures 1;
@@ -317,11 +315,6 @@ Berkeley DB:
     # Database file mode
     Perms => $octal_mode,
 
-    # Locking is enabled regardless but you can change the location
-    # AVOID IF POSSIBLE - unless you're sure everyone uses this lock, 
-    # you could easily toast the DB
-    LockFile => "/tmp/sharedlock",
-    
     ## Locking timeout in seconds
     ## Defaults to 5s:
     Timeout => 10,
@@ -369,9 +362,9 @@ calls and attempt to close as quickly as possible.
 
 =head3 dbopen
 
-B<dbopen> opens and locks the database (via an external lockfile, 
-see the B<LockFile> constructor argument). If 'ro => 1' is specified, 
-this is a LOCK_SH lock; otherwise it is a LOCK_EX.
+B<dbopen> opens and locks the database. If 'ro => 1' is specified, 
+this is a LOCK_SH shared (read) lock; otherwise it is a LOCK_EX 
+exclusive (write) lock.
 
 Try to call a B<dbclose> as quickly as possible to reduce locking 
 contention.
@@ -397,7 +390,6 @@ say, any shallow or deep data structure NOT including blessed references.
 (Yes, Storable is faster. JSON is used because it is trivially 
 portable to any language that can interface with BerkDB.)
 
-
 =head3 get
 
 The B<get> method retrieves a (deserialized) key.
@@ -418,7 +410,6 @@ The B<del> method removes a key from the database.
 
 B<dbkeys> will return a list of keys in list context, or the number 
 of keys in the database in scalar context.
-
 
 =head3 dbdump
 
