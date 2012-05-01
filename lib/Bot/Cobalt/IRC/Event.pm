@@ -7,15 +7,6 @@ use 5.10.1;
 use Bot::Cobalt::Common;
 use Moo;
 
-has 'core'    => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub {
-    require Bot::Cobalt::Core;
-    die "Needs a Bot::Cobalt::Core instance"
-      unless Bot::Cobalt::Core->is_instanced;
-    Bot::Cobalt::Core->instance
-  }
-);
-
 has 'context' => ( is => 'rw', isa => Str, required => 1 );
 has 'src'     => ( is => 'rw', isa => Str, required => 1 );
 
