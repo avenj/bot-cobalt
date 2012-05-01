@@ -56,7 +56,6 @@ if (-f $outpath) {
 
 my $db = Bot::Cobalt::DB->new(
   File => $dbpath,
-  LockFile => ".dbdump.lock",
 );
 
 $db->dbopen(ro => 1) or die "dbopen failure";
