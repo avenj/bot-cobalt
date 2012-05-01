@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bot::Cobalt::Manual::PluginTutorial - Let's write a simple plugin
+Bot::Cobalt::Manual::Plugins::Tutorial - Let's write a simple plugin
 
 =head1 SYNOPSIS
 

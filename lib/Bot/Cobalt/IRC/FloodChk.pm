@@ -23,7 +23,8 @@ sub check {
     my $pending   = @$this_ref;
     my $ev_c      = $self->count;
     my $ev_sec    = $self->in;
-    
+
+    ## Cute math from an article by Algorithm::FloodControl author:
     my $delayed = int(
       ($oldest_ts + ($pending * $ev_sec / $ev_c) ) - time
     );

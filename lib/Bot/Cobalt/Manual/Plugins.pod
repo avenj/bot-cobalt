@@ -245,7 +245,7 @@ Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
     ...
   }
 
-B<The arguments passed to event handlers are ALWAYS references.>
+B<The arguments passed to event handlers are always references.>
 (Sometimes, they're references to references, such as a hashref.
 If you don't know what that means, it's time to read L<perlreftut> and 
 L<perlref> immediately.)
@@ -1569,8 +1569,6 @@ at connect time. Some broken server configurations announce junk in
 I<CASEMAPPING> and their actual valid casemapping ruleset in I<CHARSET>; 
 L<Bot::Cobalt::IRC> will fall back to I<CHARSET> if I<CHARSET> is a valid casemap 
 but I<CASEMAPPING> is invalid. If all else fails, B<rfc1459> is used.
-
-(Relatedly, feel free to make fun of ParadoxIRC until they fix their daemons.)
 
 The saved value can be used to feed C<eq_irc> and friends from L<IRC::Utils> and
 determine nickname/channel equivalency.
