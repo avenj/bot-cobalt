@@ -12,7 +12,11 @@ extends 'Bot::Cobalt::IRC::Event';
 has 'message' => ( is => 'rw', isa => Str, required => 1,
   trigger => sub {
     my ($self, $value) = @_;
-    $self->stripped( strip_color( strip_formatting($value) ) );    
+    $self->stripped( strip_color( strip_formatting($value) ) );
+    
+    if ($self->has_message_array) {
+      $self->message_array([ split ' ', $self->stripped ]);
+    }
   },
 );
 
@@ -30,15 +34,24 @@ has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
 );
 
 ## Message content.
-has 'stripped' => ( is => 'rw', isa => Str );
+has 'stripped' => ( is => 'rw', isa => Str, lazy => 1 );
 
-has 'message_array' => ( is => 'rw', lazy => 1,
+has 'message_array' => ( is => 'rw', lazy => 1, isa => ArrayRef,
   default => sub { [ split ' ', $_[0]->stripped ] },
+  trigger => sub {
+    my ($self) = @_;
+    if ($self->has_message_array_sp) {
+      $self->message_array_sp([ split / /, $self->stripped ]);
+    }
+  },
+  predicate => 'has_message_array',
 );
 
-has 'message_array_sp' => ( is => 'rw', lazy => 1,
+has 'message_array_sp' => ( is => 'rw', lazy => 1, isa => ArrayRef,
   default => sub { [ split / /, $_[0]->stripped ] },
+  predicate => 'has_message_array_sp',
 );
+
 
 1;
 __END__
