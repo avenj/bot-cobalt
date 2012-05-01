@@ -934,11 +934,10 @@ sub Bot_ircplug_chk_floodkey_expire {
   ## Lazy flood tracker cleanup.
   ## These are just arrays of timestamps, but they gotta be cleaned up 
   ## when they're stale.
-  ## Check every couple of minutes.
 
   $self->flood->expire if $self->has_flood;
 
-  $core->timer_set( 120,
+  $core->timer_set( 60,
     { Event => 'ircplug_chk_floodkey_expire' },
     'IRCPLUG_CHK_FLOODKEY_EXPIRE'
   );
