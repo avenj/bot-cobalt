@@ -15,7 +15,8 @@ use Moo;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock/;
-use FileHandle;
+
+use IO::File;
 
 use Bot::Cobalt::Serializer;
 use Bot::Cobalt::Common qw/:types/;
@@ -106,7 +107,7 @@ sub dbopen {
   
   ## dup a FH to $db->fd for LockFH  
   my $fd = $orig_db->fd;
-  my $fh = FileHandle->new("<&=$fd")
+  my $fh = IO::File->new("<&=$fd")
     or croak "failed dup in dbopen: $!";
 
   my $timer = 0;
