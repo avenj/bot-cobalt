@@ -8,8 +8,11 @@ use Config;
 
 use POE qw/Wheel::Run Filter::Reference/;
 
+sub new { bless {}, shift }
+
 sub spawn {
   my $self = shift;
+  $self = $self->new unless ref $self;
   my %args = @_;
   $args{lc $_} = delete $args{$_} for keys %args;
   
