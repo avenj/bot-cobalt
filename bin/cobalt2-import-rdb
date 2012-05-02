@@ -42,11 +42,7 @@ for my $item (@randstuff_ini) {
   my @splitd = split //, $digest;
   my $idx = join '', splice(@splitd, -4);
   $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
-  $rdbref->{main}->{$idx} = {
-    AddedBy => '-Imported',
-    AddedAt => time,
-    String => $item,
-  };
+  $rdbref->{main}->{$idx} = [ $item, time(), '-Imported' ];
 }
 
 say "Added ".scalar @randstuff_ini." randstuffs from randstuff.ini";
@@ -89,11 +85,7 @@ if ($rdb_dir_path) {
       my @splitd = split //, $digest;
       my $idx = join '', splice(@splitd, -4);
       $idx .= pop @splitd while exists $rdbref->{$rdb_name}->{$idx} and @splitd;
-      $rdbref->{$rdb_name}->{$idx} = {
-        AddedBy => '-Imported',
-        AddedAt => time,
-        String => $item,
-      };
+      $rdbref->{$rdb_name}->{$idx} = [ $item, time(), '-Imported' ];
       
     }
     say "RDB $rdb_name : ".scalar @current_rdb." items added";

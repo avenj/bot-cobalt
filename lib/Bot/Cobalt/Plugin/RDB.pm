@@ -212,14 +212,19 @@ sub _select_random {
   my $retval = $dbmgr->random($rdb);
   ## we'll get either an item as hashref or err status:
   
-  if ($retval && ref $retval eq 'HASH') {
-    my $content = $retval->{String} // '';
+  if ($retval && ref $retval) {
+    my $content = ref $retval eq 'HASH' ?
+                  $retval->{String}
+                  : $retval->[0] ;
     if ($self->{LastRandom}
         && $self->{LastRandom} eq $content
     ) {
       $retval  = $dbmgr->random($rdb);
-      $content = $retval->{String}//''
-        if ref $retval eq 'HASH';
+      if      (ref $retval eq 'HASH') {
+        $content = $retval->{String}//''
+      } elsif (ref $retval eq 'ARRAY') {
+        $content = $retval->[0]//''
+      }
     }
     $self->{LastRandom} = $content;
     return $content
@@ -290,7 +295,7 @@ sub _cmd_randq {
   core->log->debug("dispatching get() for $match in $rdb");
 
   my $item = $dbmgr->get($rdb, $match);
-  unless ($item && ref $item eq 'HASH') {
+  unless ($item && ref $item) {
     core->log->debug("Error status from get(): $item");
     my $rpl;
     given ($dbmgr->Error) {
@@ -307,9 +312,12 @@ sub _cmd_randq {
     );
   }
 
-  my $content = $item->{String} // '(undef - broken db!)';
+  my $content = ref $item eq 'HASH' ?
+                $item->{String}
+                : $item->[0] ;
+  $content = '(undef - broken db!)' unless defined $content;
   
-  return "[${match}] $content" ;
+  return "[$match] $content" ;
 }
 
 
@@ -516,8 +524,11 @@ sub _cmd_rdb {
       
       my $item = $dbmgr->get($rdb, $idx);
 
-      if ($item and ref $item eq 'HASH') {
-        my $content  = $item->{String} // '(undef)';
+      if ($item && ref $item) {
+        my $content = ref $item eq 'HASH' ?
+                      $item->{String}
+                      : $item->[0] ;
+        $content = '(undef - broken db?)' unless defined $content;
         return "[$idx] $content"
       } else {
         my $err = $dbmgr->Error || 'Unknown error';
@@ -561,7 +572,7 @@ sub _cmd_rdb {
       $rplvars->{index} = substr($idx, 0, 16);
 
       my $item = $dbmgr->get($rdb, $idx);
-      unless ($item && ref $item eq 'HASH') {
+      unless ($item && ref $item) {
         my $err = $dbmgr->Error || 'Unknown error';
         my $rpl;
         given ($err) {
@@ -573,14 +584,20 @@ sub _cmd_rdb {
         return rplprintf( core->lang->{$rpl}, $rplvars );
       }
 
+      my $addedat_ts = ref $item eq 'HASH' ?
+                       $item->{AddedAt}
+                       : $item->[1];
+      my $added_by   = ref $item eq 'HASH' ?
+                       $item->{AddedBy}
+                       : $item->[2];
+
       my $added_dt = DateTime->from_epoch(
-        epoch => $item->{AddedAt} // 0
+        epoch => $addedat_ts // 0
       );
-      my $added_by = $item->{AddedBy} // '(undef)';
 
       $rplvars->{date} = $added_dt->date;
       $rplvars->{time} = $added_dt->time;
-      $rplvars->{addedby} = $added_by;  
+      $rplvars->{addedby} = $added_by // '(undef)' ;  
 
       $resp = rplprintf( core->lang->{RDB_ITEM_INFO}, $rplvars );
     }
@@ -748,11 +765,7 @@ sub _add_item {
     return (0, 'RDB_NOSUCH')
   }
   
-  my $itemref = {
-    AddedBy => $username,
-    AddedAt => time,
-    String  => $item,
-  };
+  my $itemref = [ $item, time(), $username ];
 
   my $status = $dbmgr->put($rdb, $itemref);
   
