@@ -518,7 +518,7 @@ sub _cmd_rdb {
 
       if ($item and ref $item eq 'HASH') {
         my $content  = $item->{String} // '(undef)';
-        return "[${idx}] $content"
+        return "[$idx] $content"
       } else {
         my $err = $dbmgr->Error || 'Unknown error';
         my $rpl;
