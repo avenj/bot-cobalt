@@ -405,9 +405,9 @@ sub random {
   
   my $randkey = $dbkeys[rand @dbkeys];
   my $ref = $db->get($randkey);
-  unless (ref $ref eq 'HASH') {
+  unless (ref $ref) {
     $db->dbclose;
-    $core->log->error("Broken DB? item $randkey in $rdb not a hash");
+    $core->log->error("Broken DB? item $randkey in $rdb not a ref");
     $self->Error("RDB_DBFAIL");
     return 0
   }
@@ -459,7 +459,7 @@ sub search {
   my @dbkeys = $db->dbkeys;
   for my $dbkey (shuffle @dbkeys) {
     my $ref = $db->get($dbkey) // next;
-    my $str = $ref->{String} // '';
+    my $str = ref $ref eq 'HASH' ? $ref->{String} : $ref->[0] ;
     if ($str =~ $re) {
       if ($wantone) {
         ## plugin only cares about one match, short-circuit
