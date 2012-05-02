@@ -277,9 +277,10 @@ Bot::Cobalt::DB - Locking Berkeley DBs with serialization
     File => $db_path,
   );
   
-  ## do some work:
+  ## Open (and lock):
   $self->{DB}->dbopen;
   
+  ## Do some work:
   $self->{DB}->put("SomeKey",
     { Some => {
         Deep => { Structure => 1, },
@@ -348,13 +349,14 @@ will attempt to close it safely.
 
 =head2 Locking
 
-By default, a lock file will be created in the same directory as 
-the database file itself.
+Proper locking is done -- that means the DB is 're-tied' after a lock is 
+granted and state cannot change between database open and lock time.
 
-The attempt to gain a lock will time out after ten seconds; this is 
-one reason it is important to check dbopen exit status.
+The attempt to gain a lock will time out after five seconds (and 
+dbopen() will return boolean false).
 
-The lock file is cleared on dbclose.
+The lock is cleared on dbclose.
+
 If the Bot::Cobalt::DB object is destroyed, it will attempt to dbclose 
 for you, but it is good practice to keep track of your open/close 
 calls and attempt to close as quickly as possible.
