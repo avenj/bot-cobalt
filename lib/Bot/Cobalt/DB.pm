@@ -24,8 +24,8 @@ use Bot::Cobalt::Common qw/:types/;
 has 'File' => ( is => 'rw', isa => Str, required => 1 );
 
 has 'Perms'   => ( is => 'rw', default => sub { 0644 } );
-has 'Timeout' => ( is => 'rw', default => sub { 5 } );
-has 'Raw'     => ( is => 'rw', default => sub { 0 } );
+has 'Timeout' => ( is => 'rw', isa => Num, default => sub { 5 } );
+has 'Raw'     => ( is => 'rw', isa => Bool, default => sub { 0 } );
 
 has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
@@ -78,6 +78,9 @@ sub dbopen {
   my ($self, %args) = @_;
   $args{lc $_} = delete $args{$_} for keys %args;
   
+  $self->Timeout( $args{timeout} )
+    if $args{timeout};
+  
   if ( $self->is_open ) {
     carp "Attempted dbopen() on already-open DB";
     return
@@ -111,7 +114,7 @@ sub dbopen {
     or croak "failed dup in dbopen: $!";
 
   my $timer = 0;
-  my $timeout = $self->Timeout || 5;
+  my $timeout = $self->Timeout;
 
   ## flock LockFH
   until ( flock $fh, $lflags ) {
