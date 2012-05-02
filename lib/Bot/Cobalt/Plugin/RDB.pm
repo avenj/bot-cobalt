@@ -19,6 +19,8 @@ use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Plugin::RDB::Database;
 
+use File::Spec;
+
 use Moo;
 ## marked non-reloadable .. shouldfix
 ## ought to feed our external RDB:: modules to unloader_cleanup
@@ -33,8 +35,10 @@ has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
     my $cfg = core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
 
-    my $rdbdir = core->var ."/". 
-                ($cfg->{Opts}->{RDBDir} || "db/rdb");
+    my $rdbdir = File::Spec->catdir(
+      core()->var,
+      $cfg->{Opts}->{RDBDir} ? $cfg->{Opts->{RDBDir} : ('db', 'rdb')
+    );
 
     Bot::Cobalt::Plugin::RDB::Database->new(
       CacheKeys => $cachekeys,
@@ -73,16 +77,18 @@ sub Cobalt_register {
 
   my $keys_c = $dbmgr->get_keys('main');
   core->Provided->{randstuff_items} = $keys_c;
-  core->log->debug("initialized: $keys_c main RDB keys");
 
   ## kickstart a randstuff timer (named timer for rdb_broadcast)
   ## delay is in Opts->RandDelay as a timestr
   ## (0 turns off timer)
   my $cfg = core->get_plugin_cfg( $self );
   my $randdelay = $cfg->{Opts}->{RandDelay} // '30m';
-  core->log->debug("randdelay: $randdelay");
+  logger->debug("randdelay: $randdelay");
+
   $randdelay = timestr_to_secs($randdelay) unless $randdelay =~ /^\d+$/;
+
   $self->rand_delay( $randdelay );
+
   if ($randdelay) {
     core->timer_set( $randdelay, 
       { 
@@ -109,16 +115,24 @@ sub Cobalt_register {
     );
   }
 
-  core->log->info("Registered");
+  logger->info("Registered, $keys_c items in main RDB");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   core->log->info("Unregistering random stuff");
-  $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
-  ## FIXME tell asyncsearch to shut down if we have one?
+
+  $poe_kernel->alias_remove('sess_'. core->get_plugin_alias($self) );
+
+  if ( $self->has_AsyncSessionID ) {
+    $poe_kernel->post( $self->AsyncSessionID, 'shutdown' );
+  }
+
   delete core->Provided->{randstuff_items};
+
   return PLUGIN_EAT_NONE
 }
 
@@ -310,6 +324,7 @@ sub _cmd_randq {
       $rdb,
       $str,
       {          ## Hints hash
+        Glob    => $str,
         Context => $msg->context,
         Channel => $msg->channel,
         GetType => 'string',
@@ -801,8 +816,9 @@ sub _searchidx {
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
       $rdb,
-      $str,
+      $string,
       {          ## Hints hash
+        Glob    => $string,
         Context => $msg->context,
         Channel => $msg->channel,
         GetType => $type,
@@ -946,8 +962,10 @@ sub poe_post_search {
   ## compose rdb path
   my $cfg = core->get_plugin_cfg($self);
 
-  my $rdbdir = core->var ."/". 
-                ($cfg->{Opts}->{RDBDir} || "db/rdb");
+  my $rdbdir = File::Spec->catdir(
+    core()->var,
+    $cfg->{Opts}->{RDBDir} ? $cfg->{Opts->{RDBDir} : ('db', 'rdb')
+  );
   
   my $rdbpath = $rdbdir ."/". $rdbname . ".rdb" ;
   
