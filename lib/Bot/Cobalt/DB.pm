@@ -150,12 +150,14 @@ sub dbopen {
   $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
-      $_ = $self->Serializer->thaw($_) unless $self->Raw;
+      $_ = $self->Serializer->ref_from_json($_) 
+        unless $self->Raw;
     }
   );
   $self->DB->filter_store_value(
     sub {
-      $_ = $self->Serializer->freeze($_) unless $self->Raw;
+      $_ = $self->Serializer->json_from_ref($_) 
+        unless $self->Raw;
       $_ .= "\0";
     }
   );
