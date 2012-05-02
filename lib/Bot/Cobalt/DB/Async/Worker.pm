@@ -26,9 +26,8 @@ sub worker {
         
         ## %opts = (
         ##   Database =>
-        ##   Method =>
-        ##   Key    =>
-        ##   Value  =>  ## if this is a put
+        ##   Raw => BOOL
+        ##   
         ##   Event  =>
         ##   Tag    =>
         ## );
@@ -81,7 +80,7 @@ sub worker {
         my $string = length($frozen) . chr(0) . $frozen ;
         my $wrote  = syswrite(STDOUT, $string);
         die $! unless $wrote == length $string;
-        next
+        exit 0
       }
     }
     elsif ( $buf =~ s/^(\d+)\0//) {
