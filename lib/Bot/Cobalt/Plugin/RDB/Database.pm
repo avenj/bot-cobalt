@@ -2,10 +2,6 @@ package Bot::Cobalt::Plugin::RDB::Database;
 our $VERSION = '0.200_48';
 
 
-## FIXME kill RDBPaths hash nonsense
-##  sub to use RDBDir + rdbname instead
-
-
 ## Frontend to managing RDB-style Bot::Cobalt::DB instances
 ##
 ## We may have a lot of RDBs.
@@ -46,9 +42,9 @@ use Cwd qw/ abs_path /;
 
 use Digest::SHA qw/sha256_hex/;
 
-use File::Basename qw/fileparse/;
-use File::Find;
 use File::Path qw/mkpath/;
+
+use File::Spec;
 
 use Time::HiRes;
 
@@ -73,8 +69,6 @@ sub new {
     croak "new() needs a RDBDir parameter"
   }
   
-  $self->{RDBPaths} = {};
-  
   $self->{CacheObj} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => $opts{CacheKeys} // 30,
   );
@@ -91,20 +85,7 @@ sub new {
     return
   }
   
-  my @paths;
-  find(sub {
-      push(@paths, $File::Find::name) if $_ =~ /\.rdb$/;
-    },
-    $rdbdir
-  );
-  
-  for my $path (@paths) {
-    my $rdb_name = fileparse($path, '.rdb');
-    
-    $self->{RDBPaths}->{$rdb_name} = $path;
-  }
-  
-  unless ( $self->{RDBPaths}->{main} ) {
+  unless ( $self->dbexists('main') ) {
     $core->log->debug("No main RDB found, creating one");
     
     unless ( $self->createdb('main') ) {
@@ -118,7 +99,8 @@ sub new {
 
 sub dbexists {
   my ($self, $rdb) = @_;
-  return 1 if $self->{RDBPaths}->{$rdb};
+  my $path = $self->path_from_name($rdb);
+  return 1 if -e $path;
   return
 }
 
@@ -126,6 +108,15 @@ sub Error {
   my ($self, $err) = @_;
   return $self->{ERRORMSG} = $err if $err;
   return $self->{ERRORMSG}
+}
+
+sub path_from_name {
+  my ($self, $rdb) = @_;
+  
+  return File::Spec->catfile(
+    $self->{RDBDir},
+    $rdb .".rdb"
+  );
 }
 
 sub createdb {
@@ -138,7 +129,7 @@ sub createdb {
     return 0
   }
 
-  if ( $self->{RDBPaths}->{$rdb} ) {
+  if ( $self->dbexists($rdb) ) {
     $self->Error("RDB_EXISTS");
     return 0
   }
@@ -146,12 +137,11 @@ sub createdb {
   my $core = $self->{core};
   $core->log->debug("attempting to create RDB $rdb");
   
-  my $path = $self->{RDBDir} ."/". $rdb .".rdb";
-  $self->{RDBPaths}->{$rdb} = $path;
+  my $path = $self->path_from_name($rdb);
 
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("Could not switch to RDB $rdb at $path");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -160,7 +150,6 @@ sub createdb {
   unless ( $db->dbopen ) {
     $core->log->error("dbopen failure for $rdb in createdb");
     $self->Error("RDB_DBFAIL");
-    delete $self->{RDBPaths}->{$rdb};
     return 0
   }
   
@@ -177,24 +166,14 @@ sub deldb {
 
   $self->Error(0);
   
-  unless ( $self->{RDBPaths}->{$rdb} ) {
-    $self->Error("RDB_NOSUCH");
-    return 0
-  }
-  
-  my $path = $self->{RDBPaths}->{$rdb};
-  
-  unless (-e $path && ( -f $path || -l $path ) ) {
-    $core->log->error(
-      "Cannot delete RDB $rdb - $path not found or not a file"
-    );
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("deldb failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -207,21 +186,20 @@ sub deldb {
     return 0
   }
   $db->dbclose;
+  $self->{CURRENT} = undef;
+  undef $db;
 
+  my $cache = $self->{CacheObj};
+  $cache->invalidate($rdb);
+
+  my $path = $self->path_from_name($rdb);
   unless ( unlink($path) ) {
     $core->log->error("Cannot unlink RDB $rdb at $path: $!");
     $self->Error("RDB_FILEFAILURE");
     return 0
   }
-  
-  delete $self->{RDBPaths}->{$rdb};
-  $self->{CURRENT} = undef;
-  undef $db;
-  
+    
   $core->log->info("Deleted RDB $rdb");
-
-  my $cache = $self->{CacheObj};
-  $cache->invalidate($rdb);
   
   return 1
 }
@@ -232,16 +210,15 @@ sub del {
   
   $self->Error(0);
   
-  unless ( $self->{RDBPaths}->{$rdb} ) {
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
   
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("del failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -281,16 +258,15 @@ sub get {
 
   $self->Error(0);
 
-  unless ( $self->{RDBPaths}->{$rdb} ) {
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
   
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("get failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -316,13 +292,12 @@ sub get {
 
 sub get_keys {
   my ($self, $rdb) = @_;
-  return unless $self->{RDBPaths}->{$rdb};
+  return unless $self->dbexists($rdb);
   my $core = $self->{core};
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("get_keys failure; cannot switch to $rdb");
     return
   }
@@ -341,7 +316,7 @@ sub put {
   my ($self, $rdb, $ref) = @_;
   
   $self->Error(0);
-  unless ( $self->{RDBPaths}->{$rdb} ) {
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }
@@ -350,8 +325,7 @@ sub put {
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("put failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -381,7 +355,7 @@ sub random {
   my ($self, $rdb) = @_;
   
   $self->Error(0);
-  unless ( $self->{RDBPaths}->{$rdb} ) {
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }
@@ -390,8 +364,7 @@ sub random {
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("random failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -427,7 +400,7 @@ sub search {
   my ($self, $rdb, $glob, $wantone) = @_;
 
   $self->Error(0);
-  unless ( $self->{RDBPaths}->{$rdb} ) {
+  unless ( $self->dbexists->($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }  
@@ -436,8 +409,7 @@ sub search {
   
   $self->_rdb_switch($rdb);
   my $db = $self->{CURRENT};
-  my $path = $self->{RDBPaths}->{$rdb};
-  unless ( ref $db && $db->get_path eq $path ) {
+  unless ( ref $db ) {
     $core->log->error("search failure; cannot switch to $rdb");
     $self->Error("RDB_DBFAIL");
     return 0
@@ -504,8 +476,11 @@ sub _gen_unique_key {
 
 sub _rdb_switch {
   my ($self, $rdb) = @_;
+  
+  undef $self->{CURRENT};
+  
   my $core = $self->{core};
-  my $path = $self->{RDBPaths}->{$rdb};
+  my $path = $self->path_from_name($rdb);
   unless ($path) {
     $core->log->error("_rdb_switch failed; no path for $rdb");
     return
