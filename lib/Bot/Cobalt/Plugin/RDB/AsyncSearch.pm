@@ -164,6 +164,9 @@ sub push_pending {
   $heap->{Wheels}->{WID}->{$wid} = $wheel;
 
   my $next_item = shift @{ $heap->{Pending} };
+  
+  my $tag = $next_item->{Tag};
+  $heap->{RequestsByWID}->{$wid} = $tag;
     
   $wheel->put(
     [ $next_item->{Path}, $next_item->{Tag}, $next_item->{Regex} ]
@@ -181,6 +184,7 @@ sub reap_all {
   }
   
   $heap->{Wheels} = { PID => {}, WID => {} };
+  $heap->{RequestsByWID} = {};
 }
 
 sub worker_input {
@@ -201,7 +205,8 @@ sub worker_input {
 
   ## Returns: resultset as arrayref, original hints hash
   ## (passed in via search)
-  $kernel->post( $sender_id, \@results, $hints );
+  my $event = $heap->{ResultEvent};
+  $kernel->post( $sender_id, $event, \@results, $hints );
 }
 
 sub worker_sigchld {
@@ -211,6 +216,7 @@ sub worker_sigchld {
   my $wheel = delete $heap->{Wheels}->{PID}->{$pid};
   my $wid = $wheel->ID;
   delete $heap->{Wheels}->{WID}->{$wid};
+  delete $heap->{RequestsByWID}->{$wid};
 
   $kernel->yield( 'push_pending' );
 }
@@ -219,16 +225,26 @@ sub worker_err {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($op, $num, $str, $wid) = @_[ARG0 .. $#_];
   
-  my $wheel = $heap->{Wheels}->{WID}->{$wid};
-  my $pid = $wheel->PID;
-  
-  ## FIXME send errorevent
+  carp "DB worker reported error in $op ($num) $str";
 }
 
 sub worker_stderr {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($input, $wid) = @_[ARG0, ARG1];
-  ## FIXME same deal as above
+  
+  my $request = $heap->{RequestsByWID}->{$wid};
+  if ($request) {
+    my $sender_id = $request->{SenderID};
+    my $hints     = $request->{Hints};
+
+    my $event = $heap->{ErrorEvent};
+
+    $kernel->post( $sender_id, $event, $input, $hints );
+  } else {
+    carp "stderr from non-avail request: $input"
+  }
+
+  ## These should sigchld and go away.
 }
 
 1;
