@@ -51,13 +51,17 @@ sub worker {
         
         my @matches;
         
-        for my $dbkey (shuffle @dbkeys) {
+        KEY: for my $dbkey (shuffle @dbkeys) {
           
           unless ( $db->dbopen(ro => 1, timeout => 30) ) {
             die "Failed database open"
           }
           
-          my $ref = $db->get($dbkey) // next;
+          my $ref = $db->get($dbkey);
+          unless (defined $ref) {
+            warn "No result from database get($dbkey)"
+            next KEY
+          }
           
           $db->dbclose;
           
