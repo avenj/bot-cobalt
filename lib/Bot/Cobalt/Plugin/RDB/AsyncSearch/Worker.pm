@@ -41,6 +41,13 @@ sub worker {
         
         $db->dbclose;
         
+        for (qw/INT TERM QUIT HUP/) {
+          $SIG{$_} = sub {
+            $db->dbclose if $db->is_open;
+            die "Terminal signal, closed cleanly"
+          };
+        }
+        
         my @matches;
         
         for my $dbkey (shuffle @dbkeys) {
