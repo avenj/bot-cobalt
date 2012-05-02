@@ -516,7 +516,6 @@ sub search {
         push(@matches, $dbkey);
       }
     }
-    push(@matches, $dbkey) if $str =~ $re;
   }
   
   $db->dbclose;
