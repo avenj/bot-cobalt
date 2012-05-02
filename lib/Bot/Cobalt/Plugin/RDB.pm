@@ -619,7 +619,11 @@ sub _cmd_rdb {
       my @indices = $self->_searchidx($rdb, $str);
       $indices[0] = 'No matches' unless @indices;
       my @returned = scalar @indices > 30 ? @indices[0 .. 29] : @indices ;
-      $resp = "Matches (max 30): ".join('  ', @returned);
+      my $count = @indices;
+      my $prefix = $count > 30 ? 
+                   "Matches (30 / $count): "
+                   : "Matches (max 30): ";
+      $resp = $prefix.join('  ', @returned);
     }
     
     when ("count") {
@@ -627,8 +631,8 @@ sub _cmd_rdb {
       return 'Syntax: rdb count <RDB> <str>'
         unless $rdb and $str;
       my @indices = $self->_searchidx($rdb, $str);
-      my $count = scalar @indices;
-      $resp = "${nickname}: Found $count matches";
+      my $count = @indices;
+      $resp = "$nickname: Found $count matches";
     }
 
   }
