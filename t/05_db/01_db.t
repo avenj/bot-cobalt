@@ -18,6 +18,7 @@ can_ok( $db, 'dbopen', 'dbclose', 'put', 'get', 'dbkeys' );
 
 ok( $db->dbopen, 'Temp database open' );
 
+diag("This should produce a warning:");
 ok( !$db->dbopen, 'Cannot reopen' );
 
 ok( $db->get_path, 'Temp database get_path');
