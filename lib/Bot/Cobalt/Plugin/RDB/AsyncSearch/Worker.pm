@@ -50,8 +50,17 @@ sub worker {
         my @matches;
         
         $regex = qr/$regex/i;
-        
-        KEY: for my $dbkey (shuffle @dbkeys) {          
+
+        my $i;        
+        KEY: for my $dbkey (shuffle @dbkeys) {
+
+          ## Only be a little greedy.          
+          if ( ++$i % 200 == 0 ) {
+            $db->dbclose;
+            $db->dbopen(ro => 1, timeout => 30)
+              or die "Failed database open"
+          }
+          
           my $ref = $db->get($dbkey);
           unless (defined $ref) {
             warn "No result from database get($dbkey)";
