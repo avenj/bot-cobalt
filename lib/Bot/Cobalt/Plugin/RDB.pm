@@ -978,11 +978,14 @@ sub _start {
   
   $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
   
+  my $maxworkers = core()->get_plugin_cfg($self)->{Opts}->{AsyncSearch};
+  $maxworkers = 5 unless $maxworkers > 1;
+  
   ## spawn asyncsearch sess
   require Bot::Cobalt::Plugin::RDB::AsyncSearch;
   
   my $asid = Bot::Cobalt::Plugin::RDB::AsyncSearch->spawn(
-    ## FIXME configurable maxworkers
+    MaxWorkers  => $maxworkers,
     ResultEvent => 'poe_got_result',
     ErrorEvent  => 'poe_got_error',
   );
@@ -1137,7 +1140,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::RDB - "random stuff" plugin
+Bot::Cobalt::Plugin::RDB - Bot::Cobalt "random stuff" plugin
 
 =head1 DESCRIPTION
 
@@ -1149,7 +1152,7 @@ Later versions included a search interface and "RDBs" -- discrete
 to return a random response.
 
 B<cobalt1> used essentially the same interface.
-This B<RDB> plugin attempts to expand on that functionality.
+This B<RDB> plugin attempts to expand on that concept.
 
 This functionality is often useful to simulate humanoid responses to 
 conversation (by writing 'conversational' RDB replies triggered by 
