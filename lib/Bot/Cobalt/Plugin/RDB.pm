@@ -1115,7 +1115,21 @@ sub poe_got_result {
 }  
 
 sub poe_got_error {
- # FIXME
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($error, $hints) = @_[ARG0, ARG1];
+  
+  my $glob = $hints->{Glob};
+  my $rdb  = $hints->{RDB};
+  
+  logger->warn("Received error from AsyncSearch: $rdb ($glob): $error");
+  
+  my $context  = $hints->{Context};
+  my $channel  = $hints->{Channel};
+  my $nickname = $hints->{Nickname};
+  
+  broadcast( 'message', $context, $channel,
+    "$nickname: asyncsearch error: $error ($rdb)"
+  );
 }
 
 
