@@ -33,47 +33,39 @@ sub worker {
         my ($dbpath, $tag, $regex) = @$input;
         
         my $db = Bot::Cobalt::DB->new($dbpath);
-        
-        unless ( $db->dbopen(ro => 1, timeout => 30) ) {
-          die "Failed database open"
-        }
-        
-        my @dbkeys = $db->dbkeys;
-        
-        $db->dbclose;
-        
+
         for (qw/INT TERM QUIT HUP/) {
           $SIG{$_} = sub {
             $db->dbclose if $db->is_open;
             die "Terminal signal, closed cleanly"
           };
         }
+
+        unless ( $db->dbopen(ro => 1, timeout => 30) ) {
+          die "Failed database open"
+        }
+                
+        my @dbkeys = $db->dbkeys;
         
         my @matches;
         
         $regex = qr/$regex/i;
         
-        KEY: for my $dbkey (shuffle @dbkeys) {
-          
-          unless ( $db->dbopen(ro => 1, timeout => 30) ) {
-            die "Failed database open"
-          }
-          
+        KEY: for my $dbkey (shuffle @dbkeys) {          
           my $ref = $db->get($dbkey);
           unless (defined $ref) {
             warn "No result from database get($dbkey)";
             next KEY
           }
           
-          $db->dbclose;
-          
           my $str = ref $ref eq 'HASH' ? $ref->{String} : $ref->[0] ;
           
           if ($str =~ $regex) {
             push(@matches, $dbkey);
           }
-        
         }
+        
+        $db->dbclose;
 
         ## Return:
         ##  - DB path

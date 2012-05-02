@@ -50,7 +50,6 @@ sub spawn {
         
         'reap_all',
         
-        'worker_err',
         'worker_input',
         'worker_stderr',
         'worker_sigchld',
@@ -222,13 +221,6 @@ sub worker_sigchld {
   delete $heap->{RequestsByWID}->{$wid};
 
   $kernel->yield( 'push_pending' );
-}
-
-sub worker_err {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($op, $num, $str, $wid) = @_[ARG0 .. $#_];
-  
-  carp "DB worker reported error in $op ($num) $str";
 }
 
 sub worker_stderr {
