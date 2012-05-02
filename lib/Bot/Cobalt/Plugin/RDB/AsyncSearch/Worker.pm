@@ -59,7 +59,7 @@ sub worker {
           
           my $ref = $db->get($dbkey);
           unless (defined $ref) {
-            warn "No result from database get($dbkey)"
+            warn "No result from database get($dbkey)";
             next KEY
           }
           
