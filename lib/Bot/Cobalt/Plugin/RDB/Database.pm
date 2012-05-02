@@ -415,7 +415,7 @@ sub search {
   my ($self, $rdb, $glob, $wantone) = @_;
 
   $self->Error(0);
-  unless ( $self->dbexists->($rdb) ) {
+  unless ( $self->dbexists($rdb) ) {
     $self->Error("RDB_NOSUCH");
     return 0
   }  

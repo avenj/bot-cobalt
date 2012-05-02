@@ -51,6 +51,8 @@ sub worker {
         
         my @matches;
         
+        $regex = qr/$regex/i;
+        
         KEY: for my $dbkey (shuffle @dbkeys) {
           
           unless ( $db->dbopen(ro => 1, timeout => 30) ) {

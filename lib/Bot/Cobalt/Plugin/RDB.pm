@@ -56,9 +56,9 @@ has 'SessionID' => ( is => 'rw', lazy => 1,
   clearer   => 'clear_SessionID',
 );
 
-has 'AsyncSessID' => ( is => 'rw', lazy => 1,
-  predicate => 'has_AsyncSessID',
-  clearer   => 'clear_AsyncSessID',
+has 'AsyncSessionID' => ( is => 'rw', lazy => 1,
+  predicate => 'has_AsyncSessionID',
+  clearer   => 'clear_AsyncSessionID',
 );
 
 sub Cobalt_register {
@@ -175,7 +175,7 @@ sub Bot_public_msg {
       when "rdb";
   }
   
-  $resp = "No output for $cmd - BUG!" unless $resp;
+#  $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->channel;
   core->log->debug("dispatching msg -> $channel");
@@ -1004,10 +1004,6 @@ sub poe_post_search {
   
   my $rdbpath = $rdbdir ."/". $rdbname . ".rdb" ;
   
-  ## compile appropriate regex (same as ::Database)
-  my $re = glob_to_re_str($globstr);
-  $re = qr/$re/i;
-
   my $dbmgr = $self->DBmgr;
   
   if (my @matches = $dbmgr->cache_check($rdbname, $globstr) ) {
@@ -1019,6 +1015,8 @@ sub poe_post_search {
     );
     return
   }
+  
+  my $re = glob_to_re_str($globstr);
   
   ## post a search w / hintshash
   $kernel->post( $self->AsyncSessionID, 
@@ -1055,8 +1053,7 @@ sub poe_got_result {
         ## cachable, we get a full set back
         $dbmgr->cache_push($rdb, $glob, $resultarr);
       
-        ## shuffle() should have already happened on resultset
-        my $itemkey = $resultarr->[0];
+        my $itemkey = $resultarr->[rand @$resultarr];
         my $item    = $dbmgr->get($rdb, $itemkey);
         
         unless ($item && ref $item) {
