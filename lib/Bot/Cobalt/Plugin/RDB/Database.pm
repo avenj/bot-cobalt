@@ -306,7 +306,6 @@ sub get {
   
   $db->dbclose;
   
-  $value->{DBKEY} = $key if ref $value eq 'HASH';
   return $value
 }
 
@@ -416,7 +415,6 @@ sub random {
   }
   $db->dbclose;
   
-  $ref->{DBKEY} = $randkey;
   return $ref
 }
 

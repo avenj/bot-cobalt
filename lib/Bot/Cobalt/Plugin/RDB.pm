@@ -308,9 +308,8 @@ sub _cmd_randq {
   }
 
   my $content = $item->{String} // '(undef - broken db!)';
-  my $itemkey = $item->{DBKEY}  // '(undef - broken db!)';
   
-  return "[${itemkey}] $content" ;
+  return "[${match}] $content" ;
 }
 
 
@@ -518,9 +517,8 @@ sub _cmd_rdb {
       my $item = $dbmgr->get($rdb, $idx);
 
       if ($item and ref $item eq 'HASH') {
-        my $indexkey = $item->{DBKEY}  // '(undef)';
         my $content  = $item->{String} // '(undef)';
-        return "[${indexkey}] $content"
+        return "[$idx] $content"
       } else {
         my $err = $dbmgr->Error || 'Unknown error';
         my $rpl;
