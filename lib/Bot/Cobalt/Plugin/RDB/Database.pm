@@ -1,6 +1,11 @@
 package Bot::Cobalt::Plugin::RDB::Database;
 our $VERSION = '0.200_48';
 
+
+## FIXME kill RDBPaths hash nonsense
+##  sub to use RDBDir + rdbname instead
+
+
 ## Frontend to managing RDB-style Bot::Cobalt::DB instances
 ##
 ## We may have a lot of RDBs.
@@ -49,7 +54,7 @@ use Time::HiRes;
 
 use List::Util qw/shuffle/;
 
-use POE qw/Wheel::Run Filter::Reference/;
+use POE;
 
 sub new {
   my $self = {};
@@ -416,51 +421,6 @@ sub random {
   $db->dbclose;
   
   return $ref
-}
-
-sub async_search {
-  my ($self, $rdb, $glob, $postback) = @_;
-
-  unless (defined $rdb && defined $glob && ref $postback) {
-    carp "async_search() called with invalid arguments";
-    return
-  }
-  
-  unless ( $self->{sessionid} ) {
-    POE::Session->create(
-      inline_states => {
-        _start => sub {
-        
-        },
-        
-        _stop  => sub {
-          delete $self->{sessionid};
-        },
-        
-        rdb_result => sub {
-        
-        },
-        
-        rdb_error => sub {
-        
-        },
-      
-      },
-    );
-  
-  } else {
-    ## have a session, post search to it and refcount_incr
-  }
-  
-  ## FIXME if postback is supplied:
-  ## see if we have a session
-  ## if not, start one to listen for rdb_result
-  ## post to AsyncSearch to run a search, incr refcount
-  ## upon rdb_result, decr refcount
-  ## postback the results to sender sess (RDB needs a sess)
-  ## searchcache logic will need to move to rdb_result
-
-
 }
 
 sub search {

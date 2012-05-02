@@ -129,9 +129,14 @@ sub push_pending {
     $perlpath .= $Config{_exe}
       unless $perlpath =~ m/$Config{_exe}$/i;
   }
+
+  ## FIXME workers could be genericized to be used with Info3 also . . .
+  ## would speed up a dsearch
   
   my $forkable;
   if ($^O eq 'MSWin32') {
+    ## May drop Win32 support here entirely . . .
+    ## Can't exec new interp, so this fork will hurt.
     require Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker;
     $forkable = \&Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker::worker;
   } else {
@@ -195,7 +200,7 @@ sub worker_input {
   my $hints     = $request->{Hints};
 
   ## Returns: resultset as arrayref, original hints hash
-  ## (passed in via rdb_search)
+  ## (passed in via search)
   $kernel->post( $sender_id, \@results, $hints );
 }
 
@@ -217,9 +222,7 @@ sub worker_err {
   my $wheel = $heap->{Wheels}->{WID}->{$wid};
   my $pid = $wheel->PID;
   
-  ## FIXME bubble errors up
-  ##  -> ErrorEvent handler in RDB::Database
-  ##   -> RDB.pm search error handler to hit IRC
+  ## FIXME send errorevent
 }
 
 sub worker_stderr {
@@ -229,3 +232,23 @@ sub worker_stderr {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Plugin::RDB::AsyncSearch - Async RDB search session
+
+=head1 DESCRIPTION
+
+This is a stub POD for my own use; my brain sucks.
+
+If I haven't fixed it before I cpan this, please beat me mercilessly.
+
+  spawn -> ResultEvent => , ErrorEvent => , MaxWorkers =>
+  post -> search_rdb( $dbpath, $compiled_re, $hints_hash )
+  post -> shutdown
+  
+
+=cut

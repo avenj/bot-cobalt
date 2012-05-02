@@ -45,6 +45,16 @@ has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
 
 has 'rand_delay' => ( is => 'rw', isa => Int );
 
+has 'SessionID' => ( is => 'rw', lazy => 1,
+  predicate => 'has_SessionID',
+  clearer   => 'clear_SessionID',
+);
+
+has 'AsyncSessID' => ( is => 'rw', lazy => 1,
+  predicate => 'has_AsyncSessID',
+  clearer   => 'clear_AsyncSessID',
+);
+
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
@@ -54,8 +64,8 @@ sub Cobalt_register {
       'rdb_broadcast',
       'rdb_triggered',
     ],
-  );  
-
+  );
+  
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   ## DBmgr must be called after core() is set:
@@ -83,6 +93,22 @@ sub Cobalt_register {
     );
   }
 
+  if ($cfg->{Opts}->{AsyncSearch}) {
+    POE::Session->create(
+      object_states => [
+        $self => [
+          '_start',
+          
+          'poe_post_search',
+          
+          'poe_got_result',
+          
+          'poe_got_error',
+        ],
+      ],
+    );
+  }
+
   core->log->info("Registered");
   return PLUGIN_EAT_NONE
 }
@@ -90,6 +116,8 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   core->log->info("Unregistering random stuff");
+  $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
+  ## FIXME tell asyncsearch to shut down if we have one?
   delete core->Provided->{randstuff_items};
   return PLUGIN_EAT_NONE
 }
@@ -274,6 +302,23 @@ sub _cmd_randq {
 
   core->log->debug("dispatching search for $str in $rdb");
 
+  if ( $self->has_SessionID ) {
+    ## if we have asyncsearch, return immediately
+    
+    $poe_kernel->post( $self->SessionID,
+      'poe_post_search',
+      $rdb,
+      $str,
+      {          ## Hints hash
+        Context => $msg->context,
+        Channel => $msg->channel,
+        GetType => 'string',
+      },
+    );
+    
+    return
+  }
+  
   my $match = $dbmgr->search($rdb, $str, 'WANTONE');
 
   if (!$match && $dbmgr->Error) {
@@ -616,7 +661,7 @@ sub _cmd_rdb {
       my ($rdb, $str) = @message;
       return 'Syntax: rdb searchidx <RDB> <string>' 
         unless $rdb and $str;
-      my @indices = $self->_searchidx($rdb, $str);
+      my @indices = $self->_searchidx($rdb, $str, 'searchidx');
       $indices[0] = 'No matches' unless @indices;
       my @returned = scalar @indices > 30 ? @indices[0 .. 29] : @indices ;
       my $count = @indices;
@@ -630,7 +675,7 @@ sub _cmd_rdb {
       my ($rdb, $str) = @message;
       return 'Syntax: rdb count <RDB> <str>'
         unless $rdb and $str;
-      my @indices = $self->_searchidx($rdb, $str);
+      my @indices = $self->_searchidx($rdb, $str, 'count');
       my $count = @indices;
       $resp = "$nickname: Found $count matches";
     }
@@ -743,9 +788,29 @@ sub Bot_rdb_broadcast {
   ### 'worker' methods ###
 
 sub _searchidx {
-  my ($self, $rdb, $string) = @_;
+  my ($self, $rdb, $string, $type) = @_;
   $rdb   = 'main' unless $rdb;
   $string = '<*>' unless $string;
+
+  ## FIXME if asyncsearch enabled, post a search_rdb
+  ## to the spawned AsyncSearch session
+  ## else continue as normal
+  if ( $self->has_SessionID ) {
+    ## if we have asyncsearch, return immediately
+    
+    $poe_kernel->post( $self->SessionID,
+      'poe_post_search',
+      $rdb,
+      $str,
+      {          ## Hints hash
+        Context => $msg->context,
+        Channel => $msg->channel,
+        GetType => $type,
+      },
+    );
+    
+    return
+  }
 
   my $dbmgr = $self->DBmgr;
   my $ret = $dbmgr->search($rdb, $string);
@@ -850,6 +915,90 @@ sub _delete_rdb {
   }
 
   return 1
+}
+
+
+## POE
+
+sub _start {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  
+  $self->SessionID( $_[SESSION]->ID );
+  
+  $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
+  
+  ## spawn asyncsearch sess
+  require Bot::Cobalt::Plugin::RDB::AsyncSearch;
+  
+  my $asid = Bot::Cobalt::Plugin::RDB::AsyncSearch->spawn(
+    ## FIXME configurable maxworkers
+    ResultEvent => 'poe_got_result',
+    ErrorEvent  => 'poe_got_error',
+  );
+  
+  $self->AsyncSessionID( $asid );
+}
+
+sub poe_post_search {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($rdbname, $globstr, $hintshash) = @_[ARG0 .. $#_];
+
+  ## compose rdb path
+  my $cfg = core->get_plugin_cfg($self);
+
+  my $rdbdir = core->var ."/". 
+                ($cfg->{Opts}->{RDBDir} || "db/rdb");
+  
+  my $rdbpath = $rdbdir ."/". $rdbname . ".rdb" ;
+  
+  ## compile appropriate regex (same as ::Database)
+  my $re = glob_to_re_str($glob);
+  $re = qr/$re/i;
+  
+  ## post a search w / hintshash
+  $kernel->post( $self->AsyncSessionID, 
+    'search_rdb',
+    $rdbpath,
+    $re,
+    $hintshash
+  );
+}
+
+sub poe_got_result {
+  my ($self, $kernel, $heap)  = @_[OBJECT, KERNEL, HEAP];
+  my ($resultarr, $hintshash) = @_[ARG0, ARG1];
+  
+  my $context = $hintshash->{Context};
+  my $channel = $hintshash->{Channel};
+  ## type is: string, indexes, or count
+  ##  (aka: randq / rdb search, rdb searchidx, rdb count)
+  my $type    = $hintshash->{GetType}; 
+  
+  my $resp;
+  
+  given ($type) {
+
+    when ("string") {
+      ## FIXME borrow randq logic
+      ## (we can actually cache this set, since we get a full set)
+    }
+    
+    when ("indexes") {
+      ## FIXME borrow searchidx logic
+    }
+    
+    when ("count") {
+      ## FIXME borrow count logic
+    }
+  
+  }
+  
+  
+  broadcast( 'message', $context, $channel, $resp ) if $resp;
+}  
+
+sub poe_got_error {
+ # FIXME
 }
 
 

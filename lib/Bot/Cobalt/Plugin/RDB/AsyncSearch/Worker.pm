@@ -1,6 +1,7 @@
 package Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker;
 
-use strictures 1;
+use strict;
+use warnings;
 
 use Storable qw/nfreeze thaw/;
 
