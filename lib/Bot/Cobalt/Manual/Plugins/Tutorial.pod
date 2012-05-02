@@ -221,6 +221,8 @@ L<Bot::Cobalt::Manual::Plugins> - Plugin authoring handbook
 
 L<Bot::Cobalt::Core>
 
+L<Bot::Cobalt::Core::Sugar>
+
 L<Bot::Cobalt::IRC>
 
 L<Bot::Cobalt::IRC::Event>
