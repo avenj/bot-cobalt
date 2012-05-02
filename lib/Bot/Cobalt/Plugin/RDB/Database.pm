@@ -396,6 +396,21 @@ sub random {
   return $ref
 }
 
+sub cache_check {
+  my ($self, $rdb, $glob) = @_;
+  my $cache = $self->{CacheObj};
+  
+  my @matches = $cache->fetch($rdb, $glob);
+  return @matches
+}
+
+sub cache_push {
+  my ($self, $rdb, $glob, $ref) = @_;
+  my $cache = $self->{CacheObj};
+  
+  $cache->cache($rdb, $glob, $ref);
+}
+
 sub search {
   my ($self, $rdb, $glob, $wantone) = @_;
 

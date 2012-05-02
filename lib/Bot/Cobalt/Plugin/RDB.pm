@@ -304,7 +304,7 @@ sub _cmd_randq {
 
   my($str, $rdb);
   if    ($type eq 'random') {
-    ## FIXME this is actually deprecated
+    ## this is actually deprecated
     ## use '~main' rdb info3 topic trick instead
     return $self->_select_random($msg, 'main');
   } elsif ($type eq 'rdb') {
@@ -316,13 +316,17 @@ sub _cmd_randq {
     $str = shift @message // '<*>';
   }
 
-  ## FIXME move dbexists() check from below to here
-  ## then we won't dispatch asyncsearch for DBs we don't know
 
   core->log->debug("dispatching search for $str in $rdb");
 
   if ( $self->has_SessionID ) {
     ## if we have asyncsearch, return immediately
+    
+    unless ( $dbmgr->dbexists($rdb) ) {
+      return rplprintf( core()->lang->{RDB_ERR_NO_SUCH_RDB},
+        { nick => $msg->src_nick, rdb => $rdb },
+      );
+    }
     
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
@@ -398,7 +402,7 @@ sub _cmd_rdb {
   ##   rdb info
   ##   rdb search
   ##   rdb searchidx
-  ## FIXME rdb dblist
+  ## FIXME rdb dblist ?
   ## this got out of hand fast.
   ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg) = @_;
@@ -830,11 +834,16 @@ sub _searchidx {
   $rdb   = 'main' unless $rdb;
   $string = '<*>' unless $string;
 
-  ## FIXME if asyncsearch enabled, post a search_rdb
-  ## to the spawned AsyncSearch session
-  ## else continue as normal
+  my $dbmgr = $self->DBmgr;
+
   if ( $self->has_SessionID ) {
     ## if we have asyncsearch, return immediately
+
+    unless ( $dbmgr->dbexists($rdb) ) {
+      return rplprintf( core()->lang->{RDB_ERR_NO_SUCH_RDB},
+        { nick => $msg->src_nick, rdb => $rdb },
+      );
+    }
     
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
@@ -853,7 +862,6 @@ sub _searchidx {
     return
   }
 
-  my $dbmgr = $self->DBmgr;
   my $ret = $dbmgr->search($rdb, $string);
   
   unless (ref $ret eq 'ARRAY') {
@@ -999,6 +1007,18 @@ sub poe_post_search {
   ## compile appropriate regex (same as ::Database)
   my $re = glob_to_re_str($globstr);
   $re = qr/$re/i;
+
+  my $dbmgr = $self->DBmgr;
+  
+  if (my @matches = $dbmgr->cache_check($rdbname, $globstr) ) {
+    ## have cached results in ::Database's cache
+    ## yield back to ourselves and return
+    $kernel->post( $_[SESSION], 'poe_got_result',
+      \@matches,
+      $hintshash,
+    );
+    return
+  }
   
   ## post a search w / hintshash
   $kernel->post( $self->AsyncSessionID, 
@@ -1029,12 +1049,12 @@ sub poe_got_result {
   given ($type) {
 
     when ("string") {
-      ## FIXME borrow randq logic
-      ## (we can actually cache this set, since we get a full set)
-      ## (need methods to hook into ::Database searchcache)
       unless (@$resultarr) {
         $resp = "$nickname: No matches found for $glob";
       } else {
+        ## cachable, we get a full set back
+        $dbmgr->cache_push($rdb, $glob, $resultarr);
+      
         ## shuffle() should have already happened on resultset
         my $itemkey = $resultarr->[0];
         my $item    = $dbmgr->get($rdb, $itemkey);
@@ -1063,7 +1083,8 @@ sub poe_got_result {
       unless (@$resultarr) {
         $resp = "$nickname: No matches found for $glob";
       } else {
-        ## FIXME methods to hook into ::Database searchcache
+        $dbmgr->cache_push($rdb, $glob, $resultarr);
+      
         my $count = @$resultarr;
         
         my (@returned, $prefix);
@@ -1081,6 +1102,9 @@ sub poe_got_result {
     }
     
     when ("count") {
+      $dbmgr->cache_push($rdb, $glob, $resultarr)
+        if @$resultarr;
+
       my $count = @$resultarr;
       $resp = "$nickname: Found $count matches for $glob";
     }
