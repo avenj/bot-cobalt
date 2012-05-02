@@ -19,6 +19,8 @@ use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Plugin::RDB::Database;
 
+use POE;
+
 use File::Spec;
 
 use Moo;
@@ -37,7 +39,7 @@ has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
 
     my $rdbdir = File::Spec->catdir(
       core()->var,
-      $cfg->{Opts}->{RDBDir} ? $cfg->{Opts->{RDBDir} : ('db', 'rdb')
+      $cfg->{Opts}->{RDBDir} ? $cfg->{Opts}->{RDBDir} : ('db', 'rdb')
     );
 
     Bot::Cobalt::Plugin::RDB::Database->new(
@@ -314,6 +316,9 @@ sub _cmd_randq {
     $str = shift @message // '<*>';
   }
 
+  ## FIXME move dbexists() check from below to here
+  ## then we won't dispatch asyncsearch for DBs we don't know
+
   core->log->debug("dispatching search for $str in $rdb");
 
   if ( $self->has_SessionID ) {
@@ -324,10 +329,12 @@ sub _cmd_randq {
       $rdb,
       $str,
       {          ## Hints hash
-        Glob    => $str,
-        Context => $msg->context,
-        Channel => $msg->channel,
-        GetType => 'string',
+        Glob     => $str,
+        Context  => $msg->context,
+        Channel  => $msg->channel,
+        Nickname => $msg->src_nick,
+        GetType  => 'string',
+        RDB      => $rdb,
       },
     );
     
@@ -676,13 +683,24 @@ sub _cmd_rdb {
       my ($rdb, $str) = @message;
       return 'Syntax: rdb searchidx <RDB> <string>' 
         unless $rdb and $str;
-      my @indices = $self->_searchidx($rdb, $str, 'searchidx');
-      $indices[0] = 'No matches' unless @indices;
-      my @returned = scalar @indices > 30 ? @indices[0 .. 29] : @indices ;
-      my $count = @indices;
-      my $prefix = $count > 30 ? 
-                   "Matches (30 / $count): "
-                   : "Matches (max 30): ";
+      my $indices = $self->_searchidx($msg, 'indexes', $rdb, $str);
+      
+      ## if we posted out to asyncsearch, return immediately
+      return unless ref $indices eq 'ARRAY';
+
+      ## otherwise we should have indices
+      $indices->[0] = 'No matches' unless @$indices;
+      my $count = @$indices;
+      
+      my (@returned, $prefix);
+      if ($count > 30) {
+        @returned = @$indices[0 .. 29];
+        $prefix   = "Matches (30 of $count): ";
+      } else {
+        @returned = @$indices;
+        $prefix   = "Matches: ";
+      }
+
       $resp = $prefix.join('  ', @returned);
     }
     
@@ -690,8 +708,13 @@ sub _cmd_rdb {
       my ($rdb, $str) = @message;
       return 'Syntax: rdb count <RDB> <str>'
         unless $rdb and $str;
-      my @indices = $self->_searchidx($rdb, $str, 'count');
-      my $count = @indices;
+
+      my $indices = $self->_searchidx($msg, 'count', $rdb, $str);
+      
+      ## Same deal as searchidx, essentially.
+      return unless ref $indices eq 'ARRAY';
+
+      my $count = @$indices;
       $resp = "$nickname: Found $count matches";
     }
 
@@ -803,7 +826,7 @@ sub Bot_rdb_broadcast {
   ### 'worker' methods ###
 
 sub _searchidx {
-  my ($self, $rdb, $string, $type) = @_;
+  my ($self, $msg, $type, $rdb, $string) = @_;
   $rdb   = 'main' unless $rdb;
   $string = '<*>' unless $string;
 
@@ -818,10 +841,12 @@ sub _searchidx {
       $rdb,
       $string,
       {          ## Hints hash
-        Glob    => $string,
-        Context => $msg->context,
-        Channel => $msg->channel,
-        GetType => $type,
+        Glob     => $string,
+        Context  => $msg->context,
+        Channel  => $msg->channel,
+        Nickname => $msg->src_nick,
+        GetType  => $type,
+        RDB      => $rdb,
       },
     );
     
@@ -834,9 +859,11 @@ sub _searchidx {
   unless (ref $ret eq 'ARRAY') {
     my $err = $dbmgr->Error;
     core->log->warn("searchidx failure: retval: $err");
-    return wantarray ? () : $err ;
+    return
   }
-  return wantarray ? @$ret : $ret ;
+  
+  ## Return arrayref on success
+  return $ret
 }
 
 sub _add_item {
@@ -964,13 +991,13 @@ sub poe_post_search {
 
   my $rdbdir = File::Spec->catdir(
     core()->var,
-    $cfg->{Opts}->{RDBDir} ? $cfg->{Opts->{RDBDir} : ('db', 'rdb')
+    $cfg->{Opts}->{RDBDir} ? $cfg->{Opts}->{RDBDir} : ('db', 'rdb')
   );
   
   my $rdbpath = $rdbdir ."/". $rdbname . ".rdb" ;
   
   ## compile appropriate regex (same as ::Database)
-  my $re = glob_to_re_str($glob);
+  my $re = glob_to_re_str($globstr);
   $re = qr/$re/i;
   
   ## post a search w / hintshash
@@ -986,31 +1013,79 @@ sub poe_got_result {
   my ($self, $kernel, $heap)  = @_[OBJECT, KERNEL, HEAP];
   my ($resultarr, $hintshash) = @_[ARG0, ARG1];
   
-  my $context = $hintshash->{Context};
-  my $channel = $hintshash->{Channel};
+  my $context  = $hintshash->{Context};
+  my $channel  = $hintshash->{Channel};
+  my $nickname = $hintshash->{Nickname};
   ## type is: string, indexes, or count
   ##  (aka: randq / rdb search, rdb searchidx, rdb count)
-  my $type    = $hintshash->{GetType}; 
+  my $type     = $hintshash->{GetType}; 
+  my $glob     = $hintshash->{Glob};
+  my $rdb      = $hintshash->{RDB};
   
   my $resp;
+  
+  my $dbmgr = $self->DBmgr;
   
   given ($type) {
 
     when ("string") {
       ## FIXME borrow randq logic
       ## (we can actually cache this set, since we get a full set)
+      ## (need methods to hook into ::Database searchcache)
+      unless (@$resultarr) {
+        $resp = "$nickname: No matches found for $glob";
+      } else {
+        ## shuffle() should have already happened on resultset
+        my $itemkey = $resultarr->[0];
+        my $item    = $dbmgr->get($rdb, $itemkey);
+        
+        unless ($item && ref $item) {
+          my $err = $dbmgr->Error;
+          logger->warn("Error from get(): $err");
+          my $rpl = $err eq 'RDB_NOSUCH_ITEM' ?
+                      'RDB_ERR_NO_SUCH_ITEM'
+                    : 'RPL_DB_ERR' ;
+          $resp = rplprintf( core()->lang->{$rpl},
+            { nick => $nickname, rdb => $rdb, index => $itemkey }
+          );
+        } else {
+          my $content = ref $item eq 'HASH' ?
+                          $item->{String}
+                        : $item->[0] ;
+          $content = '(undef - broken db?)' unless defined $content;
+          $resp = "[$itemkey] $content";
+        }
+        
+      }
     }
     
     when ("indexes") {
-      ## FIXME borrow searchidx logic
+      unless (@$resultarr) {
+        $resp = "$nickname: No matches found for $glob";
+      } else {
+        ## FIXME methods to hook into ::Database searchcache
+        my $count = @$resultarr;
+        
+        my (@returned, $prefix);
+        
+        if ($count > 30) {
+          @returned = @$resultarr[0 .. 29];
+          $prefix   = "$nickname: matches (30 / $count): ";
+        } else {
+          @returned = @$resultarr;
+          $prefix   = "$nickname: matches ($count): ";
+        }
+        
+        $resp = $prefix . join('  ', @returned);
+      }
     }
     
     when ("count") {
-      ## FIXME borrow count logic
+      my $count = @$resultarr;
+      $resp = "$nickname: Found $count matches for $glob";
     }
   
   }
-  
   
   broadcast( 'message', $context, $channel, $resp ) if $resp;
 }  
