@@ -7,6 +7,8 @@ use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
 
+use File::Spec;
+
 use constant {
   TIME     => 0,
   ACTION   => 1,
@@ -102,8 +104,9 @@ sub Cobalt_register {
   my $pcfg = $core->get_plugin_cfg($self);
   my $seendb_path = $pcfg->{PluginOpts}->{SeenDB}
                     || "seen.db" ;
-  $seendb_path = $core->var ."/". $seendb_path ;
-
+  
+  $seendb_path = File::Spec->catfile( $core->var, $seendb_path );
+  
   $core->log->debug("Opening SeenDB at $seendb_path");
 
   $self->{Buf} = { };

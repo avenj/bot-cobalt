@@ -12,6 +12,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use Bot::Cobalt;
 use Bot::Cobalt::DB;
 
+use File::Spec;
+
 use IRC::Utils qw/decode_irc/;
 
 sub new { bless {}, shift }
@@ -21,7 +23,8 @@ sub Cobalt_register {
   
   $self->{Cache} = {};
 
-  my $dbpath = $core->var ."/karma.db";
+  my $dbpath = File::Spec->catfile( $core->var, 'karma.db' );
+  
   $self->{karmadb} = Bot::Cobalt::DB->new(
     File => $dbpath,
   );

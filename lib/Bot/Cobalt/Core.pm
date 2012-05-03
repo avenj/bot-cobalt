@@ -23,6 +23,8 @@ use Storable qw/dclone/;
 
 use Scalar::Util qw/blessed/;
 
+use File::Spec;
+
 ## usually a hashref from Bot::Cobalt::Conf created via frontend:
 has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :
@@ -118,12 +120,12 @@ with 'Bot::Cobalt::Core::Role::IRC';
 sub init {
   my ($self) = @_;
 
-  my $logger = Log::Handler->create_logger("cobalt");
+  my $newlogger = Log::Handler->create_logger("cobalt");
   my $maxlevel = $self->loglevel;
   $maxlevel = 'debug' if $self->debug;
   my $logfile = $self->cfg->{core}->{Paths}->{Logfile}
-                // $self->var . "/cobalt.log" ;
-  $logger->add(
+                // File::Spec->catfile( $self->var, 'cobalt.log' );
+  $newlogger->add(
     file => {
      maxlevel => $maxlevel,
      timeformat     => "%Y/%m/%d %H:%M:%S",
@@ -137,14 +139,14 @@ sub init {
     },
   );
 
-  $self->log($logger);
+  $self->log($newlogger);
 
   ## Load configured langset (defaults to english)
   my $language = ($self->cfg->{core}->{Language} //= 'english');
   $self->lang( $self->load_langset($language) );
 
   unless ($self->detached) {
-    $logger->add(
+    $newlogger->add(
      screen => {
        log_to => "STDOUT",
        maxlevel => $maxlevel,

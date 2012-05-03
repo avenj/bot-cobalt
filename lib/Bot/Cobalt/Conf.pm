@@ -18,6 +18,8 @@ use Carp;
 use Moo;
 use Bot::Cobalt::Common qw/:types/;
 
+use File::Spec;
+
 has 'etc' => ( is => 'rw', isa => Str, required => 1 );
 
 use Bot::Cobalt::Serializer;
@@ -37,7 +39,11 @@ sub _read_conf {
     return
   }
 
-  my $path = $etc ."/". $relative_to_etc;
+  my $path = File::Spec->catfile(
+    $etc,
+    File::Spec->splitpath($relative_to_etc)
+  );
+
   unless (-e $path) {
     carp "cannot find $path at $self->etc";
     return
@@ -118,8 +124,12 @@ sub read_cfg {
   my $conf = {};
 
   $conf->{path} = $self->etc;
-  $conf->{path_chan_cf} = $conf->{path} ."/channels.conf" ;
-  $conf->{path_plugins_cf} = $conf->{path} . "/plugins.conf" ;
+  $conf->{path_chan_cf} = File::Spec->catfile( 
+    $conf->{path}, "channels.conf"
+  );
+  $conf->{path_plugins_cf} = File::Spec->catfile(
+    $conf->{path}, "plugins.conf"
+  );
 
   my $core_cf = $self->_read_core_cobalt_conf;
   if ($core_cf && ref $core_cf eq 'HASH') {

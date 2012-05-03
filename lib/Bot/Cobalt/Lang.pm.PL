@@ -1,13 +1,14 @@
 #!perl
-use 5.10.1;
 use strict;
 use warnings;
 
-my $langset = 'etc/langs/english.yml';
+use File::Spec qw/catfile/;
+
+my $langset = catfile(qw/etc langs english.yml/);
 die "langset $langset not found\n" unless -f $langset;
 
 my $libfile = shift;
-my $libfile_in = 'lib/Bot/Cobalt/Lang.pm.in';
+my $libfile_in = catfile(qw/lib Bot Cobalt Lang.pm.in/);
 die "lib $libfile_in not found\n" unless -f $libfile_in;
 
 open my $libf_fh, '<', $libfile.'.in'

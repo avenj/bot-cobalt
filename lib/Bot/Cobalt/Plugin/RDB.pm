@@ -1000,6 +1000,8 @@ sub poe_post_search {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($rdbname, $globstr, $hintshash) = @_[ARG0 .. $#_];
 
+  logger->debug("Posting async search ($rdbname)");
+
   ## compose rdb path
   my $cfg = core->get_plugin_cfg($self);
 
@@ -1008,7 +1010,7 @@ sub poe_post_search {
     $cfg->{Opts}->{RDBDir} ? $cfg->{Opts}->{RDBDir} : ('db', 'rdb')
   );
   
-  my $rdbpath = $rdbdir ."/". $rdbname . ".rdb" ;
+  my $rdbpath = File::Spec->catfile( $rdbdir, "$rdbname.rdb" );
   
   my $dbmgr = $self->DBmgr;
   
@@ -1045,6 +1047,8 @@ sub poe_got_result {
   my $type     = $hintshash->{GetType}; 
   my $glob     = $hintshash->{Glob};
   my $rdb      = $hintshash->{RDB};
+
+  logger->debug("Received async search response ($rdb)");
   
   my $resp;
   

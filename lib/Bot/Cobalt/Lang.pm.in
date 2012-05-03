@@ -16,6 +16,8 @@ use Moo::Role;
 
 use Bot::Cobalt::Serializer;
 
+use File::Spec;
+
 sub langset_load { load_langset(@_) }
 sub load_langset {  ## load_langset(language)
   ## read specified language out of etc/langs/
@@ -25,10 +27,10 @@ sub load_langset {  ## load_langset(language)
   ## you can specify a prefix
   ## f.ex: load_langset('english', '/some/dir/langs/plugin-')
   ## results in: $path = "/some/dir/langs/plugin-". lc($lang) .".yml"
-  my $prefix = shift || $self->cfg->{path} . "/langs/";
+  my $prefix = shift || File::Spec->catdir( $self->cfg->{path}, "langs" );
 
   ## etc/langs/language.yml (lowercase expected)
-  my $path = $prefix . lc($lang) . ".yml";
+  my $path = File::Spec->catfile( $prefix, lc($lang).".yml" );
 
   unless (-f $path) {
     $self->send_event( 'langset_error', "not found: ($lang) $path" )

@@ -56,6 +56,7 @@ use Bot::Cobalt::Serializer;
 
 use Storable qw/dclone/;
 
+use File::Spec;
 
 ### Constants, mostly for internal retvals:
 use constant {
@@ -82,8 +83,14 @@ sub Cobalt_register {
 
   my $p_cfg = $core->get_plugin_cfg( $self );
 
-  my $relative_path = $p_cfg->{Opts}->{AuthDB} || 'db/authdb.yml';
-  my $authdb = $core->var ."/". $relative_path;
+  my $relative_path = $p_cfg->{Opts}->{AuthDB} ||
+    File::Spec->catfile( 'db', 'authdb.yml');
+
+  my $authdb = File::Spec->catfile(
+    $core->var,
+    File::Spec->splitpath($relative_path)
+  );
+
   $self->DB_Path($authdb);
 
   ## Read in main authdb:

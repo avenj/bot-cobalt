@@ -21,6 +21,7 @@ use Bot::Cobalt::Plugin::RDB::SearchCache;
 
 use DateTime;
 
+use File::Spec;
 
 sub new { bless( {}, shift ) }
 
@@ -34,8 +35,15 @@ sub Cobalt_register {
 
   my $cfg = $core->get_plugin_cfg( $self );
   my $var = $core->var;
-  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 'db/info3.db';
-  my $dbpath = $var ."/". $relative_to_var;
+  
+  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 
+    File::Spec->catfile( 'db', 'info3.db' );
+    
+  my $dbpath = File::Spec->catfile(
+    $var,
+    File::Spec->splitpath( $relative_to_var )
+  );
+  
   $self->{DB_PATH} = $dbpath;
   $self->{DB} = Bot::Cobalt::DB->new(
     File => $dbpath,
