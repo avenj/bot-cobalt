@@ -25,7 +25,7 @@ has 'equal' => ( is => 'ro', isa => Bool, lazy => 1,
   default => sub {
     my ($self) = @_;
     my $casemap = core->get_irc_casemap($self->context);
-    eq_irc($self->old, $self->new, $casemap) ? 1 : 0
+    eq_irc($self->old_nick, $self->new_nick, $casemap) ? 1 : 0
   },
 );
 
