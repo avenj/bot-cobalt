@@ -46,6 +46,10 @@ sub plugin_alias {
   core()->get_plugin_alias( @_ )
 }
 
+sub irc_object {
+  core()->get_irc_object( @_ )
+}
+
 1;
 __END__
 
@@ -81,14 +85,30 @@ these are simple functions that wrap L<Bot::Cobalt::Core> methods.
 
 Returns the L<Bot::Cobalt::Core> singleton for the running instance.
 
+Same as calling:
+
+  require Bot::Cobalt::Core;
+  my $core = Bot::Cobalt::Core->instance;
+
 =head2 broadcast
 
 Queue an event to send to the plugin pipeline.
 
   broadcast( $event, @args );
 
-Wraps the B<send_event> method available via L<Bot::Cobalt::Core>; 
-syndicates events to the plugin pipeline.
+Wraps the B<send_event> method available via L<Bot::Cobalt::Core>, which 
+is a L<POE::Component::Syndicator>.
+
+=head2 irc_object
+
+  my $irc_obj = irc_object($context);
+
+Retrieves the IRC object assigned to a context, which is a 
+L<POE::Component::IRC::State> instance unless L<Cobalt::IRC> has been 
+subclassed or replaced.
+
+Wrapper for core->get_irc_object() -- see 
+L<Bot::Cobalt::Core::Role::EasyAccessors>
 
 =head2 logger
 
@@ -121,13 +141,14 @@ L<Bot::Cobalt::Core::Role::EasyAccessors>
 
 Register to receive specified syndicated events.
 
-Wrapper for core->plugin_register; see L<Bot::Cobalt::Manual::Plugins>
+Wrapper for core->plugin_register(); see L<Bot::Cobalt::Manual::Plugins> 
+for details.
 
 =head2 unregister
 
 Stop listening for specified syndicated events.
 
-Wrapper for core->plugin_unregister
+Wrapper for core->plugin_unregister()
 
 =head1 AUTHOR
 
