@@ -64,7 +64,6 @@ lib/Bot/Cobalt/Plugin/Extras/Debug.pm
 lib/Bot/Cobalt/Plugin/Extras/DNS.pm
 lib/Bot/Cobalt/Plugin/Extras/Ignore.pm
 lib/Bot/Cobalt/Plugin/Extras/Karma.pm
-lib/Bot/Cobalt/Plugin/Extras/Logger.pm
 lib/Bot/Cobalt/Plugin/Extras/Money.pm
 lib/Bot/Cobalt/Plugin/Extras/Relay.pm
 lib/Bot/Cobalt/Plugin/Extras/Shorten.pm
