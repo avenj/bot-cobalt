@@ -60,11 +60,10 @@ sub Cobalt_register {
   ## reverse of above:
   $self->{Regexes} = { };
   
-  ## build our initial hashes:
+  ## build our initial hashes (this is slow, ~1s on spork's huge db)
   $self->{DB}->dbopen(ro => 1) || croak 'DB open failure';
-  for my $glob ($self->{DB}->dbkeys) {
+  while (my ($glob, $ref) = each %{ $self->{DB}->Tied }) {
     ++$core->Provided->{info_topics};
-    my $ref = $self->{DB}->get($glob);
     my $regex = $ref->{Regex};
     my $compiled_re = qr/$regex/i;
     $self->{Globs}->{$glob} = $compiled_re;
