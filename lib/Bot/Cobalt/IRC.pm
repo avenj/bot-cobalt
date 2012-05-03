@@ -678,7 +678,7 @@ sub irc_quit {
   );
 
   ## Bot_user_quit
-  broadcast( 'user_quit', $context, $quit );
+  broadcast( 'user_quit', $quit );
 }
 
 sub irc_invite {
