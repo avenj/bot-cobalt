@@ -102,7 +102,7 @@ sub dbexists {
 
 sub Error {
   my ($self, $err) = @_;
-  return $self->{ERRORMSG} = $err if $err;
+  return $self->{ERRORMSG} = $err if defined $err;
   return $self->{ERRORMSG}
 }
 
