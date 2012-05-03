@@ -344,10 +344,12 @@ sub put {
     $self->Error("RDB_DBFAIL");
     return 0
   }
+
+  $db->dbclose;
   
   my $cache = $self->{CacheObj};
   $cache->invalidate($rdb);
-  $db->dbclose;
+
   return $newkey
 }
 
@@ -480,11 +482,11 @@ sub _gen_unique_key {
   my ($self, $ref) = @_;
   my $db = $self->{CURRENT} 
            || croak "_gen_unique_key called but no db to check";
-  my $stringified = $ref->{String}.Time::HiRes::time();
+  my $stringified = "$ref" . Time::HiRes::time();
   my $digest = sha256_hex($stringified);
   my @splitd = split //, $digest;
   my $newkey = join '', splice(@splitd, -4);
-  $newkey .= pop @splitd while exists $db->{Tied}{$newkey} and @splitd;
+  $newkey .= pop @splitd while exists $db->Tied->{$newkey} and @splitd;
   ## regen 0000 keys:
   return $newkey || $self->_gen_unique_key($ref)
 }
