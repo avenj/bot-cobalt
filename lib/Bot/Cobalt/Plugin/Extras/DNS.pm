@@ -123,7 +123,6 @@ sub _run_query {
     and $type =~ /^(A|CNAME|NS|MX|PTR|TXT|AAAA|SRV|SOA)$/i;
   
   $type = 'PTR' if ip_is_ipv4($host);
-  ## FIXME v6 rr lookup?
   
   logger->debug("issuing dns request: $host");
   $poe_kernel->post( 'p_'. core()->get_plugin_alias($self), 

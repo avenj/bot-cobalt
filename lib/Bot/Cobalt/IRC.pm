@@ -1347,7 +1347,7 @@ Broadcast when the bot joins a channel.
 
 A L</Bot_user_joined> is still issued as well.
 
-Carries the same syntax and caveats as L</Bot_self_left>, below.
+Carries the same syntax and caveats as L</Bot_self_left> (below)
 
 =head3 Bot_user_left
 

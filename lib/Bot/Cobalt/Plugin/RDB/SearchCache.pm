@@ -61,6 +61,7 @@ sub fetch {
             : return $ref->{Results}  ;
 }
 
+
 sub invalidate {
   my ($self, $ckey, $match) = @_;
   ## should be called on add/del operations 
@@ -76,6 +77,7 @@ sub invalidate {
 
   return delete $self->{Cache}->{$ckey}->{$match}
     if defined $match;
+
   return delete $self->{Cache}->{$ckey};
 }
 
