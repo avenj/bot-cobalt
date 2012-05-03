@@ -7,8 +7,6 @@ use Storable qw/nfreeze thaw/;
 
 use bytes;
 
-use List::Util qw/shuffle/;
-
 use Bot::Cobalt::DB;
 
 sub worker {
@@ -51,8 +49,8 @@ sub worker {
         
         $regex = qr/$regex/i;
 
-        my $i;        
-        KEY: for my $dbkey (shuffle @dbkeys) {
+        my $i;
+        KEY: for my $dbkey (@dbkeys) {
 
           ## Only be a little greedy.          
           if ( ++$i % 200 == 0 ) {

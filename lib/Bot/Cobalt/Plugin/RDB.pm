@@ -19,11 +19,14 @@ use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Plugin::RDB::Database;
 
+use Moo;
+
 use POE;
 
 use File::Spec;
 
-use Moo;
+use List::Util qw/shuffle/;
+
 ## marked non-reloadable .. shouldfix
 ## ought to feed our external RDB:: modules to unloader_cleanup
 has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
@@ -1090,7 +1093,7 @@ sub poe_got_result {
         my (@returned, $prefix);
         
         if ($count > 30) {
-          @returned = @$resultarr[0 .. 29];
+          @returned = (shuffle @$resultarr)[0 .. 29];
           $prefix   = "$nickname: matches (30 / $count): ";
         } else {
           @returned = @$resultarr;
