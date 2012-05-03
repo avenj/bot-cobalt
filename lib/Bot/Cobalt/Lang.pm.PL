@@ -2,13 +2,13 @@
 use strict;
 use warnings;
 
-use File::Spec qw/catfile/;
+use File::Spec;
 
-my $langset = catfile(qw/etc langs english.yml/);
+my $langset = File::Spec->catfile(qw/etc langs english.yml/);
 die "langset $langset not found\n" unless -f $langset;
 
 my $libfile = shift;
-my $libfile_in = catfile(qw/lib Bot Cobalt Lang.pm.in/);
+my $libfile_in = File::Spec->catfile(qw/lib Bot Cobalt Lang.pm.in/);
 die "lib $libfile_in not found\n" unless -f $libfile_in;
 
 open my $libf_fh, '<', $libfile.'.in'
