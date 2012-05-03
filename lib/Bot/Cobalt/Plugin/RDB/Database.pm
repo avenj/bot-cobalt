@@ -1,8 +1,8 @@
 package Bot::Cobalt::Plugin::RDB::Database;
 our $VERSION = '0.200_48';
 
-
 ## Frontend to managing RDB-style Bot::Cobalt::DB instances
+## I regret writing this.
 ##
 ## We may have a lot of RDBs.
 ## This plugin tries to make it easy to operate on them discretely
@@ -22,10 +22,6 @@ our $VERSION = '0.200_48';
 ## The frontend doesn't have to worry about dbopen/dbclose, which works 
 ## for RDBs because access is almost always a single operation and we 
 ## can afford to open / lock / access / unlock / close every call.
-##
-## If you're trying to program against this interface, I apologize. :)
-## Go read the Bot::Cobalt::DB POD and write something better instead.
-##   (  then send it to me! :)  )
 
 use 5.10.1;
 use strict;

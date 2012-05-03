@@ -138,7 +138,6 @@ sub push_pending {
   my $forkable;
   if ($^O eq 'MSWin32') {
     ## May drop Win32 support here entirely . . .
-    ## Can't exec new interp, so this fork will hurt.
     require Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker;
     $forkable = \&Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker::worker;
   } else {
