@@ -227,7 +227,8 @@ sub worker_stderr {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($input, $wid) = @_[ARG0, ARG1];
   
-  my $request = $heap->{RequestsByWID}->{$wid};
+  my $request_id = $heap->{RequestsByWID}->{$wid};
+  my $request    = delete $heap->{Requests}->{$request_id};
   if ($request) {
     my $sender_id = $request->{SenderID};
     my $hints     = $request->{Hints};
@@ -244,22 +245,3 @@ sub worker_stderr {
 
 1;
 __END__
-
-=pod
-
-=head1 NAME
-
-Bot::Cobalt::Plugin::RDB::AsyncSearch - Async RDB search session
-
-=head1 DESCRIPTION
-
-This is a stub POD for my own use; my brain sucks.
-
-If I haven't fixed it before I cpan this, please beat me mercilessly.
-
-  spawn -> ResultEvent => , ErrorEvent => , MaxWorkers =>
-  post -> search_rdb( $dbpath, $compiled_re, $hints_hash )
-  post -> shutdown
-  
-
-=cut
