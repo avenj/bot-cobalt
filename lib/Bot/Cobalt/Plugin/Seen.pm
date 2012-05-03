@@ -22,10 +22,12 @@ sub new { bless {}, shift }
 
 sub parse_nick {
   my ($self, $context, $nickname) = @_;
-  my $core = $self->{core};
-  my $casemap = $core->get_irc_casemap($context) || 'rfc1459';
+  my $casemap = core->get_irc_casemap($context) || 'rfc1459';
   return lc_irc($nickname, $casemap)
 }
+
+## FIXME method to retrieve users w/ similar hosts
+## !seen search ... ?
 
 sub retrieve {
   my ($self, $context, $nickname) = @_;
@@ -33,19 +35,17 @@ sub retrieve {
 
   my $thisbuf = $self->{Buf}->{$context} // {};
 
-  my $core = $self->{core};
-
   ## attempt to get from internal hashes
   my($last_ts, $last_act, $last_chan, $last_user, $last_host);
 
   my $ref;
 
-  if (exists $self->{Buf}->{$context}->{$nickname}) {
-    $ref = $self->{Buf}->{$context}->{$nickname};
+  if (exists $thisbuf->{$nickname}) {
+    $ref = $thisbuf->{$nickname};
   } else {
     my $db = $self->{SDB};
     unless ($db->dbopen) {
-      $core->log->warn("dbopen failed in retrieve; cannot open SeenDB");
+      logger->warn("dbopen failed in retrieve; cannot open SeenDB");
       return
     }
     ## context%nickname
@@ -68,38 +68,8 @@ sub retrieve {
   return($last_ts, $last_act, $last_chan, $last_user, $last_host, $meta)
 }
 
-sub updatedb {
-  my ($self) = @_;
-  ## called by seendb_update timer
-  ## update db from hashes and trim hashes appropriately
-  my $buf  = $self->{Buf};
-  my $db   = $self->{SDB};
-  my $core = $self->{core};
-
-  unless ($db->dbopen) {
-    $core->log->warn("dbopen failed in update; cannot update SeenDB");
-    return
-  }  
-  
-  CONTEXT: for my $context (keys %$buf) {
-    NICK: for my $nickname (keys %{ $buf->{$context} }) {
-      ## pull this one out:
-      my $thisbuf = delete $buf->{$context}->{$nickname};
-      next NICK unless ref $thisbuf;
-      ## write it to db:
-      my $thiskey = $context .'%'. $nickname;
-      $db->put($thiskey, $thisbuf);
-    }
-  } ## CONTEXT
-  
-  $db->dbclose;
-  return 1
-}
-
-
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
     
   my $pcfg = $core->get_plugin_cfg($self);
   my $seendb_path = $pcfg->{PluginOpts}->{SeenDB}
@@ -107,11 +77,9 @@ sub Cobalt_register {
   
   $seendb_path = File::Spec->catfile( $core->var, $seendb_path );
   
-  $core->log->debug("Opening SeenDB at $seendb_path");
+  logger->debug("Opening SeenDB at $seendb_path");
 
   $self->{Buf} = { };
-  
-  $self->{BufDirty} = 0;
   
   $self->{SDB} = Bot::Cobalt::DB->new(
     File => $seendb_path,
@@ -122,23 +90,25 @@ sub Cobalt_register {
   die "Unable to open SeenDB at $seendb_path"
     unless $rc;
 
-  $core->plugin_register( $self, 'SERVER', 
+  register( $self, 'SERVER', 
     [ qw/
     
       public_cmd_seen
       
       nick_changed      
-      self_joined
+      chan_sync
       user_joined
       user_left
       user_quit
       
       seendb_update
       
+      seenplug_deferred_list
+      
     / ],
   );
   
-  $core->timer_set( 6,
+  core->timer_set( 6,
     ## update seendb out of hash
     {
       Event => 'seendb_update',
@@ -146,7 +116,7 @@ sub Cobalt_register {
     'SEENDB_WRITE'
   );
   
-  $core->log->info("Loaded");
+  logger->info("Loaded");
   
   return PLUGIN_EAT_NONE
 }
@@ -160,14 +130,47 @@ sub Cobalt_unregister {
 sub Bot_seendb_update {
   my ($self, $core) = splice @_, 0, 2;
 
-  return PLUGIN_EAT_ALL unless $self->{BufDirty};
+  my $buf = $self->{Buf};
+  my $db  = $self->{SDB};
 
-  $self->{BufDirty} = 0 if $self->updatedb;
+  unless (keys %$buf) {
+    ## Check again later.
+    $core->timer_set( 3, { Event => 'seendb_update' } );
+    return PLUGIN_EAT_ALL
+  }
 
-  $core->timer_set( 6,
-    {
-      Event => 'seendb_update',
-    },
+  CONTEXT: for my $context (keys %$buf) {
+    unless ($db->dbopen) {
+      logger->warn("dbopen failed in update; cannot update SeenDB");
+      $core->timer_set( 3, { Event => 'seendb_update' } );
+      return PLUGIN_EAT_ALL
+    }
+
+    my $writes;
+    NICK: for my $nickname (keys %{ $buf->{$context} }) {
+      ## if we've done a lot of writes, yield back.
+      if ($writes && $writes % 50 == 0) {
+        $db->dbclose;
+        broadcast( 'seendb_update' );
+        return PLUGIN_EAT_ALL
+      }
+    
+      ## pull this one out:
+      my $thisbuf = delete $buf->{$context}->{$nickname};
+      
+      ## write it to db:
+      my $thiskey = $context .'%'. $nickname;
+      $db->put($thiskey, $thisbuf);
+      ++$writes;
+    } ## NICK
+    $db->dbclose;
+    
+    delete $buf->{$context} unless keys %{ $buf->{$context} };
+  
+  } ## CONTEXT
+  
+  $core->timer_set( 3,
+    { Event => 'seendb_update' }
   );  
   return PLUGIN_EAT_ALL
 }
@@ -182,9 +185,7 @@ sub Bot_user_joined {
   my $host = $join->src_host;
   my $chan = $join->channel;
 
-  $self->{BufDirty} = 1;
-  
-  $nick = $self->parse_nick($nick);
+  $nick = $self->parse_nick($context, $nick);
   $self->{Buf}->{$context}->{$nick} = {
     TS => time(),
     Action   => 'join',
@@ -196,8 +197,38 @@ sub Bot_user_joined {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_self_joined {
-  ## FIXME 
+sub Bot_chan_sync {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+
+  broadcast( 'seenplug_deferred_list', $context, $channel );
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Bot_seenplug_deferred_list {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${$_[0]};
+  my $channel = ${$_[1]};
+    
+  my $irc = $core->get_irc_object($context);
+  
+  my @nicks = $irc->channel_list($channel);
+
+  for my $nick (@nicks) {
+    $nick = $self->parse_nick($context, $nick);
+    
+    $self->{Buf}->{$context}->{$nick} = {
+      TS => time(),
+      Action   => 'present',
+      Channel  => $channel,
+      Username => '',
+      Host     => '',
+    };
+  }
+  
+  return PLUGIN_EAT_ALL
 }
 
 sub Bot_user_left {
@@ -210,9 +241,7 @@ sub Bot_user_left {
   my $host = $part->src_host;
   my $chan = $part->channel;
 
-  $self->{BufDirty} = 1;
-
-  $nick = $self->parse_nick($nick);
+  $nick = $self->parse_nick($context, $nick);
   $self->{Buf}->{$context}->{$nick} = {
     TS => time(),
     Action   => 'part',
@@ -232,15 +261,13 @@ sub Bot_user_quit {
   my $nick = $quit->src_nick;
   my $user = $quit->src_user;
   my $host = $quit->src_host;
-  my $chan = $quit->channel;
+  my $common = $quit->common;
 
-  $self->{BufDirty} = 1;
-
-  $nick = $self->parse_nick($nick);
+  $nick = $self->parse_nick($context, $nick);
   $self->{Buf}->{$context}->{$nick} = {
     TS => time(),
     Action   => 'quit',
-    Channel  => $chan,
+    Channel  => $common->[0],
     Username => $user,
     Host     => $host,
   };
@@ -263,8 +290,6 @@ sub Bot_nick_changed {
   
   my $first_common = $nchange->channels->[0];
 
-  $self->{BufDirty} = 1;
-  
   $self->{Buf}->{$context}->{$old} = {
     TS => time(),
     Action   => 'nchange',
@@ -326,7 +351,7 @@ sub Bot_public_cmd_seen {
   given ($last_act) {
     when ("quit") {
       $resp = 
-        "$targetnick was last seen quitting from $last_chan $ts_str ago";
+        "$targetnick was last seen quitting IRC $ts_str ago";
     }
     
     when ("join") {
@@ -339,6 +364,11 @@ sub Bot_public_cmd_seen {
         "$targetnick was last seen leaving $last_chan $ts_str ago";
     }
     
+    when ("present") {
+      $resp =
+        "$targetnick was last seen when I joined $last_chan $ts_str ago";
+    }
+    
     when ("nchange") {
       if      ($meta->{From}) {
         $resp = 
@@ -347,7 +377,7 @@ sub Bot_public_cmd_seen {
           " $ts_str ago";
       } elsif ($meta->{To}) {
         $resp = 
-          "$targetnick was last seen changing nicknames from "
+          "$targetnick was last seen changing nicknames to "
           .$meta->{To}.
           " $ts_str ago";
       }
