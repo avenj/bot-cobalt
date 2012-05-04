@@ -44,27 +44,13 @@ sub worker {
           die "Failed database open"
         }
                 
-        my @dbkeys = $db->dbkeys;
-        
         my @matches;
         
         $regex = qr/$regex/i;
 
         my $i;
-        KEY: for my $dbkey (@dbkeys) {
-
-          ## Only be a little greedy.          
-          if ( ++$i % 200 == 0 ) {
-            $db->dbclose;
-            $db->dbopen(ro => 1, timeout => 30)
-              or die "Failed database open"
-          }
-          
-          my $ref = $db->get($dbkey);
-          unless (defined $ref) {
-            warn "No result from database get($dbkey)";
-            next KEY
-          }
+        KEY: while (my ($dbkey, $ref) = each %{ $db->Tied }) {
+          next KEY unless $ref;
           
           my $str = ref $ref eq 'HASH' ? $ref->{String} : $ref->[0] ;
           
