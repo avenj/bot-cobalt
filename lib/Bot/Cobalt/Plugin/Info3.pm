@@ -761,7 +761,11 @@ sub _info_match {
   my $core = $self->{core};
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
+
   my $str;
+
+  return if $self->{Cache}->fetch('info3_neg', $txt);
+
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ $re) {
       my $glob = $self->{Regexes}->{$re};
@@ -788,7 +792,7 @@ sub _info_match {
 
   ## negative searchcache if there's no match
   ## really only helps in case of flood ...
-  $self->{Cache}->cache('info3_neg', $str, []);
+  $self->{Cache}->cache('info3_neg', $txt, [1]);
   return
 }
 
