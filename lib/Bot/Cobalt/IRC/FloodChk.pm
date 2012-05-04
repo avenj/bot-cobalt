@@ -133,7 +133,7 @@ more than the specified B<in> seconds ago.
 
 =head1 SEE ALSO
 
-Conceptually borrowed from L<Algorithm::FloodControl>
+Algorithm is borrowed from L<Algorithm::FloodControl>
 
 =head1 AUTHOR
 

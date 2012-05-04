@@ -30,6 +30,10 @@ has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
 ## path to our var/ :
 has 'var' => ( is => 'ro', isa => Str,     required => 1 );
 
+has 'etc' => ( is => 'ro', isa => Str, lazy => 1,
+  default => sub { $_[0]->cfg->{path} }
+);
+
 has 'log'      => ( is => 'rw', isa => Object );
 has 'loglevel' => ( 
   is => 'rw', isa => Str, 
@@ -286,9 +290,9 @@ sub _core_timer_check_pool {
   
   TIMER: for my $id (keys %$timerpool) {
     my $timer = $timerpool->{$id};
-     # this should never happen ...
-     # ... unless a plugin author is a fucking idiot:
+
     unless (blessed $timer && $timer->isa('Bot::Cobalt::Timer') ) {
+      ## someone's been naughty
       $self->log->warn("not a Bot::Cobalt::Timer: $id (in tick $tick)");
       delete $timerpool->{$id};
       next TIMER
