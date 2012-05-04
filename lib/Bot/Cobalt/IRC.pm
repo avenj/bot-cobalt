@@ -701,6 +701,9 @@ sub irc_invite {
 
  ### COBALT EVENTS ###
 
+## FIXME move these out to sub-plugin / sub-session ?
+## can get whatever we need from anywhere, so . . .
+
 sub Bot_send_message { Bot_message(@_) }
 sub Bot_message {
   my ($self, $core) = splice @_, 0, 2;

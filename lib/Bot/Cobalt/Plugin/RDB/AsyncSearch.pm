@@ -245,3 +245,35 @@ sub worker_stderr {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Plugin::RDB::AsyncSearch - Asynchronous RDB deep search
+
+=head1 SYNOPSIS
+
+  ## Inside a POE::Session
+  my $async_sessID = Bot::Cobalt::Plugin::RDB::AsyncSearch->spawn(
+    MaxWorkers => 5,
+    ResultEvent => 'got_rdb_result',
+    ErrorEvent  => 'got_rdb_error',
+  );
+
+=head1 DESCRIPTION
+
+This is a simple POE session for managing fork()/exec()'d
+Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker instances via 
+L<POE::Wheel::Run>.
+
+It does not interact with the L<Bot::Cobalt> core directly in any way; 
+it can be used from any POE session to deep-search RDBs.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut

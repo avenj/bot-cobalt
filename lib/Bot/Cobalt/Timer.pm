@@ -1,7 +1,7 @@
 package Bot::Cobalt::Timer;
 our $VERSION = '0.200_48';
 
-use strict; use warnings;
+use strictures 1;
 use 5.10.1;
 use Carp;
 use Moo;
