@@ -214,7 +214,7 @@ sub _rehash_langset {
   for my $this_rpl (keys %$new_rpl) {
     logger->debug("Updated: $this_rpl")
       if core->debug > 2;
-    core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
+    core->lang->{$this_rpl} = delete $new_rpl->{$this_rpl};
   }
   logger->info("Reloaded core langset ($lang)");
   broadcast( 'rehashed', 'langset' );

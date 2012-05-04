@@ -46,7 +46,7 @@ RPL:
   RPL_VERSION: "I be hustlin' wit %version (perl-%perl_v poe-%poe_v pocoirc-%pocoirc_v%) -- http://www.cobaltirc.org"
 
   ## RPL_INFO: %version, %plugins, %uptime, %sent, %topics, %randstuffs
-  RPL_INFO: "Running %version%. I have %plugins plugins loaded. I've been up for %uptime and responded %sent times. I have %topics info3 topics and %randstuffs randstuffs."
+  RPL_INFO: "I be runnin' wit %version%. we gots %plugins plugins in this mofugger, hustlin' fo %uptime%, puttin' in work %sent times. we kicks it wit %topics topics and %randstuffs randstuffs"
 
   ## RPL_OS: %os
   RPL_OS: "representin' %os"
