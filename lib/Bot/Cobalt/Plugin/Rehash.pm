@@ -72,7 +72,7 @@ sub Bot_public_cmd_rehash {
   
   my $resp;
   given ($type) {
-    when ("all") {
+    when ("all") {    ## (except langset)
       if ( 
         $self->_rehash_core_cf  
         && $self->_rehash_channels_cf

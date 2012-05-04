@@ -915,11 +915,9 @@ sub Bot_rehashed {
   my ($self, $core) = splice @_, 0, 2;
   my $type = ${ $_[0] };
   
-  if ($type eq 'channels') {
-    ## reset AutoJoin plugin instances
-    $core->log->info("Rehash received, resetting autojoins");
-    $self->_reset_ajoins;
-  }
+  ## reset AutoJoin plugin instances
+  $core->log->info("Rehash received, resetting autojoins");
+  $self->_reset_ajoins;
 
   ## FIXME rehash nickservids if needed?
   
