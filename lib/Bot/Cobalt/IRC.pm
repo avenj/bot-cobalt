@@ -911,7 +911,7 @@ sub Bot_send_raw {
   return PLUGIN_EAT_NONE
 }
 
-sub Bot_rehash {
+sub Bot_rehashed {
   my ($self, $core) = splice @_, 0, 2;
   my $type = ${ $_[0] };
   

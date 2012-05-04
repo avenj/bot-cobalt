@@ -13,31 +13,28 @@ our $VERSION = '0.200_48';
 ## Also doesn't make very many guarantees regarding consequences ...
 
 use 5.10.1;
+use strictures 1;
+
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Conf;
-
-## dclone used so we can easily throw away unwanted Bot::Cobalt::Conf hashes:
-use Storable qw/dclone/;
-
-require Bot::Cobalt::Lang;
 
 sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
-  $core->plugin_register( $self, 'SERVER',
+
+  register( $self, 'SERVER',
     [ 'rehash', 'public_cmd_rehash' ]
   );
-  $core->log->info("Registered, commands: !rehash");
+
+  logger->info("Registered, commands: !rehash");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
-  $core->log->info("Unregistered");
+  logger->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
 
@@ -55,14 +52,14 @@ sub Bot_public_cmd_rehash {
   my $context = $msg->context;
 
   my $nick = $msg->src_nick;
-  my $auth_lev = $core->auth->level($context, $nick);
-  my $auth_usr = $core->auth->username($context, $nick);
+  my $auth_lev = core->auth->level($context, $nick);
+  my $auth_usr = core->auth->username($context, $nick);
 
-  my $pcfg = $core->get_plugin_cfg($self);
+  my $pcfg = plugin_cfg($self) || {};
   my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
 
   unless ($auth_lev >= $required_lev) {
-    my $resp = rplprintf( $core->lang->{RPL_NO_ACCESS},
+    my $resp = rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nick }
     );
     broadcast( 'message', $context, $nick, $resp );
@@ -122,7 +119,6 @@ sub Bot_public_cmd_rehash {
       }
     }
     
-    ## FIXME langsets
   }
 
   broadcast( 'message', $context, $channel, $resp ) if $resp;
@@ -130,131 +126,120 @@ sub Bot_public_cmd_rehash {
   return PLUGIN_EAT_ALL
 }
 
-
-sub _rehash_all_plugins {
-  ## the code is here, but specifically disabled for now.
-  ## plugins should be reloaded specifically instead.
-  my ($self) = @_;
-  my $core = $self->{core};
-  
-  my $newcfg = $self->_get_new_cfg || return;
-  
-  unless ($newcfg->{plugin_cf} and ref $newcfg->{plugins} eq 'HASH') {
-    $core->log->warn(
-      "Rehashed conf appears to be missing plugin-specific confs"
-    );
-    $core->log->warn("Are you missing plugins/ conf files?");
-    return
-  }
-
-  $core->cfg->{plugin_cf} = dclone($newcfg->{plugin_cf});
-}
-
 sub _rehash_plugins_cf {
   my ($self) = @_;
-  my $core = $self->{core};
   
   my $newcfg = $self->_get_new_cfg || return;
   
   unless ($newcfg->{plugins} and ref $newcfg->{plugins} eq 'HASH') {
-    $core->log->warn("Rehashed conf appears to be missing plugins conf");
-    $core->log->warn("Is your plugins.conf broken?");
-    my $etcdir = $core->etc;
-    $core->log->warn("(Path to etc/: $etcdir)");
+    logger->warn("Rehashed conf appears to be missing plugins conf");
+    logger->warn("Is your plugins.conf broken?");
+    my $etcdir = core()->etc;
+    logger->warn("(Path to etc/: $etcdir)");
     return
   }
   
-  $core->cfg->{plugins} = dclone($newcfg->{plugins});
-  $core->log->info("Reloaded plugins.conf");
+  core()->cfg->{plugins} = delete $newcfg->{plugins};
+  
+  logger->info("Reloaded plugins.conf");
+  
   broadcast( 'rehashed', 'plugins' );
+  
   return 1
 }
 
 sub _rehash_core_cf {
   my ($self) = @_;
-  my $core = $self->{core};
 
   my $newcfg = $self->_get_new_cfg || return;
   
   unless ($newcfg->{core} and ref $newcfg->{core} eq 'HASH') {
-    $core->log->warn("Rehashed conf appears to be missing core conf");
-    $core->log->warn("Is your cobalt.conf broken?");
-    my $etcdir = $core->etc;
-    $core->log->warn("(Path to etc/: $etcdir)");
+    logger->warn("Rehashed conf appears to be missing core conf");
+    logger->warn("Is your cobalt.conf broken?");
+    my $etcdir = core()->etc;
+    logger->warn("(Path to etc/: $etcdir)");
     return
   }
 
-  $core->cfg->{core} = dclone($newcfg->{core});
-  $core->log->info("Reloaded core config.");
+  core()->cfg->{core} = delete $newcfg->{core};
+  
+  logger->info("Reloaded core config.");
+  
   ## Bot_rehash ($type) :
   broadcast( 'rehashed', 'core' );
+  
   return 1
 }
 
 sub _rehash_channels_cf {
   my ($self) = @_;
-  my $core = $self->{core};
   
   my $newcfg = $self->_get_new_cfg || return;
   
   unless ($newcfg->{channels} and ref $newcfg->{channels} eq 'HASH') {
-    $core->log->warn("Rehashed conf appears to be missing channels conf");
-    $core->log->warn("Is your channels.conf broken?");
-    my $etcdir = $core->etc;
-    $core->log->warn("(Path to etc/: $etcdir)");
+    logger->warn("Rehashed conf appears to be missing channels conf");
+    logger->warn("Is your channels.conf broken?");
+    my $etcdir = core()->etc;
+    logger->warn("(Path to etc/: $etcdir)");
     return
   }
 
-  $core->cfg->{channels} = dclone($newcfg->{channels});
-  $core->log->info("Reloaded channels config.");
+  core()->cfg->{channels} = delete $newcfg->{channels};
+  logger->info("Reloaded channels config.");
   broadcast( 'rehashed', 'channels' );
   return 1
 }
 
 sub _rehash_langset {
-  my ($self) = @_;
-  my $core = $self->{core};
+  my ($self, $langset) = @_;
   
   my $newcfg  = $self->_get_new_cfg || return;
-  my $lang = $newcfg->{core}->{Language} // 'english' ;
-  my $prefix = $core->etc ."/langs/" ;
-  
-  my $new_rpl = Bot::Cobalt::Lang->load_langset($lang, $prefix);
+
+  my $lang = $langset || $newcfg->{core}->{Language} || 'english' ;
+
+  my $new_rpl = core()->load_langset($lang);
   
   unless ($new_rpl && ref $new_rpl eq 'HASH') {
-    $core->log->warn("Bot::Cobalt::Lang did not return a hash.");
-    $core->log->warn("Failed to load langset $lang from $prefix");
+    logger->warn("load_langset() did not return a hash.");
+    logger->warn("Failed to load langset $lang");
     return
   }
   
   unless (scalar keys %$new_rpl) {
-    $core->log->warn("Bot::Cobalt::Lang returned a hash with no keys.");
-    $core->log->warn("Failed to load langset $lang from $prefix");
+    logger->warn("load_langset() returned a hash with no keys.");
+    logger->warn("Failed to load langset $lang");
     return
   }
   
   for my $this_rpl (keys %$new_rpl) {
-    $core->log->debug("Updated: $this_rpl")
-      if $core->debug > 2;
-    $core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
+    logger->debug("Updated: $this_rpl")
+      if core->debug > 2;
+    core->lang->{$this_rpl} = $new_rpl->{$this_rpl};
   }
-  $core->log->info("Reloaded core langset ($lang)");
+  logger->info("Reloaded core langset ($lang)");
   broadcast( 'rehashed', 'langset' );
   return 1
 }
 
 sub _get_new_cfg {
   my ($self) = @_;
-  my $core = $self->{core};
-  my $etcdir = $core->etc;
-  my $ccf = Bot::Cobalt::Conf->new(etc=>$etcdir);
+
+  logger->debug("Grabbing fresh config read . . . ");
+
+  my $etcdir = core->cfg->{path};
+  
+  my $ccf = Bot::Cobalt::Conf->new(
+    etc => $etcdir
+  );
+  
   my $newcfg = $ccf->read_cfg;
   
   unless (ref $newcfg eq 'HASH') {
-    $core->log->warn("_get_new_cfg; Bot::Cobalt::Conf did not return a hash");
-    $core->log->warn("(Path to etc/: $etcdir)");
+    logger->warn("_get_new_cfg; Bot::Cobalt::Conf did not return a hash");
+    logger->warn("(Path to etc/: $etcdir)");
     return
   }
+  
   return $newcfg
 }
 
