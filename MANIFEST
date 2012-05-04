@@ -32,8 +32,6 @@ lib/Bot/Cobalt/Core/Role/Timers.pm
 lib/Bot/Cobalt/Core/Role/Unloader.pm
 lib/Bot/Cobalt/Core/Sugar.pm
 lib/Bot/Cobalt/DB.pm
-lib/Bot/Cobalt/DB/Async.pm
-lib/Bot/Cobalt/DB/Async/Worker.pm
 lib/Bot/Cobalt/Frontend/RC.pm
 lib/Bot/Cobalt/Frontend/Utils.pm
 lib/Bot/Cobalt/IRC.pm
