@@ -89,5 +89,6 @@ sub write_conf {
   return 1
 }
 
+
 ## FIXME offer to try appending to plugins.conf ?
 ##  -> copy to .bak
