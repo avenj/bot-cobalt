@@ -93,7 +93,7 @@ sub has_flag {
 sub flags {
   my ($self, $context, $nickname) = @_;
 
-  return unless exists $self->_list->{$context}
+  return {} unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname}
          and ref $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
 
@@ -208,7 +208,8 @@ unknown.
 
   ->flags($context, $nickname)
 
-Return flags HASH for a specified nickname, or empty list for unknown.
+Return flags HASH for a specified nickname, or empty hashref for 
+unknown.
 
 =head2 has_flag
 
