@@ -860,6 +860,8 @@ sub _user_search {
 
   ## Auth should've already been checked in user_* dispatcher
 
+  ## FIXME
+
   ## search by: username, host, ... ?
   ## limit results ?
 
@@ -1017,8 +1019,13 @@ sub _user_chmask {
     );
   } else {
     ## Remove a mask (the inefficient way, at the moment - lazy)
-    ## FIXME does no checking to see if mask exists atm
+
     my @masks = grep { $_ ne $host } @{ $alist_ref->{Masks} };
+    if (@masks == @{$alist_ref->{Masks}}) {
+      ## FIXME RPL
+      return "Mask not found."
+    }
+    
     $alist_ref->{Masks} = \@masks;
     $resp = rplprintf( core->lang->{AUTH_MASK_DELETED},
       { nick => $nick, user => $target_user, mask => $host }
@@ -1033,6 +1040,8 @@ sub _user_chmask {
       "List write failed in _user_chmask, admin should check logs"
     );
   }
+
+  return
 }
 
 sub _user_chpass {
