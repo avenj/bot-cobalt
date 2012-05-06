@@ -452,6 +452,15 @@ sub _cmd_user {
     return 'No command specified'
   }
 
+  ## All of these need *some* access level
+  ## Bail early if we don't know this user
+  my $auth_lev = core->auth->level($context, $msg->src_nick);
+  unless ($auth_lev) {
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
+      { nick => $msg->src_nick },
+    ); 
+  }
+
   my $method = "_user_".$cmd;
   if ( $self->can($method) ) {
     core->log->debug("dispatching $method for ".$msg->src_nick);
@@ -848,8 +857,8 @@ sub _user_info {
 sub _user_search {
   my ($self, $context, $msg) = @_;
   my $nick = $msg->src_nick;
-  my $auth_lev = core->auth->level($context, $nick);
-  my $auth_usr = core->auth->username($context, $nick);
+
+  ## Auth should've already been checked in user_* dispatcher
 
   ## search by: username, host, ... ?
   ## limit results ?
@@ -857,7 +866,91 @@ sub _user_search {
 }
 
 sub _user_chflags {
+  my ($self, $context, $msg) = @_;
+  my $nick = $msg->src_nick;
+  
+  my $auth_lev = core->auth->level($context, $nick);
+  my $auth_usr = core->auth->username($context, $nick);
+  
+  my $pcfg = core->get_plugin_cfg($self);
+  my $req_lev = $pcfg->{RequiredPrivs}->{DeletingUsers};
+  
+  my @message = @{ $msg->message_array };
+  my $target_user = $message[2];
+  my @flags = @message[3 .. $#message];
 
+  unless ($target_user && @flags) {
+    return "Syntax: user chflags <username> <+/-flag> ..."
+  }
+  
+  my $alist_ref = $self->AccessList->{$context}->{$target_user};
+  unless ($alist_ref) {
+    return rplprintf( core->lang->{AUTH_USER_NOSUCH},
+      { nick => $nick, user => $target_user }
+    );
+  }
+  
+  my $target_user_lev = $alist_ref->{Level};
+  
+  my $auth_flags = core->auth->flags($context, $nick);
+
+  unless ($auth_lev >= $req_lev 
+    && ($auth_lev > $target_user_lev || $auth_usr eq $target_user
+        || $auth_flags->{SUPERUSER}) )  {
+    
+    my $src = $msg->src;
+    logger->warn(
+      "Access denied in chmask: $src tried to chflags $target_user"
+    );
+    
+    return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
+      { nick => $nick, lev => $auth_lev }
+    );
+  }
+
+  my $resp;
+  FLAG: for my $this_flag (@flags) {
+    my $first = substr($this_flag, 0, 1, '');
+    $this_flag = uc($this_flag||'');
+    
+    unless ($first && $this_flag) {
+      return "Bad syntax; flags should be in the form of -/+FLAG"
+    }
+    
+    given ($first) {
+      when ("+") {
+        logger->debug(
+          "$nick ($auth_usr) flag add $target_user $this_flag"
+        );
+        
+        $alist_ref->{Flags}->{$this_flag} = 1;
+      }
+      
+      when ("-") {
+        logger->debug(
+          "$nick ($auth_usr) flag drop $target_user $this_flag"
+        );
+        
+        delete $alist_ref->{Flags}->{$this_flag};
+      }
+      
+      default { 
+        return "Bad syntax; flags should be prefixed by + or -" 
+      }
+    
+    }
+    
+  }  ## FLAG
+
+  if ( $self->_write_access_list ) {
+    broadcast( 'message', $context, $nick,
+      "Adjusted flags for $target_user"
+    );
+  } else {
+    broadcast( 'message', $context, $nick,
+      "List write failed in _user_chflags, admin should check logs"
+    );
+  }
 }
 
 sub _user_chmask {
@@ -890,8 +983,13 @@ sub _user_chmask {
   my $target_user_lev = $alist_ref->{Level};
   my $flags = core->auth->flags($context, $nick);
   
+  ## Must be: 
+  ##  higher than target user's lev
+  ##   or adjusting your own mask
+  ##   or superuser
   unless ($auth_lev >= $req_lev 
-    && ($auth_lev > $target_user_lev || $flags->{SUPERUSER}) ) {
+    && ($auth_lev > $target_user_lev || $auth_usr eq $target_user
+        || $flags->{SUPERUSER}) )  {
     
     my $src = $msg->src;
     core->log->warn(
@@ -907,16 +1005,34 @@ sub _user_chmask {
   unless ($oper && $host) {
     return "Bad mask specification, should be operator (+ or -) followed by mask"
   }
-
-  if ($oper eq '+') {
-    ## Add a mask
-  } else {
-    ## Remove a mask
-  }
   
-  ## [+/-]mask syntax
-  ## FIXME normalize masks before adding 
+  $host = normalize_mask($host);
+
+  my $resp;
+  if ($oper eq '+') {
+    push(@{ $alist_ref->{Masks} }, $host)
+      unless $host ~~ @{ $alist_ref->{Masks} };
+    $resp = rplprintf( core->lang->{AUTH_MASK_ADDED},
+      { nick => $nick, user => $target_user, mask => $host }
+    );
+  } else {
+    ## Remove a mask (the inefficient way, at the moment - lazy)
+    ## FIXME does no checking to see if mask exists atm
+    my @masks = grep { $_ ne $host } @{ $alist_ref->{Masks} };
+    $alist_ref->{Masks} = \@masks;
+    $resp = rplprintf( core->lang->{AUTH_MASK_DELETED},
+      { nick => $nick, user => $target_user, mask => $host }
+    );
+  }
+
   ## call a list sync
+  if ( $self->_write_access_list ) {
+    broadcast( 'message', $context, $nick, $resp );
+  } else {
+    broadcast( 'message', $context, $nick,
+      "List write failed in _user_chmask, admin should check logs"
+    );
+  }
 }
 
 sub _user_chpass {
