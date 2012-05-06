@@ -6,9 +6,7 @@ Bot::Cobalt::Manual::Plugins::Dist - Packaging Cobalt plugins
 
 =head1 DESCRIPTION
 
-Packaging Cobalt plugins is just like packaging any other Perl module, 
-except that you can (if you like) install them to the Bot::Cobalt::Plugin::User 
-namespace.
+Packaging Cobalt plugins is just like packaging any other Perl module. 
 
 Typically, the easiest way to do so is via L<Module::Build>.
 
@@ -17,10 +15,14 @@ Typically, the easiest way to do so is via L<Module::Build>.
 Create a dist dir for your module:
 
   $ mkdir Cobalt-Plugin-User-MyPlugin
+
   $ cd Cobalt-Plugin-User-MyPlugin
+
    # create this dist's libdir:
   $ mkdir -p lib/Cobalt/Plugin/User/
+
   $ cd lib/Cobalt/Plugin/User/
+
    # create your plugin:
   $ $EDITOR MyPlugin.pm
 
@@ -31,6 +33,9 @@ Create a dist dir for your module:
   
   use strict;
   use warnings;
+  
+  use Bot::Cobalt;
+  use Bot::Cobalt::Common;
   
   sub new { bless {}, shift }
   
@@ -50,7 +55,8 @@ Create a dist dir for your module:
   
   1;
 
-See L<Bot::Cobalt::Manual::Plugins> for more on writing plugins.
+See L<Bot::Cobalt::Manual::Plugins> for more on writing plugins and 
+L<Bot::Cobalt::Manual::Plugins::Tutorial> for a walk-through.
 
 =head2 Build.PL
 
@@ -73,31 +79,17 @@ Here's a simple one based around one centralized plugin:
   $build->create_build_script;
 
 
-You could distribute a plugin set with a B<Build.PL> along these lines:
-
-  my $build = Module::Build->new(
-    dist_version  => '0.01',
-    module_name   => 'Bot::Cobalt::Plugin::User::MyPlugins',
-    dist_name     => 'Cobalt-Plugin-User-MyPlugins',
-    dist_abstract => 'My Bot::Cobalt plugin set',
-    dist_author   => 'Me <myself@example.ext>',
-    license => 'perl',
-    create_makefile_pl => 'small',
-    requires => {
-      'Bot::Cobalt::Core' => '0.200',
-    },
-  );
-  $build->create_build_script;
-
-
 You'll want to create B<META> files and a B<MANIFEST> for your 
 distribution. L<Module::Build> can do this for you:
 
   $ perl Build.PL
+
    # build a MANIFEST.SKIP for your dist:
   $ ./Build manifest_skip
+
    # build MANIFEST:
   $ ./Build manifest
+
    # build META files:
   $ ./Build distmeta
 
@@ -110,7 +102,9 @@ C<cpan> by unpacking your plugin dist and specifying the local directory:
 ...or via Module::Build directly:
 
   $ perl Build.PL
+
   $ ./Build
+
    # may need root access (or perhaps L<local::lib>):
   $ ./Build install
 
@@ -118,6 +112,7 @@ L<App::cpanminus> makes this even easier:
 
    # Ereate a dist tarball:
   $ ./Build dist
+
    # Easy install via cpanm:
   $ cpanm ./Cobalt-Plugin-User-MyPlugin-1.00.tar.gz
 
