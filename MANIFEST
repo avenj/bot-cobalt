@@ -57,10 +57,8 @@ lib/Bot/Cobalt/Manual/User.pod
 lib/Bot/Cobalt/Plugin/Alarmclock.pm
 lib/Bot/Cobalt/Plugin/Auth.pm
 lib/Bot/Cobalt/Plugin/ChanMgr.pm
-lib/Bot/Cobalt/Plugin/Extras/BanMgr.pm
 lib/Bot/Cobalt/Plugin/Extras/Debug.pm
 lib/Bot/Cobalt/Plugin/Extras/DNS.pm
-lib/Bot/Cobalt/Plugin/Extras/Ignore.pm
 lib/Bot/Cobalt/Plugin/Extras/Karma.pm
 lib/Bot/Cobalt/Plugin/Extras/Money.pm
 lib/Bot/Cobalt/Plugin/Extras/Relay.pm
