@@ -32,6 +32,10 @@ sub Cobalt_register {
   $self->{Cache} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => 20,
   );
+  
+  $self->{NegCache} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
+    MaxKeys => 8,
+  );
 
   my $cfg = $core->get_plugin_cfg( $self );
   my $var = $core->var;
@@ -390,7 +394,7 @@ sub _info_add {
 
   ## invalidate info3 cache:
   $self->{Cache}->invalidate('info3');
-  $self->{Cache}->invalidate('info3_neg');
+  $self->{NegCache}->invalidate('info3_neg');
   
   ## add to internal hashes:
   my $compiled_re = qr/$re/i;
@@ -452,7 +456,7 @@ sub _info_del {
   $self->{DB}->dbclose;
   
   $self->{Cache}->invalidate('info3');
-  $self->{Cache}->invalidate('info3_neg');
+  $self->{NegCache}->invalidate('info3_neg');
 
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
@@ -508,7 +512,7 @@ sub _info_replace {
   $core->log->debug("replace called for $glob by $nick ($auth_user)");
   
   $self->{Cache}->invalidate('info3');
-  $self->{Cache}->invalidate('info3_neg');
+  $self->{NegCache}->invalidate('info3_neg');
 
   unless ($self->{DB}->dbopen) {
     $core->log->warn("DB open failure");
@@ -764,7 +768,7 @@ sub _info_match {
 
   my $str;
 
-  return if $self->{Cache}->fetch('info3_neg', $txt);
+  return if $self->{NegCache}->fetch('info3_neg', $txt);
 
   for my $re (keys %{ $self->{Regexes} }) {
     if ($txt =~ $re) {
@@ -792,7 +796,7 @@ sub _info_match {
 
   ## negative searchcache if there's no match
   ## really only helps in case of flood ...
-  $self->{Cache}->cache('info3_neg', $txt, [1]);
+  $self->{NegCache}->cache('info3_neg', $txt, [1]);
   return
 }
 
