@@ -102,7 +102,9 @@ sub Bot_public_cmd_rehash {
     }
     
     when ("langset") {
-      if ($self->_rehash_langset) {
+      my $lang = $msg->message_array->[1];
+    
+      if ($self->_rehash_langset($lang)) {
         $resp = "Reloaded core language set.";
       } else {
         $resp = "Rehashing langset failed; administrator should check logs.";
@@ -266,6 +268,10 @@ Bot::Cobalt::Plugin::Rehash - rehash configuration on-the-fly
   
   All of the above:
    !rehash all
+
+  Load a different language set:
+   !rehash langset ebonics
+   !rehash langset english
 
 =head1 DESCRIPTION
 
