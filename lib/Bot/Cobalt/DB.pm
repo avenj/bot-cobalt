@@ -19,33 +19,44 @@ use IO::File;
 use Bot::Cobalt::Serializer;
 use Bot::Cobalt::Common qw/:types/;
 
-has 'File' => ( is => 'rw', isa => Str, required => 1 );
+has 'File'  => ( is => 'rw', isa => Str, required => 1 );
 
-has 'Perms'   => ( is => 'rw', default => sub { 0644 } );
-has 'Timeout' => ( is => 'rw', isa => Num, default => sub { 5 } );
-has 'Raw'     => ( is => 'rw', isa => Bool, default => sub { 0 } );
+has 'Perms' => ( is => 'rw', 
+  default => sub { 0644 },
+);
+
+has 'Raw'     => ( is => 'rw', isa => Bool, 
+  default => sub { 0 },
+);
+
+
+has 'Timeout' => ( is => 'rw', isa => Num, 
+  default => sub { 5 },
+);
 
 has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
   default => sub {
-    Bot::Cobalt::Serializer->new(Format => 'JSON');
+    Bot::Cobalt::Serializer->new(Format => 'JSON')
   },
 );
 
-## Orig is the original tie().
-has 'Orig'   => ( is => 'rw', isa => HashRef, default => sub { {} } );
+## _orig is the original tie().
+has '_orig' => ( is => 'rw', isa => HashRef, 
+  default => sub { {} },
+);
 
 ## Tied is the re-tied DB hash.
-has 'Tied'   => ( is => 'rw', isa => HashRef, 
+has 'Tied' => ( is => 'rw', isa => HashRef, 
   default   => sub { {} },
 );
 
-has 'LockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
+has '_lockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
   predicate => 'has_LockFH',
   clearer   => 'clear_LockFH', 
 );
 
 ## LOCK_EX or LOCK_SH for current open
-has 'LockMode' => ( is => 'rw', lazy => 1,
+has '_lockmode' => ( is => 'rw', lazy => 1,
   predicate => 'has_LockMode',
   clearer   => 'clear_LockMode',
 );
@@ -56,7 +67,9 @@ has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
   clearer   => 'clear_DB',
 );
 
-has 'is_open' => ( is => 'rw', isa => Bool, default => sub { 0 } );
+has 'is_open' => ( is => 'rw', isa => Bool,
+  default => sub { 0 },
+);
 
 sub BUILDARGS {
   my ($class, @args) = @_;
@@ -88,25 +101,25 @@ sub dbopen {
   if ($args{ro} || $args{readonly}) {
     $lflags = LOCK_SH | LOCK_NB  ;
     $fflags = O_CREAT | O_RDONLY ;
-    $self->LockMode(LOCK_SH);
+    $self->_lockmode(LOCK_SH);
   } else {
     $lflags = LOCK_EX | LOCK_NB;
     $fflags = O_CREAT | O_RDWR ;
-    $self->LockMode(LOCK_EX);
+    $self->_lockmode(LOCK_EX);
   }
   
   my $path = $self->File;
 
  ## proper DB_File locking:
-  ## open and tie the DB to Orig
+  ## open and tie the DB to _orig
   ## set up object
   ## call a sync() to create if needed
-  my $orig_db = tie %{ $self->Orig }, "DB_File", $path,
+  my $orig_db = tie %{ $self->_orig }, "DB_File", $path,
       $fflags, $self->Perms, $DB_HASH
       or croak "failed db open: $path: $!" ;
   $orig_db->sync();
   
-  ## dup a FH to $db->fd for LockFH  
+  ## dup a FH to $db->fd for _lockFH  
   my $fd = $orig_db->fd;
   my $fh = IO::File->new("<&=$fd")
     or croak "failed dup in dbopen: $!";
@@ -114,12 +127,12 @@ sub dbopen {
   my $timer = 0;
   my $timeout = $self->Timeout;
 
-  ## flock LockFH
+  ## flock _lockFH
   until ( flock $fh, $lflags ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
       undef $orig_db; undef $fh;
-      untie %{ $self->Orig };
+      untie %{ $self->_orig };
       return
     }
     select undef, undef, undef, 0.1;
@@ -133,7 +146,7 @@ sub dbopen {
 
   ## preserve db obj and lock fh
   $self->is_open(1);
-  $self->LockFH( $fh );
+  $self->_lockFH( $fh );
   $self->DB($db);
   undef $orig_db;
 
@@ -173,7 +186,7 @@ sub dbclose {
     return
   }
   
-  if ($self->LockMode == LOCK_EX) {
+  if ($self->_lockmode == LOCK_EX) {
     $self->DB->sync();
   }
 
@@ -181,11 +194,11 @@ sub dbclose {
   untie %{ $self->Tied }
     or carp "dbclose: untie Tied: $!";
 
-  flock( $self->LockFH, LOCK_UN )
+  flock( $self->_lockFH, LOCK_UN )
     or carp "dbclose: unlock: $!";  
 
-  untie %{ $self->Orig }
-    or carp "dbclose: untie Orig: $!";
+  untie %{ $self->_orig }
+    or carp "dbclose: untie _orig: $!";
 
   $self->clear_LockFH;
   $self->clear_LockMode;
