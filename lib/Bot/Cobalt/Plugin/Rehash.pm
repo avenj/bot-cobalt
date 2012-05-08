@@ -253,7 +253,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Rehash - rehash configuration on-the-fly
+Bot::Cobalt::Plugin::Rehash - Rehash config or langs on-the-fly
 
 =head1 SYNOPSIS
 
@@ -275,11 +275,15 @@ Bot::Cobalt::Plugin::Rehash - rehash configuration on-the-fly
 
 =head1 DESCRIPTION
 
-Reloads configuration files on the fly.
+Reloads configuration files or language sets on the fly.
 
-B<IMPORTANT:> The Rehash plugin does B<not> reload plugin-specific configs.
+Few guarantees regarding consequences are made as of this writing; 
+playing with core configuration options might not necessarily always do 
+what you expect. (Feel free to report as bugs via either RT or e-mail, 
+of course.)
 
-For that, use a plugin manager's reload ability. See L<Bot::Cobalt::Plugin::PluginMgr>.
+B<IMPORTANT:> The Rehash plugin does B<not> reload plugin-specific 
+configs. For that, use a plugin manager's reload ability. See L<Bot::Cobalt::Plugin::PluginMgr>.
 
 =head1 EMITTED EVENTS
 

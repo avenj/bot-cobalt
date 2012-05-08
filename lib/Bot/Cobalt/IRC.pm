@@ -1037,8 +1037,8 @@ Bot::Cobalt::IRC -- Standard Cobalt IRC-bridging plugin
 
 =head1 DESCRIPTION
 
-B<Cobalt> handles incoming and outgoing IRC activity just like any other 
-plugin pipeline events.
+Incoming and outgoing IRC activity is handled just like any other 
+plugin pipeline event.
 
 The core IRC plugin provides a multi-server IRC interface via
 L<POE::Component::IRC>. Any other IRC plugins should follow this pattern 

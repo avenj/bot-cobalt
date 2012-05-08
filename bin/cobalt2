@@ -33,8 +33,8 @@ GetOptions(
 
   ## Informational
   version => sub {
-    require Bot::Cobalt::Core;
-    print("cobalt $Bot::Cobalt::Core::VERSION\n"); 
+    require Bot::Cobalt;
+    print("cobalt $Bot::Cobalt::VERSION\n"); 
     exit 0
   },
 

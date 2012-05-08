@@ -1,6 +1,9 @@
 package Bot::Cobalt::Plugin::WWW;
 our $VERSION = '0.200_48';
 
+## FIXME seems to fail when the intertubes are clogged for some 
+## extended duration; noticed locally when my router goes MIA ...
+
 use 5.10.1;
 use strictures 1;
 
@@ -54,8 +57,6 @@ has 'max_workers' => ( is => 'rw', isa => Int, lazy => 1,
 has 'Requests' => ( is => 'rw', isa => HashRef,
   default => sub { {} },
 );
-
-has 'NON_RELOADABLE' => ( is => 'rw', default => sub { 1 } );
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
