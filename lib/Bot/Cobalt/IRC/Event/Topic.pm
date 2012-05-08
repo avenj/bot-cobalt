@@ -2,8 +2,7 @@ package Bot::Cobalt::IRC::Event::Topic;
 our $VERSION = '0.200_48';
 
 use Moo;
-use Bot::Cobalt::Common qw/:types/;
-use IRC::Utils qw/strip_color strip_formatting/;
+use Bot::Cobalt::Common qw/:types :string/;
 
 extends 'Bot::Cobalt::IRC::Event::Channel';
 
