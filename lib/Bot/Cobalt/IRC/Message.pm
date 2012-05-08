@@ -12,7 +12,9 @@ extends 'Bot::Cobalt::IRC::Event';
 has 'message' => ( is => 'rw', isa => Str, required => 1,
   trigger => sub {
     my ($self, $value) = @_;
-    $self->stripped( strip_color( strip_formatting($value) ) );
+    $self->_set_stripped( 
+      strip_color( strip_formatting($value) ) 
+    ) if $self->has_stripped;
     
     if ($self->has_message_array) {
       $self->message_array([ split ' ', $self->stripped ]);
@@ -42,22 +44,31 @@ has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
 );
 
 ## Message content.
-has 'stripped' => ( is => 'rw', isa => Str, lazy => 1 );
+has 'stripped' => ( is => 'ro', isa => Str, lazy => 1,
+  writer    => '_set_stripped',
+  predicate => 'has_stripped',
+  default => sub {
+    strip_color( strip_formatting($_[0]->message) )
+  },
+);
 
 has 'message_array' => ( is => 'rw', lazy => 1, isa => ArrayRef,
   default => sub { [ split ' ', $_[0]->stripped ] },
   trigger => sub {
+    ## Generally shouldn't be modified except internally ..
+    ## .. but hey, enough rope to hang yourself never hurt anyone
     my ($self) = @_;
     if ($self->has_message_array_sp) {
-      $self->message_array_sp([ split / /, $self->stripped ]);
+      $self->_set_message_array_sp([ split / /, $self->stripped ]);
     }
   },
   predicate => 'has_message_array',
 );
 
-has 'message_array_sp' => ( is => 'rw', lazy => 1, isa => ArrayRef,
+has 'message_array_sp' => ( is => 'ro', lazy => 1, isa => ArrayRef,
   default => sub { [ split / /, $_[0]->stripped ] },
   predicate => 'has_message_array_sp',
+  writer    => '_set_message_array_sp',
 );
 
 
