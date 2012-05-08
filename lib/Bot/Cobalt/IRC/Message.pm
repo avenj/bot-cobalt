@@ -20,10 +20,18 @@ has 'message' => ( is => 'rw', isa => Str, required => 1,
   },
 );
 
-has 'targets' => ( is => 'rw', isa => ArrayRef, required => 1 );
+has 'targets' => ( is => 'rw', isa => ArrayRef, required => 1,
+  trigger => sub {
+    my ($self, $value) = @_;
+    $self->_set_target($value->[0])
+      if $self->has_target;
+  } 
+);
 
-has 'target'  => ( is => 'rw', isa => Str, lazy => 1,
-  default => sub { $_[0]->targets->[0] }, 
+has 'target'  => ( is => 'ro', isa => Str, lazy => 1,
+  default   => sub { $_[0]->targets->[0] },
+  predicate => 'has_target',
+  writer    => '_set_target',
 );
 
 ## May or may not have a channel.

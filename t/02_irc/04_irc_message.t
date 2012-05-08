@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 13;
 use strict; use warnings;
 
 ## FIXME colorize string then check stripped() ?
@@ -25,6 +25,9 @@ ok( $msg->context eq 'Context', 'context()' );
 ok( $msg->message eq 'Some IRC message', 'message()' );
 ok( $msg->target eq 'JoeUser', 'target()');
 ok( $msg->stripped eq 'Some IRC message', 'stripped()' );
+
+ok( $msg->targets([ 'Bob', 'Sam' ]), 'Reset targets()' );
+ok( $msg->target eq 'Bob', 'target() after reset' );
 ## FIXME test arrays
 
 ## FIXME test arrays after resetting message
