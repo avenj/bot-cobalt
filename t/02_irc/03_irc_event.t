@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 11;
 use strict; use warnings;
 
 BEGIN{
@@ -6,13 +6,19 @@ BEGIN{
 }
 
 my $ev = new_ok('Bot::Cobalt::IRC::Event' => 
-  [ context => 'Main', src => 'yomomma!your@mother.org' ]
+  [ context => 'Main', src => 'snacks!things@stuff.org' ]
 );
 
 ok( $ev->context eq 'Main', 'context()' );
 
-ok( $ev->src eq 'yomomma!your@mother.org', 'src()' );
+ok( $ev->src eq 'snacks!things@stuff.org', 'src()' );
 
-ok( $ev->src_nick eq 'yomomma', 'src_nick()' );
-ok( $ev->src_user eq 'your', 'src_user()' );
-ok( $ev->src_host eq 'mother.org', 'src_host()' );
+ok( $ev->src_nick eq 'snacks', 'src_nick()' );
+ok( $ev->src_user eq 'things', 'src_user()' );
+ok( $ev->src_host eq 'stuff.org', 'src_host()' );
+
+ok( $ev->src('cake!pies@bakedgoods.org'), 'Reset src()' );
+
+ok( $ev->src_nick eq 'cake', 'src_nick after reset' );
+ok( $ev->src_user eq 'pies', 'src_user after reset' );
+ok( $ev->src_host eq 'bakedgoods.org', 'src_host after reset' );

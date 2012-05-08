@@ -8,18 +8,41 @@ use Bot::Cobalt::Common;
 use Moo;
 
 has 'context' => ( is => 'rw', isa => Str, required => 1 );
-has 'src'     => ( is => 'rw', isa => Str, required => 1 );
 
-has 'src_nick' => (  is => 'rw', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[0] },
+has 'src'     => ( is => 'rw', isa => Str, required => 1, 
+  trigger => sub {
+    ## If 'src' changes, reset nick/user/host as-needed.
+    my ($self, $value) = @_;
+    
+    my @types  = qw/nick user host/;
+    my %pieces;
+    @pieces{@types} = parse_user($value);
+    
+    for (@types) {
+      my $meth    = '_set_src_'.$_;
+      my $hasmeth = 'has_src_'.$_;
+      $self->$meth($pieces{$_})
+        if $self->$hasmeth;
+    }
+  }
 );
 
-has 'src_user' => (  is => 'rw', lazy => 1,
+has 'src_nick' => (  is => 'ro', lazy => 1,
+  default   => sub { (parse_user($_[0]->src))[0] },
+  predicate => 'has_src_nick',
+  writer    => '_set_src_nick',
+);
+
+has 'src_user' => (  is => 'ro', lazy => 1,
   default => sub { (parse_user($_[0]->src))[1] },
+  predicate => 'has_src_user',
+  writer    => '_set_src_user',
 );
 
-has 'src_host' => (  is => 'rw', lazy => 1,
+has 'src_host' => (  is => 'ro', lazy => 1,
   default => sub { (parse_user($_[0]->src))[2] },
+  predicate => 'has_src_host',
+  writer    => '_set_src_host',
 );
 
 1;
