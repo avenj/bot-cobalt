@@ -16,12 +16,15 @@ has 'cmd' => ( is => 'rw', lazy => 1,
     my $cf_core = core->get_core_cfg;
     my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!' ;
     my $txt = $self->stripped;
+
     if ($txt =~ /^${cmdchar}([^\s]+)/) {
       my $message = $self->message_array;
       shift @$message;
       $self->message_array($message);
+
       return lc($1)
     }
+
     undef
   },
 );
@@ -77,7 +80,11 @@ Used to see if someone is "talking to" the bot.
 If the message appears to actually be a command and some arguments, 
 B<cmd> will return the specified command and automatically shift 
 the B<message_array> leftwards to drop the command from 
-B<message_array>.
+B<message_array>. 
+
+Normally this isn't used directly by plugins other 
+than L<Cobalt::IRC>; a Message object handed off by a Bot_public_cmd_* 
+event has this done for you already, for example.
 
 =head1 AUTHOR
 
