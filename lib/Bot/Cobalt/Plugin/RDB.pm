@@ -157,7 +157,6 @@ sub Bot_public_msg {
   return PLUGIN_EAT_NONE unless $msg->highlight;
   ## uses message_array_sp, ie spaces are preserved
   ## (so don't include them prior to rdb names, for example)
-  ## FIXME: document this behavior
   my $msg_arr = $msg->message_array_sp;
   ## since this is a highlighted message, bot's nickname is first
   my ($cmd, @message) = @$msg_arr[1 .. (scalar @$msg_arr - 1)];
@@ -511,8 +510,6 @@ sub _cmd_rdb_dbdel {
   if ($retval) {
     $rpl = "RDB_DELETED";
   } else {
-    ## FIXME handle retvals from _delete_rdb
-    ## _delete_rdb should act like Database.pm
     given ($err) {
       $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
       $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
