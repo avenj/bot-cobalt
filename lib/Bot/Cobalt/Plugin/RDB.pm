@@ -396,7 +396,7 @@ sub _cmd_randq {
 
 
 sub _cmd_rdb {
-  ## cmd handler for:
+  ## Command dispatcher for:
   ##   rdb add
   ##   rdb del
   ##   rdb get 
@@ -406,8 +406,6 @@ sub _cmd_rdb {
   ##   rdb search
   ##   rdb searchidx
   ## FIXME rdb dblist ?
-  ## this got out of hand fast.
-  ## really needs to be dispatched out, badly.
   my ($self, $parsed_msg_a, $msg) = @_;
   my @message = @{ $parsed_msg_a };
 
@@ -441,296 +439,331 @@ sub _cmd_rdb {
     
   my $context  = $msg->context;
   my $nickname = $msg->src_nick;
+
   my $user_lev = core->auth->level($context, $nickname) // 0;
-  my $username = core->auth->username($context, $nickname);
   unless ($user_lev >= $access_levs{$cmd}) {
     return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nickname }
     );
   }
 
-  my $dbmgr = $self->DBmgr;
-
-  my $resp;
-  given ($cmd) {
-
-    when ("dbadd") {
-      ## _create a new rdb if it doesn't exist
-      my ($rdb) = @message;
-      return 'Syntax: rdb dbadd <RDB>' unless $rdb;
-      
-      return 'RDB name must be in the a-z0-9 set'
-        unless $rdb =~ /^[a-z0-9]+$/;
-
-      return 'RDB name must be less than 32 characters'
-        unless length $rdb <= 32;
-
-      my $retval = $dbmgr->createdb($rdb);
-
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-        op  => $cmd,
-      };
-      
-      my $rpl;      
-      if ($retval) {
-        $rpl = "RDB_CREATED";
-      } else {
-        given ($dbmgr->Error) {
-          $rpl = "RDB_ERR_RDB_EXISTS" when "RDB_EXISTS";
-          $rpl = "RDB_DBFAIL"         when "RDB_DBFAIL";        
-          default { return "Unknown retval $retval from createdb"; }
-        }
-      }
-      
-      return rplprintf( core->lang->{$rpl}, $rplvars );
-    }
-
-    when ("dbdel") {
-      ## delete a rdb if we're allowed (per conf and requiredlev)
-      my ($rdb) = @message;
-      return 'Syntax: rdb dbdel <RDB>' unless $rdb;
-      
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-        op   => $cmd,
-      };
-
-      my ($retval, $err) = $self->_delete_rdb($rdb);
-      
-      my $rpl;
-      if ($retval) {
-        $rpl = "RDB_DELETED";
-      } else {
-        ## FIXME handle retvals from _delete_rdb
-        ## _delete_rdb should act like Database.pm
-        given ($err) {
-          $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
-          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-          $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
-          default { return "Unknown err $err from _delete_rdb" }
-        }
-      }
-      
-      return rplprintf( core->lang->{$rpl}, $rplvars );
-    }
-    
-    when ("add") {
-      my ($rdb, @items) = @message;
-      my $item = join ' ', @items;
-      return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
-
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-      };
-
-      my ($retval, $err) = 
-        $self->_add_item($rdb, decode_irc($item), $username);
-
-      my $rpl;
-      if ($retval) {
-        $rplvars->{index} = $retval;
-        $rpl = "RDB_ITEM_ADDED";
-      } else {
-        given ($err) {
-          $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
-          $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-          default { return "Unknown err $err from _add_item" }
-        }
-      }
-
-      return rplprintf( core->lang->{$rpl}, $rplvars );
-    }
-    
-    when ("del") {
-      my ($rdb, $item_idx) = @message;
-      return 'Syntax: rdb del <RDB> <index number>'
-        unless $rdb and $item_idx;
-
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-        index => $item_idx,
-      };
-
-      my ($retval, $err) = 
-        $self->_delete_item($rdb, $item_idx, $username);
-
-      my $rpl;
-      if ($retval) {
-        $rpl = "RDB_ITEM_DELETED";
-      } else {
-        given ($err) {
-          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-          $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-        }
-      }
-
-      return rplprintf( core->lang->{$rpl}, $rplvars ) ;      
-    }
-
-    when ("get") {
-      my ($rdb, $idx) = @message;
-      return 'Syntax: rdb get <RDB> <index key>'
-        unless $rdb and $idx;
-
-      return "Invalid item index ID"
-        unless $idx =~ /^[0-9a-f]+$/;
-      $idx = lc($idx);
-
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-        ## Cut the index ID in response string to 16 chars
-        ## Gives some flex without making flooding too easy
-        index => substr($idx, 0, 16),
-      };
-      
-      my $dbmgr = $self->DBmgr;
-      unless ( $dbmgr->dbexists($rdb) ) {
-        return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
-      }
-      
-      my $item = $dbmgr->get($rdb, $idx);
-
-      if ($item && ref $item) {
-        my $content = ref $item eq 'HASH' ?
-                      $item->{String}
-                      : $item->[0] ;
-        $content = '(undef - broken db?)' unless defined $content;
-        return "[$idx] $content"
-      } else {
-        my $err = $dbmgr->Error || 'Unknown error';
-        my $rpl;
-        given ($err) {
-          $rpl = "RDB_ERR_NO_SUCH_ITEM"  when "RDB_NOSUCH_ITEM";
-          $rpl = "RDB_ERR_NO_SUCH_RDB"   when "RDB_NOSUCH";
-          $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
-          default { return "Error: $err" }
-        }
-        return rplprintf( core->lang->{$rpl}, $rplvars );
-      }
-
-    }
-
-    when ("info") {
-      ## return metadata about an item by rdb and index number
-      my ($rdb, $idx) = @message;
-      return 'Syntax: rdb info <RDB> <index key>'
-        unless $rdb;
-      
-      my $dbmgr = $self->DBmgr;
-
-      my $rplvars = {
-        nick => $nickname,
-        rdb  => $rdb,
-      };
-
-      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
-        unless $dbmgr->dbexists($rdb);
-
-      unless ($idx) {
-        my $n_keys = $dbmgr->get_keys($rdb);
-        return "RDB $rdb has $n_keys items"
-      } else {
-        return "Invalid item index ID"
-          unless $idx =~ /^[0-9a-f]+$/;
-        $idx = lc($idx);
-      }
-      
-      $rplvars->{index} = substr($idx, 0, 16);
-
-      my $item = $dbmgr->get($rdb, $idx);
-      unless ($item && ref $item) {
-        my $err = $dbmgr->Error || 'Unknown error';
-        my $rpl;
-        given ($err) {
-          $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-          $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-          $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-          default { return "Error: $err" }
-        }
-        return rplprintf( core->lang->{$rpl}, $rplvars );
-      }
-
-      my $addedat_ts = ref $item eq 'HASH' ?
-                       $item->{AddedAt}
-                       : $item->[1];
-      my $added_by   = ref $item eq 'HASH' ?
-                       $item->{AddedBy}
-                       : $item->[2];
-
-      my $added_dt = DateTime->from_epoch(
-        epoch => $addedat_ts // 0
-      );
-
-      $rplvars->{date} = $added_dt->date;
-      $rplvars->{time} = $added_dt->time;
-      $rplvars->{addedby} = $added_by // '(undef)' ;  
-
-      $resp = rplprintf( core->lang->{RDB_ITEM_INFO}, $rplvars );
-    }
-
-    when ("search") {
-      ## search by rdb and string
-      ## parse, call _cmd_randq and just pass off to that
-      my ($rdb, $str) = @message;
-      $str = '*' unless $str;
-      return 'Syntax: rdb search <RDB> <string>' unless $rdb;
-
-      $resp = $self->_cmd_randq([], $msg, 'rdb', $rdb, $str)
-    }
-    
-    when ("searchidx") {
-      my ($rdb, $str) = @message;
-      return 'Syntax: rdb searchidx <RDB> <string>' 
-        unless $rdb and $str;
-      my $indices = $self->_searchidx($msg, 'indexes', $rdb, $str);
-      
-      ## if we posted out to asyncsearch, return immediately
-      return unless ref $indices eq 'ARRAY';
-
-      ## otherwise we should have indices
-      $indices->[0] = 'No matches' unless @$indices;
-      my $count = @$indices;
-      
-      my (@returned, $prefix);
-      if ($count > 30) {
-        @returned = @$indices[0 .. 29];
-        $prefix   = "Matches (30 of $count): ";
-      } else {
-        @returned = @$indices;
-        $prefix   = "Matches: ";
-      }
-
-      $resp = $prefix.join('  ', @returned);
-    }
-    
-    when ("count") {
-      my ($rdb, $str) = @message;
-      return 'Syntax: rdb count <RDB> <str>'
-        unless $rdb and $str;
-
-      my $indices = $self->_searchidx($msg, 'count', $rdb, $str);
-      
-      ## Same deal as searchidx, essentially.
-      return unless ref $indices eq 'ARRAY';
-
-      my $count = @$indices;
-      $resp = "$nickname: Found $count matches";
-    }
-
-  }
-
-  return $resp;
+  my $method = '_cmd_rdb_'.$cmd;
+  return $self->$method($msg, \@message) if $self->can($method);
+  
+  return "No handler found for command $cmd"
 }
 
+sub _cmd_rdb_dbadd {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my $dbmgr = $self->DBmgr;
+  
+  my ($rdb) = @$parsed_args;
+  
+  return 'Syntax: rdb dbadd <RDB>' unless $rdb;
 
+  return 'RDB name must be in the a-z0-9 set'
+    unless $rdb =~ /^[a-z0-9]+$/;
+
+  return 'RDB name must be less than 32 characters'
+    unless length $rdb <= 32;
+
+  my $retval = $dbmgr->createdb($rdb);
+
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+    op   => 'dbadd',
+  };
+  
+  my $rpl;      
+  if ($retval) {
+    $rpl = "RDB_CREATED";
+  } else {
+    given ($dbmgr->Error) {
+      $rpl = "RDB_ERR_RDB_EXISTS" when "RDB_EXISTS";
+      $rpl = "RDB_DBFAIL"         when "RDB_DBFAIL";        
+      default { return "Unknown retval $retval from createdb"; }
+    }
+  }
+  
+  return rplprintf( core->lang->{$rpl}, $rplvars );
+}
+
+sub _cmd_rdb_dbdel {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my $dbmgr = $self->DBmgr;
+  
+  my ($rdb) = @$parsed_args;
+
+  return 'Syntax: rdb dbdel <RDB>' unless $rdb;
+  
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+    op   => 'dbdel',
+  };
+
+  my ($retval, $err) = $self->_delete_rdb($rdb);
+  
+  my $rpl;
+  if ($retval) {
+    $rpl = "RDB_DELETED";
+  } else {
+    ## FIXME handle retvals from _delete_rdb
+    ## _delete_rdb should act like Database.pm
+    given ($err) {
+      $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
+      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+      $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
+      default { return "Unknown err $err from _delete_rdb" }
+    }
+  }
+  
+  return rplprintf( core->lang->{$rpl}, $rplvars );
+}
+
+sub _cmd_rdb_add {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my ($rdb, @pieces) = @$parsed_args;
+  my $item = join ' ', @pieces;
+
+  return 'Syntax: rdb add <RDB> <item>' unless $rdb and $item;
+
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+  };
+  
+  my $username = core->auth->username($msg->context, $msg->src_nick);
+
+  my ($retval, $err) = 
+    $self->_add_item($rdb, decode_irc($item), $username);
+
+  my $rpl;
+  if ($retval) {
+    $rplvars->{index} = $retval;
+    $rpl = "RDB_ITEM_ADDED";
+  } else {
+    given ($err) {
+      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
+      default { return "Unknown err $err from _add_item" }
+    }
+  }
+
+  return rplprintf( core->lang->{$rpl}, $rplvars )
+}
+
+sub _cmd_rdb_del {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my ($rdb, $item_idx) = @$parsed_args;
+
+  return 'Syntax: rdb del <RDB> <index number>'
+    unless $rdb and $item_idx;
+
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+    index => $item_idx,
+  };
+  
+  my $username = core->auth->username($msg->context, $msg->src_nick);
+
+  my ($retval, $err) = 
+    $self->_delete_item($rdb, $item_idx, $username);
+
+  my $rpl;
+  if ($retval) {
+    $rpl = "RDB_ITEM_DELETED";
+  } else {
+    given ($err) {
+      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
+    }
+  }
+
+  return rplprintf( core->lang->{$rpl}, $rplvars )
+}
+
+sub _cmd_rdb_get {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my $dbmgr = $self->DBmgr;
+
+  my ($rdb, $idx) = @$parsed_args;
+
+  return 'Syntax: rdb get <RDB> <index key>'
+    unless $rdb and $idx;
+
+  return "Invalid item index ID"
+    unless $idx =~ /^[0-9a-f]+$/i;
+
+  $idx = lc($idx);
+
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+    ## Cut the index ID in response string to 16 chars
+    ## Gives some flex without making flooding too easy
+    index => substr($idx, 0, 16),
+  };
+  
+  unless ( $dbmgr->dbexists($rdb) ) {
+    return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
+  }
+  
+  my $item = $dbmgr->get($rdb, $idx);
+
+  my $resp;
+  if ($item && ref $item) {
+    my $content = ref $item eq 'HASH' ?
+                  $item->{String}
+                  : $item->[0] ;
+    $content = '(undef - broken db?)' unless defined $content;
+
+    $resp = "[$idx] $content"
+  } else {
+    my $err = $dbmgr->Error || 'Unknown error';
+    my $rpl;
+    given ($err) {
+      $rpl = "RDB_ERR_NO_SUCH_ITEM"  when "RDB_NOSUCH_ITEM";
+      $rpl = "RDB_ERR_NO_SUCH_RDB"   when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
+      default { return "Error: $err" }
+    }
+
+    $resp = rplprintf( core->lang->{$rpl}, $rplvars );
+  }
+  
+  return $resp
+}
+
+sub _cmd_rdb_info {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my $dbmgr = $self->DBmgr;
+
+  my ($rdb, $idx) = @$parsed_args;
+
+  return 'Syntax: rdb info <RDB> <index key>'
+    unless $rdb;
+  
+  my $rplvars = {
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+  };
+
+  return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+    unless $dbmgr->dbexists($rdb);
+
+  unless ($idx) {
+    my $n_keys = $dbmgr->get_keys($rdb);
+    return "RDB $rdb has $n_keys items"
+  } else {
+    return "Invalid item index ID"
+      unless $idx =~ /^[0-9a-f]+$/i;
+    $idx = lc($idx);
+  }
+  
+  $rplvars->{index} = substr($idx, 0, 16);
+
+  my $item = $dbmgr->get($rdb, $idx);
+
+  unless ($item && ref $item) {
+    my $err = $dbmgr->Error || 'Unknown error';
+    my $rpl;
+    given ($err) {
+      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
+      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+      default { return "Error: $err" }
+    }
+    return rplprintf( core->lang->{$rpl}, $rplvars );
+  }
+
+  my $addedat_ts = ref $item eq 'HASH' ?
+                   $item->{AddedAt}
+                   : $item->[1];
+
+  my $added_by   = ref $item eq 'HASH' ?
+                   $item->{AddedBy}
+                   : $item->[2];
+
+  my $added_dt = DateTime->from_epoch(
+    epoch => $addedat_ts // 0
+  );
+
+  $rplvars->{date} = $added_dt->date;
+  $rplvars->{time} = $added_dt->time;
+  $rplvars->{addedby} = $added_by // '(undef)' ;  
+
+  return rplprintf( core->lang->{RDB_ITEM_INFO}, $rplvars );
+}
+
+sub _cmd_rdb_count {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  my ($rdb, $str) = @$parsed_args;
+
+  return 'Syntax: rdb count <RDB> <str>'
+    unless defined $rdb and defined $str;
+
+  my $indices = $self->_searchidx($msg, 'count', $rdb, $str);
+  
+  ## Same deal as searchidx, return immediately if this is async.
+  return unless ref $indices eq 'ARRAY';
+
+  my $count = @$indices;
+  return $msg->src_nick .": Found $count matches";
+}
+
+sub _cmd_rdb_search {
+  my ($self, $msg, $parsed_args) = @_;
+  
+  ## Pass-thru to _cmd_randq
+
+  my ($rdb, $str) = @$parsed_args;
+  
+  $str = '*' unless $str;
+  return 'Syntax: rdb search <RDB> <string>' unless $rdb;
+
+  return $self->_cmd_randq([], $msg, 'rdb', $rdb, $str)
+}
+
+sub _cmd_rdb_searchidx {
+  my ($self, $msg, $parsed_args) = @_;
+
+  my ($rdb, $str) = @$parsed_args;
+  
+  return 'Syntax: rdb searchidx <RDB> <string>' 
+    unless $rdb and $str;
+
+  my $indices = $self->_searchidx($msg, 'indexes', $rdb, $str);
+  
+  ## if we posted out to asyncsearch, return immediately
+  return unless ref $indices eq 'ARRAY';
+
+  ## otherwise we should have indices
+  $indices->[0] = 'No matches' unless @$indices;
+  my $count = @$indices;
+  
+  my (@returned, $prefix);
+  if ($count > 30) {
+    @returned = @$indices[0 .. 29];
+    $prefix   = "Matches (30 of $count): ";
+  } else {
+    @returned = @$indices;
+    $prefix   = "Matches: ";
+  }
+
+  return $prefix.join('  ', @returned);
+}
   ### self-events ###
 
 sub Bot_rdb_triggered {
@@ -788,13 +821,14 @@ sub Bot_rdb_broadcast {
   SERVER: for my $context (keys %$servers) {
     my $c_obj = $core->get_irc_context($context);
     next SERVER unless $c_obj->connected;
-    my $irc = $core->get_irc_obj($context) || next SERVER;
+
+    my $irc   = $core->get_irc_obj($context) || next SERVER;
     my $chcfg = $core->get_channels_cfg($context);
 
     $core->log->debug("rdb_broadcast to $context");
 
     my $on_channels = $irc->channels || {};
-    my $casemap = $core->get_irc_casemap($context) || 'rfc1459';
+    my $casemap  = $core->get_irc_casemap($context) || 'rfc1459';
     my @channels = map { lc_irc($_, $casemap) } keys %$on_channels;
 
     CHAN: for my $channel (@channels) {
@@ -806,9 +840,11 @@ sub Bot_rdb_broadcast {
         $core->log->debug(
           "rdb_broadcast (action) -> $context -> $channel"
         );
+
         broadcast( 'action', $context, $channel, $random_action );
       } else {
         $core->log->debug("rdb_broadcast -> $context -> $channel");
+
         broadcast( 'message', $context, $channel, $random );
       }
  
@@ -902,6 +938,7 @@ sub _add_item {
   ## otherwise we should've gotten the new key back:
   my $pref = core->Provided;
   ++$pref->{randstuff_items} if $rdb eq 'main';
+
   return $status
 }
 
@@ -925,6 +962,7 @@ sub _delete_item {
   }
   my $pref = core->Provided;
   --$pref->{randstuff_items} if $rdb eq 'main';
+
   return $item_idx
 }
 
