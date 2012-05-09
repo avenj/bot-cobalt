@@ -4,6 +4,7 @@ our $VERSION = '0.200_48';
 use 5.10.1;
 use strict;
 use warnings;
+use Carp;
 
 use App::bmkpasswd ();
 
@@ -201,25 +202,33 @@ sub color {
   ## format specified strings, resetting NORMAL after:
   ## $str = color('bold', "Some text"); # bold text ending in normal
 
-  my $format = uc(shift || 'normal');
-  my $str = shift;
+  my ($format, $str) = @_;
+  $format = uc($format||'normal');
+
   my $selected = $COLORS{$format};
+  
+  carp "Invalid COLOR $format passed to color()"
+    unless $selected;
 
   return $selected . $str . $COLORS{NORMAL} if $str;
-
   return $selected || $COLORS{NORMAL};
-};
+}
 
 
 ## Time/date ops:
 sub timestr_to_secs {
   ## turn something like 2h3m30s into seconds
-  my $timestr = shift || return;
-
+  my ($timestr) = @_;
+  
+  unless ($timestr) {
+    carp "timestr_to_secs() received a false value";
+    return 0
+  }
+  
   ## maybe just seconds:
-  return $timestr if $timestr =~ /^\d+$/;
+  return $timestr if $timestr =~ /^[0-9]+$/;
 
-  my @chunks = $timestr =~ m/(\d+)([dhms])/gc;
+  my @chunks = $timestr =~ m/([0-9]+)([dhms])/gc;
 
   my $secs = 0;
   while ( my ($ti, $unit) = splice @chunks, 0, 2 ) {
@@ -271,7 +280,6 @@ sub secs_to_timestr {
 }
 
 sub secs_to_str {
-  ## reverse of timestr_to_secs, sort of
   ## turn seconds into a string like '0 days, 00:00:00'
   my ($diff) = @_;
   return unless defined $diff;
@@ -284,7 +292,7 @@ sub secs_to_str {
 }
 
 
-## App::bmkpasswd stubs as of 2.00_35
+## App::bmkpasswd stubs as of 00_35
 sub mkpasswd  { App::bmkpasswd::mkpasswd(@_) }
 sub passwdcmp { App::bmkpasswd::passwdcmp(@_) }
 
