@@ -71,19 +71,19 @@ sub Cobalt_register {
     'IRCPLUG_CHK_FLOODKEY_EXPIRE'
   );
 
-  $core->log->info("Loaded");
+  logger->info("Loaded");
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistering IRC plugin");
+  logger->info("Unregistering IRC plugin");
 
-  $core->log->debug("disconnecting");
+  logger->debug("disconnecting");
 
   ## shutdown IRCs
   for my $context ( keys %{ $self->ircobjs } ) {
-    $core->log->debug("shutting down irc: $context");
+    logger->debug("shutting down irc: $context");
 
     ## clear auths for this context
     $core->auth->clear($context);
@@ -113,7 +113,7 @@ sub Bot_initialize_irc {
     my $thiscfg = $cfg->{Networks}->{$context};
     
     unless (ref $thiscfg eq 'HASH' && scalar keys %$thiscfg) {
-      $core->log->warn("Missing configuration: context $context");
+      logger->warn("Missing configuration: context $context");
       next SERVER
     }
     
@@ -125,7 +125,7 @@ sub Bot_initialize_irc {
     my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
     my $use_v6 = $thiscfg->{IPv6}   ? 1 : 0;
     
-    $core->log->info(
+    logger->info(
       "Spawning IRC for $context ($nick on ${server}:${port})"
     );
 
@@ -148,7 +148,7 @@ sub Bot_initialize_irc {
   
     my $irc = POE::Component::IRC::State->spawn(
       %spawn_opts,
-    ) or $core->log->emerg("(spawn: $context) poco-irc error: $!");
+    ) or logger->emerg("(spawn: $context) poco-irc error: $!");
 
     my $server_obj = Bot::Cobalt::IRC::Server->new(
       name => $server,
@@ -192,7 +192,7 @@ sub Bot_initialize_irc {
       ],
     );
   
-    $core->log->debug("IRC Session created");
+    logger->debug("IRC Session created");
   } ## SERVER
 
   return PLUGIN_EAT_ALL
@@ -212,7 +212,7 @@ sub _start {
 
   $pcfg->{Networks}->{Main} = $cfg->{IRC};
 
-  core->log->debug("pocoirc plugin load");
+  logger->debug("pocoirc plugin load");
 
   ## autoreconn plugin:
   my %connector;
@@ -234,7 +234,7 @@ sub _start {
     );
 
   if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
-    core->log->debug("Adding NickServ ID for $context");
+    logger->debug("Adding NickServ ID for $context");
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
         Password => $pcfg->{Networks}->{$context}->{NickServPass},
@@ -274,7 +274,7 @@ sub _start {
   $irc->yield(register => 'all');
   ## initiate ze connection:
   $irc->yield(connect => {});
-  core->log->debug("irc component connect issued");
+  logger->debug("irc component connect issued");
 }
 
 sub irc_chan_sync {
@@ -438,12 +438,11 @@ sub irc_001 {
 
   my $context = $heap->{Context};
   my $irc     = $heap->{Object};
-
-  ## server welcome message received.
+  
   ## set up some stuff relevant to our server context:
-  core->Servers->{$context}->connected( 1 );
-  core->Servers->{$context}->connectedat( time() );
-  core->Servers->{$context}->maxmodes( $irc->isupport('MODES') // 4 );
+  irc_context($context)->connected( 1 );
+  irc_context($context)->connectedat( time() );
+  irc_context($context)->maxmodes( $irc->isupport('MODES') // 4 );
   ## irc comes with odd case-mapping rules.
   ## []\~ are considered uppercase equivalents of {}|^
   ##
@@ -453,7 +452,7 @@ sub irc_001 {
   ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
   ## checking ISUPPORT and setting the casemapping if available
   my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
-  core->Servers->{$context}->casemap( $casemap);
+  irc_context($context)->casemap( $casemap );
   
   ## if the server returns a fubar value IRC::Utils automagically 
   ## defaults to rfc1459 casemapping rules
@@ -475,7 +474,7 @@ sub irc_001 {
   unless ($casemap ~~ @valid_casemaps) {
     my $charset = lc( $irc->isupport('CHARSET') || '' );
     if ($charset && $charset ~~ @valid_casemaps) {
-      core->Servers->{$context}->casemap( $charset );
+      irc_context($context)->casemap( $charset );
     }
     ## we don't save CHARSET, it's deprecated per the spec
     ## also mostly unreliable and meaningless
@@ -484,7 +483,7 @@ sub irc_001 {
   }
 
   my $server = $irc->server_name;
-  core->log->info("Connected: $context: $server");
+  logger->info("Connected: $context: $server");
   ## send a Bot_connected event with context and visible server name:
   core->send_event( 'connected', $context, $server );
 }
@@ -492,8 +491,8 @@ sub irc_001 {
 sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
-  core->log->info("IRC disconnected: $context");
-  core->Servers->{$context}->connected(0);
+  logger->info("IRC disconnected: $context");
+  irc_context($context)->connected(0);
   ## Bot_disconnected event, similar to Bot_connected:
   core->send_event( 'disconnected', $context, $server );
 }
@@ -501,8 +500,8 @@ sub irc_disconnected {
 sub irc_socketerr {
   my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
-  core->log->info("irc_socketerr: $context: $err");
-  core->Servers->{$context}->connected(0);
+  logger->info("irc_socketerr: $context: $err");
+  irc_context($context)->connected(0);
   core->send_event( 'server_error', $context, $err );
 }
 
@@ -510,8 +509,8 @@ sub irc_error {
   my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
   ## Bot_server_error:
   my $context = $_[HEAP]->{Context};
-  core->Servers->{$context}->connected(0);
-  core->log->warn("IRC error: $context: $reason");
+  irc_context($context)->connected(0);
+  logger->warn("IRC error: $context: $reason");
   core->send_event( 'server_error', $context, $reason );
 }
 
@@ -919,7 +918,8 @@ sub Bot_rehashed {
   my $type = ${ $_[0] };
   
   ## reset AutoJoin plugin instances
-  $core->log->info("Rehash received, resetting autojoins");
+  logger->info("Rehash received, resetting autojoins");
+
   $self->_reset_ajoins;
 
   ## FIXME rehash nickservids if needed?
@@ -952,7 +952,7 @@ sub Bot_ircplug_flood_rem_ignore {
   my $mask    = ${ $_[1] };
   ## Internal timer-fired event to remove temp ignores.
 
-  $core->log->info("Clearing temp ignore: $mask ($context)");
+  logger->info("Clearing temp ignore: $mask ($context)");
   
   $core->ignore->del( $context, $mask );  
 
@@ -971,7 +971,7 @@ sub flood_ignore {
   
   $self->flood->clear($context, $mask);
   
-  core->log->info(
+  logger->info(
     "Issuing temporary ignore due to flood: $mask ($context)"
   );
   
@@ -1006,10 +1006,10 @@ sub _reset_ajoins {
       $ajoin{$channel} = $key;
     }
 
-    core->log->debug("Removing AutoJoin plugin for $context");
+    logger->debug("Removing AutoJoin plugin for $context");
     $irc->plugin_del('AutoJoin');
     
-    core->log->debug("Loading new AutoJoin plugin for $context");
+    logger->debug("Loading new AutoJoin plugin for $context");
     $irc->plugin_add('AutoJoin' =>
       POE::Component::IRC::Plugin::AutoJoin->new(
         Channels => \%ajoin,
