@@ -11,7 +11,9 @@ sub execute {
   my ($self, $msg) = @_;
   my $nick = $msg->src_nick//'' if ref $msg;
   my @responses = <DATA>;
-  return $nick.': '.$responses[rand @responses]
+  my $selected = $responses[rand @responses];
+  chomp($selected);
+  return $nick.': '.$selected
 }
 
 1;
