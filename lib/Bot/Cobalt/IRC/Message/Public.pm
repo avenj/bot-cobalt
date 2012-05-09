@@ -8,6 +8,8 @@ use Bot::Cobalt::Common;
 
 use Moo;
 
+use Scalar::Util qw/blessed/;
+
 extends 'Bot::Cobalt::IRC::Message';
 
 has 'cmd' => ( is => 'rw', lazy => 1,
@@ -32,8 +34,8 @@ has 'cmd' => ( is => 'rw', lazy => 1,
 has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $irc = core->get_irc_obj( $self->context );
-    my $me = $irc->nick_name;
+    my $irc = irc_object( $self->context )  || return 0 ;
+    my $me  = blessed $irc ? $irc->nick_name : return 0 ;
     my $txt = $self->stripped;
     $txt =~ /^${me}.?\s+/i
   },  
