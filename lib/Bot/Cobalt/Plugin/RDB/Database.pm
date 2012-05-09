@@ -433,7 +433,7 @@ sub search {
   my @matches = $cache->fetch($rdb, $glob);
   if (@matches) {
     if ($wantone) {
-      return pop(@{[shuffle @matches]})
+      return (shuffle @matches)[-1];
     } else {
       return wantarray ? @matches : [ @matches ] ;
     }
