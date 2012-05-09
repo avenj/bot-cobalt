@@ -224,8 +224,6 @@ sub get_db {
   return $self->DB
 }
 
-sub get_path { $_[0]->File }
-
 sub dbkeys {
   my ($self) = @_;
   croak "attempted 'dbkeys' on unopened db"
