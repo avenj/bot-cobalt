@@ -51,6 +51,10 @@ sub irc_object {
   core()->get_irc_object( @_ )
 }
 
+sub irc_context {
+  core()->get_irc_context( @_ );
+}
+
 1;
 __END__
 
@@ -100,6 +104,16 @@ Queue an event to send to the plugin pipeline.
 Wraps the B<send_event> method available via L<Bot::Cobalt::Core>, which 
 is a L<POE::Component::Syndicator>.
 
+=head2 irc_context
+
+  my $context_obj = irc_context($context);
+
+Retrieves the L<Bot::Cobalt::IRC::Server> object for the specified 
+context.
+
+Wrapper for core->get_irc_context() -- see 
+L<Bot::Cobalt::Core::Role::IRC>
+
 =head2 irc_object
 
   my $irc_obj = irc_object($context);
@@ -109,7 +123,7 @@ L<POE::Component::IRC::State> instance unless L<Cobalt::IRC> has been
 subclassed or replaced.
 
 Wrapper for core->get_irc_object() -- see 
-L<Bot::Cobalt::Core::Role::EasyAccessors>
+L<Bot::Cobalt::Core::Role::IRC>
 
 =head2 logger
 
