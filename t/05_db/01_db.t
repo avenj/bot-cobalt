@@ -21,7 +21,7 @@ ok( $db->dbopen, 'Temp database open' );
 diag("This should produce a warning:");
 ok( !$db->dbopen, 'Cannot reopen' );
 
-ok( $db->get_path, 'Temp database get_path');
+ok( $db->File eq $path, 'Temp database File');
 
 ok( $db->is_open, 'Temp database is_open' );
 
