@@ -659,7 +659,7 @@ sub _cmd_rdb_info {
   return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
     unless $dbmgr->dbexists($rdb);
 
-  unless ($idx) {
+  if (!$idx) {
     my $n_keys = $dbmgr->get_keys($rdb);
     return "RDB $rdb has $n_keys items"
   } else {
@@ -708,8 +708,12 @@ sub _cmd_rdb_count {
   
   my ($rdb, $str) = @$parsed_args;
 
+  ## count <RDB> is the same as info <RDB>
+  return $self->_cmd_rdb_info($msg, $parsed_args)
+    unless defined $str;
+
   return 'Syntax: rdb count <RDB> <str>'
-    unless defined $rdb and defined $str;
+    unless defined $rdb;
 
   my $indices = $self->_searchidx($msg, 'count', $rdb, $str);
   
