@@ -105,6 +105,8 @@ Bot::Cobalt::Core::Role::EasyAccessors - Easy configuration accessors
 Simple methods for accessing some of the configuration state tracked by 
 L<Bot::Cobalt::Core>.
 
+You might prefer L<Bot::Cobalt::Core::Sugar> when writing plugins.
+
 =head2 get_plugin_alias
 
 Takes an object (or a stringified object, but this happens 

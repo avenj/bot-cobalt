@@ -179,4 +179,6 @@ Jon Portnoy <avenj@cobaltirc.org>
 
 L<http://www.cobaltirc.org>
 
+Licensed under the same terms as Perl.
+
 =cut
