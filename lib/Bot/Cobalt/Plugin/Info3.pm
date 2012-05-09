@@ -23,11 +23,10 @@ use DateTime;
 
 use File::Spec;
 
-sub new { bless( {}, shift ) }
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $self->{core} = $core;
 
   $self->{Cache} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => 20,
@@ -37,8 +36,8 @@ sub Cobalt_register {
     MaxKeys => 8,
   );
 
-  my $cfg = $core->get_plugin_cfg( $self );
-  my $var = $core->var;
+  my $cfg = plugin_cfg( $self );
+  my $var = core->var;
   
   my $relative_to_var = $cfg->{Opts}->{InfoDB} // 
     File::Spec->catfile( 'db', 'info3.db' );
@@ -75,7 +74,7 @@ sub Cobalt_register {
   }
   $self->{DB}->dbclose;
 
-  $core->plugin_register($self, 'SERVER',
+  register($self, 'SERVER',
     [ 
       'public_msg',
       'ctcp_action',
@@ -84,14 +83,14 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("Loaded, topics: ".$core->Provided->{info_topics});
+  logger->info("Loaded, topics: ".$core->Provided->{info_topics});
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  logger->info("Unregistering Info plugin");
   delete $core->Provided->{info_topics};
-  $core->log->info("Unregistering Info plugin");
   return PLUGIN_EAT_NONE
 }
 
@@ -142,7 +141,7 @@ sub Bot_ctcp_action {
     }
   }
 
-  $core->log->debug("issuing info3_relay_string in response to action");
+  logger->debug("issuing info3_relay_string in response to action");
   broadcast( 'info3_relay_string', 
     $context, $channel, $nick, $match, join(' ', @message)
   );
@@ -188,7 +187,7 @@ sub Bot_public_msg {
             $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
         } else {
-          $core->log->warn($message[1]." is a valid cmd but method missing");
+          logger->warn($message[1]." is a valid cmd but method missing");
           return PLUGIN_EAT_NONE
         }
       }
@@ -229,7 +228,7 @@ sub Bot_public_msg {
     my $rdb = (split ' ', $match)[0];
     $rdb = substr($rdb, 1);
     if ($rdb) {
-      $core->log->debug("issuing rdb_triggered");
+      logger->debug("issuing rdb_triggered");
       broadcast( 'rdb_triggered',
         $context,
         $channel,
@@ -242,7 +241,7 @@ sub Bot_public_msg {
     }
   }
 
-  $core->log->debug("issuing info3_relay_string");
+  logger->debug("issuing info3_relay_string");
   
   broadcast( 'info3_relay_string', 
     $context, $channel, $nick, $match, $str
@@ -264,17 +263,17 @@ sub Bot_info3_relay_string {
   
   return PLUGIN_EAT_NONE unless $string;
 
-  $core->log->debug("info3_relay_string received; calling _info_format");
+  logger->debug("info3_relay_string received; calling _info_format");
   
   my $resp = $self->_info_format($context, $nick, $channel, $string, $orig);
 
   ## if $resp is a +action, send ctcp action
   if ( index($resp, '+') == 0 ) {
     $resp = substr($resp, 1);
-    $core->log->debug("Dispatching action -> $channel");
+    logger->debug("Dispatching action -> $channel");
     broadcast('action', $context, $channel, $resp);
   } else {
-    $core->log->debug("Dispatching msg -> $channel");
+    logger->debug("Dispatching msg -> $channel");
     broadcast('message', $context, $channel, $resp);
   }
 
@@ -287,12 +286,14 @@ sub Bot_info3_expire_maxtriggered {
   my $channel = ${ $_[1] };
   
   unless ($context && $channel) {
-    $core->log->debug(
+    logger->debug(
       "missing context and channel pair in expire_maxtriggered"
     );
   }
-  $core->log->debug("cleared maxtriggered for $channel on $context");
   delete $self->{LastTriggered}->{$context}->{$channel};  
+
+  logger->debug("cleared maxtriggered for $channel on $context");
+
   return PLUGIN_EAT_ALL
 }
 
@@ -300,7 +301,6 @@ sub Bot_info3_expire_maxtriggered {
 
 sub _over_max_triggered {
   my ($self, $context, $channel, $str) = @_;
-  my $core = $self->{core};
 
   if ($self->{LastTriggered}->{$context}->{$channel}) {
     my $lasttrig = $self->{LastTriggered}->{$context}->{$channel};
@@ -310,11 +310,11 @@ sub _over_max_triggered {
       if ($tries > $self->{MAX_TRIGGERED}) {
         ## we've hit this topic too many times in a row
         ## plugin should EAT_NONE
-        $core->log->debug("Over trigger limit for $str");
+        logger->debug("Over trigger limit for $str");
         ## set a timer to expire this LastTriggered
-        $core->timer_set( 90,
+        core->timer_set( 90,
           {
-            Alias => $core->get_plugin_alias($self),
+            Alias => plugin_alias($self),
             Event => 'info3_expire_maxtriggered',
             Args => [ $context, $channel ],
           },
@@ -339,24 +339,23 @@ sub _over_max_triggered {
 sub _info_add {
   my ($self, $msg, $glob, @args) = @_;
   my $string = join ' ', @args;
-  my $core   = $self->{core};
 
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth->username($context, $nick);
-  my $auth_level = $core->auth->level($context, $nick);
+  my $auth_user  = core->auth->username($context, $nick);
+  my $auth_level = core->auth->level($context, $nick);
 
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{AddTopic} // 2;
   unless ($auth_level >= $required) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nick },
     );
   }    
 
   unless ($glob && $string) {
-    return rplprintf( $core->lang->{INFO_BADSYNTAX_ADD} );
+    return rplprintf( core->lang->{INFO_BADSYNTAX_ADD} );
   }
   
   ## lowercase
@@ -364,7 +363,7 @@ sub _info_add {
 
   if (exists $self->{Globs}->{$glob}) {
     ## topic already exists, use replace instead!
-    return rplprintf( $core->lang->{INFO_ERR_EXISTS},
+    return rplprintf( core->lang->{INFO_ERR_EXISTS},
       {
         topic => $glob,
         nick => $nick,
@@ -379,7 +378,7 @@ sub _info_add {
   
   ## add to db, keyed on glob:
   unless ($self->{DB}->dbopen) {
-    $core->log->warn("DB open failure");
+    logger->warn("DB open failure");
     return 'DB open failure'
   }
   $self->{DB}->put( $glob,
@@ -401,12 +400,12 @@ sub _info_add {
   $self->{Regexes}->{$compiled_re} = $glob;
   $self->{Globs}->{$glob} = $compiled_re;
 
-  ++$core->Provided->{info_topics};
+  core->Provided->{info_topics} += 1;
 
-  $core->log->debug("topic add: $glob ($re)");
+  logger->debug("topic add: $glob ($re)");
 
   ## return RPL
-  return rplprintf( $core->lang->{INFO_ADD},
+  return rplprintf( core->lang->{INFO_ADD},
     {
       topic => $glob,
       nick => $nick,
@@ -417,29 +416,28 @@ sub _info_add {
 sub _info_del {
   my ($self, $msg, @args) = @_;
   my ($glob) = @args;
-  my $core = $self->{core};
   
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth->username($context, $nick);
-  my $auth_level = $core->auth->level($context, $nick);
+  my $auth_user  = core->auth->username($context, $nick);
+  my $auth_level = core->auth->level($context, $nick);
   
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{DelTopic} // 2;
   unless ($auth_level >= $required) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nick },
     );
   }    
 
   unless ($glob) {
-    return rplprintf( $core->lang->{INFO_BADSYNTAX_DEL} );
+    return rplprintf( core->lang->{INFO_BADSYNTAX_DEL} );
   }
   
   
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
       {
         topic => $glob,
         nick  => $nick,
@@ -449,7 +447,7 @@ sub _info_del {
 
   ## delete from db
   unless ($self->{DB}->dbopen) {
-    $core->log->warn("DB open failure");
+    logger->warn("DB open failure");
     return 'DB open failure'
   }
   $self->{DB}->del($glob);
@@ -461,11 +459,12 @@ sub _info_del {
   ## delete from internal hashes
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
-  --$core->Provided->{info_topics};
 
-  $core->log->debug("topic del: $glob ($regex)");
+  core->Provided->{info_topics} -= 1;
+
+  logger->debug("topic del: $glob ($regex)");
   
-  return rplprintf( $core->lang->{INFO_DEL},
+  return rplprintf( core->lang->{INFO_DEL},
     {
       topic => $glob,
       nick  => $nick,
@@ -478,30 +477,29 @@ sub _info_replace {
   my ($glob, @splstring) = @args;
   my $string = join ' ', @splstring;
   $glob = lc $glob;
-  my $core = $self->{core};
 
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_user  = $core->auth->username($context, $nick);
-  my $auth_level = $core->auth->level($context, $nick);
+  my $auth_user  = core->auth->username($context, $nick);
+  my $auth_level = core->auth->level($context, $nick);
   
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = plugin_cfg( $self );
   my $req_del = $pcfg->{RequiredLevels}->{DelTopic} // 2;
   my $req_add = $pcfg->{RequiredLevels}->{AddTopic} // 2;
   ## auth check for BOTH add and del reqlevels:
   unless ($auth_level >= $req_add && $auth_level >= $req_del) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nick },
     );
   }
 
   unless ($glob && $string) {
-    return rplprintf( $core->lang->{INFO_BADSYNTAX_REPL} );
+    return rplprintf( core->lang->{INFO_BADSYNTAX_REPL} );
   }
   
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
       {
         topic => $glob,
         nick  => $nick,
@@ -509,20 +507,20 @@ sub _info_replace {
     );
   }
 
-  $core->log->debug("replace called for $glob by $nick ($auth_user)");
+  logger->debug("replace called for $glob by $nick ($auth_user)");
   
   $self->{Cache}->invalidate('info3');
   $self->{NegCache}->invalidate('info3_neg');
 
   unless ($self->{DB}->dbopen) {
-    $core->log->warn("DB open failure");
+    logger->warn("DB open failure");
     return 'DB open failure'
   }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
-  --$core->Provided->{info_topics};
+  core->Provided->{info_topics} -= 1;
 
-  $core->log->debug("topic del (replace): $glob");
+  logger->debug("topic del (replace): $glob");
   
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
@@ -531,7 +529,7 @@ sub _info_replace {
   $re = '^'.$re.'$' ;  
 
   unless ($self->{DB}->dbopen) {
-    $core->log->warn("DB open failure");
+    logger->warn("DB open failure");
     return 'DB open failure'
   }
   $self->{DB}->put( $glob,
@@ -543,15 +541,15 @@ sub _info_replace {
     }
   );
   $self->{DB}->dbclose;
+  core->Provided->{info_topics} += 1;
 
   my $compiled_re = qr/$re/i;
   $self->{Regexes}->{$compiled_re} = $glob;
   $self->{Globs}->{$glob} = $compiled_re;
-  ++$core->Provided->{info_topics};
 
-  $core->log->debug("topic add (replace): $glob ($re)");
+  logger->debug("topic add (replace): $glob ($re)");
 
-  return rplprintf( $core->lang->{INFO_REPLACE},
+  return rplprintf( core->lang->{INFO_REPLACE},
     { topic => $glob, nick  => $nick }
   );
 }
@@ -560,16 +558,15 @@ sub _info_tell {
   ## 'tell X about Y' syntax
   my ($self, $msg, @args) = @_;
   my $target = shift @args;
-  my $core = $self->{core};
 
   unless ($target) {
-    return rplprintf( $core->lang->{INFO_TELL_WHO} // "Tell who what?",
+    return rplprintf( core->lang->{INFO_TELL_WHO} // "Tell who what?",
       { nick => $msg->src_nick }
     );
   }
 
   unless (@args) {
-    return rplprintf( $core->lang->{INFO_TELL_WHAT}
+    return rplprintf( core->lang->{INFO_TELL_WHAT}
       // "What should I tell $target about?" ,
         { nick => $msg->src_nick, target => $target }
     );
@@ -588,7 +585,7 @@ sub _info_tell {
   ## find info match
   my $match = $self->_info_match($str_to_match);
   unless ($match) {
-    return rplprintf( $core->lang->{INFO_DONTKNOW},
+    return rplprintf( core->lang->{INFO_DONTKNOW},
       { nick => $msg->src_nick, topic => $str_to_match }
     );
   }
@@ -613,7 +610,7 @@ sub _info_tell {
     
   my $channel = $msg->channel;
   
-  $core->log->debug("issuing info3_relay_string for tell");
+  logger->debug("issuing info3_relay_string for tell");
 
   broadcast( 'info3_relay_string', 
     $msg->context, $channel, $target, $match, $str_to_match
@@ -625,15 +622,14 @@ sub _info_tell {
 sub _info_about {
   my ($self, $msg, @args) = @_;
   my ($glob) = @args;
-  my $core = $self->{core};
 
   unless ($glob) {
-    my $count = $core->Provided->{info_topics};
+    my $count = core->Provided->{info_topics};
     return "$count info topics in database."
   }
 
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
       { topic => $glob, nick  => $msg->src_nick },
     );
   }
@@ -648,12 +644,12 @@ sub _info_about {
   my $addedat = join ' ', $dt_addedat->date, $dt_addedat->time;
   my $str_len = length( $ref->{Response} );
   
-  return rplprintf( $core->lang->{INFO_ABOUT},
+  return rplprintf( core->lang->{INFO_ABOUT},
     {
-      nick  => $msg->src_nick,
-      topic => $glob,
+      nick   => $msg->src_nick,
+      topic  => $glob,
       author => $addedby,
-      date => $addedat,
+      date   => $addedat,
       length => $str_len,
     }
   );
@@ -665,11 +661,9 @@ sub _info_display {
   my ($glob) = @args;
   return unless $glob; # FIXME rpl?
 
-  my $core = $self->{core};
-
   ## check if glob exists
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( $core->lang->{INFO_ERR_NOSUCH},
+    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
       {
         topic => $glob,
         nick  => $msg->src_nick,
@@ -712,13 +706,11 @@ sub _info_dsearch {
   my ($self, $msg, @args) = @_;
   my $str = join ' ', @args;
 
-  my $core = $self->{core};
-
-  my $pcfg = $core->get_plugin_cfg( $self );
+  my $pcfg = plugin_cfg( $self );
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
-  my $usr_lev = $core->auth->level($msg->context, $msg->src_nick);
+  my $usr_lev = core->auth->level($msg->context, $msg->src_nick);
   unless ($usr_lev >= $req_lev) {
-    return rplprintf( $core->lang->{RPL_NO_ACCESS},
+    return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $msg->src_nick }
     );
   }
@@ -735,8 +727,6 @@ sub _info_dsearch {
 sub _info_exec_dsearch {
   my ($self, $str) = @_;
 
-  my $core = $self->{core};
-
   my $cache = $self->{Cache};
   my @matches = $cache->fetch('info3', $str) || ();
   ## matches found in searchcache
@@ -746,8 +736,8 @@ sub _info_exec_dsearch {
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
     unless (ref $ref eq 'HASH') {
-      $core->log->warn("Inconsistent Info3? $glob appears to have no value");
-      $core->log->warn("This could indicate database corruption!");
+      logger->warn("Inconsistent Info3? $glob appears to have no value");
+      logger->warn("This could indicate database corruption!");
       next
     }
     my $resp_str = $ref->{Response};
@@ -762,7 +752,6 @@ sub _info_exec_dsearch {
 
 sub _info_match {
   my ($self, $txt, $isaction) = @_;
-  my $core = $self->{core};
   ## see if text matches a glob in hash
   ## if so retrieve string from db and return it
 
@@ -803,7 +792,6 @@ sub _info_match {
 
 sub _info_varhelp {
   my ($self, $msg) = @_;
-  my $core = $self->{core};
   
   my $help =
      ' !~ = CmdChar, B~ = BotNick, C = Channel, H = UserHost, N = Nick,'
@@ -826,18 +814,17 @@ sub _info_format {
   ## variable replacement for responses
   ## some of these need to pull info from context
   ## maintains oldschool darkbot6 variable format
-  my $core = $self->{core};
 
-  $core->log->debug("formatting text response ($context)");
+  logger->debug("formatting text response ($context)");
   
-  my $irc_obj = $core->get_irc_obj($context);
+  my $irc_obj = irc_object($context);
   return $str unless ref $irc_obj;
 
-  my $ccfg = $core->get_core_cfg;
+  my $ccfg = core->get_core_cfg;
   my $cmdchar = $ccfg->{Opts}->{CmdChar};
   my @users   = $irc_obj->channel_list($channel) if $channel;
   my $random  = $users[ rand @users ] if @users;
-  my $website = $core->url;
+  my $website = core->url;
 
   my $vars = {
     '!' => $cmdchar,          ## CmdChar
@@ -851,8 +838,8 @@ sub _info_format {
     S => $irc_obj->server,    ## current server
     t => time,                ## unixtime
     T => scalar localtime,    ## parsed time
-    V => 'cobalt-'.$core->version,  ## version
-    W => $core->url,          ## website
+    V => 'cobalt-'.core->version,  ## version
+    W => core->url,          ## website
   };
 
   ## FIXME -- some color code syntax ?

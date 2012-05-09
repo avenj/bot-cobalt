@@ -5,12 +5,14 @@ use 5.10.1;
 use strict;
 use warnings;
 
+our @responses;
+
 sub new { bless {}, shift }
 
 sub execute {
   my ($self, $msg) = @_;
   my $nick = $msg->src_nick//'' if ref $msg;
-  my @responses = <DATA>;
+  @responses = <DATA> unless @responses;
   my $selected = $responses[rand @responses];
   chomp($selected);
   return $nick.': '.$selected
