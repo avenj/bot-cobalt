@@ -327,6 +327,9 @@ some criteria.
 
 =head2 Receiving IRC events
 
+See L<Bot::Cobalt::IRC> for a complete list of IRC events and their 
+event syntax.
+
 =head3 Understanding server context
 
 IRC-driven events always come with a 'server context' attached, mapping 
@@ -352,8 +355,12 @@ For example, when receiving a public message:
     );
   }
 
-See L<Bot::Cobalt::IRC> for a list of IRC events and their event syntax.
+IRC-related events always come from or are sent to a specific context.
 
+Each context also has a L<Bot::Cobalt::IRC::Server> object attached; it 
+can be used to retrieve context-specific metadata such as connected 
+status and the named server's announced casemapping. 
+See L</get_irc_server>.
 
 =head3 Messages
 
@@ -1474,11 +1481,8 @@ items back to the 'worker' event handler after iterating 100 items.
     my @items = @$itemref;
     
      ## maximum number of elements to process before yield:
-    my $max_per_run = 100;
- 
-     ## work until there's no items left or we hit the max:
-    my $counter = 0;
-    while (@items && ++$counter < $max_per_run) {
+    my $max_this_run = 100;
+    while (@items && --$max_this_run != 0) {
       my $item = shift @items;
       ## ... do some work on $item ...
     }
