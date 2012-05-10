@@ -122,7 +122,7 @@ sub _run_query {
   $type = 'A' unless $type 
     and $type =~ /^(A|CNAME|NS|MX|PTR|TXT|AAAA|SRV|SOA)$/i;
   
-  $type = 'PTR' if ip_is_ipv4($host);
+  $type = 'PTR' if ip_is_ipv4($host) or ip_is_ipv6($host);
   
   logger->debug("issuing dns request: $host");
   $poe_kernel->post( 'p_'. core()->get_plugin_alias($self), 
