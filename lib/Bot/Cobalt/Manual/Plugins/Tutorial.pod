@@ -107,6 +107,7 @@ know.
     
     ## We'll write our response method fortune() later.
     my $fortune = $self->fortune;
+    chomp($fortune);
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
@@ -121,12 +122,13 @@ know.
 =head2 Add some data
 
 For convenience, we'll store our fortune cookies in the B<DATA> 
-filehandle.
+filehandle until we need them.
 
 At the bottom of your plugin module:
 
   1;  ## Perl modules must return a true value
   __DATA__
+
   You are not dead yet. Watch for further reports.
   Don't look up.
   You look tired.
@@ -136,12 +138,15 @@ Add as many as you like, one per line. When we want to retrieve them, we
 just read B<DATA> like a normal file handle.
 
 Let's write our B<fortune()> method to pull a random fortune from 
-B<DATA> -- this is nice and simple:
+our retrieved B<DATA> -- this is nice and simple:
 
   sub fortune {
     my ($self) = @_;
-    my @fortunes = <DATA>;
-    return $fortunes[rand @fortunes]
+
+    $self->{fortunes} = [ readline(DATA) ]
+      unless defined $self->{fortunes};
+    
+    return $self->{fortunes}[rand(@{ $self->{fortunes} })]
   }
 
 =head2 Finished product
@@ -191,6 +196,7 @@ B<DATA> -- this is nice and simple:
     my $channel  = $msg->channel;
     
     my $fortune = $self->fortune;
+    chomp($fortune)
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
@@ -204,8 +210,11 @@ B<DATA> -- this is nice and simple:
 
   sub fortune {
     my ($self) = @_;
-    my @fortunes = <DATA>;
-    return $fortunes[rand @fortunes]
+
+    $self->{fortunes} = [ readline(DATA) ]
+      unless defined $self->{fortunes};
+    
+    return $self->{fortunes}[rand(@{$self->{fortunes}}) ]
   }
 
   1;  ## Perl modules must return a true value
