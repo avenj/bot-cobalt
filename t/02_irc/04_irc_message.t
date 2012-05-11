@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 24;
 use strict; use warnings;
 
 ## FIXME colorize string then check stripped() ?
@@ -28,8 +28,47 @@ ok( $msg->stripped eq 'Some IRC message', 'stripped()' );
 
 ok( $msg->targets([ 'Bob', 'Sam' ]), 'Reset targets()' );
 ok( $msg->target eq 'Bob', 'target() after reset' );
+
 ## FIXME test arrays
 
 ## FIXME test arrays after resetting message
 
-## FIXME test channel message also
+undef $msg;
+
+my $pub = new_ok( 'Bot::Cobalt::IRC::Message::Public' => [
+    src     => 'somebody!somewhere@example.org',
+    context => 'Main',
+    message => 'Public IRC message',
+    targets => [ '#chan1', '#another' ],
+  ]
+);
+
+isa_ok( $pub, 'Bot::Cobalt::IRC::Message' );
+
+ok( $pub->channel eq '#chan1', 'channel()' );
+
+## FIXME
+
+my $cmd = new_ok( 'Bot::Cobalt::IRC::Message::Public' => [
+    src     => 'somebody!somewhere@example.org',
+    context => 'Main',
+    message => '!public cmd message',
+    targets => [ '#chan1', '#another' ],
+  ]
+);
+
+ok( $cmd->cmd eq 'public', 'cmd()' );
+
+ok( $cmd->message( 'Not a command'), 'Change message()' );
+
+ok( !$cmd->cmd(), 'cmd() dropped' );
+
+ok( !$cmd->highlight(), 'No highlight()' );
+
+ok( $cmd->myself('Botty'), 'Set myself()' );
+
+ok( $cmd->message( 'Botty: snacks are tasty' ), 
+  'Set highlight message()'
+);
+
+ok( $cmd->highlight, 'highlight()' );
