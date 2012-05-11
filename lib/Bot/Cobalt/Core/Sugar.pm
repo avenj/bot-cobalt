@@ -10,10 +10,12 @@ our @EXPORT = qw/
   core
   broadcast
   logger
-  plugin_alias
-  plugin_cfg
   register
   unregister
+  plugin_cfg
+  plugin_alias
+  irc_object
+  irc_context
 /;
 
 sub core {
