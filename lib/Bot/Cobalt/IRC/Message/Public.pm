@@ -13,33 +13,72 @@ use Scalar::Util qw/blessed/;
 extends 'Bot::Cobalt::IRC::Message';
 
 has 'cmd' => ( is => 'rw', lazy => 1,
-  default => sub {
-    my ($self) = @_;
-    my $cf_core = core->get_core_cfg;
-    my $cmdchar = $cf_core->{Opts}->{CmdChar} // '!' ;
-    my $txt = $self->stripped;
-
-    if ($txt =~ /^${cmdchar}([^\s]+)/) {
-      my $message = $self->message_array;
-      shift @$message;
-      $self->message_array($message);
-
-      return lc($1)
-    }
-
-    undef
-  },
+  predicate => 'has_cmd',
+  builder   => '_build_cmd',
 );
 
 has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
+  predicate => 'has_highlight',
+  builder   => '_build_highlight',
+);
+
+has 'myself' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub {
     my ($self) = @_;
-    my $irc = irc_object( $self->context )  || return 0 ;
-    my $me  = blessed $irc ? $irc->nick_name : return 0 ;
-    my $txt = $self->stripped;
-    $txt =~ /^${me}.?\s+/i
-  },  
+    
+    require Bot::Cobalt::Core;
+    return '' unless Bot::Cobalt::Core->has_instance;
+    
+    my $irc = irc_object( $self->context ) || return '';  
+    blessed $irc ? $irc->nick_name : '';
+  },
 );
+
+after 'message' => sub {
+  my ($self, $value) = @_;
+  
+  if ($self->has_highlight) {
+    $self->highlight( $self->_build_highlight );
+  }
+  
+  if ($self->has_cmd) {
+    $self->cmd( $self->_build_cmd );
+  }
+};
+
+sub _build_highlight {
+  my ($self) = @_;
+  my $me  = $self->myself || return 0;
+  my $txt = $self->stripped;
+  $txt =~ /^${me}.?\s+/i
+}
+
+sub _build_cmd {
+  my ($self) = @_;
+
+  my $cmdchar;
+  
+  require Bot::Cobalt::Core;
+  if ( Bot::Cobalt::Core->has_instance ) {
+    my $cf_core = core->get_core_cfg;
+    $cmdchar = $cf_core->{Opts}->{CmdChar} // '!' ;
+  } else {
+    $cmdchar = '!';
+  }
+  
+  my $txt = $self->stripped;
+
+  if ($txt =~ /^${cmdchar}([^\s]+)/) {
+    my $message = $self->message_array;
+    shift @$message;
+    $self->message_array($message);
+
+    return lc($1)
+  }
+  undef
+}
+
+## FIXME after message changes, change cmd()
 
 
 1;
