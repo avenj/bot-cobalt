@@ -50,7 +50,7 @@ sub _build_highlight {
   my ($self) = @_;
   my $me  = $self->myself || return 0;
   my $txt = $self->stripped;
-  $txt =~ /^${me}.?\s+/i
+  $txt =~ /^${me}[,:;!-]?\s+/i
 }
 
 sub _build_cmd {
@@ -109,10 +109,16 @@ might need is documented there.
 When an incoming message is a public (channel) message, the provided 
 C<$msg> object has the following extra methods available:
 
+=head2 myself
+
+The 'myself' attribute can be tweaked to change how L</highlight> 
+behaves. By default it will query the L<Bot::Cobalt::Core> instance for 
+an IRC object that can return the bot's current nickname.
+
 =head2 highlight
 
 If the bot appears to have been highlighted (ie, the message is prefixed 
-with the bot's nickname), this method will return boolean true.
+with L</myself>), this method will return boolean true.
 
 Used to see if someone is "talking to" the bot.
 
