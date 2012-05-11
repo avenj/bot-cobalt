@@ -105,7 +105,7 @@ sub Bot_public_cmd_rehash {
       my $lang = $msg->message_array->[1];
     
       if ($self->_rehash_langset($lang)) {
-        $resp = "Reloaded core language set.";
+        $resp = "Reloaded core language set ($lang).";
       } else {
         $resp = "Rehashing langset failed; administrator should check logs.";
       }
