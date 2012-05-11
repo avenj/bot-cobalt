@@ -34,7 +34,7 @@ our %EXPORT_TAGS = (
 );
 
 
-## mostly borrowed from IRC::Utils
+## codes mostly borrowed from IRC::Utils
 our %COLORS = (
     NORMAL      => "\x0f",
 

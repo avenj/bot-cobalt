@@ -296,8 +296,7 @@ sub Bot_private_msg {
 
   if (defined $resp) {
     my $target = $msg->src_nick;
-    core->log->debug("dispatching notice to $target");
-    broadcast( 'notice', $context, $target, $resp );
+    broadcast( 'message', $context, $target, $resp );
   }
 
   return PLUGIN_EAT_NONE
@@ -835,7 +834,7 @@ sub _user_info {
   my @flags = keys %{ $usr->{Flags} };
   my $flag_repl = "Flags: ";
   while (my $this_flag = shift @flags) {
-    $flag_repl .= $this_flag;
+    $flag_repl .= "  ".$this_flag;
     if (length $flag_repl > 300 || !@flags) {
       broadcast('message', $context, $nick, $flag_repl);
       $flag_repl = '';
@@ -844,7 +843,7 @@ sub _user_info {
 
   my $mask_repl = "Masks: ";
   while (my $this_mask = shift @masks) {
-    $mask_repl .= $this_mask;
+    $mask_repl .= "  ".$this_mask;
     if (length $mask_repl > 300 || !@masks) {
       broadcast('message', $context, $nick, $mask_repl);
       $mask_repl = '';
@@ -902,7 +901,7 @@ sub _user_chflags {
     
     my $src = $msg->src;
     logger->warn(
-      "Access denied in chmask: $src tried to chflags $target_user"
+      "Access denied in chflags: $src tried to chflags $target_user"
     );
     
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
@@ -1022,7 +1021,6 @@ sub _user_chmask {
 
     my @masks = grep { $_ ne $host } @{ $alist_ref->{Masks} };
     if (@masks == @{$alist_ref->{Masks}}) {
-      ## FIXME RPL
       return "Mask not found."
     }
     
