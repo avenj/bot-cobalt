@@ -11,7 +11,8 @@ use IRC::Utils qw/eq_irc/;
 extends 'Bot::Cobalt::IRC::Event';
 
 has 'old_nick' => ( is => 'rw', isa => Str, lazy => 1,
-  default => sub { $_[0]->src_nick }, 
+  predicate => 'has_old_nick',
+  default   => sub { $_[0]->src_nick }, 
 );
 
 has 'new_nick' => ( is => 'rw', isa => Str, required => 1 );
@@ -23,12 +24,33 @@ has 'common'   => ( is => 'ro', lazy => 1,
 );
 
 has 'equal' => ( is => 'ro', isa => Bool, lazy => 1,
-  default => sub {
-    my ($self) = @_;
-    my $casemap = core->get_irc_casemap($self->context);
-    eq_irc($self->old_nick, $self->new_nick, $casemap) ? 1 : 0
-  },
+  init_arg  => undef,
+  predicate => 'has_equal',
+  builder   => '_build_equal',
 );
+
+## Changing src on a Nick event makes no sense, as far as I can tell.
+## ...but you can do it!
+after 'src' => sub {
+  my ($self) = @_;
+
+  $self->equal( $self->_build_equal )
+    if $self->has_equal;
+
+  $self->old_nick( $self->src_nick )
+    if $self->has_old_nick;
+};
+
+sub _build_equal {
+  my ($self) = @_;
+    
+  require Bot::Cobalt::Core;
+  my $casemap = Bot::Cobalt::Core->has_instance ?
+                  core->get_irc_casemap($self->context)
+                  : 'rfc1459' ;
+
+  eq_irc($self->old_nick, $self->new_nick, $casemap)
+}
 
 1;
 __END__
