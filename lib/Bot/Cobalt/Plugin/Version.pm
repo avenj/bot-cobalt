@@ -102,7 +102,7 @@ sub Bot_public_msg {
 
       $resp = rplprintf( $core->lang->{RPL_INFO},
         {
-          version => 'cobalt '.$core->version,
+          version => 'Bot::Cobalt '.$core->version,
           plugins => scalar keys %{ $core->plugin_list },
           uptime => secs_to_str($delta),
           sent   => $core->State->{Counters}->{Sent},
@@ -115,7 +115,7 @@ sub Bot_public_msg {
     when ("version") {
       $resp = rplprintf( $core->lang->{RPL_VERSION},
         {
-          version => 'cobalt '.$core->version,
+          version => 'Bot::Cobalt '.$core->version,
           perl_v  => sprintf("%vd", $^V),
           poe_v   => $POE::VERSION,
           pocoirc_v => $POE::Component::IRC::VERSION,
