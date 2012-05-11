@@ -659,7 +659,7 @@ sub _info_display {
   ## return raw topic
   my ($self, $msg, @args) = @_;
   my ($glob) = @args;
-  return unless $glob; # FIXME rpl?
+  return "No topic specified" unless $glob; # FIXME rpl?
 
   ## check if glob exists
   unless (exists $self->{Globs}->{$glob}) {

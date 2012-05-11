@@ -150,7 +150,6 @@ RPL:
   INFO_BADSYNTAX_DEL: "Usage: <bot> DEL <topic>"
   INFO_BADSYNTAX_REPL: "Usage: <bot> REPLACE <topic> <new response>"
 
-
  ## Plugin::RDB:
 
   ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb

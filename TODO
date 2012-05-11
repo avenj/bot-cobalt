@@ -1,0 +1,13 @@
+## TODO
+
+
+Plugins:
+
+  - Plugins::ChanMgr
+    Online channels.conf manager.
+
+  - Plugins::Extras::Bitch ?
+    Channel protection plugin
+
+  - Plugins::Extras::Logger
+    Configurable og-to-file plugin
