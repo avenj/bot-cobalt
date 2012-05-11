@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 32;
 use strict; use warnings;
 
 ## FIXME colorize string then check stripped() ?
@@ -28,6 +28,35 @@ ok( $msg->stripped eq 'Some IRC message', 'stripped()' );
 
 ok( $msg->targets([ 'Bob', 'Sam' ]), 'Reset targets()' );
 ok( $msg->target eq 'Bob', 'target() after reset' );
+
+
+is_deeply( $msg->message_array,
+  [ 'Some', 'IRC', 'message' ],
+);
+
+is_deeply( $msg->message_array_sp,
+  [ 'Some', 'IRC', 'message' ],
+);
+
+ok( $msg->message( 'Changed message' ), 'Reset message()' );
+
+is_deeply( $msg->message_array,
+  [ 'Changed', 'message' ],
+);
+
+is_deeply( $msg->message_array_sp,
+  [ 'Changed', 'message' ],
+);
+
+ok( $msg->message( '  Leading spaces'), 'Reset message() again' );
+
+is_deeply( $msg->message_array,
+  [ 'Leading', 'spaces' ],
+);
+
+is_deeply( $msg->message_array_sp,
+  [ '', '', 'Leading', 'spaces' ],
+);
 
 ## FIXME test arrays
 
