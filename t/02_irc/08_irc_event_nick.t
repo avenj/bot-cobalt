@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 17;
 use strict; use warnings;
 
 BEGIN{
@@ -14,6 +14,8 @@ my $ev = new_ok('Bot::Cobalt::IRC::Event::Nick' =>
 
 isa_ok($ev, 'Bot::Cobalt::IRC::Event' );
 
+ok( !$ev->equal, 'not equal()' );
+
 ok( $ev->context eq 'Main', 'context()' );
 
 ok( $ev->src eq 'yomomma!your@mother.org', 'src()' );
@@ -27,3 +29,9 @@ ok( $ev->new_nick eq 'bob', 'new_nick()' );
 ok( ref $ev->channels eq 'ARRAY', 'channels() is ARRAY' );
 is_deeply($ev->channels, [ '#otw', '#unix' ], 'channels() is correct' );
 is_deeply($ev->channels, $ev->common, 'channels() eq common()' );
+
+ok( $ev->src('BOB!things@example.org'), 'reset src()' );
+
+ok( $ev->old_nick eq 'BOB', 'old_nick() after reset' );
+
+ok( $ev->equal, 'equal()' );
