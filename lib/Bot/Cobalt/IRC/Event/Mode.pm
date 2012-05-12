@@ -12,6 +12,7 @@ use IRC::Utils qw/parse_mode_line eq_irc/;
 extends 'Bot::Cobalt::IRC::Event';
 
 has 'mode'   => ( is => 'rw', isa => Str, required => 1 );
+
 has 'target' => ( is => 'rw', isa => Str, required => 1 );
 
 has 'is_umode' => ( is => 'ro', isa => Bool, lazy => 1,
@@ -32,14 +33,17 @@ has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
 );
 
 has 'args' => ( is => 'rw', isa => ArrayRef, lazy => 1,
-  default => sub {[]},
+  default   => sub {[]},
 );
 
 has 'hash' => ( is => 'ro', isa => HashRef, lazy => 1,
-  default => sub {
-    parse_mode_line($_[0]->mode, @{ $_[0]->args })
-  },
+  predicate => 'has_hash',
+  builder   => '_build_hash',
 );
+
+sub _build_hash {
+  parse_mode_line($_[0]->mode, @{ $_[0]->args })
+}
 
 1;
 __END__

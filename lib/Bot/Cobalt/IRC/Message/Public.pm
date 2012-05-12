@@ -78,8 +78,6 @@ sub _build_cmd {
   undef
 }
 
-## FIXME after message changes, change cmd()
-
 
 1;
 __END__
