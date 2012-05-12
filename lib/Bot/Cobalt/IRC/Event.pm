@@ -34,13 +34,13 @@ has 'src_nick' => (  is => 'ro', lazy => 1,
 );
 
 has 'src_user' => (  is => 'ro', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[1] },
+  default   => sub { (parse_user($_[0]->src))[1] },
   predicate => 'has_src_user',
   writer    => '_set_src_user',
 );
 
 has 'src_host' => (  is => 'ro', lazy => 1,
-  default => sub { (parse_user($_[0]->src))[2] },
+  default   => sub { (parse_user($_[0]->src))[2] },
   predicate => 'has_src_host',
   writer    => '_set_src_host',
 );
@@ -52,7 +52,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::IRC::Event - Represent an IRC event
+Bot::Cobalt::IRC::Event - Base class for IRC event information
 
 =head1 SYNOPSIS
 
