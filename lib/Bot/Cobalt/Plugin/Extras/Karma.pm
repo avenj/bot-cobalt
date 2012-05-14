@@ -154,6 +154,7 @@ sub Bot_public_cmd_resetkarma {
   my $channel = $msg->target;
 
   my $karma_for = lc($msg->message_array->[0] || return PLUGIN_EAT_ALL);
+  $karma_for = decode_irc($karma_for);
 
   unless ( $self->_get($karma_for) ) {
     $core->send_event( 'message', $context, $channel,
@@ -179,6 +180,7 @@ sub Bot_public_cmd_karma {
   my $channel = $msg->target;
   my $karma_for = $msg->message_array->[0];
   $karma_for = lc($karma_for || $msg->src_nick);
+  $karma_for = decode_irc($karma_for);
 
   my $resp;
 
