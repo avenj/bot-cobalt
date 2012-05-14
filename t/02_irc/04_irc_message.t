@@ -58,10 +58,6 @@ is_deeply( $msg->message_array_sp,
   [ '', '', 'Leading', 'spaces' ],
 );
 
-## FIXME test arrays
-
-## FIXME test arrays after resetting message
-
 undef $msg;
 
 my $pub = new_ok( 'Bot::Cobalt::IRC::Message::Public' => [
@@ -75,8 +71,6 @@ my $pub = new_ok( 'Bot::Cobalt::IRC::Message::Public' => [
 isa_ok( $pub, 'Bot::Cobalt::IRC::Message' );
 
 ok( $pub->channel eq '#chan1', 'channel()' );
-
-## FIXME
 
 my $cmd = new_ok( 'Bot::Cobalt::IRC::Message::Public' => [
     src     => 'somebody!somewhere@example.org',

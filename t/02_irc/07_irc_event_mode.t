@@ -22,4 +22,3 @@ ok( $ev->src_user eq 'your', 'src_user()' );
 ok( $ev->src_host eq 'mother.org', 'src_host()' );
 
 ok( ref $ev->hash eq 'HASH', 'hash()' );
-## can't test is_umode/channel, needs a core instance
