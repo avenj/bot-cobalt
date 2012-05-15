@@ -14,6 +14,8 @@ use Bot::Cobalt::Common qw/:types/;
 ##   alias => $alias
 ## );
 
+## It's possible to pass in a different core.
+## (Allows timers to fire against different syndicators if needed)
 has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
   default => sub { 
     require Bot::Cobalt::Core;
@@ -167,7 +169,9 @@ also see L<Bot::Cobalt::Core::Role::Timers/timer_set>.
 
   my $timer = Bot::Cobalt::Timer->new;
 
-Cannot be constructed without an instanced Bot::Cobalt::Core singleton.
+By default, timers that are executed will fire against the 
+L<Bot::Cobalt::Core> singleton; you can pass in a different 'core =>' 
+specification if needed.
 
 =head1 METHODS
 

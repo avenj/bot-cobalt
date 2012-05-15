@@ -41,7 +41,7 @@ has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
   default => sub { {} },
 );
 
-has 'flood' => ( is => 'rw', isa => Object, lazy => 1,
+has 'flood' => ( is => 'ro', isa => Object, lazy => 1,
   predicate => 'has_flood',
   default => sub { 
     my ($self) = @_;
@@ -217,7 +217,7 @@ sub _start {
   ## autoreconn plugin:
   my %connector;
 
-  $connector{delay} = $cfg->{Opts}->{StonedCheck} || 300;
+  $connector{delay}     = $cfg->{Opts}->{StonedCheck}    || 300;
   $connector{reconnect} = $cfg->{Opts}->{ReconnectDelay} || 60;
 
   $irc->plugin_add('Connector' =>
@@ -245,7 +245,7 @@ sub _start {
   my $chanhash = core->get_channels_cfg($context) || {};
   ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
   my %ajoin;
-  for my $chan (%{ $chanhash }) {
+  for my $chan (%$chanhash) {
     my $key = $chanhash->{$chan}->{password} // '';
     $ajoin{$chan} = $key;
   }
@@ -254,7 +254,7 @@ sub _start {
     POE::Component::IRC::Plugin::AutoJoin->new(
       Channels => \%ajoin,
       RejoinOnKick => $cfg->{Opts}->{Chan_RetryAfterKick} // 1,
-      Rejoin_delay => $cfg->{Opts}->{Chan_RejoinDelay} // 5,
+      Rejoin_delay => $cfg->{Opts}->{Chan_RejoinDelay}    // 5,
       NickServ_delay    => $cfg->{Opts}->{Chan_NickServDelay} // 1,
       Retry_when_banned => $cfg->{Opts}->{Chan_RetryAfterBan} // 60,
     ),
@@ -263,7 +263,7 @@ sub _start {
   ## define ctcp responses
   $irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
-      version  => "cobalt ".core->version." (perl $^V) ".core->url,
+      version  => "Bot::Cobalt ".core->version." (perl $^V) ".core->url,
       userinfo   => __PACKAGE__.'-'.$VERSION,
       clientinfo => __PACKAGE__.'-'.$VERSION,
       source     => core->url,
@@ -275,6 +275,101 @@ sub _start {
   ## initiate ze connection:
   $irc->yield(connect => {});
   logger->debug("irc component connect issued");
+}
+
+sub irc_connected {
+  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
+
+  ## NOTE:
+  ##  irc_connected indicates we're connected to the server
+  ##  however, irc_001 is the server welcome message
+  ##  irc_connected happens before auth, no guarantee we can send yet.
+  ##  (we don't broadcast Bot_connected until irc_001)
+}
+
+sub irc_001 {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
+
+  my $context = $heap->{Context};
+  my $irc     = $heap->{Object};
+  
+  ## set up some stuff relevant to our server context:
+  irc_context($context)->connected( 1 );
+  irc_context($context)->connectedat( time() );
+  irc_context($context)->maxmodes( $irc->isupport('MODES') // 4 );
+  ## irc comes with odd case-mapping rules.
+  ## []\~ are considered uppercase equivalents of {}|^
+  ##
+  ## this may vary by server
+  ## (most servers are rfc1459, some are -strict, some are ascii)
+  ##
+  ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
+  ## checking ISUPPORT and setting the casemapping if available
+  my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
+  irc_context($context)->casemap( $casemap );
+  
+  ## if the server returns a fubar value IRC::Utils automagically 
+  ## defaults to rfc1459 casemapping rules
+  ## 
+  ## this is unavoidable in some situations, however:
+  ## misconfigured inspircd on paradoxirc gave a codepage for CASEMAPPING
+  ## and a casemapping for CHARSET (which is supposed to be deprecated)
+  ##
+  ## I strongly suspect there are other similarly broken servers around.
+  ## para has since fixed this after extensive whining on my part \o/
+  ##
+  ## we can try to check for this, but it's still a crapshoot.
+  ##
+  ## this 'fix' will still break when CASEMAPPING is nonsense and CHARSET
+  ## is set to 'ascii' but other casemapping rules are being followed.
+  ##
+  ## the better fix is to smack your admins with a hammer.
+  my @valid_casemaps = qw/ rfc1459 ascii strict-rfc1459 /;
+  unless ($casemap ~~ @valid_casemaps) {
+    my $charset = lc( $irc->isupport('CHARSET') || '' );
+    if ($charset && $charset ~~ @valid_casemaps) {
+      irc_context($context)->casemap( $charset );
+    }
+    ## we don't save CHARSET, it's deprecated per the spec
+    ## also mostly unreliable and meaningless
+    ## you're on your own for handling fubar encodings.
+    ## http://www.irc.org/tech_docs/draft-brocklesby-irc-isupport-03.txt
+  }
+
+  my $server = $irc->server_name;
+  logger->info("Connected: $context: $server");
+  ## send a Bot_connected event with context and visible server name:
+  core->send_event( 'connected', $context, $server );
+}
+
+sub irc_disconnected {
+  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
+  my $context = $_[HEAP]->{Context};
+
+  logger->info("IRC disconnected: $context");
+  irc_context($context)->connected(0);
+
+  core->send_event( 'disconnected', $context, $server );
+}
+
+sub irc_socketerr {
+  my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
+  my $context = $_[HEAP]->{Context};
+
+  logger->info("irc_socketerr: $context: $err");
+  irc_context($context)->connected(0);
+
+  core->send_event( 'server_error', $context, $err );
+}
+
+sub irc_error {
+  my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
+  my $context = $_[HEAP]->{Context};
+
+  logger->warn("IRC error: $context: $reason");
+  irc_context($context)->connected(0);
+
+  core->send_event( 'server_error', $context, $reason );
 }
 
 sub irc_chan_sync {
@@ -290,7 +385,7 @@ sub irc_chan_sync {
   ## issue Bot_chan_sync
   broadcast( 'chan_sync', $context, $chan );
 
-  ## ON if cobalt.conf->Opts->NotifyOnSync is true or not specified:
+  ## on if cobalt.conf->Opts->NotifyOnSync is true or not specified:
   my $cf_core = core->get_core_cfg();
   my $notify = 
     ($cf_core->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
@@ -298,12 +393,10 @@ sub irc_chan_sync {
   my $chan_h = core->get_channels_cfg( $context ) || {};
 
   ## check if we have a specific setting for this channel (override):
-  if ( exists $chan_h->{$chan}
-       && ref $chan_h->{$chan} eq 'HASH' 
-       && exists $chan_h->{$chan}->{notify_on_sync} ) 
-  {
-    $notify = $chan_h->{$chan}->{notify_on_sync} ? 1 : 0;
-  }
+  $notify = $chan_h->{$chan}->{notify_on_sync}
+    if exists $chan_h->{$chan}
+    and ref $chan_h->{$chan} eq 'HASH' 
+    and exists $chan_h->{$chan}->{notify_on_sync};
 
   $irc->yield(privmsg => $chan => $resp) if $notify;
 }
@@ -347,7 +440,6 @@ sub irc_public {
   } else {
     broadcast( 'public_msg', $msg_obj );
   }
-  
 }
 
 sub irc_msg {
@@ -422,98 +514,6 @@ sub irc_ctcp_action {
 
   broadcast( 'ctcp_action', $msg_obj );
 }
-
-sub irc_connected {
-  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
-
-  ## NOTE:
-  ##  irc_connected indicates we're connected to the server
-  ##  however, irc_001 is the server welcome message
-  ##  irc_connected happens before auth, no guarantee we can send yet.
-  ##  (we don't broadcast Bot_connected until irc_001)
-}
-
-sub irc_001 {
-  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-
-  my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
-  
-  ## set up some stuff relevant to our server context:
-  irc_context($context)->connected( 1 );
-  irc_context($context)->connectedat( time() );
-  irc_context($context)->maxmodes( $irc->isupport('MODES') // 4 );
-  ## irc comes with odd case-mapping rules.
-  ## []\~ are considered uppercase equivalents of {}|^
-  ##
-  ## this may vary by server
-  ## (most servers are rfc1459, some are -strict, some are ascii)
-  ##
-  ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
-  ## checking ISUPPORT and setting the casemapping if available
-  my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
-  irc_context($context)->casemap( $casemap );
-  
-  ## if the server returns a fubar value IRC::Utils automagically 
-  ## defaults to rfc1459 casemapping rules
-  ## 
-  ## this is unavoidable in some situations, however:
-  ## misconfigured inspircd on paradoxirc gave a codepage for CASEMAPPING
-  ## and a casemapping for CHARSET (which is supposed to be deprecated)
-  ## I strongly suspect there are other similarly broken servers around.
-  ##
-  ## para has since fixed this after extensive whining on my part \o/
-  ##
-  ## we can try to check for this, but it's still a crapshoot.
-  ##
-  ## this 'fix' will still break when CASEMAPPING is nonsense and CHARSET
-  ## is set to 'ascii' but other casemapping rules are being followed.
-  ##
-  ## the better fix is to smack your admins with a hammer.
-  my @valid_casemaps = qw/ rfc1459 ascii strict-rfc1459 /;
-  unless ($casemap ~~ @valid_casemaps) {
-    my $charset = lc( $irc->isupport('CHARSET') || '' );
-    if ($charset && $charset ~~ @valid_casemaps) {
-      irc_context($context)->casemap( $charset );
-    }
-    ## we don't save CHARSET, it's deprecated per the spec
-    ## also mostly unreliable and meaningless
-    ## you're on your own for handling fubar encodings.
-    ## http://www.irc.org/tech_docs/draft-brocklesby-irc-isupport-03.txt
-  }
-
-  my $server = $irc->server_name;
-  logger->info("Connected: $context: $server");
-  ## send a Bot_connected event with context and visible server name:
-  core->send_event( 'connected', $context, $server );
-}
-
-sub irc_disconnected {
-  my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
-  my $context = $_[HEAP]->{Context};
-  logger->info("IRC disconnected: $context");
-  irc_context($context)->connected(0);
-  ## Bot_disconnected event, similar to Bot_connected:
-  core->send_event( 'disconnected', $context, $server );
-}
-
-sub irc_socketerr {
-  my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
-  my $context = $_[HEAP]->{Context};
-  logger->info("irc_socketerr: $context: $err");
-  irc_context($context)->connected(0);
-  core->send_event( 'server_error', $context, $err );
-}
-
-sub irc_error {
-  my ($self, $kernel, $reason) = @_[OBJECT, KERNEL, ARG0];
-  ## Bot_server_error:
-  my $context = $_[HEAP]->{Context};
-  irc_context($context)->connected(0);
-  logger->warn("IRC error: $context: $reason");
-  core->send_event( 'server_error', $context, $reason );
-}
-
 
 sub irc_kick {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
@@ -700,8 +700,7 @@ sub irc_invite {
 
  ### COBALT EVENTS ###
 
-## FIXME move these out to sub-plugin / sub-session ?
-## can get whatever we need from anywhere, so . . .
+## FIXME move these out to sub-plugin / sub-session
 
 sub Bot_send_message { Bot_message(@_) }
 sub Bot_message {
@@ -1001,7 +1000,7 @@ sub _reset_ajoins {
     my $irc = core->get_irc_obj($context) || next CONTEXT;
     my %ajoin;
 
-    for my $channel (keys %$chanscf) {
+    CHAN: for my $channel (keys %$chanscf) {
       my $key = $chanscf->{$channel}->{password} // '';
       $ajoin{$channel} = $key;
     }
@@ -1020,9 +1019,8 @@ sub _reset_ajoins {
       ),
     );
  
-  } ## CONTEXT
+  }
   
-  return 1;
 }
 
 1;
