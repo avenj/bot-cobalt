@@ -18,6 +18,8 @@ use List::Util   qw/shuffle/;
 
 ## Some de-Moo'd accessors for easy plugin reloads:
 
+sub new { bless {}, shift }
+
 sub DBmgr {
   my ($self) = @_;
   
@@ -56,7 +58,6 @@ sub AsyncSessionID {
   return $self->{ASYNCID} = $id if defined $id;
   $self->{ASYNCID}
 }
-
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
