@@ -264,7 +264,7 @@ sub _start {
   $irc->plugin_add('CTCP' =>
     POE::Component::IRC::Plugin::CTCP->new(
       version  => "Bot::Cobalt ".core->version." (perl $^V) ".core->url,
-      userinfo   => __PACKAGE__.'-'.$VERSION,
+      userinfo   => "I'm a teapot",
       clientinfo => __PACKAGE__.'-'.$VERSION,
       source     => core->url,
     ),
@@ -1042,8 +1042,8 @@ The core IRC plugin provides a multi-server IRC interface via
 L<POE::Component::IRC>. Any other IRC plugins should follow this pattern 
 and provide a compatible event interface.
 
-It does various work on incoming events we consider important enough
-to re-broadcast from the IRC component. This makes life easier on 
+The IRC plugin does various work on incoming events we consider important 
+enough to re-broadcast from the IRC component. This makes life easier on 
 plugins and reduces code redundancy.
 
 Arguments may vary by event. See below.
@@ -1209,7 +1209,8 @@ Carries a copy of the target and text:
   my $target = ${$_[1]};
   my $string = ${$_[2]};
 
-This being IRC, there is no guarantee that the message actually went out.
+This being IRC, there is no guarantee that the message actually made it 
+to its intended destination ;-)
 
 =head3 Bot_notice_sent
 

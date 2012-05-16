@@ -14,8 +14,7 @@ use POE;
 
 use File::Spec;
 
-use List::Util qw/shuffle/;
-use Scalar::Util qw/blessed/;
+use List::Util   qw/shuffle/;
 
 ## Some de-Moo'd accessors for easy plugin reloads:
 
@@ -43,19 +42,19 @@ sub DBmgr {
 sub rand_delay {
   my ($self, $delay) = @_;
   return $self->{RANDDELAY} = $delay if defined $delay;
-  return $self->{RANDDELAY}
+  $self->{RANDDELAY}
 }
 
 sub SessionID {
   my ($self, $id) = @_;
   return $self->{SESSID} = $id if defined $id;
-  return $self->{SESSID}
+  $self->{SESSID}
 }
 
 sub AsyncSessionID {
   my ($self, $id) = @_;
   return $self->{ASYNCID} = $id if defined $id;
-  return $self->{ASYNCID}
+  $self->{ASYNCID}
 }
 
 
