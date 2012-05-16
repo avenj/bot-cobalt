@@ -1,5 +1,5 @@
 #!perl
-my $version = '0.14';
+my $version = '0.15';
 
 ## This is still a disaster.  :|
 
@@ -12,6 +12,7 @@ use Term::ReadKey qw/ReadMode/;
 
 use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
 use Bot::Cobalt::Frontend::Utils qw/:all/;
+use Bot::Cobalt::Frontend::RC qw/rc_write/;
 
 my $rcfile = $ENV{HOME} . "/.cobalt2rc";
 
@@ -176,29 +177,6 @@ sub _slurp {
   return $str
 }
 
-sub RC_Write {
-  my ($relative_base) = @_;
-  ## Pass me a base path relative to $ENV{HOME} such as 'cobalt2'
-  ## Writes a basic cobalt2rc to current value of $rcfile
-  my $str = join "\n",
-    '## cobalt2rc automatically generated at '.scalar localtime,
-    '$BASE = $ENV{HOME} . "/'.$relative_base.'";' ,
-    '$ETC = $BASE . "/etc";' ,
-    '$VAR = $BASE . "/var";' , "\n"
-  ;
-
-  open(my $fh, '>', $rcfile)
-    or die "failed to open $rcfile: $!";
-  print $fh $str;
-  close($fh) or warn "close failed for $rcfile: $!\n";
-
-  say ">! wrote rcfile";
-  say ">! ETC is: ". $ENV{HOME} ."/". $relative_base . "/etc" ;
-  say ">! VAR is: ". $ENV{HOME} ."/". $relative_base . "/var" ;
-  say ">! To change, edit $rcfile\n";
-}
-
-
 ## Conf_* funcs
 
 sub Conf_write_confs {
@@ -347,13 +325,19 @@ if (-e $rcfile) {
     default => 'n',    
   );
   if ( $overwrite_yn ) {
-    RC_Write($relative_basedir);
+    rc_write($rcfile, $relative_basedir)
+      or die "Failed rc_write";
   } else {
     say ">! Skipping rcfile write; attempting to use existing.";
   }
 } else {
-  RC_Write($relative_basedir);
+  rc_write($rcfile, $relative_basedir)
+    or die "Failed rc_write";
 }
+say ">! wrote rcfile";
+say ">! ETC is: ". $ENV{HOME} ."/". $relative_basedir . "/etc" ;
+say ">! VAR is: ". $ENV{HOME} ."/". $relative_basedir . "/var" ;
+say ">! To change, edit $rcfile\n";
 
 my $rplvars = Conf_interactive();
 

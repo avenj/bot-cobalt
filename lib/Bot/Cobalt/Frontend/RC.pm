@@ -39,7 +39,23 @@ sub rc_read {
 }
 
 sub rc_write {
+  my ($rcfile, $basepath) = @_;
+  croak "rc_write needs rc file path and base directory path"
+    unless $rcfile and $basepath;
+  
+  my $str = join "\n",
+    '## cobalt2rc automatically generated at '.scalar localtime,
+    '$BASE = $ENV{HOME} . "/'.$basepath.'";' ,
+    '$ETC  = $BASE ."/etc";' ,
+    '$VAR  = $BASE ."/var";' , 
+    '' ;
 
+  open my $fh, '>', $rcfile
+    or croak "Unable to open rcfile: $rcfile: $!";
+  print $fh $str;
+  close $fh;
+
+  return $basepath
 }
 
 1;
