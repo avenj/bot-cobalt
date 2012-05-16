@@ -2,41 +2,27 @@ package Bot::Cobalt::Plugin::RDB;
 our $VERSION = '0.200_48';
 
 ## 'Random' DBs, often used for quotebots or random chatter
-##
-## This plugin mostly ties together the Plugin::RDB::* modules 
-## and translates Plugin::RDB::Constant return values back to 
-## rplprintf()-formatted IRC replies
 
-## Hash for a RDB item:
-##   String => "string",
-##   AddedAt => time(),
-##   AddedBy => $username,
-##   },
-
+use strictures 1;
 use 5.10.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Plugin::RDB::Database;
 
-use Moo;
-
 use POE;
 
 use File::Spec;
 
 use List::Util qw/shuffle/;
+use Scalar::Util qw/blessed/;
 
-## marked non-reloadable .. shouldfix
-## ought to feed our external RDB:: modules to unloader_cleanup
-has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool, lazy => 1,
-  default => sub {1},
-);
+## Some de-Moo'd accessors for easy plugin reloads:
 
-has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
-  default => sub {
-    my ($self) = @_;
-
+sub DBmgr {
+  my ($self) = @_;
+  
+  unless ($self->{DBMGR}) {
     my $cfg = core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
 
@@ -45,24 +31,33 @@ has 'DBmgr' => ( is => 'rw', isa => Object, lazy => 1,
       $cfg->{Opts}->{RDBDir} ? $cfg->{Opts}->{RDBDir} : ('db', 'rdb')
     );
 
-    Bot::Cobalt::Plugin::RDB::Database->new(
+    $self->{DBMGR} = Bot::Cobalt::Plugin::RDB::Database->new(
       CacheKeys => $cachekeys,
       RDBDir    => $rdbdir,
-    )
-  }, 
-);
+    );
+  }
+  
+  $self->{DBMGR}
+}
 
-has 'rand_delay' => ( is => 'rw', isa => Int );
+sub rand_delay {
+  my ($self, $delay) = @_;
+  return $self->{RANDDELAY} = $delay if defined $delay;
+  return $self->{RANDDELAY}
+}
 
-has 'SessionID' => ( is => 'rw', lazy => 1,
-  predicate => 'has_SessionID',
-  clearer   => 'clear_SessionID',
-);
+sub SessionID {
+  my ($self, $id) = @_;
+  return $self->{SESSID} = $id if defined $id;
+  return $self->{SESSID}
+}
 
-has 'AsyncSessionID' => ( is => 'rw', lazy => 1,
-  predicate => 'has_AsyncSessionID',
-  clearer   => 'clear_AsyncSessionID',
-);
+sub AsyncSessionID {
+  my ($self, $id) = @_;
+  return $self->{ASYNCID} = $id if defined $id;
+  return $self->{ASYNCID}
+}
+
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -132,7 +127,7 @@ sub Cobalt_unregister {
 
   $poe_kernel->alias_remove('sess_'. core->get_plugin_alias($self) );
 
-  if ( $self->has_AsyncSessionID ) {
+  if ( $self->AsyncSessionID ) {
     $poe_kernel->post( $self->AsyncSessionID, 'shutdown' );
   }
 
@@ -321,7 +316,7 @@ sub _cmd_randq {
 
   core->log->debug("dispatching search for $str in $rdb");
 
-  if ( $self->has_SessionID ) {
+  if ( $self->SessionID ) {
     ## if we have asyncsearch, return immediately
     
     unless ( $dbmgr->dbexists($rdb) ) {
@@ -876,7 +871,7 @@ sub _searchidx {
 
   my $dbmgr = $self->DBmgr;
 
-  if ( $self->has_SessionID ) {
+  if ( $self->SessionID ) {
     ## if we have asyncsearch, return immediately
 
     unless ( $dbmgr->dbexists($rdb) ) {
