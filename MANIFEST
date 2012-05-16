@@ -81,7 +81,6 @@ lib/Bot/Cobalt/Plugin/RDB/Database.pm
 lib/Bot/Cobalt/Plugin/RDB/SearchCache.pm
 lib/Bot/Cobalt/Plugin/Rehash.pm
 lib/Bot/Cobalt/Plugin/Seen.pm
-lib/Bot/Cobalt/Plugin/User/.keep
 lib/Bot/Cobalt/Plugin/Version.pm
 lib/Bot/Cobalt/Plugin/WWW.pm
 lib/Bot/Cobalt/Serializer.pm
