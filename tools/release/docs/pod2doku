@@ -14,6 +14,9 @@ use YAML::Syck;
 
 use Pod::Find qw/pod_find contains_pod/;
 
+use IO::Scalar;
+use Pod::Select;
+
 use Template;
 
 use Dir::Self;
@@ -67,6 +70,17 @@ sub build_dir_map {
   my $pod_h = {};
   sub _create_pod_hash {
     my ($pod, $relative_path, $type) = @_;
+
+    my $parser = Pod::Select->new;
+    $parser->select('NAME');
+    my $out_str;
+    my $handle = IO::Scalar->new(\$out_str);
+    $parser->parse_from_file($pod, $handle);
+    my ($desc) = $out_str =~ /^[^=\s].+\-\s+(.+)$/ms;
+    
+    print "WARNING no desc found for $pod\n"
+      unless $desc;
+    
     my $basepath = $relative_path;
     $basepath =~ s/(\.pod|\.pm)$//;
     ## $pod = absolute path to .pod/.pm/whatever
@@ -97,6 +111,7 @@ sub build_dir_map {
       IndexItem => {
         Type => $type,  ## category names (bin/  lib/)
         Title => $pod_name,
+        Desc  => $desc,
         ## $linkroot:PATH:TO:FILE:WITHOUT:SUFFIX
         Link => $link,
       },
@@ -185,6 +200,7 @@ for my $pod_in (sort keys %$pod_h) {
     {
       Link  => $indexitem->{Link},
       Title => $indexitem->{Title},
+      Desc  => $indexitem->{Desc},
     },
   );
 }

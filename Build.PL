@@ -200,10 +200,9 @@ my $build = $class->new(
      # templating (cpodconv/release tools)
 #      'Template' => 0,
      # POD conversion
-#      'Pod::Find' => 0,
+#      'Pod::Select' => 0,
+#      'Pod::Find'   => 0,
 #      'Pod::Simple::Wiki' => 0,
-     
-
   },
 );
 
