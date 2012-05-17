@@ -93,7 +93,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Extras::Debug - dump internal state information
+Bot::Cobalt::Plugin::Extras::Debug - Dump internal state information
 
 =head1 SYNOPSIS
 

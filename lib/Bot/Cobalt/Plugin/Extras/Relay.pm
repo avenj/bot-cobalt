@@ -468,7 +468,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Extras::Relay - multiplex IRC channels
+Bot::Cobalt::Plugin::Extras::Relay - Multiplex IRC channels
 
 =head1 DESCRIPTION
 

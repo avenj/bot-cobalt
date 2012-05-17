@@ -871,7 +871,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Info3 - enhanced text-triggered responses
+Bot::Cobalt::Plugin::Info3 - Enhanced text-triggered responses
 
 =head1 SYNOPSIS
 

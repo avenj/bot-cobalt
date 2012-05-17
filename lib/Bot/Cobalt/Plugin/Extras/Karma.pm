@@ -203,7 +203,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Extras::Karma - simple karma bot plugin
+Bot::Cobalt::Plugin::Extras::Karma - Simple karma bot plugin
 
 =head1 SYNOPSIS
 

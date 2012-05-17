@@ -1302,7 +1302,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Auth -- standard access control plugin
+Bot::Cobalt::Plugin::Auth -- User management and auth plugin
 
 =head1 DESCRIPTION
 

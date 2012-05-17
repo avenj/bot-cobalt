@@ -195,7 +195,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Extras::Money - currency conversion plugin
+Bot::Cobalt::Plugin::Extras::Money - Currency conversion plugin
 
 =head1 USAGE
 

@@ -400,7 +400,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Seen - IRC 'seen' command
+Bot::Cobalt::Plugin::Seen - IRC 'seen' plugin
 
 =head1 SYNOPSIS
 

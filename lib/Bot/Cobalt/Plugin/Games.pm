@@ -119,7 +119,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Games - interface some silly games
+Bot::Cobalt::Plugin::Games - Some silly IRC games
 
 =head1 SYNOPSIS
 

@@ -176,7 +176,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Alarmclock - simple timed highlights
+Bot::Cobalt::Plugin::Alarmclock - Timed IRC highlights
 
 =head1 SYNOPSIS
 

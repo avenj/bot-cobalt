@@ -116,7 +116,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::RDB::SearchCache - generic limited-key memory caching
+Bot::Cobalt::Plugin::RDB::SearchCache - Simple in-memory cache
 
 =head1 SYNOPSIS
 

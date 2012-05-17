@@ -148,7 +148,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Version - retrieve bot version & information
+Bot::Cobalt::Plugin::Version - Retrieve bot version and info
 
 =head1 SYNOPSIS
 

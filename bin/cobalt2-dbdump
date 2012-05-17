@@ -75,7 +75,7 @@ __END__
 
 =head1 NAME
 
-cobalt2-dbdump - export Bot::Cobalt::DB databases to YAML
+cobalt2-dbdump - Export Bot::Cobalt::DB databases to YAML
 
 =head1 SYNOPSIS
 

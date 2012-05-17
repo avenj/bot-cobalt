@@ -81,7 +81,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Extras::TempConv - temperature conversion plugin
+Bot::Cobalt::Plugin::Extras::TempConv - Temperature conversion
 
 =head1 SYNOPSIS
 

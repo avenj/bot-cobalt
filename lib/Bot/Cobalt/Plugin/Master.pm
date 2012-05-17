@@ -211,7 +211,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Master - basic bot control commands
+Bot::Cobalt::Plugin::Master - Basic bot master commands
 
 =head1 SYNOPSIS
 
