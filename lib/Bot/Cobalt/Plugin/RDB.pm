@@ -827,24 +827,27 @@ sub Bot_rdb_broadcast {
     my $casemap  = $core->get_irc_casemap($context) || 'rfc1459';
     my @channels = map { lc_irc($_, $casemap) } keys %$on_channels;
 
-    CHAN: for my $channel (@channels) {
-      next CHAN if ($chcfg->{$channel}->{rdb_randstuffs}//1) == 0;
- 
-      ## action/msg check   
-      if ( index($random, '+') == 0 ) {
-        my $random_action = substr($random, 1);
-        $core->log->debug(
-          "rdb_broadcast (action) -> $context -> $channel"
-        );
+    my $evtype;
+    if ( index($random, '+') == 0 ) {
+      ## action
+      $random = substr($random, 1);
+      $evtype = 'action';
+    } else {
+      $evtype = 'message';
+    }
+    
+    @channels = grep { $chcfg->{$_}->{rdb_randstuffs}//1 } @channels;
 
-        broadcast( 'action', $context, $channel, $random_action );
-      } else {
-        $core->log->debug("rdb_broadcast -> $context -> $channel");
-
-        broadcast( 'message', $context, $channel, $random );
-      }
- 
-    } # CHAN
+    my $maxtargets = $c_obj->maxtargets;
+    
+    while (my @targets = splice @channels, 0, $maxtargets) {
+      logger->debug(
+        "rdb_broadcast ($evtype) to $#targets targets ($context)"
+      );
+      my $targetstr = join ',', @targets;
+      broadcast( $evtype, $context, $targetstr, $random );
+    }
+    
   } # SERVER
 
   ## reset timer unless randdelay is 0
