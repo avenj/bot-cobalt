@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event::Kick;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 use Moo;
 use Bot::Cobalt::Common qw/:types/;

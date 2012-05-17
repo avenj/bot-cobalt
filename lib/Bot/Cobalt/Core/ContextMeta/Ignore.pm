@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::ContextMeta::Ignore;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 use 5.10.1;
 use strictures 1;

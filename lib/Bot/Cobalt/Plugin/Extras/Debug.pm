@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Debug;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 ## Simple 'dump to stdout' debug functions
 ##

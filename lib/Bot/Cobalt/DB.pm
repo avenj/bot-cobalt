@@ -1,5 +1,5 @@
 package Bot::Cobalt::DB;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 ## Simple interface to a DB_File (berkdb1.x interface)
 ## Uses proper retie-after-lock technique for locking

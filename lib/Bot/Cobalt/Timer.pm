@@ -1,5 +1,5 @@
 package Bot::Cobalt::Timer;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 use strictures 1;
 use 5.10.1;

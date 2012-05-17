@@ -1,5 +1,5 @@
 package Bot::Cobalt::Utils;
-our $VERSION = '0.200_48';
+our $VERSION = '0.001_01';
 
 use 5.10.1;
 use strict;
@@ -271,10 +271,10 @@ sub secs_to_timestr {
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
 
   my $str;
-  $str .= $days.'d'  if $days;  
-  $str .= $hours.'h' if $hours;
-  $str .= $mins.'m'  if $mins;  
-  $str .= $sec.'s'   if $sec;
+  $str .= $days  .'d' if $days;  
+  $str .= $hours .'h' if $hours;
+  $str .= $mins  .'m' if $mins;  
+  $str .= $sec   .'s' if $sec;
 
   return $str  
 }
