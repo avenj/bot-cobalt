@@ -36,7 +36,7 @@ sub max_workers {
 }
 
 sub Requests {
-  $_[0]->{REQS}//={}
+  return($_[0]->{REQS}//={})
 }
 
 sub new { bless {}, shift }
