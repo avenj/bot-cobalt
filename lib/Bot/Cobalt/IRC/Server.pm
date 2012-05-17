@@ -108,6 +108,13 @@ The maximum number of modes allowed in a single mode change command.
 
 If the server does not announce MAXMODES, the default is 3.
 
+=head2 maxtargets
+
+The maximum number of targets allowed for a single message as specified 
+by MAXTARGETS. 
+
+Useful for combining message sends to multiple channels, for example.
+
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
