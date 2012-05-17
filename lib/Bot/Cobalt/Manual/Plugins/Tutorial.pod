@@ -196,7 +196,6 @@ our retrieved B<DATA> -- this is nice and simple:
     my $channel  = $msg->channel;
     
     my $fortune = $self->fortune;
-    chomp($fortune)
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
