@@ -297,6 +297,7 @@ sub irc_001 {
   irc_context($context)->connected( 1 );
   irc_context($context)->connectedat( time() );
   irc_context($context)->maxmodes( $irc->isupport('MODES') // 4 );
+  irc_context($context)->maxtargets( $irc->isupport('MAXTARGETS') // 4 );
   ## irc comes with odd case-mapping rules.
   ## []\~ are considered uppercase equivalents of {}|^
   ##

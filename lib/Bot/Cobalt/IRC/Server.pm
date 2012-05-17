@@ -35,6 +35,9 @@ has 'maxmodes' => ( is => 'rw', isa => Int, lazy => 1,
   default => sub { 3 },
 );
 
+has 'maxtargets' => ( is => 'rw', isa => Int, lazy => 1,
+  default => sub { 4 },
+);
 
 1;
 __END__

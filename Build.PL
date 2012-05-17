@@ -172,7 +172,7 @@ my $build = $class->new(
      # POE::
       'POE'            => '1.311',
 
-      'POE::Component::Client::DNS' => 0,
+      'POE::Component::Client::DNS'  => 0,
       'POE::Component::Client::HTTP' => '0.945',
       'POE::Component::Client::Keepalive' => '0',
       'POE::Component::IRC::State'  => '6.78',
