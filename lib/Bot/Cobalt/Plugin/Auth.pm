@@ -363,7 +363,9 @@ sub _cmd_login {
     }
   }
 
-  return $resp  ## return a response to the _private_msg handler
+  broadcast( 'notice', $context, $nick, $resp );
+
+  return
 }
 
 sub _cmd_chpass {
