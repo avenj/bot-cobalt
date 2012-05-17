@@ -841,8 +841,9 @@ sub Bot_rdb_broadcast {
     my $maxtargets = $c_obj->maxtargets;
     
     while (my @targets = splice @channels, 0, $maxtargets) {
+      my $tcount = @targets;
       logger->debug(
-        "rdb_broadcast ($evtype) to $#targets targets ($context)"
+        "rdb_broadcast ($evtype) to $tcount targets ($context)"
       );
       my $targetstr = join ',', @targets;
       broadcast( $evtype, $context, $targetstr, $random );
