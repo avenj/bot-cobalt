@@ -7,8 +7,6 @@ our $VERSION = '0.200_48';
 use 5.10.1;
 use strictures 1;
 
-use Moo;
-
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
@@ -17,46 +15,31 @@ use POE qw/
   Component::Client::Keepalive
 /;
 
-has 'opts' => ( is => 'rw', lazy => 1,
-  default => sub {
-    my ($self) = @_;
-    core->get_plugin_cfg($self)->{Opts}
-  },
-);
+sub opts {
+  core->get_plugin_cfg($_[0])->{Opts}
+}
 
-has 'bindaddr'  => ( is => 'rw', lazy => 1,
-  predicate => 'has_bindaddr', 
-  default => sub {
-    my ($self) = @_;
-    $self->opts->{BindAddr}
-  },
-);
+sub bindaddr {
+  $_[0]->opts->{BindAddr}
+}
 
-has 'proxy' => ( is => 'rw', lazy => 1,
-  predicate => 'has_proxy',
-  default => sub {
-    my ($self) = @_;
-    $self->opts->{Proxy}
-  },
-);
+sub proxy {
+  $_[0]->opts->{Proxy}
+}
 
-has 'timeout'   => ( is => 'rw', lazy => 1,
-  default => sub {
-    my ($self) = @_;
-    $self->opts->{Timeout} || 90
-  },
-);
+sub timeout {
+  $_[0]->opts->{Timeout}    || 90
+}
 
-has 'max_workers' => ( is => 'rw', isa => Int, lazy => 1,
-  default => sub { 
-    my ($self) = @_;
-    $self->opts->{MaxWorkers} || 25
-  },
-);
+sub max_workers {
+  $_[0]->opts->{MaxWorkers} || 25
+}
 
-has 'Requests' => ( is => 'rw', isa => HashRef,
-  default => sub { {} },
-);
+sub Requests {
+  $_[0]->{REQS}//={}
+}
+
+sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -177,8 +160,8 @@ sub _start {
   $kernel->alias_set( $sess_alias );
 
   my %opts;
-  $opts{BindAddr} = $self->bindaddr if $self->has_bindaddr;
-  $opts{Proxy}    = $self->proxy    if $self->has_proxy;
+  $opts{BindAddr} = $self->bindaddr if $self->bindaddr;
+  $opts{Proxy}    = $self->proxy    if $self->proxy;
   $opts{Timeout}  = $self->timeout;
 
   ## Create "ht_${plugin_alias}" session
@@ -188,7 +171,7 @@ sub _start {
     Agent => __PACKAGE__,
     Alias => 'ht_'. core()->get_plugin_alias($self),
     ConnectionManager => POE::Component::Client::Keepalive->new(
-      keep_alive => 2,
+      keep_alive   => 2,
       max_per_host => 4,
       max_open => $self->max_workers,
       timeout  => $self->timeout,
