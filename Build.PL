@@ -151,8 +151,9 @@ my $build = $class->new(
       'URI::Escape'    => 0,
 
      # Utils
-      'DateTime'    => 0,
-      'IRC::Utils'  => '0.12',
+      'DateTime'      => 0,
+      'IRC::Utils'    => '0.12',
+      'Term::ReadKey' => 0,
 
      # Serialization
       'JSON'        => '2.00',
@@ -188,7 +189,6 @@ my $build = $class->new(
 
     ### Utils / misc
       # terminal interaction
-      'Term::ReadKey' => 0,
       'Term::ReadLine::Perl' => 0,
 
     ### Storage / serialization
