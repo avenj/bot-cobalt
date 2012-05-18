@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Karma;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_05';
 
 ## simple karma++/-- tracking
 

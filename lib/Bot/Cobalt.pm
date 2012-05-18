@@ -21,7 +21,7 @@ sub instance {
     ## Someone tried to create a new instance, but they really 
     ## wanted a Bot::Cobalt::Core.
     ## Behavior may change.
-    Bot::Cobalt::Core->new(@_[1 .. $#_])
+    return Bot::Cobalt::Core->instance(@_[1 .. $#_])
   }
 
   ## Be polite and offer up our Bot::Cobalt::Core if we have one

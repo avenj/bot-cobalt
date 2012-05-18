@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::ContextMeta::Auth;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_05';
 
 use 5.10.1;
 use strictures 1;

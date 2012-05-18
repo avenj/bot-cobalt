@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_05';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 
@@ -271,7 +271,7 @@ sub _select_random {
     return $content
   } else {
     ## do nothing if we're supposed to fail quietly
-    ## (e.g. in a rdb_triggered for a bustedass rdb)
+    ## (e.g. in a rdb_triggered for an empty rdb)
     return if $quietfail;
     my $rpl;
     given ($dbmgr->Error) {
