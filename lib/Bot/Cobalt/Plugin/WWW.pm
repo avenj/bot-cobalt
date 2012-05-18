@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::WWW;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_04';
 
 ## FIXME seems to fail when the intertubes are clogged for some 
 ## extended duration; noticed locally when my router goes MIA ...
@@ -16,7 +16,9 @@ use POE qw/
 /;
 
 sub opts {
-  core->get_plugin_cfg($_[0])->{Opts}
+  my $opts = core->get_plugin_cfg($_[0])->{Opts};
+  return {} unless $opts and ref $opts eq 'HASH';
+  $opts
 }
 
 sub bindaddr {
