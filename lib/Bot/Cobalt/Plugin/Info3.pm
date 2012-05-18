@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Info3;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_05';
 
 use 5.10.1;
 
@@ -83,7 +83,7 @@ sub Cobalt_register {
     ],
   );
 
-  logger->info("Loaded, topics: ".$core->Provided->{info_topics});
+  logger->info("Loaded, topics: ".$core->Provided->{info_topics}||=0);
   return PLUGIN_EAT_NONE
 }
 
