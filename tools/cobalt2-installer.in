@@ -12,7 +12,7 @@ use Term::ReadKey qw/ReadMode/;
 
 use Bot::Cobalt::Utils qw/ rplprintf mkpasswd /;
 use Bot::Cobalt::Frontend::Utils qw/:all/;
-use Bot::Cobalt::Frontend::RC qw/rc_write/;
+use Bot::Cobalt::Frontend::RC qw/rc_read rc_write/;
 
 my $rcfile = $ENV{HOME} . "/.cobalt2rc";
 
@@ -146,7 +146,10 @@ sub ask_from_ref {
       prompt  => $q,
       default => $hash_r->{Default},
     );
-    ReadMode(0) if $hash_r->{Hide};
+    if ($hash_r->{Hide}) {
+      ReadMode(0);
+      print "\n";
+    }
   } 
   
   return($var, $value)
