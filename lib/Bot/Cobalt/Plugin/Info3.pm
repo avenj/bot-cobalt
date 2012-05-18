@@ -83,7 +83,7 @@ sub Cobalt_register {
     ],
   );
 
-  logger->info("Loaded, topics: ".$core->Provided->{info_topics}||=0);
+  logger->info("Loaded, topics: ".($core->Provided->{info_topics}||=0));
   return PLUGIN_EAT_NONE
 }
 
