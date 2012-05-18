@@ -105,7 +105,8 @@ my $config_q = {
     
     {
       Question => "Password",
-      Hide => 1,
+      Hide  => 1,
+      Crypt => 1,
       Var  => "AUTH_PASS",
     },
     
@@ -149,6 +150,10 @@ sub ask_from_ref {
     if ($hash_r->{Hide}) {
       ReadMode(0);
       print "\n";
+    }
+    
+    if ($hash_r->{Crypt}) {
+      $value = mkpasswd($value);
     }
   } 
   
