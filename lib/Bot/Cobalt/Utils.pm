@@ -1,5 +1,5 @@
 package Bot::Cobalt::Utils;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_05';
 
 use 5.10.1;
 use strict;
@@ -8,10 +8,9 @@ use Carp;
 
 use App::bmkpasswd ();
 
-require Exporter;
-our @ISA = qw(Exporter);
+use base 'Exporter';
 
-our @EXPORT_OK = qw{
+our @EXPORT_OK = qw/
   secs_to_str
   secs_to_timestr
   timestr_to_secs
@@ -27,7 +26,7 @@ our @EXPORT_OK = qw{
   rplprintf
 
   %COLORS
-};
+/;
 
 our %EXPORT_TAGS = (
   ALL => [ @EXPORT_OK ],
