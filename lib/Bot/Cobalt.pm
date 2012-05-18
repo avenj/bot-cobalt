@@ -1,5 +1,5 @@
 package Bot::Cobalt;
-our $VERSION = '0.001_02';
+our $VERSION = '0.001_06';
 
 use 5.10.1;
 use strictures 1;
@@ -21,7 +21,7 @@ sub instance {
     ## Someone tried to create a new instance, but they really 
     ## wanted a Bot::Cobalt::Core.
     ## Behavior may change.
-    $_[0]->new(@_[1 .. $#_])
+    Bot::Cobalt::Core->new(@_[1 .. $#_])
   }
 
   ## Be polite and offer up our Bot::Cobalt::Core if we have one
@@ -63,21 +63,21 @@ Bot::Cobalt - IRC darkbot-alike plus plugin authoring sugar
 
 =head1 DESCRIPTION
 
-B<Bot::Cobalt> is the 2nd generation of the (previously not released on 
-CPAN) B<cobalt> IRC bot.
+B<Bot::Cobalt> is the second generation of the (previously not released 
+on CPAN) B<cobalt> IRC bot.
 
 Cobalt was originally a Perl reimplementation of Jason Hamilton's 
-B<darkbot> behavior (darkbot's last release was in 2001).
-
+B<darkbot> (darkbot's last release was in 2001).
 Bot::Cobalt is a much-improved (and CPAN-able!) revision, providing a 
 pluggable IRC bot framework coupled with a core set of plugins 
 replicating classic darkbot and Cobalt behavior.
 
-The included plugin set provides a wide range of behavior; see 
+The included plugin set provides a wide range of functionality; see 
 L</"Included plugins"> below.
 
-IRC functionality is provided via L<POE::Component::IRC>; the bot can 
-comfortably handle multiple servers/networks (referred to as 
+IRC connectivity and protocol details are handled via 
+L<POE::Component::IRC>; the bot can 
+comfortably manage multiple servers/networks (referred to as 
 "contexts").
 
 Bot::Cobalt tries to be friendly to developers. The bridge to 
