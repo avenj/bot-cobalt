@@ -77,7 +77,7 @@ my $config_q = {
     {
       ## For YesNo => use ask_yesno and default to YesNo value
       Question => "Use SSL for this server?",
-      YesNo => 'n',
+      YesNo   => 'n',
       Var => "CFG_USE_SSL",
     },
     
@@ -138,7 +138,7 @@ sub ask_from_ref {
   if ($type eq 'yesno') {
     $value = ask_yesno(
       prompt  => $q,
-      default => $hash_r->{Default},
+      default => $hash_r->{YesNo},
     );
   } else {
     ReadMode('noecho') if $hash_r->{Hide};
