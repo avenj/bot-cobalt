@@ -121,3 +121,5 @@ t/07_cmds/03_dbdump.t
 tools/cobalt2-installer.in
 var/.keep
 var/db/.keep
+META.yml
+META.json
