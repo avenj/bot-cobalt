@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC;
-our $VERSION = '0.001_05';
+our $VERSION = '0.001_07';
 
 use 5.10.1;
 use strictures 1;
@@ -22,13 +22,14 @@ use Bot::Cobalt::IRC::Event::Nick;
 use Bot::Cobalt::IRC::Event::Quit;
 use Bot::Cobalt::IRC::Event::Topic;
 
-use POE;
-use POE::Component::IRC::State;
-use POE::Component::IRC::Plugin::CTCP;
-use POE::Component::IRC::Plugin::AutoJoin;
-use POE::Component::IRC::Plugin::Connector;
-use POE::Component::IRC::Plugin::NickServID;
-use POE::Component::IRC::Plugin::NickReclaim;
+use POE qw/
+  Component::IRC::State
+  Component::IRC::Plugin::CTCP
+  Component::IRC::Plugin::AutoJoin
+  Component::IRC::Plugin::Connector
+  Component::IRC::Plugin::NickServID
+  Component::IRC::Plugin::NickReclaim
+/;
 
 ## Bot::Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
