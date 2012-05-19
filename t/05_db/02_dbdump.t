@@ -25,7 +25,7 @@ $db->dbclose;
 
 my $serializer;
 ok( 
-  $serializer = Bot::Cobalt::Serializer->new('YAML'),
+  $serializer = Bot::Cobalt::Serializer->new,
   'Create Bot::Cobalt::Serializer'
 );
 
@@ -34,7 +34,7 @@ ok( $db->dbopen, 'Temp database reopen' );
 my $yaml;
 ok(
   $yaml = $db->dbdump,
-  'Dump DB to YAML'
+  'Dump DB to YAMLXS'
 );
 
 $db->dbclose;
