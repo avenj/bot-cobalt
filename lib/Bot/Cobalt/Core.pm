@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.001_05';
+our $VERSION = '0.001_07';
 
 ## This is the core Syndicator singleton.
 
@@ -66,7 +66,7 @@ has 'lang' => ( is => 'rw', isa => HashRef );
 
 has 'State' => (
   ## global 'heap' of sorts
-  is => 'rw',
+  is => 'ro',
   isa => HashRef,
   default => sub {
     {
@@ -91,7 +91,7 @@ has 'PluginObjects' => (
 ## Some plugins provide optional functionality.
 ## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is  => 'rw',  isa => HashRef,
+  is  => 'ro',  isa => HashRef,
   default => sub { {} },
 );
 
