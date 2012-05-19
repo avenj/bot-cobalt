@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Auth;
-our $VERSION = '0.001_05';
+our $VERSION = '0.001_07';
 
 ## "Standard" Auth module
 ##
@@ -563,8 +563,8 @@ sub _do_login {
   core->send_event( 'auth_user_login',
     $context,
     $nick,
-    $host,
     $username,
+    $host,
     $level,
   );
 
@@ -1276,6 +1276,8 @@ sub _write_access_list {
   for my $context (keys %hash) {
     for my $user (keys %{ $hash{$context} }) {
       if ( $hash{$context}->{$user}->{Flags}->{SUPERUSER} ) {
+        ## FIXME
+        ##  sync superusers too so we can preserve flags?
         delete $hash{$context}->{$user};
       }
     }
@@ -1309,9 +1311,88 @@ Bot::Cobalt::Plugin::Auth -- User management and auth plugin
 =head1 DESCRIPTION
 
 This plugin provides the standard authorization and access control 
-functionality for B<Cobalt>.
+functionality for L<Bot::Cobalt>.
 
-=head1 COMMANDS
+=head1 CONFIGURATION
+
+=head2 plugins.conf
+
+A basic plugins.conf entry for this plugin:
+
+  Auth:
+    Module: Bot::Cobalt::Plugin::Auth
+    Config: auth.conf
+
+=head2 auth.conf
+
+C<auth.conf> is the central configuration file for this plugin, 
+including statically-configured superuser auth entries.
+
+=head3 SuperUsers
+
+The B<SuperUsers> directive specifies statically configured superusers, 
+who receive access level 9999 by default and typically have access to 
+the totality of the bot's functionality.
+
+Users are specified per-context. Multiple masks can be specified as a 
+list:
+
+  SuperUsers:
+    Main:
+      'avenj':
+        Mask:
+          - '*avenj@*.oppresses.us'
+          - '*avenj@*.cobaltirc.org'
+        Password: '$2a$08$W19087w4d(. . . .)'
+
+B<Password> should be a hashed password. You can create them from the 
+command line via C<bmkpasswd> from L<App::bmkpasswd>, which this 
+distribution depends on.
+
+=head3 Opts
+
+B<Opts> defines a small set of password and database related options:
+
+  Opts:
+    Method: 'bcrypt'
+    Bcrypt_Cost: '08'
+    AuthDB: 'db/authdb.yml'
+
+=head4 Method
+
+B<Method> is a string describing the preferred password hashing method 
+for new passwords. Hashes are created via L<App::bmkpasswd> -- C<bcrypt> 
+is the recommended method and guaranteed to be available.
+
+C<sha256> and C<sha512> methods may be available, although you might 
+need L<Crypt::Passwd::XS>. Consult the L<App::bmkpasswd> 
+documentation for details.
+
+=head4 Bcrypt_Cost
+
+If using bcrypt (see L</Method>), the 'work cost factor' is 
+configurable. Must be a two digit power of 2. Lower is faster (less 
+secure), higher is slower (more secure). 
+
+The default work cost factor is '08' -- you can probably leave this 
+alone.
+
+=head4 AuthDB
+
+Path (relative to the bot's C<var/> directory) used to store user 
+information (except for superusers).
+
+Defaults to 'db/authdb.yml'
+
+=head3 RequiredPrivs
+
+Required base access levels for specific operations.
+
+  RequiredPrivs:
+    AddingUsers: 2
+    DeletingUsers: 2
+
+=head1 IRC USAGE
 
 =head2 Logging in
 
@@ -1340,77 +1421,39 @@ functionality for B<Cobalt>.
 =head3 user search
 
 
-
-=head1 CONFIGURATION
-
-=head2 plugins.conf
-
-=head2 auth.conf
-
-
 =head1 EMITTED EVENTS
 
 =head2 Bot_auth_user_login
 
+Broadcast when a login is successful.
+
+Arguments are:
+
+  $context, $nickname, $username, $hostname, $authorized_level
+
 =head2 Bot_auth_failed_login
+
+Broadcast when a login fails.
+
+Arguments are:
+
+  $context, $nickname, $username, $hostname, "ERR_STR"
+
+Where 'ERR_STR' is one of the following strings:
+
+  "NO_SUCH_USER"
+  "NO_SHARED_CHANS"
+  "BAD_HOST"
+  "BAD_PASS"
 
 =head2 Bot_auth_user_logout
 
+Broadcast when a user is logged out, either manually or because the user 
+was "lost" (no longer visible by the bot).
 
+Arguments are:
 
-=head1 ACCEPTED EVENTS
-
-Listens for the following events:
-
-=over
-
-=item *
-
-Bot_connected
-
-=item *
-
-Bot_disconnected
-
-=item *
-
-Bot_private_msg
-
-=item *
-
-Bot_user_left
-
-=item *
-
-Bot_self_left
-
-=item *
-
-Bot_user_kicked
-
-=item *
-
-Bot_self_kicked
-
-=item *
-
-Bot_user_quit
-
-=item *
-
-Bot_nick_changed
-
-=back
-
-
-=head1 CAVEATS
-
-This plugin generally assumes you only have one copy of it loaded.
-
-It is perfectly possible to use either a replacement Auth system, or 
-a supplementary Auth system, etc. Just don't try to load two copies of 
-this particular plugin; there be dragons.
-
+  $context, $nickname, $hostname, $username, $authorized_level
 
 =head1 AUTHOR
 
