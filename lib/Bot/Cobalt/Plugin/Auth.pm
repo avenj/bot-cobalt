@@ -920,6 +920,10 @@ sub _user_chflags {
       return "Bad syntax; flags should be in the form of -/+FLAG"
     }
     
+    if ($this_flag eq 'SUPERUSER') {
+      return "Cannot set SUPERUSER flag manually"
+    }
+    
     given ($first) {
       when ("+") {
         logger->debug(
@@ -1365,8 +1369,8 @@ for new passwords. Hashes are created via L<App::bmkpasswd> -- C<bcrypt>
 is the recommended method and guaranteed to be available.
 
 C<sha256> and C<sha512> methods may be available, although you might 
-need L<Crypt::Passwd::XS>. Consult the L<App::bmkpasswd> 
-documentation for details.
+need L<Crypt::Passwd::XS> on certain platforms. Consult the 
+L<App::bmkpasswd> documentation for details.
 
 =head4 Bcrypt_Cost
 
@@ -1396,30 +1400,83 @@ Required base access levels for specific operations.
 
 =head2 Logging in
 
+  /msg cobalt login <username> <password>
+
+You must share at least one channel with the bot in order to log in.
+
 =head2 Changing your password
+
+You can change your own password at any time:
+
+  /msg cobalt chpass <oldpasswd> <newpasswd>
 
 =head2 User administration
 
 =head3 user add
 
+  /msg cobalt user add <username> <level> <mask> <passwd>
+
+New users can be added by anyone with at least C<AddingUsers> level (see 
+L</RequiredPrivs>). Users can only be added at levels below your own.
+
 =head3 user del
+
+  /msg cobalt user del <username>
+
+Users can only be removed below your own access level (and you must have 
+at least C<DeletingUsers> permissions -- see L</RequiredPrivs>)
 
 =head3 user chflags
 
+  /msg cobalt user chflags <username> +FLAG -FLAG [...]
+
+Alter a user's marked flags; flags must be prefixed with + or - to 
+indicate an addition or removal.
+
+(As of this writing, flags are under-utilized in the Cobalt core 
+distribution)
+
 =head3 user chpass
+
+  /msg cobalt user chpass <username> <passwd>
+
+Alter a user's password manually. Only usable by superusers.
 
 =head3 user chmask
 
-=head3 user whoami
+  /msg cobalt user chmask <username> +*!*some@*.mask.example.org
+  /msg cobalt user chmask <username> -*!*some@*.mask.example.org
+
+Add or remove authorized masks for a particular user.
+
+You can add or remove masks for yourself at any time, so long as you 
+have at least L</DeletingUsers> level (see L</RequiredPrivs). Altering 
+masks for other users requires a higher access level than theirs.
+
+Only one mask can be added or deleted at a time.
 
 =head3 user whois
 
+  /msg cobalt user whois <nickname>
+
+Find out if a nickname is currently logged in to the bot (and under what 
+username / access level)
+
 =head3 user info
+
+  /msg cobalt user info <username>
+
+Display user record information for a username.
 
 =head3 user list
 
+  /msg cobalt user list
+
+Display the current user list.
+
 =head3 user search
 
+FIXME
 
 =head1 EMITTED EVENTS
 
