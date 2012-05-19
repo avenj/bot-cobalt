@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::WWW;
-our $VERSION = '0.001_05';
+our $VERSION = '0.001_07';
 
 ## FIXME seems to fail when the intertubes are clogged for some 
 ## extended duration; noticed locally when my router goes MIA ...
