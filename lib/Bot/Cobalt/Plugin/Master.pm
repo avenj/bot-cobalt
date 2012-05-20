@@ -20,7 +20,7 @@ sub Cobalt_register {
       'public_cmd_cycle',
 
 #      'public_cmd_server',
-#      'public_cmd_die',
+      'public_cmd_die',
 
       'public_cmd_op',
       'public_cmd_deop',
@@ -203,6 +203,27 @@ sub Bot_public_cmd_devoice {
   return PLUGIN_EAT_ALL
 }
 
+sub Bot_public_cmd_die {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+  
+  my $pcfg = $core->get_plugin_cfg($self) || {};
+  
+  my $requiredlev = $pcfg->{Opts}->{Level_die} // 9999;
+  my $authed_lev  = $core->auth->level($context, $src_nick);
+  
+  return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
+
+  my $auth_usr = $core->auth->username($context, $src_nick);
+
+  logger->warn("Shutdown requested; $src_nick ($auth_usr)");
+
+  $core->shutdown;
+}
+
 
 1;
 __END__
@@ -224,6 +245,8 @@ Bot::Cobalt::Plugin::Master - Basic bot master commands
   
   !voice   [nickname]
   !devoice [nickname]
+
+  !die
 
 =head1 DESCRIPTION
 
