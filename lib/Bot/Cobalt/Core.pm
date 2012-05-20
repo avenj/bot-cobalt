@@ -258,7 +258,7 @@ sub sighup {
 }
 
 sub shutdown {
-  my $self = $_[OBJECT];
+  my $self = ref $_[0] eq __PACKAGE__ ? $_[0] : $_[OBJECT];
   $self->log->warn("Shutdown called, destroying syndicator");
   $self->_syndicator_destroy();
 }
