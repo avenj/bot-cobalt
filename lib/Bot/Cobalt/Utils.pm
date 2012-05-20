@@ -301,12 +301,12 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Utils - useful utilities for Cobalt plugins
+Bot::Cobalt::Utils - Utilities for Cobalt plugins
 
 =head1 DESCRIPTION
 
 Bot::Cobalt::Utils provides a set of simple utility functions for the 
-B<cobalt2> core and plugins.
+L<Bot::Cobalt> core and plugins.
 
 Plugin authors may wish to make use of these; simply importing the 
 B<:ALL> set from Bot::Cobalt::Utils will give you access to the entirety of

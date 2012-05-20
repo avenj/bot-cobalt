@@ -53,7 +53,6 @@ lib/Bot/Cobalt/Manual/Plugins.pod
 lib/Bot/Cobalt/Manual/Plugins/Config.pod
 lib/Bot/Cobalt/Manual/Plugins/Dist.pod
 lib/Bot/Cobalt/Manual/Plugins/Tutorial.pod
-lib/Bot/Cobalt/Manual/User.pod
 lib/Bot/Cobalt/Plugin/Alarmclock.pm
 lib/Bot/Cobalt/Plugin/Auth.pm
 lib/Bot/Cobalt/Plugin/Extras/Debug.pm

@@ -253,7 +253,7 @@ This is the core frontend; it uses C<.cobalt2rc> files to find the
 relevant configuration & data directories to start a particular 
 Cobalt instance.
 
-See L<cobalt2-installer> for more on getting started. The installer can 
+See C<cobalt2-installer> for more on getting started. The installer can 
 set up directories and example configuration files for a fresh instance.
 
 See L</SYNOPSIS> for usage information.
@@ -263,13 +263,7 @@ Cobalt and the complete documentation.
 
 =head1 SEE ALSO
 
-=head2 Getting started
-
 L<Bot::Cobalt>
-
-L<cobalt2-installer>
-
-=head2 Plugin authoring
 
 L<Bot::Cobalt::Manual::Plugins>
 

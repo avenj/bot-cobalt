@@ -101,7 +101,7 @@ the default frontend (C<cobalt2>), these are specified in a simple
 
   sh$ cobalt2-installer
 
-L<cobalt2-installer> will ask some questions, initialize a new rcfile 
+C<cobalt2-installer> will ask some questions, initialize a new rcfile 
 for an instance and try to create the relevant directory layout with 
 some example configuration files.
 
@@ -122,7 +122,7 @@ ready to try starting your Cobalt instance:
 
 =head2 Included plugins
 
-The example C<etc/plugins.conf> installed by L<cobalt2-installer> has 
+The example C<etc/plugins.conf> installed by C<cobalt2-installer> has 
 most of these:
 
 L<Bot::Cobalt::Plugin::Alarmclock> -- IRC highlight timers

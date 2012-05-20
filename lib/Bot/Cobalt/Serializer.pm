@@ -302,7 +302,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Serializer - easy data serialization
+Bot::Cobalt::Serializer - Simple serialization wrapper
 
 =head1 SYNOPSIS
 

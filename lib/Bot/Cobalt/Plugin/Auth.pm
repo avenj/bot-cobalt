@@ -1282,6 +1282,7 @@ sub _write_access_list {
       if ( $hash{$context}->{$user}->{Flags}->{SUPERUSER} ) {
         ## FIXME
         ##  sync superusers too so we can preserve flags?
+        ##  need to check/delete them at load time if there's a change
         delete $hash{$context}->{$user};
       }
     }
