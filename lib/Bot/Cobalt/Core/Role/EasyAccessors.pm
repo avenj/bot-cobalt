@@ -36,8 +36,18 @@ sub get_channels_cfg {
     );
     return
   }
-  ## Returns empty hash if there's no conf for this channel:
-  my $chcfg = dclone( $self->cfg->{channels}->{$context} // {} );
+  ## Returns empty hash if there's no conf for this context:
+  my $clonable = $self->cfg->{channels}->{$context};
+  $clonable = {} unless $clonable and ref $clonable eq 'HASH';
+  
+  ## Per-channel configuration should be a hash
+  ## (even if someone's been naughty with the ->cfg hash)
+  for my $channel (keys %$clonable) {
+    $clonable->{$channel} = {} unless ref $clonable->{$channel} eq 'HASH';
+  }
+  
+  my $chcfg = dclone($clonable);
+  
   return $chcfg
 }
 

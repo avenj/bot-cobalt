@@ -243,7 +243,7 @@ sub _start {
     );
   }
 
-  my $chanhash = core->get_channels_cfg($context) || {};
+  my $chanhash = core->get_channels_cfg($context);
   ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
   my %ajoin;
   for my $chan (%$chanhash) {
