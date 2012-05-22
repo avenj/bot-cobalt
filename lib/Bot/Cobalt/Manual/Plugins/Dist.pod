@@ -8,55 +8,29 @@ Bot::Cobalt::Manual::Plugins::Dist - Packaging Cobalt plugins
 
 Packaging Cobalt plugins is just like packaging any other Perl module. 
 
-Typically, the easiest way to do so is via L<Module::Build>.
+Typically, the easiest way to do so quickly is via L<Module::Build>. 
+(For more involved distributions you may want to look at 
+L<ExtUtils::MakeMaker>).
+
+(This guide only covers packaging plugins; See 
+L<Bot::Cobalt::Manual::Plugins> for more on writing plugins and 
+L<Bot::Cobalt::Manual::Plugins::Tutorial> for a walk-through.)
 
 =head2 Layout
 
 Create a dist dir for your module:
 
-  $ mkdir Cobalt-Plugin-User-MyPlugin
+  $ mkdir Bot-Cobalt-Plugin-MyPlugin
 
-  $ cd Cobalt-Plugin-User-MyPlugin
+  $ cd Bot-Cobalt-Plugin-MyPlugin
 
    # create this dist's libdir:
-  $ mkdir -p lib/Cobalt/Plugin/User/
+  $ mkdir -p lib/Bot/Cobalt/Plugin/
 
-  $ cd lib/Cobalt/Plugin/User/
+  $ cd lib/Bot/Cobalt/Plugin/
 
    # create your plugin:
   $ $EDITOR MyPlugin.pm
-
-=head2 Plugin
-
-  package Bot::Cobalt::Plugin::User::MyPlugin;
-  our $VERSION = '1.00';
-  
-  use strict;
-  use warnings;
-  
-  use Bot::Cobalt;
-  use Bot::Cobalt::Common;
-  
-  sub new { bless {}, shift }
-  
-  sub Cobalt_register {
-    my ($self, $core) = splice @_, 0, 2;
-    ## ... register for events, log our load, etc
-    return PLUGIN_EAT_NONE
-  }
-  
-  sub Cobalt_unregister {
-    my ($self, $core) = splice @_, 0, 2;
-    $core->log->info("Unloaded");
-    return PLUGIN_EAT_NONE
-  }
-  
-  . . .
-  
-  1;
-
-See L<Bot::Cobalt::Manual::Plugins> for more on writing plugins and 
-L<Bot::Cobalt::Manual::Plugins::Tutorial> for a walk-through.
 
 =head2 Build.PL
 
@@ -96,7 +70,7 @@ distribution. L<Module::Build> can do this for you:
 Users of your plugin can install the distribution (and dependencies) via 
 C<cpan> by unpacking your plugin dist and specifying the local directory:
 
-  $ cd Cobalt-Plugin-User-MyPlugin
+  $ cd Bot-Cobalt-Plugin-MyPlugin
   $ cpan .
 
 ...or via Module::Build directly:
@@ -114,15 +88,36 @@ L<App::cpanminus> makes this even easier:
   $ ./Build dist
 
    # Easy install via cpanm:
-  $ cpanm ./Cobalt-Plugin-User-MyPlugin-1.00.tar.gz
+  $ cpanm ./Bot-Cobalt-Plugin-MyPlugin-0.001.tar.gz
 
 =head2 Configuration files
 
-FIXME
+L<Bot::Cobalt> comes with the L<cobalt2-plugin-installcf> tool, allowing 
+for easy installation of plugin-specific configuration files to user 
+configuration directories.
 
-=head2 Language sets
+In order to provide a configuration file installable via the installcf 
+tool, your plugin needs a Conf.pm module providing a 'conf' class 
+method.
 
-FIXME
+Here's an example demonstrating using the DATA filehandle to provide an 
+example configuration:
+
+  ## In lib/Bot/Cobalt/Plugin/MyPlugin/Conf.pm
+  package Bot::Cobalt::Plugin::MyPlugin::Conf;
+  
+  sub conf { local $/; my $cf = <DATA>; return $cf }
+
+  __DATA__
+  ---
+  ## MyPlugin example configuration.
+  Opts:
+
+    Enable_Snacks:
+      - pie
+      - cake
+
+    Do_Stuff: 1
 
 =head1 AUTHOR
 
