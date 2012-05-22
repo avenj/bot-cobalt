@@ -1,5 +1,10 @@
 # Bot::Cobalt Changes
 
+* 0.002
+
+  - Fix Utils.pm test failures on <perl-5.14
+  - Fix Plugin::Auth syntax error on <perl-5.14
+
 * 0.001
 
   Initial release of Bot::Cobalt

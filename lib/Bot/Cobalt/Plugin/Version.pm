@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Version;
-our $VERSION = '0.002_01';
+our $VERSION = '0.002';
 ## Always declare a package name as the first line.
 ## For example, if your module lives in:
 ##   lib/Cobalt/Plugin/User/MyPlugin.pm

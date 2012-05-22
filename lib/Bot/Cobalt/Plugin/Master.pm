@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Master;
-our $VERSION = '0.002_01';
+our $VERSION = '0.002';
 ## FIXME:
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die
