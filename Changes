@@ -1,10 +1,5 @@
 # Bot::Cobalt Changes
 
+* 0.001
 
-* 0.200_xx
-
-  Until a release is available, development history lives exclusively 
-  in `git` :
-
-  -> $ git clone git://eris.cobaltirc.org/cobalt2
-  -> http://cobaltirc.org/dev/bots/cobalt
+  Initial release of Bot::Cobalt
