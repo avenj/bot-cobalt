@@ -76,7 +76,7 @@ my $config_q = {
     
     {
       ## For YesNo => use ask_yesno and default to YesNo value
-      Question => "Use SSL for this server?",
+      Question => "Use SSL for this server? (Requires POE::Component::SSLify)",
       YesNo   => 'n',
       Var => "CFG_USE_SSL",
     },

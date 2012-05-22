@@ -15,7 +15,6 @@ my $class = Module::Build->subclass(
     }
 
     sub ACTION_wikidocs {
-      ## FIXME stick cobalt2-installer POD somewhere?
       my $self = shift;
       my $base = $self->base_dir;
       my $remote = $ENV{DOC_UPLOAD} || die "Need ENV DOC_UPLOAD";
