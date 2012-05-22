@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 ## 'Random' DBs, often used for quotebots or random chatter
 

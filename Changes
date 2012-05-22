@@ -1,12 +1,19 @@
 # Bot::Cobalt Changes
 
+* 0.003
+
+  Require perl-5.12.1; given/when changed sometime in there, it seems,
+   and I'm tired of playing with EOL Perls anyway.
+
+  Some Plugin::RDB cleanups.
+
 * 0.002
 
   Fix a couple oversights resulting in test failures:
    - Fix Utils.pm test failures on <perl-5.14
    - Fix Plugin::Auth syntax error on <perl-5.14
 
-  RDB.pm:
+  Plugin::RDB:
    - Warn if Info3 seems to be missing
 
   POD tweaks.

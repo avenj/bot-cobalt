@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Server;
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 ## A server context.
 
