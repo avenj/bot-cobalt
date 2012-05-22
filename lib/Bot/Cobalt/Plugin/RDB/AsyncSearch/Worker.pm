@@ -14,7 +14,8 @@ sub worker {
   binmode STDOUT;
   binmode STDIN;
   
-  STDOUT->autoflush(1);
+  select(STDOUT);
+  $|++;
   
   my $buf = '';
   my $read_bytes;
