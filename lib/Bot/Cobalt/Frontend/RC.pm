@@ -12,7 +12,7 @@ our @EXPORT_OK = qw/
 /;
 
 sub rc_read {
-  my ($rcfile) = @_;
+  my ($rcfile) = @_ || croak "rc_read needs a rcfile path";
 
   open my $fh, '<', $rcfile
     or croak "Unable to read rcfile: $rcfile: $!";
