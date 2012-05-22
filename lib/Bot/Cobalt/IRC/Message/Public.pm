@@ -101,8 +101,8 @@ Bot::Cobalt::IRC::Message::Public - Public message subclass
 
 =head1 DESCRIPTION
 
-This is a subclass of L<Bot::Cobalt::IRC::Message> -- almost everything you 
-might need is documented there.
+This is a subclass of L<Bot::Cobalt::IRC::Message> -- most methods are 
+documented there.
 
 When an incoming message is a public (channel) message, the provided 
 C<$msg> object has the following extra methods available:

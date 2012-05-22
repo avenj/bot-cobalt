@@ -132,6 +132,7 @@ my $build = $class->new(
       'File::Path'     => '2.00',
       'Getopt::Long'   => 0,
       'IO::File'       => 0,
+      'IO::Handle'     => 0,
       'List::Util'     => 0,
       'POSIX'          => 0,
       'Scalar::Util'   => 0,

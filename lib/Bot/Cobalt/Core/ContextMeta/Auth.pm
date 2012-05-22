@@ -150,7 +150,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Core::ContextMeta::Auth - ContextMeta class for Auth
+Bot::Cobalt::Core::ContextMeta::Auth - Auth list management
 
 =head1 SYNOPSIS
 
