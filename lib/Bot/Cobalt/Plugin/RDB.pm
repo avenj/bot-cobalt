@@ -4,7 +4,7 @@ our $VERSION = '0.002';
 ## 'Random' DBs, often used for quotebots or random chatter
 
 use strictures 1;
-use 5.10.1;
+use 5.12.0;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -163,15 +163,24 @@ sub Bot_public_msg {
 
   ## dispatcher:
   my ($id, $resp);
-  given ($cmd) {
-    $resp = $self->_cmd_randstuff(\@message, $msg)
-      when "randstuff";
-    $resp = $self->_cmd_randq(\@message, $msg, 'randq')
-      when "randq";
-    $resp = $self->_cmd_rdb(\@message, $msg)
-      when "rdb";
+
+  CMD: {
+    if ($cmd eq "randstuff") {
+      $resp = $self->_cmd_randstuff(\@message, $msg);
+      last CMD
+    }
+    
+    if ($cmd eq "randq") {
+      $resp = $self->_cmd_randq(\@message, $msg, 'randq');
+      last CMD
+    }
+    
+    if ($cmd eq "rdb") {
+      $resp = $self->_cmd_rdb(\@message, $msg);
+      last CMD
+    }
   }
-  
+
 #  $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->channel;
@@ -232,15 +241,15 @@ sub _cmd_randstuff {
   ## or a new item key:
 
   unless ($newidx) {
-    given ($err) {
+
+    if ($err eq "RDB_DBFAIL") {
       return rplprintf( core->lang->{RPL_DB_ERR}, $rplvars )
-        when "RDB_DBFAIL";
-      
+    } elsif ($err eq "RDB_NOSUCH") {
       return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
-        when "RDB_NOSUCH";
-      
-      default { return "Unknown error status: $err" }
+    } else {
+      return "Unknown error status: $err"
     }
+
   } else {
     return rplprintf( core->lang->{RDB_ITEM_ADDED}, $rplvars );
   }
