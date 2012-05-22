@@ -118,7 +118,7 @@ my $build = $class->new(
 
   requires => {
    ### Core set ###
-      'perl' => '5.10.1',
+      'perl' => '5.12.0',
       'Carp' => 0,
       'Cwd'  => 0,
       'Exporter' => 0,
