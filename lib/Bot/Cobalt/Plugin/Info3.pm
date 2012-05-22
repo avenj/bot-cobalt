@@ -1,7 +1,7 @@
 package Bot::Cobalt::Plugin::Info3;
 our $VERSION = '0.002';
 
-use 5.10.1;
+use 5.12.0;
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -172,12 +172,11 @@ sub Bot_public_msg {
       'infovars' => '_info_varhelp',
     );
     
-    given (lc $message[1]) {
-      when ([ keys %handlers ]) {
-        ## this is apparently a valid command
-        my @args = @message[2 .. $#message];
-        my $method = $handlers{ $message[1] };
-        if ( $self->can($method) ) {
+    if (lc($message[1]) ~~ [ keys %handlers ]) {
+      ## this is apparently a valid command
+      my @args = @message[2 .. $#message];
+      my $method = $handlers{ $message[1] };
+      if ( $self->can($method) ) {
           ## pass handlers $msg ref as first arg
           ## the rest is the remainder of the string
           ## (without highlight or command)
@@ -186,20 +185,19 @@ sub Bot_public_msg {
           broadcast( 'message', 
             $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
-        } else {
+      } else {
           logger->warn($message[1]." is a valid cmd but method missing");
           return PLUGIN_EAT_NONE
-        }
       }
-      
-      default {
-        ## not an info3 cmd
-        ## shift the highlight off and see if it's a match, below
-        ## save the highlighted version, it might still be a valid match
-        $with_highlight = join ' ', @message;
-        shift @message;
-      }
+    
+    } else {
+      ## not an info3 cmd
+      ## shift the highlight off and see if it's a match, below
+      ## save the highlighted version, it might still be a valid match
+      $with_highlight = join ' ', @message;
+      shift @message;
     }
+  
   }
 
   ## rejoin message
