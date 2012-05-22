@@ -5,6 +5,7 @@ use 5.10.1;
 use strictures 1;
 
 use Carp;
+use IO::Handle;
 
 use base 'Exporter';
 
