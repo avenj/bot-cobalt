@@ -797,10 +797,13 @@ sub Bot_rdb_triggered {
   my $random = $send_orig ? $orig 
                : $self->_select_random($new_msg, $rdb, 'quietfail') ;
 
-  broadcast( 
-    'info3_relay_string', $context, $channel, $nick, $random, $questionstr
-  );
-
+  if (exists core()->Provided->{info_topics}) {
+    broadcast( 'info3_relay_string',
+      $context, $channel, $nick, $random, $questionstr
+    );
+  } else {
+    logger->warn("RDB plugin cannot trigger, Info3 is missing");
+  }
   return PLUGIN_EAT_ALL
 }
 
@@ -1207,6 +1210,8 @@ to fill your channel with random chatter.
 The "randstuff" db is labelled "main" -- all other RDB names must be 
 in the [a-z0-9] set.
 
+Requires L<Bot::Cobalt::Plugin::Info3>.
+
 =head1 COMMANDS
 
 Commands are prefixed with the bot's nickname, rather than CmdChar.
@@ -1301,7 +1306,7 @@ Returns just the total number of matches for the specified glob.
 
 =head2 random
 
-'random' is not actually a built-in command; however, assuming you have 
+'random' is not actually a built-in command; however, since you must have 
 L<Bot::Cobalt::Plugin::Info3>, a handy trick is to add a topic named 'random' 
 that triggers RDB 'main':
 
