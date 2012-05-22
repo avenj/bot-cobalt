@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event;
-our $VERSION = '0.001_07';
+our $VERSION = '0.001';
 
 ## Base class for IRC events.
 
@@ -99,9 +99,9 @@ May be undefined if the message was "odd."
 
 =head1 SEE ALSO
 
-L<Bot::Cobalt::IRC::Message> -- subclass for messages, notices, and actions
+L<Bot::Cobalt::IRC::Message>
 
-L<Bot::Cobalt::IRC::Message::Public> -- subclass for public messages
+L<Bot::Cobalt::IRC::Message::Public>
 
 L<Bot::Cobalt::IRC::Event::Channel>
 

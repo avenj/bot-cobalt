@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::ContextMeta::Auth;
-our $VERSION = '0.001_07';
+our $VERSION = '0.001';
 
 use 5.10.1;
 use strictures 1;
@@ -164,7 +164,7 @@ See below for a complete description of available methods.
 A ContextMeta subclass providing context-specific authorization state 
 information.
 
-FIXME
+This is used by plugins to manage or retrieve authorized user details.
 
 =head2 add
 

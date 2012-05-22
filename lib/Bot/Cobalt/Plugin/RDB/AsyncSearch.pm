@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB::AsyncSearch;
-our $VERSION = '0.001_07';
+our $VERSION = '0.001';
 
 use 5.10.1;
 use Carp;

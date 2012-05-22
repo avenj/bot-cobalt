@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Seen;
-our $VERSION = '0.001_07';
+our $VERSION = '0.001';
 
 use 5.10.1;
 
