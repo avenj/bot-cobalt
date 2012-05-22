@@ -24,7 +24,6 @@ sub check {
     my $ev_c      = $self->count;
     my $ev_sec    = $self->in;
 
-    ## Cute math from an article by Algorithm::FloodControl author:
     my $delayed = int(
       ($oldest_ts + ($pending * $ev_sec / $ev_c) ) - time
     );
@@ -49,7 +48,7 @@ sub clear {
   return unless exists $self->fqueue->{$context};
   
   return delete $self->fqueue->{$context}->{$key}
-    if $key;
+    if defined $key;
   return delete $self->fqueue->{$context}
 }
 
