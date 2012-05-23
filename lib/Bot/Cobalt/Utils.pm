@@ -106,12 +106,9 @@ sub rplprintf {
 
 sub glob_grep {
   my $glob = shift || return;
-  my @array;
-  if (ref $_[0] eq 'ARRAY') {
-    @array = @{ shift(@_) };
-  } else {
-    @array = @_;
-  }
+
+  my @array = ref $_[0] eq 'ARRAY' ? @{ shift(@_) } : @_ ;
+
   my $re = glob_to_re($glob);
   grep { m/$re/ } @array
 }
