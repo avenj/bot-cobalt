@@ -90,9 +90,6 @@ utilities, logging, plugin configuration, asynchronous HTTP
 sessions, data serialization and on-disk databases, and more. See 
 L<Bot::Cobalt::Manual::Plugins> for more about plugin authoring.
 
-Complete documentation is also available in an easy-to-navigate Wiki 
-format at L<http://www.cobaltirc.org/dev/bots>
-
 =head2 Initializing a new instance
 
 A Cobalt instance needs its own I<etc/> and I<var/> directories. With 
