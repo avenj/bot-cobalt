@@ -146,6 +146,8 @@ L<Bot::Cobalt::Core::Role::EasyAccessors>
 
 =head2 plugin_cfg
 
+  my $opts = plugin_cfg($self)->{Opts};
+
 Returns plugin configuration hashref for the specified plugin.
 Requires a plugin alias or blessed plugin object be specified.
 
