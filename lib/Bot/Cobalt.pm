@@ -150,6 +150,19 @@ L<Bot::Cobalt::Plugin::Extras::Shorten> -- Shorten URLs via Metamark
 
 L<Bot::Cobalt::Plugin::Extras::TempConv> -- Temperature units conversion 
 
+=head2 Extensions on CPAN
+
+There are a few externally-distributed plugin sets available 
+via CPAN:
+
+L<Bot::Cobalt::Plugin::Calc> -- Simple calculator
+
+L<Bot::Cobalt::Plugin::RSS> -- RSS feed aggregator
+
+L<Bot::Cobalt::Plugin::Silly> -- Very silly plugin set
+
+For debugging or playing with L<Bot::Cobalt::DB> databases, you may want 
+to have a look at L<Bot::Cobalt::DB::Term>.
 
 =head1 SEE ALSO
 
