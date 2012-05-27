@@ -1503,14 +1503,6 @@ For more fine-grained control, consider running your own POE::Session;
 see L</"Spawning your own POE::Session">, below.
 
 
-=head2 Custom per-plugin language sets
-
-FIXME discussion of using load_langset to create a 'local' RPL hash
-
-=head3 rplprintf
-
-FIXME
-
 =head2 Spawning your own POE::Session
 
 There's nothing preventing you from spawning your own L<POE::Session>; 
@@ -1537,7 +1529,8 @@ that is to say, the order in which events will hit plugins.
 For example, when writing a plugin such as an input filter, it can be useful to move 
 your plugin towards the top of the plugin pipeline.
 
-FIXME examples
+  ## With 'use Bot::Cobalt':
+  core->pipeline->bump_up( plugin_alias($self) );
 
 See L<Object::Pluggable::Pipeline> for details.
 
@@ -1594,17 +1587,23 @@ L<IRC::Utils/decode_irc> is included if you 'use Bot::Cobalt::Common'.
 
 =head1 SEE ALSO
 
-Plugin authors should at least read the L<Bot::Cobalt::IRC> POD, and 
-probably L<Bot::Cobalt::Utils> as well.
+L<Bot:Cobalt::IRC> covers events handled and emitted by the IRC plugin.
 
-B<The easiest way to browse documentation is our POD converted to DokuWiki, 
-available online:>
+L<Bot::Cobalt::Manual::Plugins::Tutorial> contains a simple walk-through 
+tutorial on plugin writing.
 
-L<http://www.cobaltirc.org/docs/wiki/doku.php?id=bots:cobalt:docs:>
+L<Bot::Cobalt::Core::Sugar> describes functional sugar imported when you 
+C<use Bot::Cobalt;>.
 
-FIXME Cobalt-related links
+Plugin authors may also be interested in using L<Bot::Cobalt::Utils>.
+
+You can view the full documentation at 
+L<http://www.metacpan.org/release/Bot-Cobalt>.
 
 =head2 Relevant CPAN documentation
+
+L<Bot::Cobalt::Core> and L<Bot::Cobalt::IRC> are mostly a lot of sugar 
+over the following very useful CPAN modules:
 
 =over
 
@@ -1614,11 +1613,7 @@ L<IRC::Utils>
 
 =item *
 
-L<POE::Component::IRC>
-
-=item *
-
-L<POE::Component::IRC::State>
+L<POE::Component::IRC> and L<POE::Component::IRC::State>
 
 =item *
 
@@ -1626,15 +1621,7 @@ L<POE::Component::Syndicator>
 
 =item *
 
-L<Object::Pluggable>
-
-=item *
-
-L<Object::Pluggable::Pipeline>
-
-=item *
-
-L<Object::Pluggable::Constants>
+L<Log::Handler>
 
 =back
 
