@@ -78,9 +78,8 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  logger->info("Unregistering IRC plugin");
 
-  logger->debug("disconnecting");
+  logger->info("Unregistering IRC plugin");
 
   ## shutdown IRCs
   for my $context ( keys %{ $self->ircobjs } ) {
@@ -91,12 +90,15 @@ sub Cobalt_unregister {
     ## and ignores:
     $core->ignore->clear($context);
 
-    my $irc = $self->ircobjs->{$context};
-    $irc->shutdown("IRC component shut down");
-
+    my $irc = delete $self->ircobjs->{$context};
     $core->Servers->{$context}->clear_irc;
+    $irc->shutdown("IRC component shut down");
   }
-
+  
+  $self->ircobjs({});
+  
+  logger->debug("IRC shut down");
+  
   return PLUGIN_EAT_NONE
 }
 
@@ -162,7 +164,7 @@ sub Bot_initialize_irc {
   
     POE::Session->create(
       ## track this session's context name in HEAP
-      heap =>  { Context => $context, Object => $irc },
+      heap =>  { Context => $context },
       object_states => [
         $self => [
           '_start',
@@ -206,7 +208,7 @@ sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $cfg  = core->get_core_cfg;
   my $pcfg = core->get_plugin_cfg($self);
@@ -292,7 +294,7 @@ sub irc_001 {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
   
   ## set up some stuff relevant to our server context:
   irc_context($context)->connected( 1 );
@@ -377,8 +379,8 @@ sub irc_error {
 sub irc_chan_sync {
   my ($self, $heap, $chan) = @_[OBJECT, HEAP, ARG0];
 
-  my $irc     = $heap->{Object};
   my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
 
   my $resp = rplprintf( core->lang->{RPL_CHAN_SYNC},
     { 'chan' => $chan }
@@ -407,8 +409,8 @@ sub irc_public {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
   
-  my $irc     = $heap->{Object};
   my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
 
   my $casemap = core->get_irc_casemap( $context );
   for my $mask ( core->ignore->list($context) ) {
@@ -449,7 +451,7 @@ sub irc_msg {
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $casemap = core->get_irc_casemap( $context );
   for my $mask ( core->ignore->list($context) ) {
@@ -478,7 +480,7 @@ sub irc_notice {
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
   
   my $casemap = core->get_irc_casemap($context);
   for my $mask ( core->ignore->list($context) ) {
@@ -500,7 +502,7 @@ sub irc_ctcp_action {
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $casemap = core->get_irc_casemap($context);
   for my $mask ( core->ignore->list($context) ) {
@@ -522,7 +524,7 @@ sub irc_kick {
   my ($src, $channel, $target, $reason) = @_[ARG0 .. ARG3];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $kick = Bot::Cobalt::IRC::Event::Kick->new(
     context => $context,
@@ -547,8 +549,8 @@ sub irc_mode {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $changed_on, $modestr, @modeargs) = @_[ ARG0 .. $#_ ];
   
-  my $irc     = $heap->{Object};
   my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
 
   my $mode_obj = Bot::Cobalt::IRC::Event::Mode->new(
     context => $context,
@@ -577,7 +579,7 @@ sub irc_topic {
   my ($src, $channel, $topic) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $topic_obj = Bot::Cobalt::IRC::Event::Topic->new(
     context => $context,
@@ -595,7 +597,7 @@ sub irc_nick {
   my ($src, $new, $common) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   ## see if it's our nick that changed, send event:
   if ($new eq $irc->nick_name) {
@@ -619,7 +621,7 @@ sub irc_join {
   my ($src, $channel) = @_[ARG0, ARG1];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $join = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
@@ -642,7 +644,7 @@ sub irc_part {
   my ($src, $channel, $msg) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
   
   my $part = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
@@ -669,7 +671,7 @@ sub irc_quit {
   my ($src, $msg, $common) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $quit = Bot::Cobalt::IRC::Event::Quit->new(
     context => $context,
@@ -687,7 +689,7 @@ sub irc_invite {
   my ($src, $channel) = @_[ARG0, ARG1];
   
   my $context = $heap->{Context};
-  my $irc     = $heap->{Object};
+  my $irc     = $self->ircobjs->{$context};
 
   my $invite = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
