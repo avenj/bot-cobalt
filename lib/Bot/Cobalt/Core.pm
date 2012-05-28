@@ -173,7 +173,7 @@ sub init {
         'sighup',
         'ev_plugin_error',
 
-        '_core_timer_check_pool',
+        'core_timer_check_pool',
       ],
     ],
   );
@@ -235,7 +235,7 @@ sub syndicator_started {
   $self->log->info("-> started, plugins_initialized sent");
 
   ## kickstart timer pool
-  $kernel->yield('_core_timer_check_pool');
+  $kernel->yield('core_timer_check_pool');
 }
 
 sub sighup {
@@ -265,7 +265,10 @@ sub shutdown {
 
 sub syndicator_stopped {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
-  $self->log->warn("Shutting down");
+  $kernel->alarm('core_timer_check_pool');
+  $kernel->signal( $kernel, 'POCOIRC_SHUTDOWN' );
+  $kernel->post( $kernel, 'shutdown' );
+  $self->log->warn("Syndicator stopped.");
 }
 
 sub ev_plugin_error {
@@ -282,7 +285,7 @@ sub ev_plugin_error {
 
 ### Core low-pri timer
 
-sub _core_timer_check_pool {
+sub core_timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
   my $tick = $_[ARG0];
   ++$tick;
@@ -315,7 +318,7 @@ sub _core_timer_check_pool {
   ## most definitely not a high-precision timer.
   ## checked every second or so
   ## tracks timer pool ticks
-  $kernel->alarm('_core_timer_check_pool' => time + 1, $tick);
+  $kernel->alarm('core_timer_check_pool' => time + 1, $tick);
 }
 
 
