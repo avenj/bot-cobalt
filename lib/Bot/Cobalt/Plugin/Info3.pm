@@ -982,7 +982,7 @@ Useful for checking for variables or RDBs.
 
 =head2 Directing responses at other users
 
-=head4 tell
+=head3 tell
 
 You can instruct the bot to "talk" to someone else using B<tell>:
 

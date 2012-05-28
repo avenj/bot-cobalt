@@ -25,7 +25,6 @@ sub instance {
   }
 
   ## Be polite and offer up our Bot::Cobalt::Core if we have one
-  ## (and if this doesn't appear to be a construction attempt)
   unless (Bot::Cobalt::Core->has_instance) {
     carp "Tried to retrieve instance but no active Bot::Cobalt::Core found";
     return
