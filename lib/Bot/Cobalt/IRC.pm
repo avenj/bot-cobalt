@@ -92,7 +92,7 @@ sub Cobalt_unregister {
 
     my $irc = delete $self->ircobjs->{$context};
     $core->Servers->{$context}->clear_irc;
-    $irc->yield('shutdown', "IRC component shut down");
+    $irc->call('shutdown', "IRC component shut down");
   }
   
   logger->debug("IRC shut down");
