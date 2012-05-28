@@ -1,5 +1,17 @@
 # Bot::Cobalt Changes
 
+* 0.004
+
+  Fix IRC.pm bug that kept sessions hanging about when the bot was 
+  terminated via an online command. (This fixes the busted '!die' 
+  command from Plugin::Master).
+  Also improve shutdown cleanups in Core.
+
+  Code cleanups (no functionality change):
+   - Bot::Cobalt::IRC
+   - Bot::Cobalt::Utils
+   - Significant POD cleanups
+
 * 0.003
 
   Require perl-5.12.1; given/when changed sometime in there, it seems,
