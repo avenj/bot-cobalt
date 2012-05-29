@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 25;
 use strict; use warnings;
 
 BEGIN {
@@ -16,13 +16,9 @@ BEGIN {
 
 my $timer = new_ok( 'Bot::Cobalt::Timer' => [
     core  => MockCore->new,
-
     delay => 60,
-    
     id    => 'mytimer',
-   
     event => 'test',
-   
     alias => 'Pkg::Snackulate', 
   ],
 );
@@ -57,3 +53,7 @@ is( $mtimer->target, 'target', 'target()' );
 is( $mtimer->text, 'testing things', 'text()' );
 is( $mtimer->type, 'msg', 'assume msg type()' );
 is( $mtimer->at, 0, 'no delay set' );
+
+ok( $mtimer->delay(900), 'set delay()' );
+ok( $mtimer->at, 'at() is set' );
+ok( !$mtimer->execute_if_ready, 'no execute()' );
