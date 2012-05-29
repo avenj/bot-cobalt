@@ -73,6 +73,7 @@ sub Cobalt_register {
   );
 
   logger->info("Loaded");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -149,7 +150,7 @@ sub Bot_initialize_irc {
   
     my $irc = POE::Component::IRC::State->spawn(
       %spawn_opts,
-    ) or logger->emerg("(spawn: $context) poco-irc error: $!");
+    ) or logger->error("(spawn: $context) poco-irc error: $!");
 
     my $server_obj = Bot::Cobalt::IRC::Server->new(
       name => $server,
@@ -349,9 +350,11 @@ sub irc_disconnected {
   my $context = $_[HEAP]->{Context};
 
   logger->info("IRC disconnected: $context");
-  irc_context($context)->connected(0);
-
-  core->send_event( 'disconnected', $context, $server );
+  
+  if ( irc_context($context) ) {
+    irc_context($context)->connected(0);
+    core->send_event( 'disconnected', $context, $server );
+  }
 }
 
 sub irc_socketerr {
@@ -359,9 +362,11 @@ sub irc_socketerr {
   my $context = $_[HEAP]->{Context};
 
   logger->info("irc_socketerr: $context: $err");
-  irc_context($context)->connected(0);
-
-  core->send_event( 'server_error', $context, $err );
+  
+  if ( irc_context($context) ) {
+    irc_context($context)->connected(0);
+    core->send_event( 'server_error', $context, $err );
+  }
 }
 
 sub irc_error {
@@ -369,9 +374,11 @@ sub irc_error {
   my $context = $_[HEAP]->{Context};
 
   logger->warn("IRC error: $context: $reason");
-  irc_context($context)->connected(0);
 
-  core->send_event( 'server_error', $context, $reason );
+  if ( irc_context($context) ) {
+    irc_context($context)->connected(0);
+    core->send_event( 'server_error', $context, $reason );
+  }
 }
 
 sub irc_chan_sync {
