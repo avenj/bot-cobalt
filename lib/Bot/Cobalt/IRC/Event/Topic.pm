@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event::Topic;
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 use Moo;
 use Bot::Cobalt::Common qw/:types :string/;

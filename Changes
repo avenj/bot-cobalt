@@ -8,7 +8,7 @@
   Fix Utils.pm bug in glob_* functions that would cause failures when
   operating on a negative value. Should've been defined() checks.
   
-  Test improvements and clean-ups.
+  POD and test improvements and clean-ups.
 
 * 0.004
 
