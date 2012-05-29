@@ -23,7 +23,9 @@ sub load_langset {  ## load_langset(language)
   ## read specified language out of etc/langs/
   ## return hash suitable for core->lang
   my ($self) = shift;
-  my $lang = shift || croak 'no language specified?';
+
+  my $lang = shift || croak 'no language specified in load_langset';
+
   ## you can specify a prefix
   ## f.ex: load_langset('english', '/some/dir/langs/plugin-')
   ## results in: $path = "/some/dir/langs/plugin-". lc($lang) .".yml"
@@ -98,5 +100,5 @@ sub load_langset {  ## load_langset(language)
 
 ### this module will have a langset appended at build-time ###
 
-no Moo; 1;
+1;
 __DATA__

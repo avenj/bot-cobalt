@@ -321,9 +321,7 @@ sub core_timer_check_pool {
   $kernel->alarm('core_timer_check_pool' => time + 1, $tick);
 }
 
-
-## Moose-compatible 'no Moo'
-no Moo; 1;
+1;
 __END__
 
 =pod

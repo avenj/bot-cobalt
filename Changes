@@ -2,8 +2,11 @@
 
 * 0.005
 
-  Fix a Utils.pm bug in glob_* functions that would cause failures 
-  when operating on a negative value. Should've been defined() checks.
+  Fix an IRC.pm bug that would cause failures if an error event was 
+  received for a context that never completed a connection.
+
+  Fix Utils.pm bug in glob_* functions that would cause failures when
+  operating on a negative value. Should've been defined() checks.
 
 * 0.004
 

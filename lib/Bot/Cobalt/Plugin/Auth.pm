@@ -1303,7 +1303,7 @@ sub _write_access_list {
   chmod($perms, $authdb);
 }
 
-no Moo; 1;
+1;
 __END__
 
 
