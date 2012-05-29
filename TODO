@@ -1,13 +1,12 @@
 ## TODO
 
-
 Plugins:
 
-  - Plugins::ChanMgr
-    Online channels.conf manager.
+  - Plugins::Extras::BanMgr
+    Channel ban manager plugin
 
-  - Plugins::Extras::Bitch ?
-    Channel protection plugin
+  - Plugins::ChanMgr
+    Online channels.conf manager
 
   - Plugins::Extras::Logger
-    Configurable og-to-file plugin
+    Configurable log-to-file plugin
