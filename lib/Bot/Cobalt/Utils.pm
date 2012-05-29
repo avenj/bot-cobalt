@@ -105,7 +105,9 @@ sub rplprintf {
 ## Glob -> regex functions:
 
 sub glob_grep {
-  my $glob = shift || return;
+  my $glob = shift;
+  croak "glob_grep called with no arguments!"
+    unless defined $glob;
 
   my @array = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_ ;
 
@@ -114,7 +116,10 @@ sub glob_grep {
 }
 
 sub glob_to_re {
-  my $glob = shift || return;
+  my ($glob) = @_;
+  croak "glob_to_re called with no arguments!"
+    unless defined $glob;
+
   my $re = glob_to_re_str($glob);
   return qr/$re/
 }
@@ -127,7 +132,10 @@ sub glob_to_re_str {
   ##   leading ^ (beginning of str) is accepted
   ##   so is trailing $
   ##   char classes are accepted
-  my $glob = shift || return;
+  my ($glob) = @_;
+  croak "glob_to_re_str called with no arguments!"
+    unless defined $glob;
+
   my($re, $in_esc);
   my ($first, $pos) = (1, 0);
   my @chars = split '', $glob;
