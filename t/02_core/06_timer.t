@@ -1,11 +1,22 @@
-use Test::More tests => 20;
+use Test::More tests => 22;
 use strict; use warnings;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Timer' );
 }
 
+{
+  package MockCore;
+  use strict; use warnings FATAL => 'all';
+  use Test::More;
+  sub new { bless {}, shift }
+  sub send_event { pass('send_event called') }
+}
+
+
 my $timer = new_ok( 'Bot::Cobalt::Timer' => [
+    core  => MockCore->new,
+
     delay => 60,
     
     id    => 'mytimer',
@@ -31,8 +42,10 @@ ok( $timer->args(['arg1', 'arg2']), 'set args()' );
 is_deeply( $timer->args, ['arg1', 'arg2'], 'get args()' );
 
 ok( $timer->is_ready, 'timer would be ready' );
+ok( $timer->execute_if_ready, 'execute_if_ready()' );
 
 my $mtimer = new_ok( 'Bot::Cobalt::Timer' => [
+    core    => MockCore->new,
     context => 'Test',
     target  => 'target',
     text    => 'testing things',
