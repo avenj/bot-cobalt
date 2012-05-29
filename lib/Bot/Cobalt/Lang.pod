@@ -15,7 +15,7 @@ Bot::Cobalt::Lang -- A role for language set loading
 
 Provides language set loading for the Cobalt core (and plugins that want 
 to load their own langset, if you'd like -- just use 
-L</load_langset>as a class method or consume this role).
+L</load_langset> as a class method or consume this role).
 
 Langsets should be in a YAML format readable by L<YAML::XS> (YAML1.1).
 

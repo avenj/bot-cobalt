@@ -287,25 +287,22 @@ Bot::Cobalt::DB - Locking Berkeley DBs with serialization
   
   ## ... perhaps in a Cobalt_register ...
   my $db_path = $core->var ."/MyDatabase.db";
-  $self->{DB} = Bot::Cobalt::DB->new(
+  my $db = Bot::Cobalt::DB->new(
     File => $db_path,
   );
   
   ## Open (and lock):
-  $self->{DB}->dbopen;
+  $db->dbopen;
   
   ## Do some work:
-  $self->{DB}->put("SomeKey",
-    { Some => {
-        Deep => { Structure => 1, },
-    }, },
-  );
+  $db->put("SomeKey", $some_deep_structure);
   
-  for my $key ($self->{DB}->dbkeys) {
-    my $this_hash = $self->{DB}->get($key);
+  for my $key ($db->dbkeys) {
+    my $this_hash = $db->get($key);
   }
   
-  $self->{DB}->dbclose;
+  ## Close and unlock:
+  $db->dbclose;
 
 
 =head1 DESCRIPTION
@@ -367,9 +364,9 @@ Proper locking is done -- that means the DB is 're-tied' after a lock is
 granted and state cannot change between database open and lock time.
 
 The attempt to gain a lock will time out after five seconds (and 
-dbopen() will return boolean false).
+L</dbopen> will return boolean false).
 
-The lock is cleared on dbclose.
+The lock is cleared on L</dbclose>.
 
 If the Bot::Cobalt::DB object is destroyed, it will attempt to dbclose 
 for you, but it is good practice to keep track of your open/close 
@@ -405,9 +402,6 @@ The B<put> method adds an entry to the database:
 The value can be any data structure serializable by JSON::XS; that is to 
 say, any shallow or deep data structure NOT including blessed references.
 
-(Yes, Storable is faster. JSON is used because it is trivially 
-portable to any language that can interface with BerkDB.)
-
 =head3 get
 
 The B<get> method retrieves a (deserialized) key.
@@ -416,13 +410,11 @@ The B<get> method retrieves a (deserialized) key.
   ## . . . later on . . .
   my $ref = $db->get($key);
 
-
 =head3 del
 
 The B<del> method removes a key from the database.
 
   $db->del($key);
-
 
 =head3 dbkeys 
 
@@ -442,15 +434,14 @@ You can serialize/export the entirety of the DB via B<dbdump>.
 
 See L<Bot::Cobalt::Serializer> for more on C<freeze()> and valid formats.
 
-As of B<2.00_24>, a tool called B<cobalt2-dbdump> is available as a 
+A tool called B<cobalt2-dbdump> is available as a 
 simple frontend to this functionality. See C<cobalt2-dbdump --help>
 
 =head1 FORMAT
 
 B<Bot::Cobalt::DB> databases are Berkeley DB 1.x, with NULL-terminated records 
-and values stored as JSON.
-
-They should be fairly easy to parse in a language of your choice.
+and values stored as JSON. They're intended to be easily portable to 
+other non-Perl applications.
 
 =head1 AUTHOR
 
