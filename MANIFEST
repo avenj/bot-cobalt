@@ -100,6 +100,7 @@ t/02_core/02_flood.t
 t/02_core/03_contextmeta.t
 t/02_core/04_contextmeta_ignore.t
 t/02_core/05_contextmeta_auth.t
+t/02_core/06_timer.t
 t/03_irc/01_loadable.t
 t/03_irc/02_irc_server.t
 t/03_irc/03_irc_event.t

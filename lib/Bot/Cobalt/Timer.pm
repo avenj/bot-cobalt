@@ -31,14 +31,17 @@ has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
 ## This can be any value, but most often a string or number.
 has 'id' => ( is => 'rw', lazy => 1, predicate => 'has_id' );
 
-## Must provide either an absolute time or a delta from now
+## 'at' is set regardless of whether delay()/at() is used
+## (or 0 if none is ever set)
 has 'at'    => ( is => 'rw', isa => Num, lazy => 1, 
-  default => sub { 0 } 
+  default => sub { 0 },
 );
 
 has 'delay' => ( is => 'rw', isa => Num, lazy => 1,
-  default => sub { 0 },
-  trigger => sub {
+  predicate => 'has_delay',
+  clearer   => 'clear_delay',
+  default   => sub { 0 },
+  trigger   => sub {
     my ($self, $value) = @_;
     $self->at( time() + $value );
   }, 
@@ -183,11 +186,14 @@ The absolute time that this timer is supposed to fire (epoch seconds).
 
 This is normally set automatically when L</delay> is called.
 
+(If it is tweaked manually, L</delay> is irrelevant information.)
+
 =head3 delay
 
-The time this timer is supposed to fire expressed in seconds from now.
+The time this timer is supposed to fire expressed in seconds from the 
+time it was set.
 
-This will set L</at> to I<time()> + I<delay>.
+(Sets L</at> to I<time()> + I<delay>)
 
 =head3 event
 
