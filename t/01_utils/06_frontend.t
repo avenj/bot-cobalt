@@ -8,8 +8,7 @@ BEGIN {
 subtest 'yesno' => sub {
   plan tests => 4,
 
-  open my $stdin, '<', \"y\n"
-    or die "open stdin: $!";
+  open my $stdin, '<', \"y\n" or die "open stdin: $!";
   local *STDIN = $stdin;
 
   ok( 
@@ -19,8 +18,7 @@ subtest 'yesno' => sub {
     ), 'Yes, default no'
   );
 
-  open $stdin, '<', \"y\n"
-    or die "open stdin: $!";
+  open $stdin, '<', \"y\n" or die "open stdin: $!";
   local *STDIN = $stdin;
 
   ok(
@@ -30,8 +28,7 @@ subtest 'yesno' => sub {
     ), 'Yes, default yes'
   );
 
-  open $stdin, '<', \"n\n"
-    or die "open stdin: $!";
+  open $stdin, '<', \"n\n" or die "open stdin: $!";
   local *STDIN = $stdin;
   
   ok(
@@ -41,8 +38,7 @@ subtest 'yesno' => sub {
     ), 'No, default no'
   );
 
-  open $stdin, '<', \"n\n"
-    or die "open stdin: $!";
+  open $stdin, '<', \"n\n" or die "open stdin: $!";
   local *STDIN = $stdin;
 
   ok(
@@ -57,8 +53,7 @@ subtest 'yesno' => sub {
 subtest 'question' => sub {
   plan tests => 1,
 
-  open my $stdin, '<', \"A string\n"
-    or die "open stdin: $!";
+  open my $stdin, '<', \"A string\n" or die "open stdin: $!";
   local *STDIN = $stdin;
 
   ok(
