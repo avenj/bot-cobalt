@@ -5,7 +5,7 @@ BEGIN {
 }
 
 new_ok( 'Bot::Cobalt::Serializer' => [ Format => 'JSON' ] );
-new_ok( 'Bot::Cobalt::Serializer' => [ Format => 'YAMLXS' ] );
+new_ok( 'Bot::Cobalt::Serializer' );
 
 my $hash = {
   Scalar => "A string",
@@ -14,7 +14,7 @@ my $hash = {
   Hash  => { Some => { Deep => 'Hash' } },
 };
 
-## JSON and YAMLXS (default) are the only ones we use
+## JSON and YAMLXS (default) are the only ones we use in core
 
 JSON: {
   my $js_ser = new_ok( 'Bot::Cobalt::Serializer' => [ 'JSON' ] );
