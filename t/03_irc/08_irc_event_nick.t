@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 20;
 use strict; use warnings;
 
 BEGIN{
@@ -29,6 +29,9 @@ ok( $ev->new_nick eq 'bob', 'new_nick()' );
 ok( ref $ev->channels eq 'ARRAY', 'channels() is ARRAY' );
 is_deeply($ev->channels, [ '#otw', '#unix' ], 'channels() is correct' );
 is_deeply($ev->channels, $ev->common, 'channels() eq common()' );
+ok( $ev->channels(['#eris']), 'reset channels()' );
+is_deeply( $ev->channels, ['#eris'], 'channels() matches' );
+is_deeply( $ev->common, ['#eris'], 'common() matches' );
 
 ok( $ev->src('BOB!things@example.org'), 'reset src()' );
 
