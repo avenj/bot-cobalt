@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 11;
 use strict; use warnings;
 
 BEGIN{
@@ -13,6 +13,8 @@ my $ev = new_ok('Bot::Cobalt::IRC::Event::Mode' =>
 
 isa_ok($ev, 'Bot::Cobalt::IRC::Event' );
 
+is( $ev->mode, '+tk', 'mode()' );
+
 ok( $ev->context eq 'Main', 'context()' );
 
 ok( $ev->src eq 'yomomma!your@mother.org', 'src()' );
@@ -22,3 +24,5 @@ ok( $ev->src_user eq 'your', 'src_user()' );
 ok( $ev->src_host eq 'mother.org', 'src_host()' );
 
 ok( ref $ev->hash eq 'HASH', 'hash()' );
+
+is_deeply( $ev->args, ['key'], 'args()' );

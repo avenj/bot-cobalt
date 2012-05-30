@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 13;
 use strict; use warnings;
 
 BEGIN{
@@ -9,10 +9,14 @@ my $server = new_ok('Bot::Cobalt::IRC::Server' =>
   [ name => 'irc.example.org', prefer_nick => 'abc' ]
 );
 
+is( $server->name, 'irc.example.org', 'name()' );
+is( $server->prefer_nick, 'abc', 'prefer_nick()' );
+ok( $server->irc(bless({}, 'MockIRC')), 'irc()' );
 ok( $server->connectedat(time), 'connectedat()' );
 ok( $server->connected(1), 'connected()' );
 ok( $server->casemap('ascii'), 'casemap(ascii)' );
-ok( $server->casemap eq 'ascii', 'casemap eq ascii' );
+is( $server->casemap, 'ascii', 'casemap eq ascii' );
 ok( $server->casemap('rfc1459'), 'casemap(rfc1459)' );
-ok( $server->casemap eq 'rfc1459', 'casemap eq rfc1459' );
-ok( $server->maxmodes(4) == 4, 'maxmodes(4)' );
+is( $server->casemap, 'rfc1459', 'casemap eq rfc1459' );
+is( $server->maxmodes(4), 4, 'maxmodes(4)' );
+is( $server->maxtargets(2), 2, 'maxtarges(2)' );
