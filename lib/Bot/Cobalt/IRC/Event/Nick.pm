@@ -18,10 +18,18 @@ has 'old_nick' => ( is => 'rw', isa => Str, lazy => 1,
 
 has 'new_nick' => ( is => 'rw', isa => Str, required => 1 );
 
-has 'channels' => ( is => 'rw', isa => ArrayRef, required => 1 );
+has 'channels' => ( is => 'rw', isa => ArrayRef, 
+  required => 1,
+  trigger  => sub {
+    my ($self, $value) = @_;
+    $self->_set_common($value) if $self->has_common;
+  },
+);
 ## ...just to remain compat with ::Quit:
 has 'common'   => ( is => 'ro', lazy => 1,
-  default => sub { $_[0]->channels },
+  default   => sub { $_[0]->channels },
+  predicate => 'has_common',
+  writer    => '_set_common',
 );
 
 ## Changing src on a Nick event makes no sense, as far as I can tell.
