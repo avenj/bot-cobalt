@@ -159,8 +159,7 @@ sub dbopen {
     sub { $_ .= "\0" }
   );
 
-  ## Storable is probably faster
-  ## ... but has no backwards compat guarantee, really
+  ## JSONified values
   $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
