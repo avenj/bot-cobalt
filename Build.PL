@@ -139,9 +139,8 @@ my $build = $class->new(
       'Storable'       => 0,
       'Time::HiRes'    => 0,
       
-      'strictures' => '1',
-      
-      'Try::Tiny' => 0,
+      'strictures' => 1,
+      'Try::Tiny'  => 0,
       
    ### Cobalt set ###
      # Crypt

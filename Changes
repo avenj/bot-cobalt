@@ -1,6 +1,7 @@
 # Bot::Cobalt Changes
 
-* 0.005
+
+* 0.005  (29 May 2012)
 
   Fix an IRC.pm bug that would cause failures if an error event was 
   received for a context that never completed a connection.
@@ -10,7 +11,7 @@
   
   POD and test improvements and clean-ups.
 
-* 0.004
+* 0.004  (27 May 2012)
 
   Fix IRC.pm bug that kept sessions hanging about when the bot was 
   terminated via an online command. (This fixes the busted '!die' 
@@ -22,7 +23,7 @@
    - Bot::Cobalt::Utils
    - Significant POD cleanups
 
-* 0.003
+* 0.003  (22 May 2012)
 
   Require perl-5.12.1; given/when changed sometime in there, it seems,
    and I'm tired of playing with EOL Perls anyway.
