@@ -67,7 +67,7 @@ sub try_load_cf {
   my $plugincf = $plugin . '::Conf' ;
 
   eval "require $plugincf";
-  die "Fatal error: $plugincf: $@" if $@;
+  return if $@;
 
   die "No conf() method found for $plugincf\n"
     unless $plugincf->can('conf');
