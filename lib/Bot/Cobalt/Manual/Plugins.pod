@@ -6,14 +6,13 @@ Bot::Cobalt::Manual::Plugins - Bot::Cobalt plugin authoring reference
 
 =head1 DESCRIPTION
 
-This POD attempts to be a reasonably complete guide to writing useful 
+This POD attempts to be a reasonably complete guide to writing 
 L<Bot::Cobalt> plugins.
 
-Refer to L</SEE ALSO> for other relevant documentation.
-
-B<Plugin authors should at least read the L<Bot::Cobalt::IRC> POD>
-
 For a quick-start guide, try L<Bot::Cobalt::Manual::Plugins::Tutorial>.
+
+Refer to L</SEE ALSO> for other relevant documentation.
+Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
 
 =head1 PLUGIN FUNDAMENTALS
 
@@ -595,7 +594,8 @@ on the methods you can call against C<$irc> -- they are very complete.
 
 =head2 Core methods
 
-The Cobalt core provides various useful accessors and methods for plugins.
+The Cobalt core provides various convenience accessors and methods for 
+plugins.
 
 The object reference to the Cobalt core object is referred to here 
 as C<$core>.
@@ -788,7 +788,7 @@ A plugin can be instanced many times with discrete conf
 values (although many plugins won't play very nice with multiple 
 instances). 
 
-Sometimes it's useful to know the name of your current alias.
+Sometimes it's necessary to know the name of your current alias.
 
 Your plugin's $self object must be specified:
 
@@ -915,7 +915,7 @@ access the timer pool directly. It is a hash keyed on timer ID.
 
 Timer methods are provided by the L<Bot::Cobalt::Core::Role::Timers> role.
 Each individual timer is a L<Bot::Cobalt::Timer> object; if you plan to 
-manipulate timers, you'll likely want to consult that POD.
+manipulate a created timer, you'll likely want to consult that POD.
 
 Typically most plugins will only need the following functionality; this 
 only covers the hash-based interface to 
@@ -989,7 +989,7 @@ If no B<Type> is specified, I<event> is assumed:
 
 You can tags packages with your plugin's B<Alias>, if you'd like; 
 if an Alias is set, you'll be able to clear all timers by alias via 
-L</timer_del_alias>:
+L</timer_del_alias> or retrieve them via L</timer_get_alias>:
 
   ## Alias-tagged timer
   my $id = $core->timer_set( $secs,
@@ -1023,7 +1023,7 @@ You can also specify an ID:
 
 (The L<Bot::Cobalt::Timer> object interface uses the B<id> attribute.)
 
-This can be useful for resetting timers you've already set; grab the ID 
+This can be used for resetting timers you've already set; grab the ID 
 returned by a C<timer_set()> call and reset it to change the event or delay.
 
 You may want C<timestr_to_secs> from L<Bot::Cobalt::Utils> for easy 
@@ -1211,7 +1211,7 @@ See L<Bot::Cobalt::Common> for details.
 L<Bot::Cobalt::DB> provides an easy object-oriented interface to storing 
 and retrieving Perl data structures to/from BerkeleyDB via L<DB_File>.
 
-This is useful when a plugin has some persistent data it needs to 
+Useful when a plugin has some persistent data it needs to 
 keep track of, but storing it in memory and serializing to/from disk is 
 too expensive.
 
@@ -1240,7 +1240,7 @@ standardized format. Serialization formats such as B<JSON> and B<YAML>
 are convenient for "speaking" to other networked applications, sharing 
 data, or saving persistent data to disk in an easily-retrievable format.
 
-B<Cobalt> comes with a simple object oriented frontend to some common 
+L<Bot::Cobalt> comes with a simple object oriented frontend to some common 
 serialization formats, as well as built-in file operations for "freezing" 
 and "thawing" data to/from files on disk:
 
@@ -1266,19 +1266,19 @@ Cobalt-style glob syntax tools, color/format interpolation, and others.
   ## Import all Bot::Cobalt::Utils funcs:
   use Bot::Cobalt::Utils qw/ :ALL /;
 
-See L<Bot::Cobalt::Utils>
-
+See L<Bot::Cobalt::Utils>.
 
 =head3 IRC::Utils
 
 L<IRC::Utils> is a great little module covering many basic IRC-related 
-tasks, such as host normalization and matching and casemapping-aware 
+tasks, such as host normalization / matching and casemapping-aware IRC 
 uppercase/lowercase tools.
 
-It is used extensively by both B<Cobalt> and L<POE::Component::IRC>; 
-in other words, it is guaranteed to be available if B<Cobalt> is.
+It is used extensively by both L<Bot::Cobalt> and 
+L<POE::Component::IRC>; thusly it is guaranteed to be available if 
+L<Bot::Cobalt> is.
 
-See L<IRC::Utils> for upstream documentation.
+See L<IRC::Utils> for upstream's documentation.
 
 
 =head3 Bot::Cobalt::Plugin::WWW
