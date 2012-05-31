@@ -3,6 +3,7 @@ our $VERSION = '0.006_01';
 
 use strictures 1;
 use Carp;
+use Try::Tiny;
 
 use base 'Exporter';
 
@@ -24,10 +25,12 @@ sub rc_read {
   close $fh;
   
   my ($BASE, $ETC, $VAR);
-  eval $rcstr;
-  if ($@) {
-    croak "Errors reported during rcfile parse: $@"
-  }
+
+  try { 
+    eval $rcstr
+  } catch {
+    croak "Errors reported during rcfile parse: $_"
+  };
   
   unless ($BASE && $ETC && $VAR) {
     warn "rc_read; could not find BASE, ETC, VAR\n";

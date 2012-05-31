@@ -141,6 +141,8 @@ my $build = $class->new(
       
       'strictures' => '1',
       
+      'Try::Tiny' => 0,
+      
    ### Cobalt set ###
      # Crypt
       'App::bmkpasswd' => 0,
