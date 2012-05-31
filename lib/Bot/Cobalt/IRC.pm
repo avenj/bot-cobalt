@@ -349,7 +349,7 @@ sub irc_disconnected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
 
-  logger->info("IRC disconnected: $context");
+  logger->warn("Disconnected: $context ($server)");
   
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
@@ -361,7 +361,7 @@ sub irc_socketerr {
   my ($self, $kernel, $err) = @_[OBJECT, KERNEL, ARG0];
   my $context = $_[HEAP]->{Context};
 
-  logger->info("irc_socketerr: $context: $err");
+  logger->warn("Socket error: $context: $err");
   
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
