@@ -205,11 +205,14 @@ sub syndicator_started {
     
     my $module = $self->cfg->{plugins}->{$plugin}->{Module};
     
-    eval "require $module";
-    if ($@) {
-      $self->log->warn("Could not load $module: $@");
-      $self->unloader_cleanup($module);
-      next 
+    {
+      local $@;
+      eval "require $module";
+      if ($@) {
+        $self->log->warn("Could not load $module: $@");
+        $self->unloader_cleanup($module);
+        next 
+      }
     }
     
     my $obj = $module->new();

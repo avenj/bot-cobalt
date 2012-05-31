@@ -72,12 +72,15 @@ sub _load_games {
     next unless ref $games->{$game}->{Cmds} eq 'ARRAY';
 
     ## attempt to load module
-    eval "require $module";
-    if ($@) {
-      logger->warn("Failed to load $module - $@");
-      next
-    } else {
-      logger->debug("Found: $module");
+    {
+      local $@;
+      eval "require $module";
+      if ($@) {
+        logger->warn("Failed to load $module - $@");
+        next
+      } else {
+        logger->debug("Found: $module");
+      }
     }
 
     push(@{ $self->{ModuleNames} }, $module);

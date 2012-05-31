@@ -189,7 +189,7 @@ sub readfile {
 sub version {
   my ($self) = @_;
   my $module = $self->Types->{ $self->Format };
-  eval "require $module";
+  { local $@; eval "require $module" }
   return($module, $module->VERSION);
 }
 

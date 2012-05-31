@@ -90,6 +90,7 @@ sub _load_module {
   require Bot::Cobalt::Core;
   my $core = Bot::Cobalt::Core->instance;
 
+  local $@;
   eval "require $module";
   if ($@) {
     ## 'require' failed
