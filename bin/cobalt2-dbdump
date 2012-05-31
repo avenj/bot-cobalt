@@ -4,7 +4,7 @@ use 5.10.1;
 use strict;
 use warnings;
 
-STDOUT->autoflush(1);
+$|++;
 
 use Bot::Cobalt::DB;
 use Bot::Cobalt::Serializer;

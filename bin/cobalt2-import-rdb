@@ -17,7 +17,7 @@ use Digest::SHA qw/sha256_hex/;
 
 use Time::HiRes;
 
-STDOUT->autoflush(1);
+$|++;
 
 say "This simplistic tool will convert darkbot/cobalt1 RDBs.";
 
