@@ -7,6 +7,7 @@ use strictures 1;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
+use Bot::Cobalt::Serializer;
 
 use HTTP::Request;
 
@@ -125,8 +126,6 @@ sub Bot_mcpan_plug_resp_recv {
 
   my $dist = $hints->{Dist};
   my $type = $hints->{Type};
-
-  ## FIXME
   
   unless ($response->is_success) {
     broadcast('message',
@@ -136,6 +135,38 @@ sub Bot_mcpan_plug_resp_recv {
     return PLUGIN_EAT_ALL
   }
 
+  my $json = $response->content;
+  
+  unless ($json) {
+    broadcast('message',
+      $hints->{Context}, $hints->{Channel},
+      "Unknown failure -- no data received for $dist",
+    );
+    return PLUGIN_EAT_ALL
+  }
+
+  my $ser = Bot::Cobalt::Serializer->new('JSON');
+  
+  my $d_hash;
+  {
+    eval { $d_hash = $ser->thaw($json) };
+    if ($@) {
+      broadcast( 'message',
+        $hints->{Context}, $hints->{Channel},
+        "Decoder failure; err: $@",
+      );
+      return PLUGIN_EAT_ALL
+    }
+  }
+  
+  unless ($d_hash && ref $d_hash eq 'HASH') {
+    broadcast( 'message',
+      $hints->{Context}, $hints->{Channel},
+      "Odd; no hash received after decode for $dist"
+    );
+    return PLUGIN_EAT_ALL
+  }
+  
   ## FIXME
 
 }

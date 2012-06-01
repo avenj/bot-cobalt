@@ -55,6 +55,7 @@ lib/Bot/Cobalt/Manual/Plugins/Dist.pod
 lib/Bot/Cobalt/Manual/Plugins/Tutorial.pod
 lib/Bot/Cobalt/Plugin/Alarmclock.pm
 lib/Bot/Cobalt/Plugin/Auth.pm
+lib/Bot/Cobalt/Plugin/Extras/CPAN.pm
 lib/Bot/Cobalt/Plugin/Extras/Debug.pm
 lib/Bot/Cobalt/Plugin/Extras/DNS.pm
 lib/Bot/Cobalt/Plugin/Extras/Karma.pm
