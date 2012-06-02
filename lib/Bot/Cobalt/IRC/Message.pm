@@ -4,8 +4,10 @@ our $VERSION = '0.006_01';
 ## Message class. Inherits from Event
 
 use 5.10.1;
-use Bot::Cobalt::Common;
 use Moo;
+use strictures 1;
+
+use Bot::Cobalt::Common;
 
 extends 'Bot::Cobalt::IRC::Event';
 
@@ -39,7 +41,7 @@ has 'target'  => ( is => 'ro', isa => Str, lazy => 1,
 ## May or may not have a channel.
 has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
   default => sub {
-    $_[0]->target =~ /^[#&+]/ ? $_[0]->target : ''
+    $_[0]->target =~ /^[#&+!]/ ? $_[0]->target : ''
   },
 );
 
