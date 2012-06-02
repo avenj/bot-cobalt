@@ -173,6 +173,10 @@ my $build = $class->new(
      # POE::
       'POE'            => '1.311',
 
+       ## ::Resolver that doesn't fail w/ newer Socket::GetAddrInfo
+       ## (Not sure why LeoNerd felt :newapi import needed to croak() )
+      'POE::Component::Resolver'     => '0.919',
+
       'POE::Component::Client::DNS'  => 0,
       'POE::Component::Client::HTTP' => '0.945',
       'POE::Component::Client::Keepalive' => '0',
