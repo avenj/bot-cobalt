@@ -11,6 +11,8 @@ use Bot::Cobalt::Serializer;
 
 use HTTP::Request;
 
+use Try::Tiny;
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -61,35 +63,20 @@ sub Bot_public_cmd_cpan {
   
   given ( lc($cmd||'') ) {
   
-    when ([qw/latest release/]) {
-      ## Get latest vers / date and link
-      $hints->{Type} = 'latest';
-    }
-    
-    when ("dist") {
-      ## Get download url      
-      $hints->{Type} = 'dist';
-    }
-    
-    when (/^tests?$/) {
-      ## Get test reports
-      $hints->{Type} = 'tests';
-    }
-    
-    when ([qw/info abstract/]) {
-      ## Get dist abstract
-      $hints->{Type} = 'abstract';
-    }
-    
-    when ("license") {
-      ## Get license link
-      $hints->{Type} = 'license';
-    }
+    ## Get latest vers / date and link
+    $hints->{Type} = 'latest'   when [qw/latest release/];
+    ## Download URL
+    $hints->{Type} = 'dist'     when "dist";
+    $hints->{Type} = 'tests'    when /^tests?$/;
+    $hints->{Type} = 'abstract' when [qw/info abstract/];
+    $hints->{Type} = 'license'  when "license";
     
     default {
-      ## FIXME bad syntax
+      broadcast( 'message',
+        $msg->context, $msg->channel,
+        "Unknown query; try: dist, latest, tests, abstract, license",
+      );
     }
-  
   }
 
   $self->_request($url, $hints)
@@ -128,10 +115,20 @@ sub Bot_mcpan_plug_resp_recv {
   my $type = $hints->{Type};
   
   unless ($response->is_success) {
-    broadcast('message',
-      $hints->{Context}, $hints->{Channel},
-      "HTTP failure, cannot get release info for $dist"
-    );
+    my $status = $response->code;
+    
+    if ($status == 404) {
+      broadcast( 'message',
+        $hints->{Context}, $hints->{Channel},
+        "No such distribution: $dist"
+      );
+    } else {
+      broadcast( 'message',
+        $hints->{Context}, $hints->{Channel},
+        "Could not get release info for $dist ($status)"
+      );
+    }
+
     return PLUGIN_EAT_ALL
   }
 
@@ -149,14 +146,15 @@ sub Bot_mcpan_plug_resp_recv {
   
   my $d_hash;
   {
-    eval { $d_hash = $ser->thaw($json) };
-    if ($@) {
+    try { 
+      $d_hash = $ser->thaw($json) 
+    } catch {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
-        "Decoder failure; err: $@",
+        "Decoder failure; err: $_",
       );
       return PLUGIN_EAT_ALL
-    }
+    };
   }
   
   unless ($d_hash && ref $d_hash eq 'HASH') {
@@ -167,8 +165,47 @@ sub Bot_mcpan_plug_resp_recv {
     return PLUGIN_EAT_ALL
   }
   
-  ## FIXME
+  my $resp;
+  
+  given ($type) {
+    
+    when ("abstract") {
+      my $abs = $d_hash->{abstract} || 'No abstract available.';
+      $resp = "mCPAN: $dist: $abs";
+    }
+    
+    when ("dist") {
+      my $dl = $d_hash->{download_url} || 'No download link available.';
+      $resp = "mCPAN: ($dist) $dl";
+    }
+    
+    when ("latest") {
+      my $vers = $d_hash->{version};
+      my $arc  = $d_hash->{archive};
+      $resp = "mCPAN: $dist: Latest version is $vers ($arc)";
+    }
+    
+    when ("license") {
+      my $name = $d_hash->{name};
+      my $lic  = join ' ', @{ $d_hash->{license} };
+      $resp = "mCPAN: License terms for $name: $lic";
+    }
+    
+    when ("tests") {
+      my %tests = %{$d_hash->{tests}};
+      $resp = sprintf("mCPAN: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
+        $dist, $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
+      );
+    }
+  
+  }
+  
+  broadcast( 'message',
+    $hints->{Context}, $hints->{Channel}, 
+    $resp
+  );
 
+  return PLUGIN_EAT_ALL
 }
 
 1;
