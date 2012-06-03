@@ -6,7 +6,6 @@ use strictures 1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
-use Bot::Cobalt::DB;
 use Bot::Cobalt::Serializer;
 
 use HTTP::Request;
@@ -20,10 +19,11 @@ sub Cobalt_register {
   
   register( $self, 'SERVER',
     'public_cmd_cpan',
+    'mcpan_plug_resp_recv',
   );
   
-  ## FIXME set up cachedb
-  
+  ## FIXME cachedb ?
+
   logger->info("Loaded: !cpan");
   
   return PLUGIN_EAT_NONE
@@ -45,9 +45,9 @@ sub Bot_public_cmd_cpan {
   my $dist = $msg->message_array->[1];
   
   unless ($dist) {
-    ## assume 'latest' if only one arg
+    ## assume 'abstract' if only one arg
     $dist = $cmd;
-    $cmd  = 'latest';
+    $cmd  = 'abstract';
   }
   
   $dist =~ s/::/-/g;
@@ -76,6 +76,7 @@ sub Bot_public_cmd_cpan {
         $msg->context, $msg->channel,
         "Unknown query; try: dist, latest, tests, abstract, license",
       );
+      ## Set no type, we'll return below.
     }
   }
 
@@ -92,8 +93,6 @@ sub _request {
   my $this_url = $base_url . $url;
   
   logger->debug("metacpan request: $this_url");
-
-  ## FIXME cachedb, check for recent cached result
 
   my $request = HTTP::Request->new(
     'GET', $this_url
@@ -166,35 +165,39 @@ sub Bot_mcpan_plug_resp_recv {
   }
   
   my $resp;
+
+  my $prefix = color('bold', 'mCPAN');
   
   given ($type) {
     
     when ("abstract") {
-      my $abs = $d_hash->{abstract} || 'No abstract available.';
-      $resp = "mCPAN: $dist: $abs";
+      my $abs  = $d_hash->{abstract} || 'No abstract available.';
+      my $vers = $d_hash->{version};
+      $resp = "$prefix: ($dist $vers) $abs";
     }
     
     when ("dist") {
       my $dl = $d_hash->{download_url} || 'No download link available.';
-      $resp = "mCPAN: ($dist) $dl";
+      $resp = "$prefix: ($dist) $dl";
     }
     
     when ("latest") {
       my $vers = $d_hash->{version};
       my $arc  = $d_hash->{archive};
-      $resp = "mCPAN: $dist: Latest version is $vers ($arc)";
+      $resp = "$prefix: ($dist) Latest version is $vers ($arc)";
     }
     
     when ("license") {
       my $name = $d_hash->{name};
       my $lic  = join ' ', @{ $d_hash->{license} };
-      $resp = "mCPAN: License terms for $name: $lic";
+      $resp = "$prefix: License terms for $name:  $lic";
     }
     
     when ("tests") {
       my %tests = %{$d_hash->{tests}};
-      $resp = sprintf("mCPAN: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
-        $dist, $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
+      $resp = sprintf("%s: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
+        $prefix, $dist,
+        $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
       );
     }
   
@@ -209,3 +212,53 @@ sub Bot_mcpan_plug_resp_recv {
 }
 
 1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Plugin::Extras::CPAN - Query MetaCPAN API from IRC
+
+=head1 SYNOPSIS
+
+  ## Retrieve dist abstract:
+  > !cpan Some::Dist
+  > !cpan abstract Some::Dist
+  
+  ## Retrieve latest version:
+  > !cpan latest Some::Dist
+  
+  ## Test summary:
+  > !cpan tests Some::Dist
+  
+  ## License info:
+  > !cpan license Some::Dist
+  
+  ## Download link:
+  > !cpan dist Some::Dist
+
+=head1 DESCRIPTION
+
+A L<Bot::Cobalt> plugin providing an IRC interface to the 
+L<http://www.metacpan.org> API.
+
+Retrieves CPAN distribution information.
+
+=head1 SEE ALSO
+
+As of this writing, the authoritative reference for the MetaCPAN API 
+appears to be available at 
+L<https://github.com/CPAN-API/cpan-api/wiki/Beta-API-docs>
+
+=head1 TODO
+
+Some useful search features.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+L<http://www.cobaltirc.org>
+
+=cut
