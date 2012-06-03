@@ -10,6 +10,8 @@ use Bot::Cobalt::Serializer;
 
 use HTTP::Request;
 
+use Module::CoreList;
+
 use Try::Tiny;
 
 sub new { bless {}, shift }
@@ -19,6 +21,7 @@ sub Cobalt_register {
   
   register( $self, 'SERVER',
     'public_cmd_cpan',
+    'public_cmd_corelist',
     'mcpan_plug_resp_recv',
   );
   
@@ -35,6 +38,40 @@ sub Cobalt_unregister {
   logger->info("Bye!");
   
   return PLUGIN_EAT_NONE
+}
+
+sub Bot_public_cmd_corelist {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  
+  my $dist = $msg->message_array->[1];
+  
+  unless ($dist) {
+    broadcast( 'message',
+      $msg->context, $msg->channel,
+      "corelist needs a module name."
+    );
+    return PLUGIN_EAT_ALL
+  }
+  
+  my $resp;
+  
+  my $vers = $msg->message_array->[2];
+  
+  my $first = Module::CoreList->first_release($dist, $vers);
+
+  if ($first) {
+    $resp = $vers ?
+            "$dist ($vers) was released with $first"
+            : "$dist was released with $first"
+  } else {
+    $resp = "Module not found in core."
+  }
+  
+  broadcast( 'message',
+    $msg->context, $msg->channel,
+    join(' ', $msg->src_nick, $resp)
+  );
 }
 
 sub Bot_public_cmd_cpan {
@@ -62,7 +99,7 @@ sub Bot_public_cmd_cpan {
   };
   
   given ( lc($cmd||'') ) {
-  
+
     ## Get latest vers / date and link
     $hints->{Type} = 'latest'   when [qw/latest release/];
     ## Download URL
@@ -238,12 +275,17 @@ Bot::Cobalt::Plugin::Extras::CPAN - Query MetaCPAN API from IRC
   ## Download link:
   > !cpan dist Some::Dist
 
+  ## Query Module::CoreList:
+  > !corelist Some::Dist
+
 =head1 DESCRIPTION
 
 A L<Bot::Cobalt> plugin providing an IRC interface to the 
 L<http://www.metacpan.org> API.
 
-Retrieves CPAN distribution information.
+Retrieves CPAN distribution information; can also retrieve 
+L<Module::CoreList> data specifying when/if a distribution was included 
+in Perl core.
 
 =head1 SEE ALSO
 
