@@ -84,9 +84,9 @@ my $class = Module::Build->subclass(
 );
 
 my $build = $class->new(
-  module_name => 'Bot::Cobalt',
-  dist_abstract => 'Pluggable IRC bot (cobalt2)',
-  dist_author => 'Jon Portnoy <avenj@cobaltirc.org>',
+  module_name   => 'Bot::Cobalt',
+  dist_abstract => 'Pluggable IRC darkbot-alike',
+  dist_author   => 'Jon Portnoy <avenj@cobaltirc.org>',
   license => 'perl',
   
   create_readme => 1,
