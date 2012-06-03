@@ -2,6 +2,7 @@ package Bot::Cobalt::IRC::Event::Kick;
 our $VERSION = '0.006_01';
 
 use Moo;
+use strictures 1;
 use Bot::Cobalt::Common qw/:types/;
 
 extends 'Bot::Cobalt::IRC::Event::Channel';

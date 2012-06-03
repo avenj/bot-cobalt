@@ -2,6 +2,7 @@ package Bot::Cobalt::IRC::Event::Mode;
 our $VERSION = '0.006_01';
 
 use Moo;
+use strictures 1;
 
 use Bot::Cobalt;
 

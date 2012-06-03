@@ -1,8 +1,8 @@
 package Bot::Cobalt::IRC::Event::Nick;
 our $VERSION = '0.006_01';
 
-use strictures 1;
 use Moo;
+use strictures 1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common qw/:types/;

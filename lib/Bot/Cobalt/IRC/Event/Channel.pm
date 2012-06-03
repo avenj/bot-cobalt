@@ -4,6 +4,7 @@ our $VERSION = '0.006_01';
 ## Generic channel events.
 
 use Moo;
+use strictures 1;
 use Bot::Cobalt::Common qw/:types/;
 
 extends 'Bot::Cobalt::IRC::Event';
