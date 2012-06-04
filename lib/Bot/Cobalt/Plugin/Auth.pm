@@ -1295,7 +1295,7 @@ sub _write_access_list {
 
   my $serializer = Bot::Cobalt::Serializer->new( Logger => core->log );
   unless ( $serializer->writefile($authdb, \%hash) ) {
-    core->log->emerg("Failed to serialize db to disk: $authdb");
+    core->log->error("Failed to serialize db to disk: $authdb");
   }
 
   my $p_cfg = core->get_plugin_cfg( $self );
