@@ -138,7 +138,10 @@ sub freeze {
   ## ->freeze($ref)
   ## serialize arbitrary data structure
   my ($self, $ref) = @_;
-  return unless defined $ref;
+  unless (defined $ref) {
+    carp "freeze() received no data";
+    return
+  }
 
   my $method = lc( $self->Format );
   $method = $method . "_from_ref";
@@ -149,7 +152,10 @@ sub thaw {
   ## ->thaw($data)
   ## deserialize data in specified Format
   my ($self, $data) = @_;
-  return unless defined $data;
+  unless (defined $data) {
+    carp "thaw() received no data";
+    return
+  }
 
   my $method = lc( $self->Format );
   $method = "ref_from_" . $method ;
