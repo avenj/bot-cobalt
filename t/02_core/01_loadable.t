@@ -1,4 +1,4 @@
-use Test::More tests => 16;
+use Test::More tests => 22;
 use strict; use warnings;
 
 BEGIN {
@@ -67,3 +67,12 @@ can_ok( $core,
   /,
   
 );
+
+## Empty hashes:
+ok( $core->get_channels_cfg('Main'), 'get_channels_cfg(Main)' );
+ok( $core->get_plugin_cfg('None'), 'get_plugin_cfg(None)' );
+
+ok( !$core->is_connected('Main'), 'is_connected(Main)' );
+ok( !$core->get_irc_context('Main'), 'get_irc_context(Main)' );
+ok( !$core->get_irc_object('Main'), 'get_irc_object(Main)' );
+ok( !$core->get_irc_casemap('Main'), 'get_irc_casemap(Main)' );
