@@ -34,7 +34,23 @@ has 'etc' => ( is => 'ro', isa => Str, lazy => 1,
   default => sub { $_[0]->cfg->{path} }
 );
 
-has 'log'      => ( is => 'rw', isa => Object );
+has 'log'      => ( is => 'rw', 
+  isa => sub {
+    unless (blessed $_[0]) {
+      die "log() not passed a blessed object"
+    }
+
+    for my $meth (qw/debug info warn error/) {
+      die "log() object missing required method $meth"
+        unless $_[0]->can($meth);
+    }
+  },
+  
+  default => sub {
+    Log::Handler->create_logger("cobalt");
+  },
+);
+
 has 'loglevel' => ( 
   is => 'rw', isa => Str, 
   default => sub { 'info' } 
@@ -124,41 +140,39 @@ with 'Bot::Cobalt::Core::Role::IRC';
 sub init {
   my ($self) = @_;
 
-  my $newlogger = Log::Handler->create_logger("cobalt");
-  my $maxlevel = $self->loglevel;
-  $maxlevel = 'debug' if $self->debug;
-  my $logfile = $self->cfg->{core}->{Paths}->{Logfile}
-                // File::Spec->catfile( $self->var, 'cobalt.log' );
-  $newlogger->add(
-    file => {
-     maxlevel => $maxlevel,
-     timeformat     => "%Y/%m/%d %H:%M:%S",
-     message_layout => "[%T] %L %p %m",
+  my $maxlevel = $self->debug ? 'debug' : $self->loglevel ;
 
-     filename => $logfile,
-     filelock => 1,
-     fileopen => 1,
-     reopen   => 1,
-     autoflush => 1,
+  my $logfile  = $self->cfg->{core}->{Paths}->{Logfile}
+                // File::Spec->catfile( $self->var, 'cobalt.log' );
+
+  $self->log->add(
+    file => {
+      maxlevel => $maxlevel,
+      timeformat     => "%Y/%m/%d %H:%M:%S",
+      message_layout => "[%T] %L %p %m",
+
+      filename => $logfile,
+      filelock => 1,
+      fileopen => 1,
+      reopen   => 1,
+      autoflush => 1,
     },
   );
 
-  $self->log($newlogger);
+  unless ($self->detached) {
+    $self->log->add(
+      screen => {
+        log_to => "STDOUT",
+        maxlevel => $maxlevel,
+        timeformat     => "%Y/%m/%d %H:%M:%S",
+        message_layout => "[%T] %L (%p) %m",
+      },
+    );
+  }
 
   ## Load configured langset (defaults to english)
   my $language = ($self->cfg->{core}->{Language} //= 'english');
   $self->lang( $self->load_langset($language) );
-
-  unless ($self->detached) {
-    $newlogger->add(
-     screen => {
-       log_to => "STDOUT",
-       maxlevel => $maxlevel,
-       timeformat     => "%Y/%m/%d %H:%M:%S",
-       message_layout => "[%T] %L (%p) %m",
-     },
-    );
-  }
 
   $self->_syndicator_init(
     prefix => 'ev_',  ## event prefix for sessions
