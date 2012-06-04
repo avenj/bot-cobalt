@@ -44,7 +44,7 @@ sub Bot_public_cmd_corelist {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
   
-  my $dist = $msg->message_array->[1];
+  my $dist = $msg->message_array->[0];
   
   unless ($dist) {
     broadcast( 'message',
@@ -56,7 +56,7 @@ sub Bot_public_cmd_corelist {
   
   my $resp;
   
-  my $vers = $msg->message_array->[2];
+  my $vers = $msg->message_array->[1];
   
   my $first = Module::CoreList->first_release($dist, $vers);
 
@@ -70,7 +70,7 @@ sub Bot_public_cmd_corelist {
   
   broadcast( 'message',
     $msg->context, $msg->channel,
-    join(' ', $msg->src_nick, $resp)
+    join(', ', $msg->src_nick, $resp)
   );
 }
 
