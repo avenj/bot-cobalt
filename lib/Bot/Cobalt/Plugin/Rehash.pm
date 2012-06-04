@@ -230,8 +230,11 @@ sub _get_new_cfg {
 
   my $etcdir = core->cfg->{path};
   
+  logger->debug("Using etcdir $etcdir");
+  
   my $ccf = Bot::Cobalt::Conf->new(
-    etc => $etcdir
+    etc   => $etcdir,
+    debug => core()->debug,
   );
   
   my $newcfg = $ccf->read_cfg;
