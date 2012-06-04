@@ -130,23 +130,6 @@ sub timer_set_hashref {
   return $timer
 }
 
-sub timer_del {
-  ## delete a timer by its ID
-  ## doesn't care if the timerID actually exists or not.
-  my ($self, $id) = @_;
-  return unless $id;
-
-  $self->log->debug("timer del; $id")
-    if $self->debug > 1;
-
-  return unless exists $self->TimerPool->{$id};
-
-  my $deleted = delete $self->TimerPool->{$id};
-  $self->send_event( 'deleted_timer', $id, $deleted );
-  
-  return $deleted
-}
-
 sub timer_get {
   my ($self, $id) = @_;
   return unless $id;
@@ -171,6 +154,23 @@ sub timer_get_alias {
   }
 
   return wantarray ? @timers : \@timers
+}
+
+sub timer_del {
+  ## delete a timer by its ID
+  ## doesn't care if the timerID actually exists or not.
+  my ($self, $id) = @_;
+  return unless $id;
+
+  $self->log->debug("timer del; $id")
+    if $self->debug > 1;
+
+  return unless exists $self->TimerPool->{$id};
+
+  my $deleted = delete $self->TimerPool->{$id};
+  $self->send_event( 'deleted_timer', $id, $deleted );
+  
+  return $deleted
 }
 
 sub timer_del_alias {
