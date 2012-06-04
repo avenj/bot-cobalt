@@ -20,7 +20,8 @@ use Bot::Cobalt::Common qw/:types/;
 
 use File::Spec;
 
-has 'etc' => ( is => 'rw', isa => Str, required => 1 );
+has 'etc'   => ( is => 'rw', isa => Str, required => 1 );
+has 'debug' => ( is => 'rw', isa => Bool, default => sub { 0 } );
 
 use Bot::Cobalt::Serializer;
 
@@ -34,6 +35,9 @@ sub _read_conf {
   }
 
   my $etc = $self->etc;
+
+  warn "_read_conf; using etcdir $etc" if $self->debug;
+
   unless (-e $self->etc) {
     carp "cannot find etcdir: $self->etc";
     return
@@ -43,6 +47,8 @@ sub _read_conf {
     $etc,
     File::Spec->splitpath($relative_to_etc)
   );
+  
+  warn "_read_conf; reading conf path $path" if $self->debug;
 
   unless (-e $path) {
     carp "cannot find $path at $self->etc";
