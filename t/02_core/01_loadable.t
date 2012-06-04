@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 16;
 use strict; use warnings;
 
 BEGIN {
@@ -24,6 +24,13 @@ ok( $core->has_instance, 'Core has_instance' );
 my $second;
 ok( $second = Bot::Cobalt::Core->instance, 'Retrieve instance' );
 is( "$core", "$second", 'instances match' );
+
+for my $meth (qw/debug info warn error/) {
+  ok( $core->log->can($meth), "Have log method $meth" );
+}
+
+isa_ok( $core->auth, 'Bot::Cobalt::Core::ContextMeta::Auth' );
+isa_ok( $core->ignore, 'Bot::Cobalt::Core::ContextMeta::Ignore' );
 
 ## Did we get expected roles, here?
 can_ok( $core,
