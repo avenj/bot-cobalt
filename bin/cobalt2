@@ -147,7 +147,12 @@ sub _start_cobalt {
 
   require Bot::Cobalt::Conf;
   require Bot::Cobalt::Core;
-  my $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg;
+  
+  my $cfg = Bot::Cobalt::Conf->new(
+    etc   => $etcdir,
+    debug => $opt_debug,
+  )->read_cfg;
+  
   Bot::Cobalt::Core->instance(
     cfg => $cfg,
     var => $vardir,
