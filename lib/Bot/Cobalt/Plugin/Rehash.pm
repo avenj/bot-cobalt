@@ -19,6 +19,8 @@ use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Conf;
 
+use Try::Tiny;
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -237,7 +239,13 @@ sub _get_new_cfg {
     debug => core()->debug,
   );
   
-  my $newcfg = $ccf->read_cfg;
+  my $newcfg;
+  try 
+    { $newcfg = $ccf->read_cfg }
+  catch {
+    logger->error("Failed read_cfg: $_");
+    return
+  };
   
   unless (ref $newcfg eq 'HASH') {
     logger->warn("_get_new_cfg; Bot::Cobalt::Conf did not return a hash");
