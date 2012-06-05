@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 24;
 use strict; use warnings;
 
 BEGIN {
@@ -10,10 +10,21 @@ BEGIN {
 can_ok( 'Bot::Cobalt::Conf', 'read_cfg' );
 can_ok( 'Bot::Cobalt::Core', 'init' );
 
+use Module::Build;
+use File::Spec;
+my $basedir = Module::Build->current->base_dir;
+my $etcdir  = File::Spec->catdir( $basedir, 'etc' );
+my $cfg;
+ok( 
+  $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg,
+  'read_cfg()'
+);
+ok( ref $cfg eq 'HASH', 'cfg() is a hash' );
+
 my $core;
 ok( 
   $core = Bot::Cobalt::Core->instance(
-    cfg => {},
+    cfg => $cfg,
     var => '',
   ),
   'instance() a Bot::Cobalt::Core',
