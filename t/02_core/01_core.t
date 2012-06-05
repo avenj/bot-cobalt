@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 25;
 use strict; use warnings;
 
 BEGIN {
@@ -12,7 +12,16 @@ can_ok( 'Bot::Cobalt::Core', 'init' );
 
 use Module::Build;
 use File::Spec;
-my $basedir = Module::Build->current->base_dir;
+my $basedir;
+
+use Try::Tiny;
+try { 
+  $basedir = Module::Build->current->base_dir
+} catch {
+  die "\n! Failed to retrieve base_dir() from Module::Build\n"
+     ."...are you trying to run the test suite outside of `./Build`?\n"
+};
+
 my $etcdir  = File::Spec->catdir( $basedir, 'etc' );
 my $cfg;
 ok( 
@@ -79,7 +88,8 @@ can_ok( $core,
   
 );
 
-## Empty hashes:
+ok( $core->get_core_cfg, 'get_core_cfg()' );
+
 ok( $core->get_channels_cfg('Main'), 'get_channels_cfg(Main)' );
 ok( $core->get_plugin_cfg('None'), 'get_plugin_cfg(None)' );
 
