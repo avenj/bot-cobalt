@@ -41,7 +41,7 @@ sub rc_read {
   
   unless ($rc_h && ref $rc_h eq 'HASH') {
     $generic_crappy_err->();
-    croak "rc_read $rcfile expected to receive a hash"
+    croak "rc_read ($rcfile) expected to receive a hash"
   }
 
   my ($BASE, $ETC, $VAR) = @$rc_h{'BASE', 'ETC', 'VAR'};
