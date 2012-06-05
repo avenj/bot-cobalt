@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 ## Bot::Cobalt::Conf
 ## Looks for the following YAML confs:
@@ -66,7 +66,7 @@ sub _read_conf {
   };
 
   unless ($thawed) {
-    carp "Serializer returned nothing; empty file, perhaps?";
+    carp "Serializer returned nothing; empty file, perhaps? ($path)";
     return
   }
 

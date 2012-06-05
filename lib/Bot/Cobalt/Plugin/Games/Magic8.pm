@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Games::Magic8;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 use 5.10.1;
 use strict;

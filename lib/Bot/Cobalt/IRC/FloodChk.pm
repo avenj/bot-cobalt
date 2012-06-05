@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::FloodChk;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 use Moo;
 use Bot::Cobalt::Common qw/:types/;

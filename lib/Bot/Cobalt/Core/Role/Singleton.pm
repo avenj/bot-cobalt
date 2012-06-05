@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Role::Singleton;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 use strictures 1;
 

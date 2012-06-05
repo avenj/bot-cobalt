@@ -1142,12 +1142,7 @@ These messages are also logged to 'warn' by default.
 
 Broadcast whenever a timer ID has been executed.
 
-The first argument is the timer ID.
-
-The second argument is the "tick" that the timer was executed from; this 
-is an integer increased by one every time the core timer pool is 
-checked; batched timer runs (set for exactly the same time) will execute 
-within the same "tick."
+The only argument is the timer ID.
 
 =head4 Bot_deleted_timer
 

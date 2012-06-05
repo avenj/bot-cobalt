@@ -1,5 +1,5 @@
 package Bot::Cobalt;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 use 5.10.1;
 use strictures 1;
@@ -52,6 +52,7 @@ Bot::Cobalt - IRC darkbot-alike plus plugin authoring sugar
   ## Set up example confs and a simple ~/.cobalt2rc :
   sh$ cobalt2-installer
 
+  ## Get some assistance:
   sh$ cobalt2 --help
   
   ## Launch in foreground:
@@ -80,8 +81,8 @@ comfortably manage multiple servers/networks (referred to as
 "contexts").
 
 Bot::Cobalt tries to be friendly to developers. The bridge to 
-L<POE::Component::IRC> exists as a plugin and 
-can be easily subclassed or replaced entirely; see L<Bot::Cobalt::IRC>.
+L<POE::Component::IRC> exists as a plugin and can be easily subclassed 
+or replaced entirely; see L<Bot::Cobalt::IRC>.
 
 Plugin authoring is intended to be as easy as possible. Modules are 
 included to provide simple frontends to IRC-related 
@@ -135,6 +136,9 @@ L<Bot::Cobalt::Plugin::PluginMgr> -- Load/unload plugins from IRC
 
 L<Bot::Cobalt::Plugin::RDB> -- "Random stuff" databases for quotebots 
 or randomized chatter on a timer
+
+L<Bot::Cobalt::Plugin::Extras::CPAN> -- Query MetaCPAN and 
+L<Module::CoreList>
 
 L<Bot::Cobalt::Plugin::Extras::DNS> -- DNS lookups
 
