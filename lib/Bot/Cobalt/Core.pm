@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.006_01';
+our $VERSION = '0.006';
 
 ## This is the core Syndicator singleton.
 
@@ -304,8 +304,6 @@ sub ev_plugin_error {
 
 sub core_timer_check_pool {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
-  my $tick = $_[ARG0];
-  ++$tick;
 
   ## Timers are provided by Core::Role::Timers
 
@@ -316,17 +314,17 @@ sub core_timer_check_pool {
 
     unless (blessed $timer && $timer->isa('Bot::Cobalt::Timer') ) {
       ## someone's been naughty
-      $self->log->warn("not a Bot::Cobalt::Timer: $id (in tick $tick)");
+      $self->log->warn("not a Bot::Cobalt::Timer: $id");
       delete $timerpool->{$id};
       next TIMER
     }
     
     if ( $timer->execute_if_ready ) {
       my $event = $timer->event;
-      $self->log->debug("timer execute; $id ($event) in tick $tick")
+      $self->log->debug("timer execute; $id ($event)")
         if $self->debug > 1;
 
-      $self->send_event( 'executed_timer', $id, $tick );
+      $self->send_event( 'executed_timer', $id );
       $self->timer_del($id);
     }
   
@@ -334,8 +332,7 @@ sub core_timer_check_pool {
   
   ## most definitely not a high-precision timer.
   ## checked every second or so
-  ## tracks timer pool ticks
-  $kernel->alarm('core_timer_check_pool' => time + 1, $tick);
+  $kernel->alarm('core_timer_check_pool' => time + 1);
 }
 
 1;
