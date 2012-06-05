@@ -297,7 +297,7 @@ sub Conf_interactive {
 print(
   "This is the cobalt2 install helper.\n",
   "This script will create a cobalt2rc file specifying install paths.\n",
-  "It will also help you initialize some starter cobalt2 conf files.\n",
+  "It will also help you initialize some starter cobalt2 conf files.\n\n",
   "> Press ENTER to continue, Ctrl+C to quit.",
 );
 <STDIN>;
@@ -326,6 +326,7 @@ my $relative_basedir = ask_question(
   default => "cobalt2",
 );
 
+my $real_basedir;   ## Reported by rc_write
 if (-e $rcfile) {
   say ">! $rcfile seems to already exist.";
   my $overwrite_yn = ask_yesno(
@@ -333,18 +334,16 @@ if (-e $rcfile) {
     default => 'n',    
   );
   if ( $overwrite_yn ) {
-    rc_write($rcfile, $relative_basedir)
+    $real_basedir = rc_write($rcfile, $relative_basedir)
       or die "Failed rc_write";
   } else {
     say ">! Skipping rcfile write; attempting to use existing.";
   }
 } else {
-  rc_write($rcfile, $relative_basedir)
+  $real_basedir = rc_write($rcfile, $relative_basedir)
     or die "Failed rc_write";
 }
-say ">! wrote rcfile";
-say ">! ETC is: ". $ENV{HOME} ."/". $relative_basedir . "/etc" ;
-say ">! VAR is: ". $ENV{HOME} ."/". $relative_basedir . "/var" ;
+say ">! Wrote rcfile; base path is $real_basedir";
 say ">! To change, edit $rcfile\n";
 
 my $rplvars = Conf_interactive();
