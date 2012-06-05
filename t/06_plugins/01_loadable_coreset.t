@@ -1,4 +1,4 @@
-use Test::More tests => 57;
+use Test::More tests => 60;
 my @core;
 BEGIN {
   my $prefix = 'Bot::Cobalt::Plugin::';
@@ -15,6 +15,7 @@ BEGIN {
     Version
     WWW
     
+    Extras::CPAN
     Extras::DNS
     Extras::Karma
     Extras::Money
