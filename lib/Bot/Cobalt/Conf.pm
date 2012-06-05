@@ -11,19 +11,20 @@ our $VERSION = '0.006_01';
 ## See plugins.conf for more information.
 
 use 5.10.1;
-use strict;
-use warnings;
-use Carp;
-
 use Moo;
-use Bot::Cobalt::Common qw/:types/;
+use strictures 1;
+
+use Carp;
+use Try::Tiny;
 
 use File::Spec;
 
+
+use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Serializer;
+
 has 'etc'   => ( is => 'rw', isa => Str, required => 1 );
 has 'debug' => ( is => 'rw', isa => Bool, default => sub { 0 } );
-
-use Bot::Cobalt::Serializer;
 
 sub _read_conf {
   ## deserialize a YAML conf
@@ -56,10 +57,16 @@ sub _read_conf {
   }
 
   my $serializer = Bot::Cobalt::Serializer->new;
-  my $thawed = $serializer->readfile( $path );
+  
+  my $thawed;
+  try
+    { $thawed = $serializer->readfile( $path ) }
+  catch {
+    croak "Serializer readfile() failed for $path: $_"
+  };
 
   unless ($thawed) {
-    carp "Serializer failure! Empty file, perhaps?";
+    carp "Serializer returned nothing; empty file, perhaps?";
     return
   }
 
