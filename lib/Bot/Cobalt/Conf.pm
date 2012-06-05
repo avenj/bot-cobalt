@@ -59,7 +59,7 @@ sub _read_conf {
   my $thawed = $serializer->readfile( $path );
 
   unless ($thawed) {
-    carp "Serializer failure!";
+    carp "Serializer failure! Empty file, perhaps?";
     return
   }
 

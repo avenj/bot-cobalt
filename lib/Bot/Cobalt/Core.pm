@@ -285,7 +285,7 @@ sub syndicator_stopped {
   $kernel->alarm('core_timer_check_pool');
   $kernel->signal( $kernel, 'POCOIRC_SHUTDOWN' );
   $kernel->post( $kernel, 'shutdown' );
-  $self->log->warn("Syndicator stopped.");
+  $self->log->warn("Core syndicator stopped.");
 }
 
 sub ev_plugin_error {

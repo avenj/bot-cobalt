@@ -32,7 +32,7 @@ around 'add' => sub {
     Reason  => $reason,
   };
 
-  $orig->($self, $context, $mask, $meta)
+  $self->$orig($context, $mask, $meta)
 };
 
 sub reason {

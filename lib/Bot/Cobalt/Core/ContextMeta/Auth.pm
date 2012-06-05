@@ -46,7 +46,7 @@ around 'add' => sub {
     Flags => $args{flags},
   };
 
-  $orig->($self, $args{context}, $args{nickname}, $meta);
+  $self->$orig($args{context}, $args{nickname}, $meta);
 };
 
 sub level {
