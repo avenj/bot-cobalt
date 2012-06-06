@@ -56,6 +56,7 @@ our %EXPORT_TAGS = (
   errors => [ qw/
 
     carp
+    confess
     croak
 
   / ],
@@ -228,6 +229,7 @@ See L<Bot::Cobalt::Utils> for details.
   
 =head4 Errors
 
+  confess
   croak
 
 =head1 AUTHOR

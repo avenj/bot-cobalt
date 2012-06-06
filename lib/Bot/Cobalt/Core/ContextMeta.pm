@@ -19,7 +19,7 @@ has '_list' => ( is => 'rw', isa => HashRef,
 sub add {
   my ($self, $context, $key, $meta) = @_;
 
-  croak "add() needs at least a context and key"
+  confess "add() needs at least a context and key"
     unless defined $context and defined $key;
 
   my $ref = {
@@ -44,7 +44,7 @@ sub clear {
 sub del {
   my ($self, $context, $key) = @_;
 
-  croak "del() needs a context and item"
+  confess "del() needs a context and item"
     unless defined $context and defined $key;
   
   my $list = $self->_list->{$context} // return;
@@ -55,7 +55,7 @@ sub del {
 sub fetch {
   my ($self, $context, $key) = @_;
   
-  croak "fetch() needs a context and key"
+  confess "fetch() needs a context and key"
     unless defined $context and defined $key;
 
   return unless exists $self->_list->{$context};

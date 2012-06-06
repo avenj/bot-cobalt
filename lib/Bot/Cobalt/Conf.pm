@@ -62,6 +62,7 @@ sub _read_conf {
   try
     { $thawed = $serializer->readfile( $path ) }
   catch {
+    ## Still dies, but with more useful information.
     croak "Serializer readfile() failed for $path: $_"
   };
 
@@ -148,14 +149,14 @@ sub read_cfg {
   if ($core_cf && ref $core_cf eq 'HASH') {
     $conf->{core} = $core_cf;
   } else {
-    croak "failed to load cobalt.conf";
+    croak "Failed to load cobalt.conf";
   }
 
   my $chan_cf = $self->_read_core_channels_conf;
   if ($chan_cf && ref $chan_cf eq 'HASH') {
     $conf->{channels} = $chan_cf;
   } else {
-    carp "failed to load channels.conf";
+    carp "Failed to load channels.conf, using empty hash";
     ## busted cf, set up an empty context
     $conf->{channels} = { Main => {} } ;
   }
@@ -164,7 +165,7 @@ sub read_cfg {
   if ($plug_cf && ref $plug_cf eq 'HASH') {
     $conf->{plugins} = $plug_cf;
   } else {
-    carp "failed to load plugins.conf";
+    carp "Failed to load plugins.conf, using empty hash";
     $conf->{plugins} = { } ;
   }
 

@@ -106,7 +106,7 @@ sub rplprintf {
 
 sub glob_grep {
   my $glob = shift;
-  croak "glob_grep called with no arguments!"
+  confess "glob_grep called with no arguments!"
     unless defined $glob;
 
   my @array = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_ ;
@@ -117,7 +117,7 @@ sub glob_grep {
 
 sub glob_to_re {
   my ($glob) = @_;
-  croak "glob_to_re called with no arguments!"
+  confess "glob_to_re called with no arguments!"
     unless defined $glob;
 
   my $re = glob_to_re_str($glob);
@@ -133,7 +133,7 @@ sub glob_to_re_str {
   ##   so is trailing $
   ##   char classes are accepted
   my ($glob) = @_;
-  croak "glob_to_re_str called with no arguments!"
+  confess "glob_to_re_str called with no arguments!"
     unless defined $glob;
 
   my($re, $in_esc);

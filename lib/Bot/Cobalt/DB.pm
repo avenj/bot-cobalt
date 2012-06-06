@@ -116,13 +116,13 @@ sub dbopen {
   ## call a sync() to create if needed
   my $orig_db = tie %{ $self->_orig }, "DB_File", $path,
       $fflags, $self->Perms, $DB_HASH
-      or croak "failed db open: $path: $!" ;
+      or confess "failed db open: $path: $!" ;
   $orig_db->sync();
   
   ## dup a FH to $db->fd for _lockFH  
   my $fd = $orig_db->fd;
   my $fh = IO::File->new("<&=$fd")
-    or croak "failed dup in dbopen: $!";
+    or confess "failed dup in dbopen: $!";
 
   my $timer = 0;
   my $timeout = $self->Timeout;
@@ -142,7 +142,7 @@ sub dbopen {
   ## reopen DB to Tied
   my $db = tie %{ $self->Tied }, "DB_File", $path,
       $fflags, $self->Perms, $DB_HASH
-      or croak "failed db reopen: $path: $!"; 
+      or confess "failed db reopen: $path: $!"; 
 
   ## preserve db obj and lock fh
   $self->is_open(1);
@@ -209,7 +209,7 @@ sub dbclose {
 
 sub get_tied {
   my ($self) = @_;
-  croak "attempted to get_tied on unopened db"
+  confess "attempted to get_tied on unopened db"
     unless $self->is_open;
 
   return $self->Tied
@@ -217,7 +217,7 @@ sub get_tied {
 
 sub get_db {
   my ($self) = @_;
-  croak "attempted to get_db on unopened db"
+  confess "attempted to get_db on unopened db"
     unless $self->is_open;
 
   return $self->DB
@@ -225,7 +225,7 @@ sub get_db {
 
 sub dbkeys {
   my ($self) = @_;
-  croak "attempted 'dbkeys' on unopened db"
+  confess "attempted 'dbkeys' on unopened db"
     unless $self->is_open;
 
   return wantarray ? (keys %{ $self->Tied })
@@ -234,7 +234,7 @@ sub dbkeys {
 
 sub get {
   my ($self, $key) = @_;
-  croak "attempted 'get' on unopened db"
+  confess "attempted 'get' on unopened db"
     unless $self->is_open;
   return undef unless exists $self->Tied->{$key};
 
@@ -243,7 +243,7 @@ sub get {
 
 sub put {
   my ($self, $key, $value) = @_;
-  croak "attempted 'put' on unopened db"
+  confess "attempted 'put' on unopened db"
     unless $self->is_open;
 
   return $self->Tied->{$key} = $value;
@@ -251,7 +251,7 @@ sub put {
 
 sub del {
   my ($self, $key) = @_;
-  croak "attempted 'del' on unopened db"
+  confess "attempted 'del' on unopened db"
     unless $self->is_open;
   return undef unless exists $self->Tied->{$key};
   delete $self->Tied->{$key};
@@ -260,7 +260,7 @@ sub del {
 
 sub dbdump {
   my ($self, $format) = @_;
-  croak "attempted dbdump on unopened db"
+  confess "attempted dbdump on unopened db"
     unless $self->is_open;
   $format = 'YAMLXS' unless $format;
   

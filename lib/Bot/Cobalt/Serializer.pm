@@ -22,10 +22,10 @@ has 'Format' => ( is => 'rw', isa => Str,
 
     $format = uc($format);
 
-    croak "Unknown format $format"
+    confess "Unknown format $format"
       unless $format ~~ [ keys %{ $self->Types } ];
 
-    croak "Requested format $format but can't find a module for it"
+    confess "Requested format $format but can't find a module for it"
       unless $self->_check_if_avail($format)
   },
 );
@@ -370,8 +370,8 @@ optionally providing the ability to read/write files directly.
   my $serializer = Bot::Cobalt::Serializer->new( $format );
   my $serializer = Bot::Cobalt::Serializer->new( %opts );
 
-Spawn a serializer instance. Will croak if you are missing the relevant 
-serializer module; see L</Format>, below.
+Spawn a serializer instance. Will croak with a stack trace if you are 
+missing the relevant serializer module; see L</Format>, below.
 
 The default is to spawn a B<YAML::XS> (YAML1.1) serializer with error 
 logging to C<carp>.
