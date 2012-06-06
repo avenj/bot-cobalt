@@ -5,7 +5,13 @@ use 5.10.1;
 use strict;
 use warnings;
 
-my $rcfile = $ENV{HOME}."/.cobalt2rc";
+use File::Spec;
+
+## Default rcfile location.
+my $rcfile = $ENV{HOME} ? 
+  File::Spec->catfile( $ENV{HOME}, ".cobalt2rc" )
+  : ".cobalt2rc" ;
+
 my $opt_debug  = 0;
 my $opt_detach = 1;
 my $loglevel   = 'info';
@@ -107,7 +113,7 @@ sub _check_cfs {
   my @required = qw/ cobalt.conf channels.conf plugins.conf /;
 
   for my $file (@required) {
-    unless (-e $etcdir . "/" . $file) {
+    unless (-e File::Spec->catfile($etcdir, $file) ) {
       say ">! Missing core conf: $file";
       say ">! (etcdir: $etcdir)";
       say ">! You may want to try `cobalt2-installer`";
@@ -126,6 +132,7 @@ sub _start_cobalt {
     if $pid->alive;
 
   ## POSIX fork dance
+  ## Uh. No guarantee when RUNNING_IN_HELL. Too bad.
   use POSIX ();
   if ($opt_detach)
   {
@@ -201,8 +208,8 @@ if ($basedir) {
     die "basedir $basedir specified but nonexistant";
   }
 
-  $etcdir = $basedir . "/etc";
-  $vardir = $basedir . "/var";
+  $etcdir = File::Spec->catdir($basedir, "etc");
+  $vardir = File::Spec->catdir($basedir, "var");
 
 } else {
   ## no basedir specified, try rcfile
