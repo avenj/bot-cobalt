@@ -1,5 +1,14 @@
 # Bot::Cobalt Changes
 
+* 0.007  (06 Jun 2012)
+  
+  Fix usage help message in Plugin::Extras::CPAN.
+
+  Push missing bin/cobalt2{-installer, -plugin-installcf} portable path 
+  fixes. (Uh, oops?)
+  
+  Add missing test for Frontend::RC.
+
 * 0.006  (05 Jun 2012)
 
   Fix instance rc files:

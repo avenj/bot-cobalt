@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Games::Dice;
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 our $VERSION = '0.03';
 
