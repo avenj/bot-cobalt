@@ -4,6 +4,7 @@ use 5.10.1;
 use strictures 1;
 
 use File::Copy;
+use File::Spec;
 
 use Bot::Cobalt::Frontend::RC qw/rc_read/;
 use Bot::Cobalt::Frontend::Utils qw/
@@ -12,7 +13,9 @@ use Bot::Cobalt::Frontend::Utils qw/
 /;
 
 my($path_dest, $this_plugin);
-my $path_rcfile = $ENV{HOME} . "/.cobalt2rc" ;
+my $path_rcfile = $ENV{HOME} ?
+  File::Spec->catfile( $ENV{HOME}, ".cobalt2rc" )
+  : ".cobalt2rc"
 
 use Getopt::Long;
 GetOptions(
