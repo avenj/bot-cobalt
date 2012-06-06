@@ -80,6 +80,14 @@ sub Bot_public_cmd_cpan {
   
   my $cmd  = $msg->message_array->[0];
   my $dist = $msg->message_array->[1];
+
+  unless ($cmd) {
+    broadcast( 'message',
+      $msg->context, $msg->channel,
+      "No command; try: dist, latest, tests, abstract, license",
+    );
+    return PLUGIN_EAT_ALL
+  }
   
   unless ($dist) {
     ## assume 'abstract' if only one arg
