@@ -96,6 +96,7 @@ t/01_utils/03_timestr.t
 t/01_utils/04_glob.t
 t/01_utils/05_color.t
 t/01_utils/06_frontend.t
+t/01_utils/07_rcfiles.t
 t/02_core/01_core.t
 t/02_core/02_flood.t
 t/02_core/03_contextmeta.t

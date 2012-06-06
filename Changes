@@ -52,7 +52,7 @@
   received for a context that never completed a connection.
 
   Fix Utils.pm bug in glob_* functions that would cause failures when
-  operating on a negative value. Should've been defined() checks.
+  operating on an untrue value. Should've been defined() checks.
 
   POD and test improvements and clean-ups.
 
