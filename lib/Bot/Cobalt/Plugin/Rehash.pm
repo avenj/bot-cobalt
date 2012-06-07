@@ -100,7 +100,6 @@ sub Bot_public_cmd_rehash {
       } else {
         $resp = "Rehashing plugins.conf failed; admin should check logs.";
       }
-      
     }
     
     when ("langset") {
@@ -116,16 +115,17 @@ sub Bot_public_cmd_rehash {
     when ("channels") {
       if ($self->_rehash_channels_cf) {
         $resp = "Rehashed channels configuration.";
-        ## FIXME catch rehash event in ::IRC so we can unload and reload AutoJoin plugin w/ new 
-        ##  channels
       } else {
         $resp = "Rehashing channels failed; administrator should check logs.";
       }
     }
     
+    default {
+      $resp = "Unknown config group, try: core, plugins, langset, channels";
+    }
   }
 
-  broadcast( 'message', $context, $channel, $resp ) if $resp;
+  broadcast( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
 }
