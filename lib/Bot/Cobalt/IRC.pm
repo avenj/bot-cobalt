@@ -104,13 +104,13 @@ sub Cobalt_unregister {
 sub Bot_initialize_irc {
   my ($self, $core) = splice @_, 0, 2;
 
-  my $cfg  = $core->get_plugin_cfg( $self );
+  my $cfg     = $core->get_plugin_cfg( $self );
+  my $corecfg = $core->get_core_cfg;
 
   ## The IRC: directive in cobalt.conf provides context 'Main'
   ## (This will override any 'Main' specified in multiserv.conf)
-  my $corecfg = $core->get_core_cfg;
-  my $main_net = $corecfg->{IRC};
-  $cfg->{Networks}->{Main} = $main_net;
+  $cfg->{Networks}->{Main} = $corecfg->{IRC};
+
   SERVER: for my $context (keys %{ $cfg->{Networks} } ) {
     my $thiscfg = $cfg->{Networks}->{$context};
     
@@ -121,7 +121,13 @@ sub Bot_initialize_irc {
     
     next if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
     
-    my $server = $thiscfg->{ServerAddr} // next SERVER;
+    my $server = $thiscfg->{ServerAddr};
+    
+    unless (defined $server) {
+      logger->warn("Context $context has no ServerAddr defined");
+      next SERVER
+    }
+    
     my $port   = $thiscfg->{ServerPort} // 6667;
     my $nick   = $thiscfg->{Nickname} // 'cobalt2' ;
     my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
@@ -140,11 +146,12 @@ sub Bot_initialize_irc {
       port     => $port,
       useipv6  => $use_v6,
       usessl   => $usessl,
-      raw => 0,
+      raw      => 0,
     );
   
     my $localaddr = $thiscfg->{BindAddr} || undef;
     $spawn_opts{localaddr} = $localaddr if $localaddr;
+
     my $server_pass = $thiscfg->{ServerPass};
     $spawn_opts{password} = $server_pass if defined $server_pass;
   
@@ -211,8 +218,6 @@ sub _start {
 
   my $cfg  = core->get_core_cfg;
   my $pcfg = core->get_plugin_cfg($self);
-
-  $pcfg->{Networks}->{Main} = $cfg->{IRC};
 
   logger->debug("pocoirc plugin load");
 
