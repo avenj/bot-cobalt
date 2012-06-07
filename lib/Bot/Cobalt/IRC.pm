@@ -46,9 +46,9 @@ has 'flood' => ( is => 'ro', isa => Object, lazy => 1,
   predicate => 'has_flood',
   default => sub { 
     my ($self) = @_;
-    my $cfg = core->get_core_cfg;
-    my $count = $cfg->{Opts}->{FloodCount} || 5;
-    my $secs  = $cfg->{Opts}->{FloodTime}  || 6;
+    my $ccfg  = core->get_core_cfg;
+    my $count = $ccfg->{Opts}->{FloodCount} || 5;
+    my $secs  = $ccfg->{Opts}->{FloodTime}  || 6;
     Bot::Cobalt::IRC::FloodChk->new(
       count => $count,
       in    => $secs,
@@ -104,15 +104,15 @@ sub Cobalt_unregister {
 sub Bot_initialize_irc {
   my ($self, $core) = splice @_, 0, 2;
 
-  my $cfg     = $core->get_plugin_cfg( $self );
-  my $corecfg = $core->get_core_cfg;
+  my $pcfg = $core->get_plugin_cfg( $self );
+  my $ccfg = $core->get_core_cfg;
 
   ## The IRC: directive in cobalt.conf provides context 'Main'
   ## (This will override any 'Main' specified in multiserv.conf)
-  $cfg->{Networks}->{Main} = $corecfg->{IRC};
+  $pcfg->{Networks}->{Main} = $ccfg->{IRC};
 
-  SERVER: for my $context (keys %{ $cfg->{Networks} } ) {
-    my $thiscfg = $cfg->{Networks}->{$context};
+  SERVER: for my $context (keys %{ $pcfg->{Networks} } ) {
+    my $thiscfg = $pcfg->{Networks}->{$context};
     
     unless (ref $thiscfg eq 'HASH' && scalar keys %$thiscfg) {
       logger->warn("Missing configuration: context $context");
@@ -216,7 +216,7 @@ sub _start {
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
-  my $cfg  = core->get_core_cfg;
+  my $ccfg = core->get_core_cfg;
   my $pcfg = core->get_plugin_cfg($self);
 
   logger->debug("pocoirc plugin load");
@@ -224,8 +224,8 @@ sub _start {
   ## autoreconn plugin:
   my %connector;
 
-  $connector{delay}     = $cfg->{Opts}->{StonedCheck}    || 300;
-  $connector{reconnect} = $cfg->{Opts}->{ReconnectDelay} || 60;
+  $connector{delay}     = $ccfg->{Opts}->{StonedCheck}    || 300;
+  $connector{reconnect} = $ccfg->{Opts}->{ReconnectDelay} || 60;
 
   $irc->plugin_add('Connector' =>
     POE::Component::IRC::Plugin::Connector->new(
@@ -236,7 +236,7 @@ sub _start {
   ## attempt to regain primary nickname:
   $irc->plugin_add('NickReclaim' =>
     POE::Component::IRC::Plugin::NickReclaim->new(
-        poll => $cfg->{Opts}->{NickRegainDelay} // 30,
+        poll => $ccfg->{Opts}->{NickRegainDelay} // 30,
       ), 
     );
 
@@ -260,10 +260,10 @@ sub _start {
   $irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
       Channels => \%ajoin,
-      RejoinOnKick => $cfg->{Opts}->{Chan_RetryAfterKick} // 1,
-      Rejoin_delay => $cfg->{Opts}->{Chan_RejoinDelay}    // 5,
-      NickServ_delay    => $cfg->{Opts}->{Chan_NickServDelay} // 1,
-      Retry_when_banned => $cfg->{Opts}->{Chan_RetryAfterBan} // 60,
+      RejoinOnKick => $ccfg->{Opts}->{Chan_RetryAfterKick} // 1,
+      Rejoin_delay => $ccfg->{Opts}->{Chan_RejoinDelay}    // 5,
+      NickServ_delay    => $ccfg->{Opts}->{Chan_NickServDelay} // 1,
+      Retry_when_banned => $ccfg->{Opts}->{Chan_RetryAfterBan} // 60,
     ),
   );
 
