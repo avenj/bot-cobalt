@@ -104,6 +104,7 @@ sub Bot_public_cmd_cpan {
     Channel => $msg->channel,
     Nick    => $msg->src_nick,
     Dist    => $dist,
+    Link    => 'http://www.metacpan.org'.$url,
   };
   
   given ( lc($cmd||'') ) {
@@ -157,6 +158,7 @@ sub Bot_mcpan_plug_resp_recv {
 
   my $dist = $hints->{Dist};
   my $type = $hints->{Type};
+  my $link = $hints->{Link};
   
   unless ($response->is_success) {
     my $status = $response->code;
@@ -218,7 +220,7 @@ sub Bot_mcpan_plug_resp_recv {
     when ("abstract") {
       my $abs  = $d_hash->{abstract} || 'No abstract available.';
       my $vers = $d_hash->{version};
-      $resp = "$prefix: ($dist $vers) $abs";
+      $resp = "$prefix: ($dist $vers) $abs ; $link";
     }
     
     when ("dist") {
@@ -229,7 +231,7 @@ sub Bot_mcpan_plug_resp_recv {
     when ("latest") {
       my $vers = $d_hash->{version};
       my $arc  = $d_hash->{archive};
-      $resp = "$prefix: ($dist) Latest version is $vers ($arc)";
+      $resp = "$prefix: ($dist) Latest is $vers ($arc) ; $link";
     }
     
     when ("license") {
