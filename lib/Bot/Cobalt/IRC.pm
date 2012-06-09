@@ -82,18 +82,8 @@ sub Cobalt_unregister {
 
   logger->info("Unregistering IRC plugin");
 
-  ## shutdown IRCs
   for my $context ( keys %{ $self->ircobjs } ) {
-    logger->debug("shutting down irc: $context");
-
-    ## clear auths for this context
-    $core->auth->clear($context);
-    ## and ignores:
-    $core->ignore->clear($context);
-
-    my $irc = delete $self->ircobjs->{$context};
-    $core->Servers->{$context}->clear_irc;
-    $irc->call('shutdown', "IRC component shut down");
+    broadcast( 'ircplug_disconnect', $context );
   }
   
   logger->debug("IRC shut down");
@@ -111,33 +101,53 @@ sub Bot_initialize_irc {
   ## (This will override any 'Main' specified in multiserv.conf)
   $pcfg->{Networks}->{Main} = $ccfg->{IRC};
 
-  SERVER: for my $context (keys %{ $pcfg->{Networks} } ) {
-    my $thiscfg = $pcfg->{Networks}->{$context};
-    
-    unless (ref $thiscfg eq 'HASH' && scalar keys %$thiscfg) {
-      logger->warn("Missing configuration: context $context");
-      next SERVER
-    }
-    
-    next if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
-    
-    my $server = $thiscfg->{ServerAddr};
-    
-    unless (defined $server) {
-      logger->warn("Context $context has no ServerAddr defined");
-      next SERVER
-    }
-    
-    my $port   = $thiscfg->{ServerPort} // 6667;
-    my $nick   = $thiscfg->{Nickname} // 'cobalt2' ;
-    my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
-    my $use_v6 = $thiscfg->{IPv6}   ? 1 : 0;
-    
-    logger->info(
-      "Spawning IRC for $context ($nick on ${server}:${port})"
-    );
+  for my $context (keys %{ $pcfg->{Networks} } ) {
+    logger->debug("Found configured context $context");
+    broadcast( 'ircplug_connect', $context );
+  }
 
-    my %spawn_opts = (
+  return PLUGIN_EAT_ALL
+}
+
+sub Bot_ircplug_connect {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+  
+  logger->debug("ircplug_connect issued for $context");
+  
+  my $pcfg = core->get_plugin_cfg( $self );
+  
+  my $thiscfg = $pcfg->{Networks}->{$context};
+  
+  unless (ref $thiscfg eq 'HASH' && keys %$thiscfg) {
+    logger->error("Connect issued for context without valid cfg ($context)");
+    return PLUGIN_EAT_ALL
+  }
+
+  return PLUGIN_EAT_ALL
+    if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
+
+  my $server = $thiscfg->{ServerAddr};
+  
+  unless (defined $server) {
+    logger->error("Context $context has no defined ServerAddr");
+    return PLUGIN_EAT_ALL
+  }
+
+  my $port   = $thiscfg->{ServerPort} || 6667;
+  my $nick   = $thiscfg->{Nickname}   || 'cobalt2' ;
+
+  my $usessl = $thiscfg->{UseSSL} ? 1 : 0;
+  my $use_v6 = $thiscfg->{IPv6}   ? 1 : 0;
+
+  logger->info(
+    "Spawning IRC for $context ($nick on $server : $port)"
+  );
+  logger->debug(
+    "Context $context; SSL $usessl ; V6 $use_v6"
+  );
+
+  my %spawn_opts = (
       alias    => $context,
       nick     => $nick,
       username => $thiscfg->{Username} // 'cobalt',
@@ -147,63 +157,88 @@ sub Bot_initialize_irc {
       useipv6  => $use_v6,
       usessl   => $usessl,
       raw      => 0,
-    );
-  
-    my $localaddr = $thiscfg->{BindAddr} || undef;
-    $spawn_opts{localaddr} = $localaddr if $localaddr;
+  );
 
-    my $server_pass = $thiscfg->{ServerPass};
-    $spawn_opts{password} = $server_pass if defined $server_pass;
-  
-    my $irc = POE::Component::IRC::State->spawn(
-      %spawn_opts,
-    ) or logger->error("(spawn: $context) poco-irc error: $!");
+  $spawn_opts{localaddr} = $thiscfg->{BindAddr}
+    if defined $thiscfg->{BindAddr};
 
-    my $server_obj = Bot::Cobalt::IRC::Server->new(
-      name => $server,
-      irc  => $irc,
-      prefer_nick => $nick,
-    );
-    
-    core->Servers->{$context} = $server_obj;
-    $self->ircobjs->{$context} = $irc;
-  
-    POE::Session->create(
-      ## track this session's context name in HEAP
-      heap =>  { Context => $context },
-      object_states => [
-        $self => [
-          '_start',
-  
-          'irc_001',
-          'irc_connected',
-          'irc_disconnected',
-          'irc_error',
-          'irc_socketerr',
-  
-          'irc_chan_sync',
-  
-          'irc_public',
-          'irc_msg',
-          'irc_notice',
-          'irc_ctcp_action',
-  
-          'irc_kick',
-          'irc_mode',
-          'irc_topic',
-          'irc_invite',
+  $spawn_opts{password} = $thiscfg->{ServerPass}
+    if defined $thiscfg->{ServerPass};
 
-          'irc_nick',
-          'irc_join',
-          'irc_part',
-          'irc_quit',
-        ],
+  my $irc = POE::Component::IRC::State->spawn(
+    %spawn_opts
+  ) or logger->error("IRC component spawn() for $context failed")
+    and return PLUGIN_EAT_ALL;
+
+  my $server_obj = Bot::Cobalt::IRC::Server->new(
+    name => $server,
+    irc  => $irc,
+    prefer_nick => $nick,
+  );
+
+  $core->Servers->{$context} = $server_obj;
+  $self->ircobjs->{$context} = $irc;
+
+  POE::Session->create(
+    ## track this session's context name in HEAP
+    heap =>  { Context => $context },
+    object_states => [
+      $self => [
+        '_start',
+
+        'irc_001',
+        'irc_connected',
+        'irc_disconnected',
+        'irc_error',
+        'irc_socketerr',
+
+        'irc_chan_sync',
+
+        'irc_public',
+        'irc_msg',
+        'irc_notice',
+        'irc_ctcp_action',
+
+        'irc_kick',
+        'irc_mode',
+        'irc_topic',
+        'irc_invite',
+
+        'irc_nick',
+        'irc_join',
+        'irc_part',
+        'irc_quit',
       ],
-    );
-  
-    logger->debug("IRC Session created");
-  } ## SERVER
+    ],
+  );
 
+  logger->debug("Successful session creation for context $context");
+
+  return PLUGIN_EAT_ALL
+}
+
+sub Bot_ircplug_disconnect {
+  my ($self, $core) = splice @_, 0, 2;
+  my $context = ${ $_[0] };
+
+  logger->debug("ircplug_disconnect called for $context");
+
+  ## clear auths for this context
+  $core->auth->clear($context);
+  ## and ignores:
+  $core->ignore->clear($context);
+
+  $core->Servers->{$context}->clear_irc;
+
+  my $irc = delete $self->ircobjs->{$context}
+    or logger->error(
+       "ircplug_disconnect called for nonexistant context $context"
+     ) and return PLUGIN_EAT_ALL;
+
+  $irc->call('shutdown', "IRC component shut down");
+
+  logger->info("Called shutdown for context $context");
+  
   return PLUGIN_EAT_ALL
 }
 
