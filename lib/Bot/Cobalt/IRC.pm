@@ -38,6 +38,8 @@ has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
   default => sub { 1 },
 );
 
+## We keep references to our ircobjs; core tracks these also, 
+## but there is no guarantee that we're the only IRC plugin loaded.
 has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
   default => sub { {} },
 );
@@ -80,13 +82,13 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
 
-  logger->info("Unregistering IRC plugin");
+  logger->info("Unregistering and dropping servers.");
 
   for my $context ( keys %{ $self->ircobjs } ) {
     $core->send_event_now( 'ircplug_disconnect', $context );
   }
   
-  logger->debug("IRC has been unregistered.");
+  logger->debug("Clean unload");
   
   return PLUGIN_EAT_NONE
 }
@@ -188,32 +190,32 @@ sub Bot_ircplug_connect {
     ## track this session's context name in HEAP
     heap =>  { Context => $context },
     object_states => [
-      $self => [
-        '_start',
+      $self => [ qw/
+        _start
 
-        'irc_001',
-        'irc_connected',
-        'irc_disconnected',
-        'irc_error',
-        'irc_socketerr',
+        irc_001
+        irc_connected
+        irc_disconnected
+        irc_error
+        irc_socketerr
 
-        'irc_chan_sync',
+        irc_chan_sync
 
-        'irc_public',
-        'irc_msg',
-        'irc_notice',
-        'irc_ctcp_action',
+        irc_public
+        irc_msg
+        irc_notice
+        irc_ctcp_action
 
-        'irc_kick',
-        'irc_mode',
-        'irc_topic',
-        'irc_invite',
+        irc_kick
+        irc_mode
+        irc_topic
+        irc_invite
 
-        'irc_nick',
-        'irc_join',
-        'irc_part',
-        'irc_quit',
-      ],
+        irc_nick
+        irc_join
+        irc_part
+        irc_quit
+      / ],
     ],
   );
 
@@ -299,7 +301,7 @@ sub _start {
 
   $irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
-      Channels => \%ajoin,
+      Channels     => \%ajoin,
       RejoinOnKick => $ccfg->{Opts}->{Chan_RetryAfterKick} // 1,
       Rejoin_delay => $ccfg->{Opts}->{Chan_RejoinDelay}    // 5,
       NickServ_delay    => $ccfg->{Opts}->{Chan_NickServDelay} // 1,
@@ -332,6 +334,7 @@ sub irc_connected {
   ##  however, irc_001 is the server welcome message
   ##  irc_connected happens before auth, no guarantee we can send yet.
   ##  (we don't broadcast Bot_connected until irc_001)
+  logger->debug("Received irc_connected for $server");
 }
 
 sub irc_001 {
@@ -341,10 +344,11 @@ sub irc_001 {
   my $irc     = $self->ircobjs->{$context};
   
   ## set up some stuff relevant to our server context:
-  irc_context($context)->connected( 1 );
-  irc_context($context)->connectedat( time() );
+  irc_context($context)->connected(1);
+  irc_context($context)->connectedat( time );
   irc_context($context)->maxmodes( $irc->isupport('MODES') // 4 );
   irc_context($context)->maxtargets( $irc->isupport('MAXTARGETS') // 4 );
+
   ## irc comes with odd case-mapping rules.
   ## []\~ are considered uppercase equivalents of {}|^
   ##
@@ -386,8 +390,9 @@ sub irc_001 {
 
   my $server = $irc->server_name;
   logger->info("Connected: $context: $server");
+
   ## send a Bot_connected event with context and visible server name:
-  core->send_event( 'connected', $context, $server );
+  broadcast( 'connected', $context, $server );
 }
 
 sub irc_disconnected {
@@ -398,7 +403,7 @@ sub irc_disconnected {
   
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
-    core->send_event( 'disconnected', $context, $server );
+    broadcast( 'disconnected', $context, $server );
   }
 }
 
@@ -410,7 +415,7 @@ sub irc_socketerr {
   
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
-    core->send_event( 'server_error', $context, $err );
+    broadcast( 'server_error', $context, $err );
   }
 }
 
@@ -422,7 +427,7 @@ sub irc_error {
 
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
-    core->send_event( 'server_error', $context, $reason );
+    broadcast( 'server_error', $context, $reason );
   }
 }
 
@@ -492,6 +497,10 @@ sub irc_public {
     return if $floodchk->($context, $src);
     broadcast( 'public_msg', $msg_obj);    
   } else {
+    ## In the interests of keeping memory usage low on a 
+    ## large channel, we don't flood-check every incoming public 
+    ## message; plugins that respond to these may want to create 
+    ## their own Bot::Cobalt::IRC::FloodChk
     broadcast( 'public_msg', $msg_obj );
   }
 }
@@ -651,13 +660,13 @@ sub irc_nick {
 
   ## see if it's our nick that changed, send event:
   if ($new eq $irc->nick_name) {
-    core->send_event( 'self_nick_changed', $context, $new );
+    broadcast( 'self_nick_changed', $context, $new );
     return
   }
 
   my $nchg = Bot::Cobalt::IRC::Event::Nick->new(
-    context => $context,
-    src     => $src,
+    context  => $context,
+    src      => $src,
     new_nick => $new,
     channels => $common,
   );
@@ -776,10 +785,13 @@ sub Bot_message {
   ## Issue USER event Outgoing_message for output filters
   my @msg = ( $context, $target, $txt );
   my $eat = $core->send_user_event( 'message', \@msg );
+
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @msg[1,2];
+
     $self->ircobjs->{$context}->yield(privmsg => $target => $txt);
     broadcast( 'message_sent', $context, $target, $txt );
+
     ++$core->State->{Counters}->{Sent};
   }
 
@@ -806,8 +818,10 @@ sub Bot_notice {
   ## USER event Outgoing_notice
   my @notice = ( $context, $target, $txt );
   my $eat = $core->send_user_event( 'notice', \@notice );
+
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @notice[1,2];
+
     $self->ircobjs->{$context}->yield(notice => $target => $txt);
     broadcast( 'notice_sent', $context, $target, $txt );
   }
@@ -835,6 +849,7 @@ sub Bot_action {
   ## USER event Outgoing_ctcp (CONTEXT, TYPE, TARGET, TEXT)
   my @ctcp = ( $context, 'ACTION', $target, $txt );
   my $eat = $core->send_user_event( 'ctcp', \@ctcp );
+
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @ctcp[2,3];
     $self->ircobjs->{$context}->yield(ctcp => $target => 'ACTION '.$txt );
@@ -1157,9 +1172,6 @@ The IRC component will provide a maybe-not-useful reason:
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
   my $reason  = ${$_[1]};
-
-... Maybe you're zlined. :)
-
 
 
 =head2 Incoming message events
