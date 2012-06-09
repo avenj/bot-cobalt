@@ -10,8 +10,6 @@ requires qw/
   PluginObjects
 /;
 
-use Storable qw/dclone/;
-
 use Scalar::Util qw/blessed/;
 
 sub get_plugin_alias {
@@ -23,8 +21,7 @@ sub get_plugin_alias {
 
 sub get_core_cfg {
   my ($self) = @_;
-  my $corecfg = dclone( $self->cfg->{core} );
-  return $corecfg
+  $self->cfg->{core}
 }
 
 sub get_channels_cfg {
@@ -37,16 +34,14 @@ sub get_channels_cfg {
     return
   }
   ## Returns empty hash if there's no conf for this context:
-  my $clonable = $self->cfg->{channels}->{$context};
-  $clonable = {} unless $clonable and ref $clonable eq 'HASH';
+  my $chcfg = $self->cfg->{channels}->{$context};
+  $chcfg = {} unless $chcfg and ref $chcfg eq 'HASH';
   
   ## Per-channel configuration should be a hash
   ## (even if someone's been naughty with the ->cfg hash)
-  for my $channel (keys %$clonable) {
-    $clonable->{$channel} = {} unless ref $clonable->{$channel} eq 'HASH';
+  for my $channel (keys %$chcfg) {
+    $chcfg->{$channel} = {} unless ref $chcfg->{$channel} eq 'HASH';
   }
-  
-  my $chcfg = dclone($clonable);
   
   return $chcfg
 }
@@ -83,10 +78,7 @@ sub get_plugin_cfg {
     return
   }
 
-  ## return a copy, not a ref to the original.
-  ## that way we can worry less about stupid plugins breaking things
-  my $cloned = dclone($plugin_cf);
-  return $cloned
+  return $plugin_cf
 }
 
 
@@ -137,7 +129,7 @@ a string).
 
 =head2 get_core_cfg
 
-Returns a copy of the 'core' configuration hash.
+Returns the 'core' configuration hash.
 
 =head1 AUTHOR
 
