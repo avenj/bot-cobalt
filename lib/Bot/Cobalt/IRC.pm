@@ -83,10 +83,10 @@ sub Cobalt_unregister {
   logger->info("Unregistering IRC plugin");
 
   for my $context ( keys %{ $self->ircobjs } ) {
-    broadcast( 'ircplug_disconnect', $context );
+    $core->send_event_now( 'ircplug_disconnect', $context );
   }
   
-  logger->debug("IRC shut down");
+  logger->debug("IRC has been unregistered.");
   
   return PLUGIN_EAT_NONE
 }
