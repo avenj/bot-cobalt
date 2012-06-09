@@ -141,13 +141,6 @@ core method B<get_plugin_cfg>:
     ## No configuration found for our plugin ...
   }
 
-Note that B<get_plugin_cfg> returns a COPY of the plugin's 
-configuration structure.
-
-If the plugin needs to modify its own configuration hash for some 
-reason, it needs to access B<< core()->cfg->{plugin_cf} >> directly. 
-See L</"Directly accessing cfg hash">, below.
-
 See also: L</"Core methods">
 
 =head4 PluginOpts
@@ -745,7 +738,7 @@ Retrieves the 'core' configuration directives from C<cobalt.conf>.
 This includes configuration for L<Bot::Cobalt::IRC>:
 
   my $core_cf = $core->get_core_cfg();
-  my $cf_serverport = $core_cf->{IRC}->{ServerPort};
+  my $lang    = $core_cf->{Language};
 
 =head4 get_channels_cfg
 
@@ -766,9 +759,6 @@ Retrieves the configuration hash for a specific plugin.
 
 Either the plugin's C<$self> object or its current alias must be 
 specified.
-
-Returns a hashref that is a copy of the plugin's config, as found 
-in I<< $core->cfg->{plugin_cf}->{$alias} >>
 
 Returns undef if there is no plugin configuration stored for this 
 plugin:
