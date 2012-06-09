@@ -101,9 +101,17 @@ sub Bot_initialize_irc {
   ## (This will override any 'Main' specified in multiserv.conf)
   $pcfg->{Networks}->{Main} = $ccfg->{IRC};
 
+  my $active_contexts;
   for my $context (keys %{ $pcfg->{Networks} } ) {
+    ++$active_contexts;
+    next if defined $pcfg->{Networks}->{$context}->{Enabled}
+         and $pcfg->{Networks}->{$context}->{Enabled} == 0;
     logger->debug("Found configured context $context");
     broadcast( 'ircplug_connect', $context );
+  }
+  
+  unless ($active_contexts) {
+    logger->error("There appears to be no active configured contexts.");
   }
 
   return PLUGIN_EAT_ALL
@@ -123,9 +131,6 @@ sub Bot_ircplug_connect {
     logger->error("Connect issued for context without valid cfg ($context)");
     return PLUGIN_EAT_ALL
   }
-
-  return PLUGIN_EAT_ALL
-    if defined $thiscfg->{Enabled} and $thiscfg->{Enabled} == 0;
 
   my $server = $thiscfg->{ServerAddr};
   
@@ -970,7 +975,7 @@ sub Bot_rehashed {
 
   $self->_reset_ajoins;
 
-  ## FIXME rehash nickservids if needed?
+  ## FIXME rehash nickservids if needed
   
   return PLUGIN_EAT_NONE
 }
@@ -1063,7 +1068,7 @@ sub _reset_ajoins {
         Channels => \%ajoin,
         RejoinOnKick => $corecf->{Opts}->{Chan_RetryAfterKick} // 1,
         Rejoin_delay => $corecf->{Opts}->{Chan_RejoinDelay}    // 5,
-        NickServ_delay => $corecf->{Opts}->{Chan_NickServDelay} // 1,
+        NickServ_delay    => $corecf->{Opts}->{Chan_NickServDelay} // 1,
         Retry_when_banned => $corecf->{Opts}->{Chan_RetryAfterBan} // 60,
       ),
     );
