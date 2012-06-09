@@ -119,7 +119,7 @@ my $build = $class->new(
 
   requires => {
    ### Core set ###
-      'perl' => '5.12.0',
+      'perl' => '5.12.1',
 
       'Carp' => 0,
 
@@ -163,7 +163,7 @@ my $build = $class->new(
       
    ### Cobalt set ###
      # Crypt
-      'App::bmkpasswd' => 0,
+      'App::bmkpasswd' => '1.03',
 
      # HTTP
       'HTTP::Request'  => 0,

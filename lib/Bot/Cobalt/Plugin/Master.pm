@@ -19,7 +19,7 @@ sub Cobalt_register {
       'public_cmd_part',
       'public_cmd_cycle',
 
-#      'public_cmd_server',
+      'public_cmd_server',
       'public_cmd_die',
 
       'public_cmd_op',
@@ -224,6 +224,13 @@ sub Bot_public_cmd_die {
   $core->shutdown;
 }
 
+sub Bot_public_cmd_server {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  
+  ## FIXME
+  ## need IRC.pm fixes, see IRC.pm Bot_initialize_irc
+}
 
 1;
 __END__
