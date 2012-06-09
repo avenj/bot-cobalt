@@ -19,8 +19,6 @@ use Bot::Cobalt::IRC;
 use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
 
-use Storable qw/dclone/;
-
 use Scalar::Util qw/blessed/;
 
 use File::Spec;
