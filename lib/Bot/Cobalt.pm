@@ -4,7 +4,6 @@ our $VERSION = '0.008_01';
 use 5.10.1;
 use strictures 1;
 use Carp;
-use Moo;
 
 use Bot::Cobalt::Core::Sugar;
 
