@@ -979,6 +979,9 @@ Displays the raw (unparsed) topic response.
 
 Useful for checking for variables or RDBs.
 
+=head3 about
+
+Returns metadata regarding when the topic was added and by whom.
 
 =head2 Directing responses at other users
 
