@@ -34,18 +34,31 @@ use POE qw/
 ## Bot::Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
 
-has 'NON_RELOADABLE' => ( is => 'ro', isa => Bool,
+has 'NON_RELOADABLE' => ( 
+  isa => Bool,
   default => sub { 1 },
+  ## Well, really, it is.
+  ##  ... but life usually sucks when you do.
+  ## Call _set_NON_RELOADABLE if you really need to.
+  is => 'rwp',
 );
 
 ## We keep references to our ircobjs; core tracks these also, 
 ## but there is no guarantee that we're the only IRC plugin loaded.
-has 'ircobjs' => ( is => 'rw', isa => HashRef, lazy => 1,
+has 'ircobjs' => ( 
+  is   => 'rw', 
+  isa  => HashRef, 
+  lazy => 1,
   default => sub { {} },
 );
 
-has 'flood' => ( is => 'ro', isa => Object, lazy => 1,
+has 'flood' => (
+  is   => 'ro', 
+  isa  => Object, 
+  lazy => 1,
+  
   predicate => 'has_flood',
+  
   default => sub { 
     my ($self) = @_;
     my $ccfg  = core->get_core_cfg;
@@ -85,7 +98,7 @@ sub Cobalt_unregister {
   logger->info("Unregistering and dropping servers.");
 
   for my $context ( keys %{ $self->ircobjs } ) {
-    $self->ircplug_clear_context($context);
+    $self->_clear_context($context);
   }
   
   logger->debug("Clean unload");
@@ -105,15 +118,19 @@ sub Bot_initialize_irc {
 
   my $active_contexts;
   for my $context (keys %{ $pcfg->{Networks} } ) {
+    ## Counter is solely to provide an informative error if cfg is fubar:
     ++$active_contexts;
+
     next if defined $pcfg->{Networks}->{$context}->{Enabled}
          and $pcfg->{Networks}->{$context}->{Enabled} == 0;
+
     logger->debug("Found configured context $context");
+
     broadcast( 'ircplug_connect', $context );
   }
   
   unless ($active_contexts) {
-    logger->error("There appears to be no active configured contexts.");
+    logger->error("No contexts configured/enabled!");
   }
 
   return PLUGIN_EAT_ALL
@@ -124,6 +141,12 @@ sub Bot_ircplug_connect {
   my $context = ${ $_[0] };
 
   ## Spawn an IRC Component and a Session to manage it.
+  ##
+  ## Called for each configured context.
+  ##
+  ## The sessions call the same object with different contexts in HEAP;
+  ## the handlers do some processing and relay the event from the 
+  ## PoCo::IRC syndicator to the Bot::Cobalt::Core pipeline.
   
   logger->debug("ircplug_connect issued for $context");
   
@@ -185,8 +208,20 @@ sub Bot_ircplug_connect {
     prefer_nick => $nick,
   );
 
-  $core->Servers->{$context} = $server_obj;
-  $self->ircobjs->{$context} = $irc;
+  if ( $self->_spawn_for_context($context) ) {
+    ## Save our Bot::Cobalt::IRC::Server:
+    $core->Servers->{$context} = $server_obj;
+    
+    ## ..and the PoCo::IRC object:
+    $self->ircobjs->{$context} = $irc;
+    logger->debug("Successful session creation for context $context");
+  }
+
+  return PLUGIN_EAT_ALL
+}
+
+sub _spawn_for_context {
+  my ($self, $context) = @_;
 
   POE::Session->create(
     ## track this session's context name in HEAP
@@ -219,11 +254,9 @@ sub Bot_ircplug_connect {
         irc_quit
       / ],
     ],
-  ) or logger->error("Session creation failed for context $context");
-
-  logger->debug("Successful session creation for context $context");
-
-  return PLUGIN_EAT_ALL
+  ) or
+     logger->error("Session creation failed for context $context")
+     and return;
 }
 
 sub Bot_ircplug_disconnect {
@@ -231,15 +264,18 @@ sub Bot_ircplug_disconnect {
   my $context = ${ $_[0] };
   
   logger->debug("ircplug_disconnect event caught for $context");
-  $self->ircplug_clear_context($context);
+
+  $self->_clear_context($context);
   
   return PLUGIN_EAT_ALL
 }
 
-sub ircplug_clear_context {
+sub _clear_context {
   my ($self, $context) = @_;
+  ## Method called out of both _unregister and ircplug_disconnect
+  ## Handles actual shutdown/cleanup for a particular context
 
-  logger->debug("ircplug_clear_context called for $context");
+  logger->debug("_clear_context called for $context");
 
   ## clear auths for this context
   core->auth->clear($context);
@@ -1710,6 +1746,20 @@ A reason can be supplied:
 There is no guarantee that we were present on the channel in the 
 first place.
 
+=head2 Server control
+
+=head3 ircplug_connect
+
+Takes the name of a configured context.
+
+Attempts to initialize a connection for the named context (if the 
+configuration can be found).
+
+This interface is evolving and subject to change.
+
+=head3 ircplug_disconnect
+
+Same arguments and caveats as ircplug_connect.
 
 =head1 SEE ALSO
 
