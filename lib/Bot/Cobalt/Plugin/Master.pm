@@ -337,6 +337,14 @@ sub Bot_public_cmd_server {
         
         return PLUGIN_EAT_ALL
       }
+      
+      unless (keys %{ $core->Servers } > 1) {
+        broadcast( 'message', $context, $msg->channel,
+          "Cannot disconnect; have no other active contexts."
+        );
+      
+        return PLUGIN_EAT_ALL
+      }
 
       broadcast( 'message', $context, $msg->channel,
         "Attempting to disconnect from context $target_ctxt"
