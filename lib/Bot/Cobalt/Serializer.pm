@@ -15,6 +15,7 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Fcntl qw/:flock/;
 
+
 has 'Format' => ( is => 'rw', isa => Str,
   default => sub { 'YAMLXS' },
   trigger => sub {
@@ -109,6 +110,7 @@ has 'ref_from_xml' => ( is => 'rw', lazy => 1,
     XML::Dumper->new->xml2pl($_[0])
   },
 );
+
 
 sub BUILDARGS {
   my ($class, @args) = @_;
@@ -216,12 +218,18 @@ sub _check_if_avail {
   my ($self, $type) = @_;
   ## see if we have this serialization method available to us
   my $module;
+  
   return unless $module = $self->Types->{$type};
-  eval "require $module";
-  if ($@) {
-    $self->_log("$type specified but $module not available");
-    return
-  } else {
+
+  {
+    local $@;
+    eval "require $module";
+    
+    if ($@) {
+      $self->_log("$type specified but $module not available");
+      return
+    }
+
     return $module
   }
 }
