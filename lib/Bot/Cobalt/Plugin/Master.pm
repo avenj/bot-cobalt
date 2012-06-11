@@ -1,8 +1,5 @@
 package Bot::Cobalt::Plugin::Master;
 our $VERSION = '0.008_01';
-## FIXME:
-##  !server < list | connect | disconnect ... >
-##  !restart(?) / !die
 
 use 5.10.1;
 use Bot::Cobalt;
@@ -50,7 +47,7 @@ sub Bot_public_cmd_cycle {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   ## fail quietly for unauthed users
@@ -73,7 +70,7 @@ sub Bot_public_cmd_join {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -99,7 +96,7 @@ sub Bot_public_cmd_part {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -126,7 +123,7 @@ sub Bot_public_cmd_op {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_op} // 3;
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_op} // 3;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -146,7 +143,7 @@ sub Bot_public_cmd_deop {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_op} // 3;
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_op} // 3;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -169,7 +166,7 @@ sub Bot_public_cmd_voice {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_voice} // 2;
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_voice} // 2;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -190,7 +187,7 @@ sub Bot_public_cmd_devoice {
 
   my $pcfg = $core->get_plugin_cfg($self) || {};
 
-  my $requiredlev = $pcfg->{Opts}->{Level_voice} // 2;
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_voice} // 2;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -212,7 +209,7 @@ sub Bot_public_cmd_die {
   
   my $pcfg = $core->get_plugin_cfg($self) || {};
   
-  my $requiredlev = $pcfg->{Opts}->{Level_die} || 9999;
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_die} || 9999;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -224,13 +221,141 @@ sub Bot_public_cmd_die {
   $core->shutdown;
 }
 
-#sub Bot_public_cmd_server {
-#  my ($self, $core) = splice @_, 0, 2;
-#  my $msg = ${ $_[0] };
+sub Bot_public_cmd_server {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
   
-  ## FIXME
-  ## need IRC.pm fixes, see IRC.pm Bot_initialize_irc
-#}
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick,
+  
+  my $pcfg = $core->get_plugin_cfg($self) || {};
+  
+  my $requiredlev = $pcfg->{PluginOpts}->{Level_server} || 9999;
+  my $authed_lev  = $core->auth->level($context, $src_nick);
+  
+  return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
+  
+  my $cmd = lc($msg->message_array->[0] || 'list') ;
+
+  CMD: {
+  
+    if ($cmd eq "list") {
+      my @contexts = keys %{ $core->Servers };
+      
+      broadcast( 'message', $context, $msg->channel,
+        "Active contexts: ".join ' ', @contexts
+      );
+      
+      ## FIXME
+      ## No real convenient way to get a list of non-enabled contexts..
+      ##  ... maybe this whole mess really belongs in IRC.pm ?
+    
+      return PLUGIN_EAT_ALL
+    }
+    
+    if ($cmd eq "current") {
+      broadcast( 'message', $context, $msg->channel,
+        "Currently on server context $context"
+      );
+
+      return PLUGIN_EAT_ALL
+    }
+    
+    if ($cmd eq "connect") {
+      my $irc_pcfg = $core->get_plugin_cfg('IRC');
+      unless (ref $irc_pcfg eq 'HASH' && keys %$irc_pcfg) {
+        broadcast( 'message', $context, $msg->channel,
+          "Could not locate cfg for IRC plugin"
+        );
+        
+        return PLUGIN_EAT_ALL
+      }
+      
+      my $target_ctxt = $msg->message_array->[1];
+      
+      unless (defined $target_ctxt) {
+        broadcast( 'message', $context, $msg->channel,
+          "No context specified."
+        );
+        
+        return PLUGIN_EAT_ALL
+      }
+      
+      unless ($irc_pcfg->{$target_ctxt}) {
+        broadcast( 'message', $context, $msg->channel,
+          "Could not locate cfg for context $target_ctxt"
+        );
+      
+        return PLUGIN_EAT_ALL
+      }
+      
+      if (my $ctxt_obj = $core->get_irc_context($target_ctxt)) {
+        if ($ctxt_obj->connected) {
+          broadcast('message', $context, $msg->channel,
+            "Context $target_ctxt claims to be currently connected."
+          );
+          
+          return PLUGIN_EAT_ALL
+        }
+      }
+      
+      broadcast( 'message', $context, $msg->channel,
+        "Issuing connect for context $target_ctxt"
+      );
+      
+      broadcast( 'ircplug_connect', $target_ctxt );
+
+      return PLUGIN_EAT_ALL
+    }
+    
+    if ($cmd eq "disconnect") {
+      ## FIXME if this is our only context, refuse
+      
+      my $target_ctxt = $msg->message_array->[1];
+      
+      unless (defined $target_ctxt) {
+        broadcast( 'message', $context, $msg->channel,
+          "No context specified."
+        );
+        
+        return PLUGIN_EAT_ALL
+      }
+      
+      my $ctxt_obj;
+      unless ($ctxt_obj = $core->get_irc_context($target_ctxt)) {
+        broadcast( 'message', $context, $msg->channel,
+          "Could not find context object for $target_ctxt"
+        );
+        
+        return PLUGIN_EAT_ALL
+      }
+      
+      unless ($ctxt_obj->connected) {
+        broadcast( 'message', $context, $msg->channel,
+          "Context $target_ctxt claims to not be currently connected."
+        );
+        
+        return PLUGIN_EAT_ALL
+      }
+
+      broadcast( 'message', $context, $msg->channel,
+        "Attempting to disconnect from context $target_ctxt"
+      ); 
+      
+      broadcast( 'ircplug_disconnect', $context );
+    
+      return PLUGIN_EAT_ALL
+    }
+    
+    ## Fell through
+    broadcast( 'message', $msg->context, $msg->channel,
+      "Unknown command; try one of: list, current, connect, disconnect"
+    );
+
+    return PLUGIN_EAT_ALL
+  }
+
+}
 
 1;
 __END__
