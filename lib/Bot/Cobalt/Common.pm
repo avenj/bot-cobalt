@@ -1,5 +1,5 @@
 package Bot::Cobalt::Common;
-our $VERSION = '0.007';
+our $VERSION = '0.008_01';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##

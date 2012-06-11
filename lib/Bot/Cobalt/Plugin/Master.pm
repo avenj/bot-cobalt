@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Master;
-our $VERSION = '0.007';
+our $VERSION = '0.008_01';
 ## FIXME:
 ##  !server < list | connect | disconnect ... >
 ##  !restart(?) / !die
@@ -212,7 +212,7 @@ sub Bot_public_cmd_die {
   
   my $pcfg = $core->get_plugin_cfg($self) || {};
   
-  my $requiredlev = $pcfg->{Opts}->{Level_die} // 9999;
+  my $requiredlev = $pcfg->{Opts}->{Level_die} || 9999;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -224,13 +224,13 @@ sub Bot_public_cmd_die {
   $core->shutdown;
 }
 
-sub Bot_public_cmd_server {
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
+#sub Bot_public_cmd_server {
+#  my ($self, $core) = splice @_, 0, 2;
+#  my $msg = ${ $_[0] };
   
   ## FIXME
   ## need IRC.pm fixes, see IRC.pm Bot_initialize_irc
-}
+#}
 
 1;
 __END__

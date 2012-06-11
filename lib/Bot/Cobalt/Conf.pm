@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf;
-our $VERSION = '0.007';
+our $VERSION = '0.008_01';
 
 ## Bot::Cobalt::Conf
 ## Looks for the following YAML confs:
@@ -18,7 +18,6 @@ use Carp;
 use Try::Tiny;
 
 use File::Spec;
-
 
 use Bot::Cobalt::Common qw/:types/;
 use Bot::Cobalt::Serializer;

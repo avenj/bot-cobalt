@@ -34,12 +34,16 @@ my $class = Module::Build->subclass(
     
     sub ACTION_versionify {
       my $self = shift;
+
       my $base = $self->base_dir;
       my $vers = $self->dist_version;
+
       ++$|;
+
       print "Versionifying ";
       require File::Find;
       File::Find->import('find');
+
       my $x;
       find(sub {
           if ($_ =~ /\.pm(.in)?$/) {
@@ -163,7 +167,7 @@ my $build = $class->new(
       
    ### Cobalt set ###
      # Crypt
-      'App::bmkpasswd' => '1.03',
+      'App::bmkpasswd' => '1.06',
 
      # HTTP
       'HTTP::Request'  => 0,
