@@ -85,7 +85,7 @@ sub Cobalt_unregister {
   logger->info("Unregistering and dropping servers.");
 
   for my $context ( keys %{ $self->ircobjs } ) {
-    $core->send_event_now( 'ircplug_disconnect', $context );
+    $self->ircplug_clear_context($context);
   }
   
   logger->debug("Clean unload");
@@ -122,6 +122,8 @@ sub Bot_initialize_irc {
 sub Bot_ircplug_connect {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
+
+  ## Spawn an IRC Component and a Session to manage it.
   
   logger->debug("ircplug_connect issued for $context");
   
@@ -217,7 +219,7 @@ sub Bot_ircplug_connect {
         irc_quit
       / ],
     ],
-  );
+  ) or logger->error("Session creation failed for context $context");
 
   logger->debug("Successful session creation for context $context");
 
@@ -227,15 +229,24 @@ sub Bot_ircplug_connect {
 sub Bot_ircplug_disconnect {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
+  
+  logger->debug("ircplug_disconnect event caught for $context");
+  $self->ircplug_clear_context($context);
+  
+  return PLUGIN_EAT_ALL
+}
 
-  logger->debug("ircplug_disconnect called for $context");
+sub ircplug_clear_context {
+  my ($self, $context) = @_;
+
+  logger->debug("ircplug_clear_context called for $context");
 
   ## clear auths for this context
-  $core->auth->clear($context);
+  core->auth->clear($context);
   ## and ignores:
-  $core->ignore->clear($context);
+  core->ignore->clear($context);
 
-  $core->Servers->{$context}->clear_irc;
+  core->Servers->{$context}->clear_irc;
 
   my $irc = delete $self->ircobjs->{$context}
     or logger->error(
@@ -246,7 +257,7 @@ sub Bot_ircplug_disconnect {
 
   logger->info("Called shutdown for context $context");
   
-  return PLUGIN_EAT_ALL
+  return $context
 }
 
 
@@ -1100,14 +1111,15 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::IRC -- Standard Cobalt IRC-bridging plugin
+Bot::Cobalt::IRC -- Bot::Cobalt IRC bridge
 
 =head1 DESCRIPTION
 
-Incoming and outgoing IRC activity is handled just like any other 
-plugin pipeline event.
+This is the core plugin providing IRC functionality to 
+L<Bot::Cobalt>; incoming and outgoing IRC activity 
+is handled just like any other plugin pipeline event.
 
-The core IRC plugin provides a multi-server IRC interface via
+This core IRC plugin provides a multi-server IRC interface via
 L<POE::Component::IRC>. Any other IRC plugins should follow this pattern 
 and provide a compatible event interface.
 
@@ -1117,9 +1129,9 @@ plugins and reduces code redundancy.
 
 Arguments may vary by event. See below.
 
-(If you're trying to write Cobalt plugins, you probably want to start 
+If you're trying to write Cobalt plugins, you probably want to start 
 with L<Bot::Cobalt::Manual::Plugins> -- this is a reference for IRC-related 
-events specifically.)
+events specifically.
 
 
 =head1 EMITTED EVENTS
