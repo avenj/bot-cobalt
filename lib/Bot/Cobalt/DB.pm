@@ -110,7 +110,7 @@ sub BUILDARGS {
   my ($class, @args) = @_;
 
   @args == 1 ? 
-    { File => shift @args }
+    { File => $args[0] }
     : { @args }
 }
 
