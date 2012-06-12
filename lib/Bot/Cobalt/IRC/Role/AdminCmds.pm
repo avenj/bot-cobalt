@@ -184,8 +184,8 @@ sub Bot_ircplug_timer_serv_retry {
   
   my $context = $hints->{context};
   my $delay   = $hints->{delay} || 300;
-  
-  unless (my $ctxt_obj = irc_context($context) && $ctxt_obj->connected) {
+  my $ctxt_obj;
+  unless ($ctxt_obj = irc_context($context) && $ctxt_obj->connected) {
     logger->info("Attempting reconnect to $context . . .");
     
     broadcast( 'ircplug_connect', $context );

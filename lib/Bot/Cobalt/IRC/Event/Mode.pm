@@ -16,7 +16,11 @@ has 'mode'   => ( is => 'rw', isa => Str, required => 1 );
 
 has 'target' => ( is => 'rw', isa => Str, required => 1 );
 
-has 'is_umode' => ( is => 'ro', isa => Bool, lazy => 1,
+has 'is_umode' => ( 
+  lazy => 1,
+  is  => 'ro', 
+  isa => Bool, 
+
   default => sub {
     my ($self)  = @_;
     my $casemap = core->get_irc_casemap( $self->context );
@@ -26,24 +30,36 @@ has 'is_umode' => ( is => 'ro', isa => Bool, lazy => 1,
   },
 );
 
-has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
+has 'channel' => ( 
+  lazy => 1,
+  is  => 'rw', 
+
   default => sub {
     my ($self) = @_;
     $self->is_umode ? undef : $self->target
   },
 );
 
-has 'args' => ( is => 'rw', isa => ArrayRef, lazy => 1,
+has 'args' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => ArrayRef, 
+
   default   => sub {[]},
 );
 
-has 'hash' => ( is => 'ro', isa => HashRef, lazy => 1,
+has 'hash' => (
+  lazy => 1,
+  is  => 'ro', 
+  isa => HashRef, 
+
   predicate => 'has_hash',
   builder   => '_build_hash',
 );
 
 sub _build_hash {
-  parse_mode_line($_[0]->mode, @{ $_[0]->args })
+  my ($self) = @_;
+  parse_mode_line( $self->mode, @{ $self->args })
 }
 
 1;

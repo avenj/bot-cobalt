@@ -11,9 +11,14 @@ use Bot::Cobalt::Common;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'message' => ( is => 'rw', isa => Str, required => 1,
+has 'message' => ( 
+  required => 1,
+  is  => 'rw', 
+  isa => Str, 
+
   trigger => sub {
     my ($self, $value) = @_;
+
     $self->_set_stripped( 
       strip_color( strip_formatting($value) ) 
     ) if $self->has_stripped;
@@ -24,38 +29,62 @@ has 'message' => ( is => 'rw', isa => Str, required => 1,
   },
 );
 
-has 'targets' => ( is => 'rw', isa => ArrayRef, required => 1,
+has 'targets' => (
+  required => 1,
+  is  => 'rw', 
+  isa => ArrayRef, 
+
   trigger => sub {
     my ($self, $value) = @_;
+
     $self->_set_target($value->[0])
       if $self->has_target;
   } 
 );
 
-has 'target'  => ( is => 'ro', isa => Str, lazy => 1,
-  default   => sub { $_[0]->targets->[0] },
+has 'target'  => (
+  lazy => 1,
+  is  => 'rwp',
+  isa => Str, 
+
   predicate => 'has_target',
-  writer    => '_set_target',
+
+  default   => sub { $_[0]->targets->[0] },
 );
 
 ## May or may not have a channel.
-has 'channel' => ( is => 'rw', isa => Str, lazy => 1,
+has 'channel' => (
+  lazy => 1,
+  is  => 'rw', 
+  isa => Str,
+
   default => sub {
     $_[0]->target =~ /^[#&+!]/ ? $_[0]->target : ''
   },
 );
 
 ## Message content.
-has 'stripped' => ( is => 'ro', isa => Str, lazy => 1,
-  writer    => '_set_stripped',
+has 'stripped' => (
+  lazy => 1,
+  is  => 'rwp', 
+  isa => Str, 
+
   predicate => 'has_stripped',
-  default => sub {
+
+  default   => sub {
     strip_color( strip_formatting($_[0]->message) )
   },
 );
 
-has 'message_array' => ( is => 'rw', lazy => 1, isa => ArrayRef,
+has 'message_array' => (
+  lazy => 1, 
+  is  => 'rw', 
+  isa => ArrayRef,
+
+  predicate => 'has_message_array',
+
   default => sub { [ split ' ', $_[0]->stripped ] },
+
   trigger => sub {
     ## Generally shouldn't be modified except internally ..
     ## .. but hey, enough rope to hang yourself never hurt anyone
@@ -64,13 +93,16 @@ has 'message_array' => ( is => 'rw', lazy => 1, isa => ArrayRef,
       $self->_set_message_array_sp([ split / /, $self->stripped ]);
     }
   },
-  predicate => 'has_message_array',
 );
 
-has 'message_array_sp' => ( is => 'ro', lazy => 1, isa => ArrayRef,
-  default => sub { [ split / /, $_[0]->stripped ] },
+has 'message_array_sp' => ( 
+  lazy => 1, 
+  is  => 'rwp', 
+  isa => ArrayRef,
+
   predicate => 'has_message_array_sp',
-  writer    => '_set_message_array_sp',
+
+  default => sub { [ split / /, $_[0]->stripped ] },
 );
 
 

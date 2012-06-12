@@ -12,17 +12,29 @@ use Scalar::Util qw/blessed/;
 
 extends 'Bot::Cobalt::IRC::Message';
 
-has 'cmd' => ( is => 'rw', lazy => 1,
+has 'cmd' => ( 
+  lazy => 1,
+  is  => 'rw',
+  isa => Any,
+
   predicate => 'has_cmd',
   builder   => '_build_cmd',
 );
 
-has 'highlight' => ( is => 'rw', isa => Bool, lazy => 1,
+has 'highlight' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => Bool, 
+
   predicate => 'has_highlight',
   builder   => '_build_highlight',
 );
 
-has 'myself' => ( is => 'rw', isa => Str, lazy => 1,
+has 'myself' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => Str, 
+
   default => sub {
     my ($self) = @_;
     

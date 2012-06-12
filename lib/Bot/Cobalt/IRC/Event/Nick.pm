@@ -4,32 +4,47 @@ our $VERSION = '0.008_01';
 use Moo;
 use strictures 1;
 
-use Bot::Cobalt;
 use Bot::Cobalt::Common qw/:types/;
 
 use IRC::Utils qw/eq_irc/;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'old_nick' => ( is => 'rw', isa => Str, lazy => 1,
+has 'old_nick' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => Str, 
+
   predicate => 'has_old_nick',
+
   default   => sub { $_[0]->src_nick }, 
 );
 
-has 'new_nick' => ( is => 'rw', isa => Str, required => 1 );
-
-has 'channels' => ( is => 'rw', isa => ArrayRef, 
+has 'new_nick' => ( 
   required => 1,
+  is  => 'rw', 
+  isa => Str, 
+);
+
+has 'channels' => ( 
+  required => 1,
+  is  => 'rw', 
+  isa => ArrayRef, 
+
   trigger  => sub {
     my ($self, $value) = @_;
     $self->_set_common($value) if $self->has_common;
   },
 );
 ## ...just to remain compat with ::Quit:
-has 'common'   => ( is => 'ro', lazy => 1,
-  default   => sub { $_[0]->channels },
+has 'common'   => ( 
+  is => 'ro',
+  lazy => 1,
+
   predicate => 'has_common',
   writer    => '_set_common',
+
+  default   => sub { $_[0]->channels },
 );
 
 ## Changing src on a Nick event makes no sense, as far as I can tell.

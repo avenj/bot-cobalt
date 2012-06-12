@@ -7,9 +7,17 @@ use Bot::Cobalt::Common qw/:types :string/;
 
 extends 'Bot::Cobalt::IRC::Event::Channel';
 
-has 'topic' => ( is => 'rw', isa => Str, required => 1 );
+has 'topic' => (
+  required => 1,
+	is  => 'rw',
+  isa => Str, 
+);
 
-has 'stripped' => (  is => 'ro', isa => Str, lazy => 1,
+has 'stripped' => (
+  lazy => 1,
+  is  => 'ro', 
+  isa => Str, 
+
   default => sub {
     strip_color( strip_formatting( $_[0]->topic ) )
   },

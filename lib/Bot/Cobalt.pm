@@ -34,7 +34,7 @@ sub instance {
 
 sub new {
   croak "Bot::Cobalt is a stub; it cannot be constructed.\n"
-    . "See the perldoc for Bot::Cobalt::Core\n";
+    . "See the perldoc for Bot::Cobalt::Core";
 }
 
 1;
