@@ -45,6 +45,8 @@ lib/Bot/Cobalt/IRC/Event/Topic.pm
 lib/Bot/Cobalt/IRC/FloodChk.pm
 lib/Bot/Cobalt/IRC/Message.pm
 lib/Bot/Cobalt/IRC/Message/Public.pm
+lib/Bot/Cobalt/IRC/Role/AdminCmds.pm
+lib/Bot/Cobalt/IRC/Role/UserEvents.pm
 lib/Bot/Cobalt/IRC/Server.pm
 lib/Bot/Cobalt/Lang.pm.in
 lib/Bot/Cobalt/Lang.pm.PL
