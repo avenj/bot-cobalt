@@ -16,8 +16,12 @@ use Bot::Cobalt::Common qw/:types/;
 use Fcntl qw/:flock/;
 
 
-has 'Format' => ( is => 'rw', isa => Str,
+has 'Format' => (
+  is => 'rw', 
+  isa => Str,
+  
   default => sub { 'YAMLXS' },
+  
   trigger => sub {
     my ($self, $format) = @_;
 
@@ -31,7 +35,12 @@ has 'Format' => ( is => 'rw', isa => Str,
   },
 );
 
-has 'Types' => ( is => 'ro', isa => HashRef, lazy => 1,
+has 'Types' => ( 
+  lazy => 1,
+
+  is  => 'ro', 
+  isa => HashRef, 
+
   default => sub {
     {
       YAML   => 'YAML::Syck',
@@ -42,7 +51,10 @@ has 'Types' => ( is => 'ro', isa => HashRef, lazy => 1,
   },
 );
 
-has 'Logger' => ( is => 'rw', isa => Object,
+has 'Logger' => (
+  is => 'rw', 
+  isa => Object,
+  
   trigger => sub {
     my ($self, $logobj) = @_;
     my $method = $self->LogMethod;
@@ -52,59 +64,88 @@ has 'Logger' => ( is => 'rw', isa => Object,
   },
 );
 
-has 'LogMethod' => ( is => 'rw', isa => Str, lazy => 1,
+has 'LogMethod' => ( 
+  lazy => 1,
+
+  is  => 'rw', 
+  isa => Str, 
+
   default => sub { 'error' },
 );
 
 
-has 'yamlxs_from_ref' => ( is => 'rw', lazy => 1,
+has 'yamlxs_from_ref' => (
+  is  => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     YAML::XS::Dump($_[0])
   },
 );
 
-has 'ref_from_yamlxs' => ( is => 'rw', lazy => 1,
+has 'ref_from_yamlxs' => (
+  is  => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     YAML::XS::Load($_[0])
   },
 );
 
-has 'yaml_from_ref' => ( is => 'rw', lazy => 1,
+has 'yaml_from_ref' => (
+  is  => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     require YAML::Syck;
     YAML::Syck::Dump($_[0])
   },
 );
 
-has 'ref_from_yaml' => ( is => 'rw', lazy => 1,
+has 'ref_from_yaml' => (
+  is => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     require YAML::Syck;
     YAML::Syck::Load($_[0])
   },
 );
 
-has 'json_from_ref' => ( is => 'rw', lazy => 1,
+has 'json_from_ref' => ( 
+  is => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     my $jsify = JSON->new->allow_nonref;
     $jsify->utf8->encode($_[0]);
   },
 );
 
-has 'ref_from_json' => ( is => 'rw', lazy => 1,
+has 'ref_from_json' => ( 
+  is => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     my $jsify = JSON->new->allow_nonref;
     $jsify->utf8->decode($_[0])
   },
 );
 
-has 'xml_from_ref' => ( is => 'rw', lazy => 1,
+has 'xml_from_ref' => ( 
+  is => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     require XML::Dumper;
     XML::Dumper->new->pl2xml($_[0])
   },
 );
 
-has 'ref_from_xml' => ( is => 'rw', lazy => 1,
+has 'ref_from_xml' => ( 
+  is => 'rw', 
+  lazy => 1,
+  
   coerce => sub {
     require XML::Dumper;
     XML::Dumper->new->xml2pl($_[0])
@@ -128,12 +169,10 @@ sub BUILDARGS {
   ## Specify something with a LogMethod method, default 'error':
   ## ->new( Logger => $core->log );
   ## ->new( Logger => $core->log, LogMethod => 'crit' );
-  
-  if (@args == 1) {
-    return { Format => shift @args }
-  } else {
-    return { @args }
-  }
+
+  @args == 1 ?
+    { Format => $args[0] }
+    : { @args }
 }
 
 sub freeze {
