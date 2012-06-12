@@ -16,7 +16,12 @@ use Bot::Cobalt::Common qw/:types/;
 
 ## It's possible to pass in a different core.
 ## (Allows timers to fire against different syndicators if needed)
-has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
+has 'core'  => (
+  lazy => 1,
+
+  is  => 'rw', 
+  isa => Object, 
+  
   default => sub { 
     require Bot::Cobalt::Core;
     die "Cannot find active Bot::Cobalt::Core instance"
@@ -29,50 +34,92 @@ has 'core'  => ( is => 'rw', isa => Object, lazy => 1,
 ## timer pool managers; if not, creating IDs is up to them.
 ## (See ::Core::Role::Timers)
 ## This can be any value, but most often a string or number.
-has 'id' => ( is => 'rw', lazy => 1, predicate => 'has_id' );
+has 'id' => ( 
+  lazy => 1, 
+  is  => 'rw', 
+
+  predicate => 'has_id' 
+);
 
 ## 'at' is set regardless of whether delay()/at() is used
 ## (or 0 if none is ever set)
-has 'at'    => ( is => 'rw', isa => Num, lazy => 1, 
+has 'at'    => ( 
+  lazy => 1, 
+  is  => 'rw', 
+  isa => Num,
+
   default => sub { 0 },
 );
 
-has 'delay' => ( is => 'rw', isa => Num, lazy => 1,
+has 'delay' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => Num, 
+
   predicate => 'has_delay',
   clearer   => 'clear_delay',
+
   default   => sub { 0 },
+
   trigger   => sub {
     my ($self, $value) = @_;
     $self->at( time() + $value );
   }, 
 );
 
-has 'event' => ( is => 'rw', isa => Str, lazy => 1,
+has 'event' => ( 
+  is  => 'rw', 
+  isa => Str, lazy => 1,
+  
   predicate => 'has_event',
 );
 
-has 'args'  => ( is => 'rw', isa => ArrayRef, lazy => 1,
+has 'args'  => ( 
+  is  => 'rw', 
+  isa => ArrayRef, lazy => 1,
+  
   default => sub { [] },
 );
 
-has 'alias' => ( is => 'rw', isa => Str,
+has 'alias' => ( 
+  is  => 'rw', 
+  isa => Str,
+  
   default => sub { scalar caller }, 
 );
 
-has 'context' => ( is => 'rw', isa => Str, lazy => 1,
-  default   => sub { 'Main' },
+has 'context' => ( 
+  lazy => 1,
+  is  => 'rw', 
+  isa => Str, 
+
   predicate => 'has_context',
+  
+  default   => sub { 'Main' },  
 );
 
-has 'text'    => ( is => 'rw', isa => Str, lazy => 1, 
+has 'text'    => (
+  lazy => 1, 
+  is  => 'rw', 
+  isa => Str, 
+
   predicate => 'has_text' 
 );
 
-has 'target'  => ( is => 'rw', isa => Str, lazy => 1, 
+has 'target'  => (
+  lazy => 1, 
+  is  => 'rw', 
+  isa => Str, 
+
   predicate => 'has_target' 
 );
 
-has 'type'  => ( is => 'rw', isa => Str, lazy => 1,
+has 'type'  => ( 
+  lazy => 1,
+
+  is  => 'rw', 
+  isa => Str, 
+
   default => sub {
     my ($self) = @_;
     
@@ -85,10 +132,9 @@ has 'type'  => ( is => 'rw', isa => Str, lazy => 1,
     }
   },
   
-  trigger => sub {
-    my ($self, $value) = @_;
-    $value = lc($value);
-    $value = 'msg' if $value ~~ [qw/message privmsg/];
+  coerce => sub {
+    $_[0] = lc($_[0]);
+    $_[0] = 'msg' if $_[0] ~~ [qw/message privmsg/];
   },
 ); 
 
