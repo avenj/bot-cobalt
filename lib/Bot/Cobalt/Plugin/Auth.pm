@@ -23,10 +23,6 @@ our $VERSION = '0.008_02';
 ##
 ## - Plugins determine required levels for their respective commands
 ##
-##
-## Authenticate via 'login <username> <passwd>' in PRIVMSG
-## Users can be managed online via the PRIVMSG 'user' command
-##
 ## Passwords are hashed via bcrypt and stored in YAML
 ## Location of the authdb is determined by auth.conf
 ##
@@ -42,9 +38,6 @@ our $VERSION = '0.008_02';
 ##   },
 ## }
 ##
-## Auth hash should be adjusted when nicknames change.
-## This plugin tracks 'lost' identified users and clears as needed
-##
 ## Also see Bot::Cobalt::Core::ContextMeta::Auth
 
 use 5.10.1;
@@ -55,6 +48,8 @@ use Bot::Cobalt::Common;
 use Bot::Cobalt::Serializer;
 
 use Storable qw/dclone/;
+
+use Try::Tiny;
 
 use File::Spec;
 
@@ -1240,10 +1235,13 @@ sub _mkpasswd {
   ## $self->_mkpasswd( $passwd );
   ## simple frontend to Bot::Cobalt::Utils::mkpasswd()
   ## handles grabbing cfg opts for us:
+
   my $cfg = core->get_plugin_cfg( $self );
-  my $method = $cfg->{Method} // 'bcrypt';
-  my $bcrypt_cost = $cfg->{Bcrypt_Cost} || '08';
-  return mkpasswd($passwd, $method, $bcrypt_cost);
+
+  my $crypt_method = $cfg->{Method} // 'bcrypt';
+  my $bcrypt_cost  = $cfg->{Bcrypt_Cost} || '08';
+
+  mkpasswd($passwd, $crypt_method, $bcrypt_cost)
 }
 
 
@@ -1264,7 +1262,14 @@ sub _read_access_list {
   }
 
   my $serializer = Bot::Cobalt::Serializer->new( Logger => core->log );
-  my $accesslist = $serializer->readfile($authdb);
+  
+  my $accesslist;
+  try {
+    $accesslist = $serializer->readfile($authdb);
+  } catch {
+    logger->error("readfile() failure; $authdb $_");
+  };
+  
   return $accesslist
 }
 
@@ -1294,13 +1299,18 @@ sub _write_access_list {
   return unless scalar keys %hash;
 
   my $serializer = Bot::Cobalt::Serializer->new( Logger => core->log );
-  unless ( $serializer->writefile($authdb, \%hash) ) {
-    core->log->error("Failed to serialize db to disk: $authdb");
-  }
+  
+  try {
+    $serializer->writefile($authdb, \%hash);
 
-  my $p_cfg = core->get_plugin_cfg( $self );
-  my $perms = oct( $p_cfg->{Opts}->{AuthDB_Perms} // '0600' );
-  chmod($perms, $authdb);
+    my $p_cfg = core->get_plugin_cfg( $self );
+    my $perms = oct( $p_cfg->{Opts}->{AuthDB_Perms} // '0600' );
+    chmod($perms, $authdb);
+  } catch {
+    logger->error("writefile() failure; $authdb $_")
+  };
+
+  return $authdb  
 }
 
 1;
