@@ -37,9 +37,9 @@ use IRC::Utils qw/ parse_mode_line /;
 has 'NON_RELOADABLE' => ( 
   isa => Bool,
   default => sub { 1 },
-  ## Well, really, it is.
+  ## Well, really, it's sort-of unloadable.
   ##  ... but life usually sucks when you do.
-  ## Call _set_NON_RELOADABLE if you really need to.
+  ## Call _set_NON_RELOADABLE if you really need to
   is => 'rwp',
 );
 
@@ -70,6 +70,8 @@ has 'flood' => (
     )
   },
 );
+
+with 'Bot::Cobalt::IRC::Role::UserEvents';
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -147,7 +149,18 @@ sub Bot_ircplug_connect {
   ## The sessions call the same object with different contexts in HEAP;
   ## the handlers do some processing and relay the event from the 
   ## PoCo::IRC syndicator to the Bot::Cobalt::Core pipeline.
-  
+
+  if ($core->Servers->{$context}) {
+    if ($core->Servers->{$context}->connected) {
+      logger->error("Connect issued for connected context $context");
+      return PLUGIN_EAT_ALL
+    }
+
+    ## FIXME
+    ##  reconnecting to existing defined context, perhaps
+    ##  clear old IRC object(s)
+  }
+
   logger->debug("ircplug_connect issued for $context");
   
   my $pcfg = core->get_plugin_cfg( $self );
@@ -208,6 +221,7 @@ sub Bot_ircplug_connect {
     prefer_nick => $nick,
   );
 
+  ## Attempt to spin up a session.
   if ( $self->_spawn_for_context($context) ) {
     ## Save our Bot::Cobalt::IRC::Server:
     $core->Servers->{$context} = $server_obj;
@@ -808,241 +822,19 @@ sub irc_invite {
 }
 
 
- ### COBALT EVENTS ###
-
-## FIXME move these out to sub-plugin / sub-session
-
-sub Bot_send_message { Bot_message(@_) }
-sub Bot_message {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $target  = ${$_[1]};
-  my $txt     = ${$_[2]};
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $target
-           && defined $txt
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-  
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  ## Issue USER event Outgoing_message for output filters
-  my @msg = ( $context, $target, $txt );
-  my $eat = $core->send_user_event( 'message', \@msg );
-
-  unless ($eat == PLUGIN_EAT_ALL) {
-    my ($target, $txt) = @msg[1,2];
-
-    $self->ircobjs->{$context}->yield(privmsg => $target => $txt);
-    broadcast( 'message_sent', $context, $target, $txt );
-
-    ++$core->State->{Counters}->{Sent};
-  }
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_send_notice { Bot_notice(@_) }
-sub Bot_notice {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $target  = ${$_[1]};
-  my $txt     = ${$_[2]};
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $target
-           && defined $txt
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  ## USER event Outgoing_notice
-  my @notice = ( $context, $target, $txt );
-  my $eat = $core->send_user_event( 'notice', \@notice );
-
-  unless ($eat == PLUGIN_EAT_ALL) {
-    my ($target, $txt) = @notice[1,2];
-
-    $self->ircobjs->{$context}->yield(notice => $target => $txt);
-    broadcast( 'notice_sent', $context, $target, $txt );
-  }
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_send_action { Bot_action(@_) }
-sub Bot_action {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $target  = ${$_[1]};
-  my $txt     = ${$_[2]};
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $target
-           && defined $txt
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-  
-  ## USER event Outgoing_ctcp (CONTEXT, TYPE, TARGET, TEXT)
-  my @ctcp = ( $context, 'ACTION', $target, $txt );
-  my $eat = $core->send_user_event( 'ctcp', \@ctcp );
-
-  unless ($eat == PLUGIN_EAT_ALL) {
-    my ($target, $txt) = @ctcp[2,3];
-    $self->ircobjs->{$context}->yield(ctcp => $target => 'ACTION '.$txt );
-    broadcast( 'ctcp_sent', $context, 'ACTION', $target, $txt );
-  }
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_topic {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $channel = ${$_[1]};
-  my $topic   = defined $_[2] ? ${$_[2]} : "" ;
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $channel
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  $self->irc->yield( 'topic', $channel, $topic );
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_mode {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $target  = ${$_[1]}; ## channel or self normally
-  my $modestr = ${$_[2]}; ## modes + args
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $target
-           && defined $modestr
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  my ($mode, @args) = split ' ', $modestr;
-
-  $self->ircobjs->{$context}->yield( 'mode', $target, $mode, @args );
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_kick {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $channel = ${$_[1]};
-  my $target  = ${$_[2]};
-  my $reason  = defined $_[3] ? ${$_[3]} : 'Kicked';
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $channel
-           && $target
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }      
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  $self->ircobjs->{$context}->yield( 'kick', $channel, $target, $reason );
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_join {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $channel = ${$_[1]};
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $channel
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  $self->ircobjs->{$context}->yield( 'join', $channel );
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_part {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $channel = ${$_[1]};
-  my $reason  = defined $_[2] ? ${$_[2]} : 'Leaving' ;
-
-  unless ( $context
-           && $self->ircobjs->{$context}
-           && $channel
-  ) { 
-    return PLUGIN_EAT_NONE 
-  }      
-
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-
-  $self->ircobjs->{$context}->yield( 'part', $channel, $reason );
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Bot_send_raw {
-  my ($self, $core) = splice @_, 0, 2;
-  my $context = ${$_[0]};
-  my $raw     = ${$_[1]};
-
-  unless ( $context && $self->ircobjs->{$context} && $raw ) {
-    return PLUGIN_EAT_NONE
-  }
-  
-  return PLUGIN_EAT_NONE unless $core->is_connected($context);
-  
-  $self->ircobjs->{$context}->yield( 'quote', $raw );
-
-  broadcast( 'raw_sent', $context, $raw );
-
-  return PLUGIN_EAT_NONE
-}
+### Internals.
 
 sub Bot_rehashed {
   my ($self, $core) = splice @_, 0, 2;
   my $type = ${ $_[0] };
   
-  ## reset AutoJoin plugin instances
-  logger->info("Rehash received, resetting autojoins");
-
+  logger->info("Rehash received, resetting ajoins");
   $self->_reset_ajoins;
-
-  ## FIXME rehash nickservids if needed
+  
+  ## FIXME nickservid rehash if needed
   
   return PLUGIN_EAT_NONE
 }
-
-### Internals.
 
 sub Bot_ircplug_chk_floodkey_expire {
   my ($self, $core) = splice @_, 0, 2;
