@@ -23,16 +23,31 @@ use Scalar::Util qw/blessed/;
 
 use File::Spec;
 
-## usually a hashref from Bot::Cobalt::Conf created via frontend:
-has 'cfg' => ( is => 'rw', isa => HashRef, required => 1 );
-## path to our var/ :
-has 'var' => ( is => 'ro', isa => Str,     required => 1 );
+has 'cfg' => ( 
+  ## usually a hashref from Bot::Cobalt::Conf created via frontend
+  required => 1,
+  is  => 'rw', 
+  isa => HashRef,
+);
 
-has 'etc' => ( is => 'ro', isa => Str, lazy => 1,
+has 'var' => (
+  ## path to our var/
+  required => 1,
+  is  => 'ro', 
+  isa => Str,
+);
+
+has 'etc' => (
+  lazy => 1,
+  is  => 'ro',
+  isa => Str, 
+
   default => sub { $_[0]->cfg->{path} }
 );
 
-has 'log'      => ( is => 'rw', 
+has 'log'      => ( 
+  is => 'rw', 
+
   isa => sub {
     unless (blessed $_[0]) {
       die "log() not passed a blessed object"
@@ -50,38 +65,53 @@ has 'log'      => ( is => 'rw',
 );
 
 has 'loglevel' => ( 
-  is => 'rw', isa => Str, 
+  is  => 'rw', 
+  isa => Str, 
+
   default => sub { 'info' } 
 );
 
-has 'detached' => ( is => 'ro', isa => Int, lazy => 1,
+has 'detached' => ( 
+  lazy => 1,
+  is   => 'ro', 
+  isa  => Int, 
+
   default => sub { 0 },
 );
 
 has 'debug'    => ( 
-  is => 'rw', isa => Int, 
+  isa => Int, 
+  is  => 'rw', 
+
   default => sub { 0 } 
 );
 
-## pure plugin convenience, ->VERSION is a better idea:
+## version/url used for var replacement:
 has 'version' => ( 
-  is => 'ro', isa => Str, lazy => 1,
+  lazy => 1,
+  is   => 'rwp', 
+  isa  => Str,
+
   default => sub { $Bot::Cobalt::Core::VERSION }
 );
 
-## Mostly used for W~ in Plugin::Info3 str formatting:
 has 'url' => ( 
-  is => 'ro', isa => Str,
+  is  => 'ro', 
+  isa => Str,
+
   default => sub { "http://www.cobaltirc.org" },
 );
 
-## pulls hash from Bot::Cobalt::Lang->load_langset later
-has 'lang' => ( is => 'rw', isa => HashRef );
+has 'lang' => ( 
+  is => 'rw', 
+  isa => HashRef
+);
 
 has 'State' => (
   ## global 'heap' of sorts
   is => 'ro',
   isa => HashRef,
+
   default => sub {
     {
       HEAP => { },
@@ -96,26 +126,36 @@ has 'State' => (
   },
 );
 
-## alias -> object:
 has 'PluginObjects' => (
-  is  => 'rw',  isa => HashRef,
+  ## alias -> object mapping
+  is  => 'rw',  
+  isa => HashRef,
+  
   default => sub { {} },
 );
 
-## Some plugins provide optional functionality.
-## The 'Provided' hash lets other plugins see if an event is available.
 has 'Provided' => (
-  is  => 'ro',  isa => HashRef,
+  ## Some plugins provide optional functionality.
+  ## This hash lets other plugins see if an event is available.
+  is  => 'ro',
+  isa => HashRef,
+
   default => sub { {} },
 );
 
-has 'auth' => ( is => 'rw', isa => Object,
+has 'auth' => ( 
+  is => 'rw', 
+  isa => Object,
+  
   default => sub {
     Bot::Cobalt::Core::ContextMeta::Auth->new
   },
 );
 
-has 'ignore' => ( is => 'rw', isa => Object,
+has 'ignore' => ( 
+  is  => 'rw', 
+  isa => Object,
+  
   default => sub {
     Bot::Cobalt::Core::ContextMeta::Ignore->new
   },
@@ -124,15 +164,10 @@ has 'ignore' => ( is => 'rw', isa => Object,
 extends 'POE::Component::Syndicator';
 
 with 'Bot::Cobalt::Lang';
-
 with 'Bot::Cobalt::Core::Role::Singleton';
-
 with 'Bot::Cobalt::Core::Role::EasyAccessors';
-
 with 'Bot::Cobalt::Core::Role::Unloader';
-
 with 'Bot::Cobalt::Core::Role::Timers';
-
 with 'Bot::Cobalt::Core::Role::IRC';
 
 sub init {
@@ -233,8 +268,10 @@ sub syndicator_started {
 
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
+
       delete $self->PluginObjects->{$obj};
       $self->unloader_cleanup($module);
+
       next
     }
 
@@ -280,9 +317,11 @@ sub shutdown {
 
 sub syndicator_stopped {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
+
   $kernel->alarm('core_timer_check_pool');
   $kernel->signal( $kernel, 'POCOIRC_SHUTDOWN' );
   $kernel->post( $kernel, 'shutdown' );
+
   $self->log->warn("Core syndicator stopped.");
 }
 
