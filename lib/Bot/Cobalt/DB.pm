@@ -1,12 +1,11 @@
 package Bot::Cobalt::DB;
 our $VERSION = '0.008_01';
 
-## Simple interface to a DB_File (berkdb1.x interface)
+## Simple interface to a DB_File
 ## Uses proper retie-after-lock technique for locking
 
-use 5.10.1;
+use 5.12.1;
 use strictures 1;
-
 use Carp;
 
 use Moo;
@@ -19,65 +18,100 @@ use IO::File;
 use Bot::Cobalt::Serializer;
 use Bot::Cobalt::Common qw/:types/;
 
-has 'File'  => ( is => 'rw', isa => Str, required => 1 );
+has 'File'  => ( 
+  is  => 'rw', 
+  isa => Str, 
+  
+  required => 1 
+);
 
-has 'Perms' => ( is => 'rw', 
+has 'Perms' => ( 
+  is => 'rw', 
+  
   default => sub { 0644 },
 );
 
-has 'Raw'     => ( is => 'rw', isa => Bool, 
+has 'Raw'     => ( 
+  is  => 'rw', 
+  isa => Bool, 
+  
   default => sub { 0 },
 );
 
-
-has 'Timeout' => ( is => 'rw', isa => Num, 
+has 'Timeout' => ( 
+  is  => 'rw', 
+  isa => Num, 
+  
   default => sub { 5 },
 );
 
-has 'Serializer' => ( is => 'rw', isa => Object, lazy => 1,
+has 'Serializer' => ( 
+  lazy => 1,
+  is   => 'rw', 
+  isa  => Object, 
+
   default => sub {
     Bot::Cobalt::Serializer->new(Format => 'JSON')
   },
 );
 
 ## _orig is the original tie().
-has '_orig' => ( is => 'rw', isa => HashRef, 
+has '_orig' => ( 
+  is  => 'rw', 
+  isa => HashRef, 
+
   default => sub { {} },
 );
 
 ## Tied is the re-tied DB hash.
-has 'Tied' => ( is => 'rw', isa => HashRef, 
+has 'Tied'  => ( 
+  is  => 'rw', 
+  isa => HashRef, 
+
   default   => sub { {} },
 );
 
-has '_lockFH' => ( is => 'rw', isa => FileHandle, lazy => 1,
+has '_lockFH' => ( 
+  lazy => 1,
+  is   => 'rw',
+  isa  => FileHandle, 
+
   predicate => 'has_LockFH',
   clearer   => 'clear_LockFH', 
 );
 
 ## LOCK_EX or LOCK_SH for current open
-has '_lockmode' => ( is => 'rw', lazy => 1,
+has '_lockmode' => ( 
+  lazy => 1,
+  is  => 'rw', 
+
   predicate => 'has_LockMode',
   clearer   => 'clear_LockMode',
 );
 
 ## DB object.
-has 'DB'     => ( is => 'rw', isa => Object, lazy => 1,
+has 'DB'     => ( 
+  lazy => 1,
+  is   => 'rw', 
+  isa  => Object, 
+
   predicate => 'has_DB',
   clearer   => 'clear_DB',
 );
 
-has 'is_open' => ( is => 'rw', isa => Bool,
+has 'is_open' => ( 
+  is => 'rw', 
+  isa => Bool,
+  
   default => sub { 0 },
 );
 
 sub BUILDARGS {
   my ($class, @args) = @_;
-  if (@args == 1) {
-    return { File => shift @args }
-  } else {
-    return { @args }
-  }
+
+  @args == 1 ? 
+    { File => shift @args }
+    : { @args }
 }
 
 sub DESTROY {
@@ -88,7 +122,8 @@ sub DESTROY {
 sub dbopen {
   my ($self, %args) = @_;
   $args{lc $_} = delete $args{$_} for keys %args;
-  
+
+  ## per-open timeout was specified:
   $self->Timeout( $args{timeout} )
     if $args{timeout};
   
