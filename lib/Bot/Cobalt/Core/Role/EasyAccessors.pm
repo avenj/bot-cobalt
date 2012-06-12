@@ -66,7 +66,7 @@ sub get_plugin_cfg {
   }
 
   unless ($alias) {
-    $self->log->error("get_plugin_cfg: no plugin alias? ".scalar caller);
+    $self->log->error("get_plugin_cfg: no plugin alias");
     return
   }
 
@@ -74,8 +74,8 @@ sub get_plugin_cfg {
   my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return {};
 
   unless (ref $plugin_cf eq 'HASH') {
-    $self->log->debug("get_plugin_cfg; $alias cfg not a HASH");
-    return
+    $self->log->error("get_plugin_cfg; $alias cfg not a HASH");
+    return {}
   }
 
   return $plugin_cf
