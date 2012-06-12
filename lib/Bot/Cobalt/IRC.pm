@@ -74,11 +74,14 @@ has 'flood' => (
 ## Outgoing IRC traffic is handled by UserEvents role:
 with 'Bot::Cobalt::IRC::Role::UserEvents';
 
+## Administrative commands:
+with 'Bot::Cobalt::IRC::Role::AdminCmds';
+
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   ## register for events
-  $core->plugin_register($self, 'SERVER',
+  register($self, 'SERVER',
     'all',
   );
 
@@ -311,9 +314,6 @@ sub _clear_context {
   return $context
 }
 
-
- ### IRC EVENTS ###
-
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
 
@@ -387,6 +387,9 @@ sub _start {
   $irc->yield(connect => {});
   logger->debug("irc component connect issued");
 }
+
+
+### IRC event 'relay' to our pipeline.
 
 sub irc_connected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];

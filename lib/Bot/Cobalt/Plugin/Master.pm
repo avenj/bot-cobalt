@@ -2,6 +2,8 @@ package Bot::Cobalt::Plugin::Master;
 our $VERSION = '0.008_01';
 
 use 5.10.1;
+use strictures 1;
+
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
@@ -16,7 +18,6 @@ sub Cobalt_register {
       'public_cmd_part',
       'public_cmd_cycle',
 
-      'public_cmd_server',
       'public_cmd_die',
 
       'public_cmd_op',
@@ -221,150 +222,6 @@ sub Bot_public_cmd_die {
   $core->shutdown;
 }
 
-sub Bot_public_cmd_server {
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
-  
-  my $context  = $msg->context;
-  my $src_nick = $msg->src_nick,
-  
-  my $pcfg = $core->get_plugin_cfg($self) || {};
-  
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_server} || 9999;
-  my $authed_lev  = $core->auth->level($context, $src_nick);
-  
-  return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
-  
-  my $cmd = lc($msg->message_array->[0] || 'list') ;
-
-  CMD: {
-  
-    if ($cmd eq "list") {
-      my @contexts = keys %{ $core->Servers };
-      
-      broadcast( 'message', $context, $msg->channel,
-        "Active contexts: ".join ' ', @contexts
-      );
-      
-      ## FIXME
-      ## No real convenient way to get a list of non-enabled contexts..
-      ##  ... maybe this whole mess really belongs in IRC.pm ?
-    
-      return PLUGIN_EAT_ALL
-    }
-    
-    if ($cmd eq "current") {
-      broadcast( 'message', $context, $msg->channel,
-        "Currently on server context $context"
-      );
-
-      return PLUGIN_EAT_ALL
-    }
-    
-    if ($cmd eq "connect") {
-      my $irc_pcfg = $core->get_plugin_cfg('IRC');
-      unless (ref $irc_pcfg eq 'HASH' && keys %$irc_pcfg) {
-        broadcast( 'message', $context, $msg->channel,
-          "Could not locate cfg for IRC plugin"
-        );
-        
-        return PLUGIN_EAT_ALL
-      }
-      
-      my $target_ctxt = $msg->message_array->[1];
-      
-      unless (defined $target_ctxt) {
-        broadcast( 'message', $context, $msg->channel,
-          "No context specified."
-        );
-        
-        return PLUGIN_EAT_ALL
-      }
-      
-      unless ($irc_pcfg->{$target_ctxt}) {
-        broadcast( 'message', $context, $msg->channel,
-          "Could not locate cfg for context $target_ctxt"
-        );
-      
-        return PLUGIN_EAT_ALL
-      }
-      
-      if (my $ctxt_obj = $core->get_irc_context($target_ctxt)) {
-        if ($ctxt_obj->connected) {
-          broadcast('message', $context, $msg->channel,
-            "Context $target_ctxt claims to be currently connected."
-          );
-          
-          return PLUGIN_EAT_ALL
-        }
-      }
-      
-      broadcast( 'message', $context, $msg->channel,
-        "Issuing connect for context $target_ctxt"
-      );
-      
-      broadcast( 'ircplug_connect', $target_ctxt );
-
-      return PLUGIN_EAT_ALL
-    }
-    
-    if ($cmd eq "disconnect") {
-      ## FIXME if this is our only context, refuse
-      
-      my $target_ctxt = $msg->message_array->[1];
-      
-      unless (defined $target_ctxt) {
-        broadcast( 'message', $context, $msg->channel,
-          "No context specified."
-        );
-        
-        return PLUGIN_EAT_ALL
-      }
-      
-      my $ctxt_obj;
-      unless ($ctxt_obj = $core->get_irc_context($target_ctxt)) {
-        broadcast( 'message', $context, $msg->channel,
-          "Could not find context object for $target_ctxt"
-        );
-        
-        return PLUGIN_EAT_ALL
-      }
-      
-      unless ($ctxt_obj->connected) {
-        broadcast( 'message', $context, $msg->channel,
-          "Context $target_ctxt claims to not be currently connected."
-        );
-        
-        return PLUGIN_EAT_ALL
-      }
-      
-      unless (keys %{ $core->Servers } > 1) {
-        broadcast( 'message', $context, $msg->channel,
-          "Cannot disconnect; have no other active contexts."
-        );
-      
-        return PLUGIN_EAT_ALL
-      }
-
-      broadcast( 'message', $context, $msg->channel,
-        "Attempting to disconnect from context $target_ctxt"
-      ); 
-      
-      broadcast( 'ircplug_disconnect', $context );
-    
-      return PLUGIN_EAT_ALL
-    }
-    
-    ## Fell through
-    broadcast( 'message', $msg->context, $msg->channel,
-      "Unknown command; try one of: list, current, connect, disconnect"
-    );
-
-    return PLUGIN_EAT_ALL
-  }
-
-}
-
 1;
 __END__
 
@@ -398,7 +255,6 @@ Levels for each command are specified in C<plugins.conf>:
   Module: Bot::Cobalt::Plugin::Master
   Opts:
     Level_die: 9999
-    Level_server: 9999
     Level_joinpart: 3
     Level_voice: 2
     Level_op: 3
