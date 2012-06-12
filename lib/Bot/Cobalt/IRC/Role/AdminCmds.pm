@@ -102,12 +102,18 @@ sub _cmd_connect {
   ## Do we alraedy have this context?
   if (my $ctxt_obj = irc_context($target_ctxt) ) {
   
-    if ($txt_obj->connected) {
-    
+    if ($ctxt_obj->connected) {
+      broadcast( 'message',
+        $msg->context,
+        $msg->channel,
+        "Attempting reconnect for context $target_ctxt"
+      );
+      
       ## FIXME
       ## Issue affirmative message
       ## Clean up this context and try to reconnect
       ## Set a timer to run retries
+      ##  (ircplug_timer_serv_retry)
       
       return PLUGIN_EAT_ALL
     }    
@@ -120,7 +126,7 @@ sub _cmd_connect {
   );
     
   broadcast( 'ircplug_connect', $target_ctxt );
-    
+  
   return PLUGIN_EAT_ALL  
 }
 
@@ -166,11 +172,34 @@ sub _cmd_disconnect {
     "Attempting to disconnect from $target_ctxt"
   );
   
-  broadcast( 'ircplug_disconnect', $context );
+  broadcast( 'ircplug_disconnect', $target_ctxt );
   
   return PLUGIN_EAT_ALL
 }
 
+
+sub Bot_ircplug_timer_serv_retry {
+  my ($self, $core) = splice @_, 0, 2;
+  my $hints = ${ $_[0] };
+  
+  my $context = $hints->{context};
+  my $delay   = $hints->{delay} || 300;
+  
+  unless (my $ctxt_obj = irc_context($context) && $ctxt_obj->connected) {
+    logger->info("Attempting reconnect to $context . . .");
+    
+    broadcast( 'ircplug_connect', $context );
+    
+    core->timer_set( $delay,
+      {
+        Event => 'ircplug_timer_serv_retry',
+        Args  => [ { context => $context, delay => $delay } ],
+      },
+    );
+  }
+  
+  return PLUGIN_EAT_ALL
+}
 
 1
 ## FIXME POD
