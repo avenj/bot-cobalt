@@ -186,7 +186,8 @@ sub freeze {
 
   my $method = lc( $self->Format );
   $method = $method . "_from_ref";
-  return $self->$method($ref);
+
+  $self->$method($ref)
 }
 
 sub thaw {
@@ -200,42 +201,46 @@ sub thaw {
 
   my $method = lc( $self->Format );
   $method = "ref_from_" . $method ;
-  return $self->$method($data);
+
+  $self->$method($data)
 }
 
 sub writefile {
   my ($self, $path, $ref, $opts) = @_;
   ## $serializer->writefile($path, $ref [, { Opts });
   ## serialize arbitrary data and write it to disk
-  if      (!$path) {
-    $self->_log("writefile called without path argument");
-    return
+
+  if (!$path) {
+    confess "writefile called without path argument"
   } elsif (!defined $ref) {
-    $self->_log("writefile called with nothing to write");
-    return
+    confess "writefile called without data to serialize"
   }
+  
   my $frozen = $self->freeze($ref);
-  $self->_write_serialized($path, $frozen, $opts); 
+  
+  $self->_write_serialized($path, $frozen, $opts)
 }
 
 sub readfile {
   my ($self, $path, $opts) = @_;
   ## my $ref = $serializer->readfile($path)
   ## thaw a file into data structure
+
   if (!$path) {
-    $self->_log("readfile called without path argument");
-    return
+    confess "readfile called without path argument";
   } elsif (!-r $path || -d $path ) {
-    $self->_log("readfile called on unreadable file $path");
-    return
+    confess "readfile called on unreadable file $path";
   }
+  
   my $data = $self->_read_serialized($path, $opts);
-  return $self->thaw($data);
+  
+  $self->thaw($data)
 }
 
 sub version {
   my ($self) = @_;
-  my $module = $self->Types->{ $self->Format };
+  
+  my $module = $self->Types->{ $self->Format }; 
   { local $@; eval "require $module" }
   return($module, $module->VERSION);
 }
@@ -244,7 +249,9 @@ sub version {
 
 sub _log {
   my ($self, $message) = @_;
+  
   my $method = $self->LogMethod;
+  
   unless ($self->Logger && $self->Logger->can($method) ) {
     carp "$message\n";
   } else {
@@ -276,11 +283,7 @@ sub _check_if_avail {
 
 sub _read_serialized {
   my ($self, $path, $opts) = @_;
-  return unless $path;
-  if (-d $path || ! -e $path) {
-    $self->_log("file not readable: $path");
-    return
-  }
+  return unless defined $path;
 
   my $lock = 1;
   if (defined $opts && ref $opts eq 'HASH') {
@@ -288,19 +291,16 @@ sub _read_serialized {
   }
 
   open(my $in_fh, '<', $path)
-    or $self->_log("open failed for $path: $!") and return;
+    or confess "open failed for $path: $!";
   
   if ($lock) {
-    flock($in_fh, LOCK_SH)  # blocking call
-      or $self->_log("LOCK_SH failed for $path: $!") and return;
+    flock($in_fh, LOCK_SH)
+      or confess "LOCK_SH failed for $path: $!";
    }
 
-  my $data = join('', <$in_fh>);
+  my $data = join '', <$in_fh>;
 
-  if ($lock) {
-    flock($in_fh, LOCK_UN)
-      or $self->_log("LOCK_UN failed for $path: $!");
-  }
+  flock($in_fh, LOCK_UN) if $lock;
 
   close($in_fh)
     or $self->_log("close failed for $path: $!");
@@ -322,24 +322,21 @@ sub _write_serialized {
   utf8::decode($data);
 
   open(my $out_fh, '>>', $path)
-    or $self->_log("open failed for $path: $!") and return;
+    or confess "open failed for $path: $!";
 
   if ($lock) {
     flock($out_fh, LOCK_EX | LOCK_NB)
-      or $self->_log("LOCK_EX failed for $path: $!") and return;
+      or confess "LOCK_EX failed for $path: $!";
   }
 
   seek($out_fh, 0, 0)
-    or $self->_log("seek failed for $path: $!") and return;
+    or confess "seek failed for $path: $!";
   truncate($out_fh, 0)
-    or $self->_log("truncate failed for $path") and return;
+    or confess "truncate failed for $path";
 
   print $out_fh $data;
 
-  if ($lock) {
-    flock($out_fh, LOCK_UN)
-      or $self->_log("LOCK_UN failed for $path: $!");
-  }
+  flock($out_fh, LOCK_UN) if $lock;
 
   close($out_fh)
     or $self->_log("close failed for $path: $!");
