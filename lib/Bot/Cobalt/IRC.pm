@@ -71,6 +71,7 @@ has 'flood' => (
   },
 );
 
+## Outgoing IRC traffic is handled by UserEvents role:
 with 'Bot::Cobalt::IRC::Role::UserEvents';
 
 sub Cobalt_register {
@@ -78,7 +79,7 @@ sub Cobalt_register {
 
   ## register for events
   $core->plugin_register($self, 'SERVER',
-    [ 'all' ],
+    'all',
   );
 
   broadcast( 'initialize_irc' );
@@ -552,11 +553,13 @@ sub irc_public {
   ## Bot_public_msg / Bot_public_cmd_$cmd  
   ## FloodChk cmds and highlights
   if (my $cmd = $msg_obj->cmd) {
-    return if $floodchk->($context, $src);
-    broadcast( 'public_cmd_'.$cmd, $msg_obj);
+    $floodchk->($context, $src) ?
+      return
+      : broadcast( 'public_cmd_'.$cmd, $msg_obj);
   } elsif ($msg_obj->highlight) {
-    return if $floodchk->($context, $src);
-    broadcast( 'public_msg', $msg_obj);    
+    $floodchk->($context, $src) ?
+      return
+      : broadcast( 'public_msg', $msg_obj);
   } else {
     ## In the interests of keeping memory usage low on a 
     ## large channel, we don't flood-check every incoming public 
