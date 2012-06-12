@@ -33,10 +33,11 @@ has 'core'  => (
 ## May have a timer ID specified at construction for use by 
 ## timer pool managers; if not, creating IDs is up to them.
 ## (See ::Core::Role::Timers)
-## This can be any value, but most often a string or number.
 has 'id' => ( 
   lazy => 1, 
-  is  => 'rw', 
+
+  is  => 'rw',
+  isa => Str,
 
   predicate => 'has_id' 
 );
@@ -45,6 +46,7 @@ has 'id' => (
 ## (or 0 if none is ever set)
 has 'at'    => ( 
   lazy => 1, 
+
   is  => 'rw', 
   isa => Num,
 
@@ -53,6 +55,7 @@ has 'at'    => (
 
 has 'delay' => ( 
   lazy => 1,
+
   is  => 'rw', 
   isa => Num, 
 
@@ -68,15 +71,19 @@ has 'delay' => (
 );
 
 has 'event' => ( 
+  lazy => 1,
+
   is  => 'rw', 
-  isa => Str, lazy => 1,
+  isa => Str, 
   
   predicate => 'has_event',
 );
 
 has 'args'  => ( 
+  lazy => 1,
+
   is  => 'rw', 
-  isa => ArrayRef, lazy => 1,
+  isa => ArrayRef, 
   
   default => sub { [] },
 );
@@ -90,6 +97,7 @@ has 'alias' => (
 
 has 'context' => ( 
   lazy => 1,
+
   is  => 'rw', 
   isa => Str, 
 
@@ -100,6 +108,7 @@ has 'context' => (
 
 has 'text'    => (
   lazy => 1, 
+
   is  => 'rw', 
   isa => Str, 
 
@@ -133,8 +142,7 @@ has 'type'  => (
   },
   
   coerce => sub {
-    $_[0] = lc($_[0]);
-    $_[0] = 'msg' if $_[0] ~~ [qw/message privmsg/];
+    $_[0] =~ /message|privmsg/i ? 'msg' : lc($_[0]) ;
   },
 ); 
 
