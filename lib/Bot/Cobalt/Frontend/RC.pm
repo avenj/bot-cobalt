@@ -70,12 +70,63 @@ sub rc_write {
     ETC  => File::Spec->catdir( $basepath, 'etc' ),
     VAR  => File::Spec->catdir( $basepath, 'var' ),
   };
-  
-  return $basepath if Bot::Cobalt::Serializer->new->writefile(
-    $rcfile, $rc_h
-  );
-  
-  croak "rc_write() failure in call to Serializer"
+
+  ## Return $basepath on success, otherwise croak out.
+  try {
+    Bot::Cobalt::Serializer->new->writefile(
+      $rcfile, $rc_h
+    );
+    $basepath
+  } catch {
+    croak "rc_write() failure in call to Serializer; $rcfile $_"
+  }
 }
 
-1;
+1
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Frontend::RC - Read and write instance RC files
+
+=head1 SYNOPSIS
+
+  use Bot::Cobalt::Frontend::RC qw/ rc_read rc_write /;
+  
+  my ($base, $etc, $var) = rc_read($rcfile_path);
+  
+  rc_write($rcfile_path, $base_path);
+
+=head1 DESCRIPTION
+
+L<Bot::Cobalt> RC files are small per-instance YAML configuration files 
+used by the default frontends to determine the location of configuration 
+('etc') and dynamic data ('var') directories.
+
+An example RC file might look like:
+
+  ---
+  BASE: /home/cobalt/cobalt2
+  ETC: /home/cobalt/cobalt2/etc
+  VAR: /home/cobalt/cobalt2/var
+
+=head2 rc_read
+
+rc_read() takes the path to a preexisting RC file and returns a list of 
+three elements; the base directory path, 'etc' path, and 'var' path, 
+respectively.
+
+=head2 rc_write
+
+rc_write() takes the path to the destination RC file and a base 
+directory path from which 'etc' and 'var' directories are constructed.
+
+Returns the actual (parsed) base path on success, croaks on failure.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
