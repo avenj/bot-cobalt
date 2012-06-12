@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Games::Roulette;
-our $VERSION = '0.008_01';
+our $VERSION = '0.008_02';
 
 use 5.10.1;
 use strict;

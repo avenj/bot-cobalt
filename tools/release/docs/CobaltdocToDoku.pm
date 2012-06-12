@@ -1,5 +1,5 @@
 package CobaltdocToDoku;
-our $VERSION = '0.008_01';
+our $VERSION = '0.008_02';
 
 ## a Pod::Simple::Wiki class to create DokuWiki txt for cobalt2's POD
 ## does cobalt2-specific stuff and a bit of a mess, hence not on CPAN

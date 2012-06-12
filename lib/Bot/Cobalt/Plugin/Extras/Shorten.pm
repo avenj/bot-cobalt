@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Shorten;
-our $VERSION = '0.008_01';
+our $VERSION = '0.008_02';
 
 use 5.10.1;
 use strict;
