@@ -63,23 +63,17 @@ our %COLORS = (
   LIGHT_GREY  => "\x0315",
 );
 
+my %default_fmt_vars;
+for my $color (keys %COLORS) {
+  my $fmtvar = 'C_'.$color;
+  $default_fmt_vars{$fmtvar} = $COLORS{$color};
+}
 
 ## String formatting, usually for langsets:
 sub rplprintf {
   my $string = shift;
   return '' unless $string;
-  
-  my $vars = {};
-  
-  if (@_ > 1) {
-    my %args = @_;
-    $vars->{$_} = delete $args{$_} for keys %args;
-  } else {
-    $vars = ref $_[0] eq 'HASH' ?
-            $_[0]
-            : croak "rplprintf() expects a hash" ;
-  }
-  
+
   ## rplprintf( $string, $vars )
   ## returns empty string if no string is specified.
   ##
@@ -90,26 +84,33 @@ sub rplprintf {
   ## $vars should be a hash keyed by variable, f.ex:
   ##   'user' => $username,
   ##   'err'  => $error,
-
-  ## %C_* colors / formats :
-  for my $color (keys %COLORS) {
-    my $fmtvar = 'C_'.$color;
-    $vars->{$fmtvar} = $COLORS{$color};
+  
+  my %vars = %default_fmt_vars;
+  
+  if (@_ > 1) {
+    my %args = @_;
+    $vars{$_} = delete $args{$_} for keys %args;
+  } else {
+    if (ref $_[0] eq 'HASH') {
+      $vars{$_} = $_[0]->{$_} for keys %{$_[0]}
+    } else {
+      croak "rplprintf() expects a hash"
+    }
   }
 
   my $repl = sub {
     ## _repl($1, $2, $vars)
-    my ($orig, $match, $vars) = @_;
-    return $orig unless ref $vars and defined $vars->{$match};
-    my $replace = $vars->{$match};
+    my ($orig, $match, $varref) = @_;
+    return $orig unless defined $varref->{$match};
+    my $replace = $varref->{$match};
     return $replace
   };
 
   my $regex = qr/(%([^\s%]+)%?)/;
 
-  $string =~ s/$regex/$repl->($1, $2, $vars)/ge;
+  $string =~ s/$regex/$repl->($1, $2, \%vars)/ge;
 
-  return $string  
+  $string
 }
 
 
@@ -123,6 +124,7 @@ sub glob_grep {
   my @array = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_ ;
 
   my $re = glob_to_re($glob);
+  
   grep { m/$re/ } @array
 }
 
@@ -132,7 +134,8 @@ sub glob_to_re {
     unless defined $glob;
 
   my $re = glob_to_re_str($glob);
-  return qr/$re/
+  
+  qr/$re/
 }
 
 sub glob_to_re_str {
@@ -201,7 +204,7 @@ sub glob_to_re_str {
     $in_esc = 0;
   }
 
-  return $re
+  $re
 }
 
 
@@ -267,7 +270,7 @@ sub timestr_to_secs {
     }
   }
 
-  return $secs
+  $secs
 }
 
 sub _time_breakdown {
@@ -291,7 +294,7 @@ sub secs_to_timestr {
   $str .= $mins  .'m' if $mins;  
   $str .= $sec   .'s' if $sec;
 
-  return $str  
+  $str  
 }
 
 sub secs_to_str {
