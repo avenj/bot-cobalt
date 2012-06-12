@@ -35,6 +35,8 @@ sub Bot_public_cmd_server {
     return PLUGIN_EAT_ALL
   }
   
+  logger->debug("Dispatching $cmd for $src_nick");
+  
   $self->$meth($msg)
 }
 
@@ -74,6 +76,8 @@ sub _cmd_connect {
       "Could not locate any network configuration."
     );
     
+    logger->error("_cmd_connect could not find an IRC network cfg");
+    
     return PLUGIN_EAT_ALL
   }
   
@@ -99,30 +103,44 @@ sub _cmd_connect {
     return PLUGIN_EAT_ALL
   }
   
-  ## Do we alraedy have this context?
+  ## Do we already have this context?
   if (my $ctxt_obj = irc_context($target_ctxt) ) {
-  
+
     if ($ctxt_obj->connected) {
       broadcast( 'message',
         $msg->context,
         $msg->channel,
         "Attempting reconnect for context $target_ctxt"
       );
+    }
+
+    logger->info("Attempting reconnect for context $target_ctxt");
+
+    broadcast( 'ircplug_disconnect', $target_ctxt );
+    broadcast( 'ircplug_connect', $target_ctxt );
       
-      ## FIXME
-      ## Issue affirmative message
-      ## Clean up this context and try to reconnect
-      ## Set a timer to run retries
-      ##  (ircplug_timer_serv_retry)
+    broadcast( 'ircplug_timer_serv_retry',
+        {
+          context => $target_ctxt,
+          delay   => 300,
+        },
+      );
       
-      return PLUGIN_EAT_ALL
-    }    
+    return PLUGIN_EAT_ALL
   }
 
   broadcast( 'message',
     $msg->context,
     $msg->channel,
     "Issuing connect for context $target_ctxt"
+  );
+  
+  my $src_nick = $msg->src_nick;
+  my $auth_usr = core->auth->user($msg->context, $src_nick);
+  
+  logger->info(
+   "Issuing connect for context $target_ctxt",
+   "(Issued by $src_nick [$auth_usr])"
   );
     
   broadcast( 'ircplug_connect', $target_ctxt );
@@ -171,6 +189,14 @@ sub _cmd_disconnect {
     $msg->channel,
     "Attempting to disconnect from $target_ctxt"
   );
+
+  my $src_nick = $msg->src_nick;
+  my $auth_usr = core->auth->user($msg->context, $src_nick);
+  
+  logger->info(
+   "Issuing connect for context $target_ctxt",
+   "(Issued by $src_nick [$auth_usr])"
+  );
   
   broadcast( 'ircplug_disconnect', $target_ctxt );
   
@@ -181,9 +207,12 @@ sub _cmd_disconnect {
 sub Bot_ircplug_timer_serv_retry {
   my ($self, $core) = splice @_, 0, 2;
   my $hints = ${ $_[0] };
-  
+    
   my $context = $hints->{context};
   my $delay   = $hints->{delay} || 300;
+
+  logger->debug("ircplug_timer_serv_retry called for $context");
+
   my $ctxt_obj;
   unless ($ctxt_obj = irc_context($context) && $ctxt_obj->connected) {
     logger->info("Attempting reconnect to $context . . .");
