@@ -242,9 +242,11 @@ sub Bot_mcpan_plug_resp_recv {
     
     when ("tests") {
       my %tests = %{ 
-        $d_hash->{tests}
-        || { pass => 0, fail => 0, na => 0, unknown => 0 }
+        keys %{$d_hash->{tests}||{}} ? 
+          $d_hash->{tests}
+          : { pass => 0, fail => 0, na => 0, unknown => 0 }
       };
+
       $resp = sprintf("%s: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
         $prefix, $dist,
         $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
