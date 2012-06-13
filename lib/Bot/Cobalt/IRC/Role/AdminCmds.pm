@@ -93,7 +93,7 @@ sub _cmd_connect {
     return PLUGIN_EAT_ALL
   }
   
-  unless ($pcfg->{$target_ctxt}) {
+  unless ($pcfg->{Networks}->{$target_ctxt}) {
     broadcast( 'message',
       $msg->context,
       $msg->channel,
