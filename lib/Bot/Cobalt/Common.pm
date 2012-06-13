@@ -240,6 +240,4 @@ See L<Bot::Cobalt::Utils> for details.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

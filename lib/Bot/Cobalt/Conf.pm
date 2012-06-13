@@ -248,6 +248,4 @@ B<Config> directives. Keyed on plugin alias.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

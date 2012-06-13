@@ -204,6 +204,4 @@ Mimics B<darkbot6> behavior, but with saner time string grammar.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

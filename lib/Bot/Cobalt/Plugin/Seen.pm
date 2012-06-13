@@ -424,6 +424,4 @@ The path to the SeenDB can be specified via C<plugins.conf>:
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

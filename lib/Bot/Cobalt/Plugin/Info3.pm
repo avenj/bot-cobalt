@@ -1069,6 +1069,4 @@ L<Bot::Cobalt::Plugin::RDB> for details.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

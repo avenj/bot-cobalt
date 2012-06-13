@@ -333,6 +333,4 @@ event is broadcast. Otherwise the timer will warn and return.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

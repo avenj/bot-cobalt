@@ -477,6 +477,4 @@ Frontends have to worry about fork()/exec() on their own.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

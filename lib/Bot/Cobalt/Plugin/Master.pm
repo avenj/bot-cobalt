@@ -283,6 +283,4 @@ Levels for each command are specified in C<plugins.conf>:
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

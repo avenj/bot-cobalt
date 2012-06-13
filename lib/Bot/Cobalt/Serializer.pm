@@ -527,7 +527,4 @@ L<XML::Dumper>
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
-
 =cut

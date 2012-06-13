@@ -308,6 +308,4 @@ will be one of I<core>, I<channels>, I<langset>, or I<plugins>.
 
 Jon Portnoy <avenj@cobaltirc.org>
 
-L<http://www.cobaltirc.org>
-
 =cut

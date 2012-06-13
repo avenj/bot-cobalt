@@ -588,6 +588,4 @@ boolean false.
 
 Jon Portnoy (avenj)
 
-L<http://www.cobaltirc.org>
-
 =cut
