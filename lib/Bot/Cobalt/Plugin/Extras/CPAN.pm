@@ -236,12 +236,15 @@ sub Bot_mcpan_plug_resp_recv {
     
     when ("license") {
       my $name = $d_hash->{name};
-      my $lic  = join ' ', @{ $d_hash->{license} };
+      my $lic  = join ' ', @{ $d_hash->{license}||['undef'] };
       $resp = "$prefix: License terms for $name:  $lic";
     }
     
     when ("tests") {
-      my %tests = %{$d_hash->{tests}};
+      my %tests = %{ 
+        $d_hash->{tests}
+        || { pass => 0, fail => 0, na => 0, unknown => 0 }
+      };
       $resp = sprintf("%s: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
         $prefix, $dist,
         $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
