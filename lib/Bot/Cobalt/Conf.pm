@@ -92,7 +92,32 @@ sub _read_core_cobalt_conf {
 
 sub _read_core_channels_conf {
   my ($self) = @_;
-  $self->_read_conf("channels.conf");
+  
+  my $thawed = $self->_read_conf("channels.conf");
+  
+  warn "Conf; channels.conf; did not find configured channels for Main\n"
+    unless ref $thawed->{Main} eq 'HASH'
+    and keys %{ $thawed->{Main} };
+
+  CONTEXT: for my $context (keys %$thawed) {
+    my $ctxt_cfg = $thawed->{$context};
+
+    unless (ref $ctxt_cfg eq 'HASH') {
+      confess 
+        "Conf; channels.conf; cfg for context $context is not a hash";
+    }
+
+    CHAN: for my $channel (keys %$ctxt_cfg) {
+      unless (ref $ctxt_cfg->{$channel} eq 'HASH') {
+        warn "Conf; channels.conf; ",
+          "cfg for $channel on $context is not a hash\n";
+        $ctxt_cfg->{$channel} = {};
+      }
+    } ## CHAN
+  
+  }
+
+  return $thawed
 }
 
 sub _read_core_plugins_conf {
