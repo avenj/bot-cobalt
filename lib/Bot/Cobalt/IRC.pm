@@ -157,14 +157,17 @@ sub Bot_ircplug_connect {
   ## PoCo::IRC syndicator to the Bot::Cobalt::Core pipeline.
 
   if ($core->Servers->{$context}) {
-    if ($core->Servers->{$context}->connected) {
-      logger->error("Connect issued for connected context $context");
-      return PLUGIN_EAT_ALL
+    if ( $core->Servers->{$context}->has_irc ) {
+      $core->Servers->{$context}->irc->call('shutdown',
+        'Reconnecting'
+      );
+      
+      $core->Servers->{$context}->clear_irc;
     }
 
-    ## FIXME
-    ##  reconnecting to existing defined context, perhaps
-    ##  clear old IRC object(s)
+    ## Just in case ...
+    $core->auth->clear($context);
+    $core->ignore->clear($context);
   }
 
   logger->debug("ircplug_connect issued for $context");
