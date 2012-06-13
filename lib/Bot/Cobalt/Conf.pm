@@ -41,14 +41,12 @@ sub _read_conf {
   ## deserialize a YAML conf
   my ($self, $relative_to_etc) = @_;
 
-  unless ($relative_to_etc) {
-    carp "no path specified in _read_conf?";
-    return
-  }
+  confess "no path specified in _read_conf"
+    unless defined $relative_to_etc;
 
   my $etc = $self->etc;
 
-  warn "_read_conf; using etcdir $etc" if $self->debug;
+  warn "_read_conf; using etcdir $etc\n" if $self->debug;
 
   unless (-e $self->etc) {
     carp "cannot find etcdir: $self->etc";
@@ -60,7 +58,7 @@ sub _read_conf {
     File::Spec->splitpath($relative_to_etc)
   );
   
-  warn "_read_conf; reading conf path $path" if $self->debug;
+  warn "_read_conf; reading conf path $path\n" if $self->debug;
 
   unless (-e $path) {
     carp "cannot find $path at $self->etc";
@@ -87,7 +85,16 @@ sub _read_conf {
 
 sub _read_core_cobalt_conf {
   my ($self) = @_;
-  $self->_read_conf("cobalt.conf");
+  my $thawed = $self->_read_conf("cobalt.conf");
+  
+  confess "Conf; cobalt.conf; no IRC configuration found"
+    unless ref $thawed->{IRC} eq 'HASH'
+    and keys %{ $thawed->{IRC} };
+
+  warn "Conf; cobalt.conf; IRC->ServerAddr not specified\n"
+    unless defined $thawed->{IRC}->{ServerAddr};
+  
+  return $thawed
 }
 
 sub _read_core_channels_conf {
@@ -128,8 +135,9 @@ sub _read_core_plugins_conf {
 sub _read_plugin_conf {
   ## read a conf for a specific plugin
   ## must be defined in plugins.conf when this method is called
-  ## IMPORTANT: re-reads plugins.conf per call unless specified
   my ($self, $plugin, $plugins_conf) = @_;
+
+  ## re-reads plugins.conf per call unless specified:
   $plugins_conf = ref $plugins_conf eq 'HASH' ?
                   $plugins_conf
                   : $self->_read_core_plugins_conf ;
