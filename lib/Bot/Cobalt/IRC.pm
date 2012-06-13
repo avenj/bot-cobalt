@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC;
-our $VERSION = '0.008_02';
+our $VERSION = '0.008_03';
 
 use 5.10.1;
 use strictures 1;
@@ -954,6 +954,9 @@ __END__
 Bot::Cobalt::IRC -- Bot::Cobalt IRC bridge
 
 =head1 DESCRIPTION
+
+For a description of the commands provided by the IRC bridge, see 
+L<Bot::Cobalt::IRC::Role::AdminCmds>.
 
 This is the core plugin providing IRC functionality to 
 L<Bot::Cobalt>; incoming and outgoing IRC activity 

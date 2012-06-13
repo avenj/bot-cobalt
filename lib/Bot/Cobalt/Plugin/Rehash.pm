@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Rehash;
-our $VERSION = '0.008_02';
+our $VERSION = '0.008_03';
 
 ## HANDLES AND EATS:
 ##  !rehash

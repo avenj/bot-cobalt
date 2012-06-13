@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Role::AdminCmds;
-our $VERSION = '0.008_02';
+our $VERSION = '0.008_03';
 
 use 5.12.1;
 use Moo::Role;
@@ -230,5 +230,46 @@ sub Bot_ircplug_timer_serv_retry {
   return PLUGIN_EAT_ALL
 }
 
-1
-## FIXME POD
+1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::IRC::Role::AdminCmds - IRC-specific admin commands
+
+=head1 SYNOPSIS
+
+  ## Check current context name:
+  !server current
+
+  ## List contexts:
+  !server list  
+
+  ## Issue a (re)connect:
+  !server connect Main
+  
+  ## Issue a disconnect:
+  !server disconnect Alpha
+
+=head1 DESCRIPTION
+
+This is a L<Moo::Role> consumed by the default IRC plugin 
+(L<Bot::Cobalt::IRC>). It provides basic administrative commands 
+specific to IRC connection control.
+
+As a failsafe you cannot disconnect from all contexts. See the C<die> 
+command provided by L<Bot::Cobalt::Plugin::Master> instead.
+However, Issuing a connect for a currently-connected context will 
+attempt a reconnection (note that it's possible to 'lose' bots this way, 
+particularly if the configuration or the remote server has changed in 
+some way).
+
+See the L</SYNOPSIS> for basic usage information.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut

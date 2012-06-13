@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Role::EasyAccessors;
-our $VERSION = '0.008_02';
+our $VERSION = '0.008_03';
 
 use strictures 1;
 use Moo::Role;
