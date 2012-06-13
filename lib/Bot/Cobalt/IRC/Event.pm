@@ -7,9 +7,19 @@ use 5.10.1;
 use Bot::Cobalt::Common;
 use Moo;
 
-has 'context' => ( is => 'rw', isa => Str, required => 1 );
+has 'context' => ( 
+  required => 1 
 
-has 'src'     => ( is => 'rw', isa => Str, required => 1, 
+  is  => 'rw', 
+  isa => Str,
+);
+
+has 'src'     => (
+  required => 1, 
+
+  is  => 'rw', 
+  isa => Str, 
+
   trigger => sub {
     ## If 'src' changes, reset nick/user/host as-needed.
     my ($self, $value) = @_;

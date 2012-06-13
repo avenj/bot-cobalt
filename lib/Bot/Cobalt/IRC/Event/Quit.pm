@@ -7,11 +7,21 @@ use Bot::Cobalt::Common qw/:types/;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'reason' => ( is => 'rw', isa => Str, lazy => 1, 
+has 'reason' => ( 
+  lazy => 1, 
+
+  is  => 'rw', 
+  isa => Str, 
+
   default => sub {''},
 );
 
-has 'common' => ( is => 'rw', isa => ArrayRef, lazy => 1,
+has 'common' => ( 
+  lazy => 1,
+
+  is  => 'rw', 
+  isa => ArrayRef,
+
   default => sub {[]},
 );
 

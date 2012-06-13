@@ -18,6 +18,7 @@ has 'target' => ( is => 'rw', isa => Str, required => 1 );
 
 has 'is_umode' => ( 
   lazy => 1,
+
   is  => 'ro', 
   isa => Bool, 
 
@@ -32,7 +33,7 @@ has 'is_umode' => (
 
 has 'channel' => ( 
   lazy => 1,
-  is  => 'rw', 
+  is  => 'rw',
 
   default => sub {
     my ($self) = @_;

@@ -9,12 +9,14 @@ extends 'Bot::Cobalt::IRC::Event::Channel';
 
 has 'topic' => (
   required => 1,
+
 	is  => 'rw',
   isa => Str, 
 );
 
 has 'stripped' => (
   lazy => 1,
+
   is  => 'ro', 
   isa => Str, 
 
