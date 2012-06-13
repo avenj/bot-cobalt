@@ -319,7 +319,7 @@ Bot::Cobalt::Serializer - Simple serialization wrapper
 
   use Bot::Cobalt::Serializer;
 
-  ## Spawn a YAML (1.1 handler:
+  ## Spawn a YAML (1.1) handler:
   my $serializer = Bot::Cobalt::Serializer->new;
 
   ## Spawn a JSON handler:

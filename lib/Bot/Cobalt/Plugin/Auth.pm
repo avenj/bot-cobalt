@@ -1261,7 +1261,7 @@ sub _read_access_list {
     return { }
   }
 
-  my $serializer = Bot::Cobalt::Serializer->new( Logger => core->log );
+  my $serializer = Bot::Cobalt::Serializer->new();
   
   my $accesslist;
   try {
@@ -1298,7 +1298,7 @@ sub _write_access_list {
   ## don't need to write empty access lists to disk ...
   return unless scalar keys %hash;
 
-  my $serializer = Bot::Cobalt::Serializer->new( Logger => core->log );
+  my $serializer = Bot::Cobalt::Serializer->new();
   
   try {
     $serializer->writefile($authdb, \%hash);

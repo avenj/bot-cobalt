@@ -47,9 +47,7 @@ sub load_langset {  ## load_langset(language)
   $self->log->info("Loading language set: $lang")
     if $self->can('log');
 
-  my %opts;
-  $opts{Logger} = $self->log if $self->can('log');
-  my $serializer = Bot::Cobalt::Serializer->new(%opts);
+  my $serializer = Bot::Cobalt::Serializer->new();
   
   my $langset = try {
     $serializer->readfile($path)
