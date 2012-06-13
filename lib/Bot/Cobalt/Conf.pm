@@ -129,7 +129,43 @@ sub _read_core_channels_conf {
 
 sub _read_core_plugins_conf {
   my ($self) = @_;
-  $self->_read_conf("plugins.conf");
+  my $thawed = $self->_read_conf("plugins.conf");
+  
+  my @accepted_keys = qw/
+    Config
+    Module
+    NoAutoLoad
+    Opts
+    Priority
+  /;
+  
+  warn "Conf; plugins.conf; no plugins found\n"
+    unless keys %$thawed;
+  
+  for my $plugin (keys %$thawed) {
+    my $this_plug_cf = $thawed->{$plugin};
+    
+    confess "Conf; plugins.conf; cfg for $plugin is not a hash"
+      unless ref $this_plug_cf eq 'HASH';
+    
+    confess "Conf; plugins.conf; no Module directive for $plugin"
+      unless $this_plug_cf->{Module};
+    
+    confess "Conf; plugins.conf; $plugin Priority must be numeric"
+      if defined $this_plug_cf->{Priority}
+      and $this_plug_cf->{Priority} !~ /^\d+$/;
+
+    confess "Conf; plugins.conf; $plugin Opts must be a hash"
+      if defined $this_plug_cf->{Opts}
+      and ref $this_plug_cf->{Opts} ne 'HASH';
+
+    for my $directive (keys %$this_plug_cf) {
+      warn "Conf; plugins.conf; unknown directive $directive\n"
+        unless $directive ~~ @accepted_keys;
+    }
+  }
+  
+  return $thawed
 }
 
 sub _read_plugin_conf {
