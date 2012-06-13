@@ -31,13 +31,14 @@ sub Cobalt_register {
 
   $self->{karma_regex} = qr/^(\S+)(\+{2}|\-{2})$/;
 
-  $core->plugin_register( $self, 'SERVER',
-    [
-      'public_msg',
-      'public_cmd_karma',
-      'public_cmd_resetkarma',
-      'karmaplug_sync_db',
-    ],
+  register( $self, 'SERVER',
+    qw/
+      public_msg
+      public_cmd_karma
+      public_cmd_resetkarma
+      
+      karmaplug_sync_db
+    /
   );
 
   $core->timer_set( 5,
@@ -45,15 +46,20 @@ sub Cobalt_register {
     'KARMAPLUG_SYNC_DB',
   );
 
-  $core->log->info("Registered");
+  logger->info("Registered");
 
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistering");
+
+  logger->debug("Calling _sync");
+
   $self->_sync();
+  
+  logger->info("Unregistered");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -157,15 +163,15 @@ sub Bot_public_cmd_resetkarma {
   $karma_for = decode_irc($karma_for);
 
   unless ( $self->_get($karma_for) ) {
-    $core->send_event( 'message', $context, $channel,
-      "That user has no karma as it is.",
+    broadcast( 'message', $context, $channel,
+      "That user has no karma to clear.",
     );
     return PLUGIN_EAT_ALL
   }
   
   $self->{Cached}->{$karma_for} = 0;
   
-  $core->send_event( 'message', $context, $channel,
+  broadcast( 'message', $context, $channel,
     "Cleared karma for $karma_for",
   );
   
@@ -190,7 +196,7 @@ sub Bot_public_cmd_karma {
     $resp = "$karma_for currently has no karma, good or bad.";
   }
 
-  $core->send_event( 'message', $context, $channel, $resp );
+  broadcast( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
 }

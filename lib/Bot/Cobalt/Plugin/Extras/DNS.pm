@@ -28,18 +28,25 @@ sub Cobalt_register {
     ],
   );
 
-  $core->plugin_register( $self, 'SERVER',
-    [ 'public_cmd_dns', 'public_cmd_nslookup' ],
+  register( $self, 'SERVER', 
+    qw/
+      public_cmd_dns
+      public_cmd_nslookup
+    /
   );
   
-  $core->log->info("Loaded: dns nslookup");
+  logger->info("Loaded: dns nslookup");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   $poe_kernel->alias_remove( 'p_'.$core->get_plugin_alias($self) );
-  $core->log->info("Unloaded");
+
+  logger->info("Unloaded");
+
   return PLUGIN_EAT_NONE  
 }
 
@@ -60,10 +67,13 @@ sub Bot_public_cmd_dns {
 
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+
   $kernel->alias_set( 'p_'. core()->get_plugin_alias($self) );
+
   $self->{Resolver} = POE::Component::Client::DNS->spawn(
     Alias => 'named'. core()->get_plugin_alias($self),
   );
+
   logger->debug("Resolver session spawned");
 }
 
@@ -125,6 +135,7 @@ sub _run_query {
   $type = 'PTR' if ip_is_ipv4($host) or ip_is_ipv6($host);
   
   logger->debug("issuing dns request: $host");
+
   $poe_kernel->post( 'p_'. core()->get_plugin_alias($self), 
     'dns_issue_query',
     $context, $channel, $host, $type
@@ -141,7 +152,9 @@ sub dns_issue_query {
     type  => $type,
     context => { Context => $context, Channel => $channel },
   );
+
   POE::Kernel->yield('dns_resp_recv', $resp) if $resp;
+
   return 1
 }
 

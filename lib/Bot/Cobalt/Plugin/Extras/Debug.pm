@@ -26,6 +26,7 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
+
   my @events = map { 'public_cmd_'.$_ } 
     qw/
       dumpcfg 
@@ -34,10 +35,13 @@ sub Cobalt_register {
       dumpservers
       dumplangset
     / ;
-  $core->plugin_register( $self, 'SERVER',
+
+  register( $self, 'SERVER',
     [ @events ] 
   );
+
   $core->log->info("Loaded DEBUG");
+
   $core->log->warn(
     "THIS PLUGIN IS FOR DEVELOPMENT PURPOSES",
     "You do not want to run this plugin on a live bot;",

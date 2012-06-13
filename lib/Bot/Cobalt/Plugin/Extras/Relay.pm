@@ -114,18 +114,23 @@ sub Bot_relay_push_join_queue {
 
   SERV: for my $context (keys %$queue) {
     next SERV unless scalar keys %{ $self->{Relays}->{$context} };
+
     CHAN: for my $channel (keys %{ $queue->{$context} }) {
       my @relays = $self->get_relays($context, $channel);
       next CHAN unless @relays;
+
       my @pending = @{ $queue->{$context}->{$channel} };
       my $str = "[joined: ${context}:${channel}] ";
+
       if (@pending > 5) {
         $str .= join ', ', splice @pending, 0, 5;
+
         my $remaining = scalar @pending;
         $str .= " ($remaining more, truncated)";
       } else {
         $str .= join ', ', @pending;
       }      
+
       ## clear queue
       $queue->{$context}->{$channel} = [];
       
@@ -167,10 +172,13 @@ sub _push_left_queue {
     CHAN: for my $channel (keys %{ $queue->{$context} }) {
       my @relays = $self->get_relays($context, $channel);
       next CHAN unless @relays;
+
       my @pending = @{ $queue->{$context}->{$channel} };
       my $str = "[left: ${context}:${channel}] ";
+
       if (@pending > 5) {
         $str .= join ', ', splice @pending, 0, 5;
+
         my $remaining = scalar @pending;
         $str .= " ($remaining more, truncated)";
       } else {
@@ -179,6 +187,7 @@ sub _push_left_queue {
       
       RELAY: for my $relay (@relays) {
         my ($to_context, $to_channel) = @$relay;
+
         broadcast( 'message',
           $to_context,
           $to_channel,
@@ -336,8 +345,10 @@ sub Bot_user_quit {
   for my $channel (@$common) {
     my @relays = $self->get_relays($context, $channel);
     next unless @relays;
+
     RELAY: for my $relay (@relays) {
       my ($to_context, $to_channel) = @$relay;
+
       push(@{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
         unless 
         $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
@@ -365,10 +376,12 @@ sub Bot_nick_changed {
   for my $channel (@$common) {
     my @relays = $self->get_relays($context, $channel);
     next unless @relays;
+
     RELAY: for my $relay (@relays) {
       my ($to_context, $to_channel) = @$relay;
       my $str = 
         "[relay: $channel] $old_nick changed nickname to $src_nick";
+
       broadcast( 'message', $to_context, $to_channel, $str );
     }
   }
@@ -498,7 +511,7 @@ An example relay.conf:
         Context: Main
         Channel: '#otw'
       To:
-        Context: Paradox
+        Context: AlphaChat
         Channel: '#perl'
 
 See etc/plugins/relay.conf in the L<Bot::Cobalt> distribution.
