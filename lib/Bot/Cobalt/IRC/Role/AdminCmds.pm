@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Role::AdminCmds;
-our $VERSION = '0.008_03';
+our $VERSION = '0.008';
 
 use 5.12.1;
 use Moo::Role;
@@ -44,6 +44,9 @@ sub _cmd_list {
   my ($self, $msg) = @_;
   
   my @contexts = keys %{ core->Servers };
+  
+  my $pcfg = plugin_cfg($self);
+  ## FIXME look for contexts that are conf'd but not active
   
   broadcast( 'message',
     $msg->context,

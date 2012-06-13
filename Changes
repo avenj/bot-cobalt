@@ -1,5 +1,36 @@
 # Bot::Cobalt Changes
 
+* 0.008  (13 Jun 2012)
+
+  Core configuration accessors no longer return cloned copies of config 
+  hashes. This behavior was intended to make it harder for plugins to 
+  break core config unintentionally, but it was also unintuitive 
+  enough to trip myself up from time to time ;-)
+  Return actual references instead.
+  
+  Bot::Cobalt::Serializer:
+    - Drop Logger/LogMethod, always carp/croak/confess
+    - Throw proper exceptions on most errors
+    - Support writefile() lock retries and timeout
+
+  Bot::Cobalt::IRC refactor and fixes:
+    - ircplug_connect & ircplug_disconnect handlers
+    - '!server' command handler in IRC::Role::AdminCmds    
+    - Move outgoing-to-IRC handlers to IRC::Role::UserEvents
+    - Improved disconnect cleanup
+    - Improved warnings/logging
+
+  Bot::Cobalt::Utils:
+    - support list-style arguments in rplprintf()
+    - build %C_* vars for rplprintf at load-time rather than when called 
+  
+  Plugin::Master; required access levels should've come from PluginOpts
+  (rather than Opts, as this plugin doesn't normally have an external cfg)
+
+  Die with stack traces on most errors (confess rather than croak)
+
+  Various syntax / POD / test cleanups.
+
 * 0.007  (06 Jun 2012)
   
   Fix usage help message in Plugin::Extras::CPAN.
