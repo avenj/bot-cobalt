@@ -8,7 +8,7 @@ use Bot::Cobalt::Common;
 use Moo;
 
 has 'context' => ( 
-  required => 1 
+  required => 1,
 
   is  => 'rw', 
   isa => Str,

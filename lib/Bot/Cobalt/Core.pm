@@ -457,7 +457,7 @@ A configuration hash is typically created by L<Bot::Cobalt::Conf>:
 
   ## Instance a Bot::Cobalt::Core singleton
   ## Further instance() calls will return the singleton
-  Bot::Cobalt::Core->instace(
+  Bot::Cobalt::Core->instance(
     cfg => $cfg_hash,
     var => $path_to_var_dir,
     

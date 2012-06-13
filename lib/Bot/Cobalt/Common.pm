@@ -20,12 +20,16 @@ use Bot::Cobalt::Utils qw/ :ALL /;
 
 use IRC::Utils qw/ 
   decode_irc
+
   lc_irc eq_irc uc_irc 
+
   normalize_mask matches_mask
+
   strip_color strip_formatting
+
   parse_user
-  is_valid_nick_name
-  is_valid_chan_name
+
+  is_valid_nick_name is_valid_chan_name
 /;
 
 use Object::Pluggable::Constants qw/ 

@@ -52,13 +52,15 @@ sub fetch {
   my ($self, $ckey, $match) = @_;
   
   return unless $ckey and $match;
+
   return unless $self->{Cache}->{$ckey} 
          and $self->{Cache}->{$ckey}->{$match};
 
   my $ref = $self->{Cache}->{$ckey}->{$match};
 
-  wantarray ? return @{ $ref->{Results} } 
-            : return $ref->{Results}  ;
+  return wantarray ? 
+      @{ $ref->{Results} } 
+    : $ref->{Results}
 }
 
 
@@ -78,7 +80,7 @@ sub invalidate {
   return delete $self->{Cache}->{$ckey}->{$match}
     if defined $match;
 
-  return delete $self->{Cache}->{$ckey};
+  return delete $self->{Cache}->{$ckey}
 }
 
 sub MaxKeys {
@@ -94,6 +96,7 @@ sub _shrink {
   return unless $ckey and ref $self->{Cache}->{$ckey};
 
   my $cacheref = $self->{Cache}->{$ckey};
+
   return unless scalar keys %$cacheref > $self->MaxKeys;
 
   my @cached = sort { 

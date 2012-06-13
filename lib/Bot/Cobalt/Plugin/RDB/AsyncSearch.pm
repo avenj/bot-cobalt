@@ -77,7 +77,9 @@ sub _stop {
 
 sub shutdown {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL];
+
   $kernel->call( $_[SESSION], 'reap_all' );
+
   $kernel->refcount_decrement( 
     $_[SESSION]->ID(), 'Waiting for requests'
   );
@@ -216,7 +218,9 @@ sub worker_sigchld {
   my $pid = $_[ARG1];
   
   my $wheel = delete $heap->{Wheels}->{PID}->{$pid};
+
   my $wid = $wheel->ID;
+
   delete $heap->{Wheels}->{WID}->{$wid};
   delete $heap->{RequestsByWID}->{$wid};
 
@@ -228,7 +232,9 @@ sub worker_stderr {
   my ($input, $wid) = @_[ARG0, ARG1];
   
   my $request_id = $heap->{RequestsByWID}->{$wid};
+
   my $request    = delete $heap->{Requests}->{$request_id};
+
   if ($request) {
     my $sender_id = $request->{SenderID};
     my $hints     = $request->{Hints};

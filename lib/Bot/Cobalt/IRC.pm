@@ -36,19 +36,21 @@ use IRC::Utils qw/ parse_mode_line /;
 
 has 'NON_RELOADABLE' => ( 
   isa => Bool,
-  default => sub { 1 },
   ## Well, really, it's sort-of unloadable.
   ##  ... but life usually sucks when you do.
   ## Call _set_NON_RELOADABLE if you really need to
   is => 'rwp',
+
+  default => sub { 1 },
 );
 
 ## We keep references to our ircobjs; core tracks these also, 
 ## but there is no guarantee that we're the only IRC plugin loaded.
 has 'ircobjs' => ( 
+  lazy => 1,
   is   => 'rw', 
   isa  => HashRef, 
-  lazy => 1,
+
   default => sub { {} },
 );
 
@@ -394,7 +396,6 @@ sub _start {
 sub irc_connected {
   my ($self, $kernel, $server) = @_[OBJECT, KERNEL, ARG0];
 
-  ## NOTE:
   ##  irc_connected indicates we're connected to the server
   ##  however, irc_001 is the server welcome message
   ##  irc_connected happens before auth, no guarantee we can send yet.
@@ -556,13 +557,17 @@ sub irc_public {
   ## Bot_public_msg / Bot_public_cmd_$cmd  
   ## FloodChk cmds and highlights
   if (my $cmd = $msg_obj->cmd) {
+
     $floodchk->($context, $src) ?
       return
       : broadcast( 'public_cmd_'.$cmd, $msg_obj);
+
   } elsif ($msg_obj->highlight) {
+
     $floodchk->($context, $src) ?
       return
       : broadcast( 'public_msg', $msg_obj);
+
   } else {
     ## In the interests of keeping memory usage low on a 
     ## large channel, we don't flood-check every incoming public 

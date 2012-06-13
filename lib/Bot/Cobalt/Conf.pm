@@ -22,8 +22,20 @@ use File::Spec;
 use Bot::Cobalt::Common qw/:types/;
 use Bot::Cobalt::Serializer;
 
-has 'etc'   => ( is => 'rw', isa => Str, required => 1 );
-has 'debug' => ( is => 'rw', isa => Bool, default => sub { 0 } );
+has 'etc'   => (
+  required => 1,
+
+  is  => 'rw', 
+  isa => Str, 
+);
+
+has 'debug' => (
+  is  => 'rw', 
+  isa => Bool, 
+  
+  default => sub { 0 } 
+);
+
 
 sub _read_conf {
   ## deserialize a YAML conf
@@ -75,17 +87,17 @@ sub _read_conf {
 
 sub _read_core_cobalt_conf {
   my ($self) = @_;
-  return $self->_read_conf("cobalt.conf");
+  $self->_read_conf("cobalt.conf");
 }
 
 sub _read_core_channels_conf {
   my ($self) = @_;
-  return $self->_read_conf("channels.conf");
+  $self->_read_conf("channels.conf");
 }
 
 sub _read_core_plugins_conf {
   my ($self) = @_;
-  return $self->_read_conf("plugins.conf");
+  $self->_read_conf("plugins.conf");
 }
 
 sub _read_plugin_conf {
