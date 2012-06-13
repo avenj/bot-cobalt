@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Role::Unloader;
-our $VERSION = '0.008';
+our $VERSION = '0.009_01';
 
 use 5.10.1;
 use strict;
