@@ -11,9 +11,10 @@ use Carp;
 use YAML::XS ();
 use JSON ();
 
+use Fcntl qw/:flock/;
+
 use Bot::Cobalt::Common qw/:types/;
 
-use Fcntl qw/:flock/;
 
 has 'Format' => (
   is  => 'rw', 
@@ -51,7 +52,7 @@ has 'Types' => (
 );
 
 has 'yamlxs_from_ref' => (
-  is  => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -60,7 +61,7 @@ has 'yamlxs_from_ref' => (
 );
 
 has 'ref_from_yamlxs' => (
-  is  => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -69,7 +70,7 @@ has 'ref_from_yamlxs' => (
 );
 
 has 'yaml_from_ref' => (
-  is  => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -79,7 +80,7 @@ has 'yaml_from_ref' => (
 );
 
 has 'ref_from_yaml' => (
-  is => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -89,7 +90,7 @@ has 'ref_from_yaml' => (
 );
 
 has 'json_from_ref' => ( 
-  is => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -99,7 +100,7 @@ has 'json_from_ref' => (
 );
 
 has 'ref_from_json' => ( 
-  is => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -109,7 +110,7 @@ has 'ref_from_json' => (
 );
 
 has 'xml_from_ref' => ( 
-  is => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -119,7 +120,7 @@ has 'xml_from_ref' => (
 );
 
 has 'ref_from_xml' => ( 
-  is => 'rw', 
+  is   => 'rw', 
   lazy => 1,
   
   coerce => sub {
@@ -142,9 +143,7 @@ sub BUILDARGS {
   ## - or -
   ## ->new( Format => 'YAML' ) ## --> to YAML1.0
 
-  @args == 1 ?
-    { Format => $args[0] }
-    : { @args }
+  @args == 1 ? { Format => $args[0] } : { @args }
 }
 
 sub freeze {
@@ -366,7 +365,7 @@ serialization formats, automatically enabling Unicode encode/decode and
 optionally providing the ability to read/write files directly.
 
 Errors will typically throw fatal exceptions (usually with a stack 
-trace) via L<Carp> -- you may want to look into L<Try::Tiny> for 
+trace) via L<Carp/confess> -- you may want to look into L<Try::Tiny> for 
 handling them cleanly.
 
 =head1 METHODS

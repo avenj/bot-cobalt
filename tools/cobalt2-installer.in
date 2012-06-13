@@ -277,7 +277,6 @@ sub Conf_interactive {
 
   print "\n";
 
-  ## FIXME note about ChanMgr?
   say "You may want to edit channels.conf and add other channels.\n";
 
   say ">! Configuring auth.conf\n";
