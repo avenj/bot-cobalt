@@ -51,29 +51,6 @@ has 'Types' => (
   },
 );
 
-has 'Logger' => (
-  is => 'rw', 
-  isa => Object,
-  
-  trigger => sub {
-    my ($self, $logobj) = @_;
-    my $method = $self->LogMethod;
-
-    die "Logger specified but method $method not found"
-      unless $logobj->can($method);
-  },
-);
-
-has 'LogMethod' => ( 
-  lazy => 1,
-
-  is  => 'rw', 
-  isa => Str, 
-
-  default => sub { 'error' },
-);
-
-
 has 'yamlxs_from_ref' => (
   is  => 'rw', 
   lazy => 1,
@@ -165,10 +142,6 @@ sub BUILDARGS {
   ## ->new( Format => 'JSON' )   ## --> to JSON
   ## - or -
   ## ->new( Format => 'YAML' ) ## --> to YAML1.0
-  ## - and / or -
-  ## Specify something with a LogMethod method, default 'error':
-  ## ->new( Logger => $core->log );
-  ## ->new( Logger => $core->log, LogMethod => 'crit' );
 
   @args == 1 ?
     { Format => $args[0] }
@@ -247,37 +220,21 @@ sub version {
 
 ## Internals
 
-sub _log {
-  my ($self, $message) = @_;
-  
-  my $method = $self->LogMethod;
-  
-  unless ($self->Logger && $self->Logger->can($method) ) {
-    carp "$message\n";
-  } else {
-    $self->Logger->$method($message);
-  }
-}
-
 
 sub _check_if_avail {
   my ($self, $type) = @_;
   ## see if we have this serialization method available to us
-  my $module;
   
+  my $module;  
   return unless $module = $self->Types->{$type};
 
   {
     local $@;
     eval "require $module";
-    
-    if ($@) {
-      $self->_log("$type specified but $module not available");
-      return
-    }
-
-    return $module
+    return if $@;
   }
+
+  return $module
 }
 
 
@@ -303,7 +260,7 @@ sub _read_serialized {
   flock($in_fh, LOCK_UN) if $lock;
 
   close($in_fh)
-    or $self->_log("close failed for $path: $!");
+    or carp "close failed for $path: $!";
 
   utf8::encode($data);
 
@@ -325,6 +282,10 @@ sub _write_serialized {
     or confess "open failed for $path: $!";
 
   if ($lock) {
+    ## Non-blocking attempt to get a write lock.
+    
+    ## FIXME lock timeout, change to blocking
+    ##  w/ short default timeout
     flock($out_fh, LOCK_EX | LOCK_NB)
       or confess "LOCK_EX failed for $path: $!";
   }
@@ -339,7 +300,7 @@ sub _write_serialized {
   flock($out_fh, LOCK_UN) if $lock;
 
   close($out_fh)
-    or $self->_log("close failed for $path: $!");
+    or carp "close failed for $path: $!";
 
   return 1
 }
@@ -358,20 +319,13 @@ Bot::Cobalt::Serializer - Simple serialization wrapper
 
   use Bot::Cobalt::Serializer;
 
-  ## Spawn a YAML1.0 handler:
+  ## Spawn a YAML (1.1 handler:
   my $serializer = Bot::Cobalt::Serializer->new;
 
-  ## Spawn a JSON handler
+  ## Spawn a JSON handler:
   my $serializer = Bot::Cobalt::Serializer->new('JSON');
   ## ...same as:
   my $serializer = Bot::Cobalt::Serializer->new( Format => 'JSON' );
-
-  ## Spawn a YAML1.1 handler that logs to $core->log->crit:
-  my $serializer = Bot::Cobalt::Serializer->new(
-    Format => 'YAMLXS',
-    Logger => $core->log,
-    LogMethod => 'crit',
-  );
 
   ## Serialize some data to our Format:
   my $ref = { Stuff => { Things => [ 'a', 'b'] } };
@@ -420,22 +374,12 @@ missing the relevant serializer module; see L</Format>, below.
 The default is to spawn a B<YAML::XS> (YAML1.1) serializer with error 
 logging to C<carp>.
 
-You can spawn an instance using a different Format by passing a simple 
-scalar argument:
+You can spawn an instance using a different Format by passing the name 
+of the format as an argument:
 
   $handle_syck = Bot::Cobalt::Serializer->new('YAML');
   $handle_yaml = Bot::Cobalt::Serializer->new('YAMLXS');
   $handle_json = Bot::Cobalt::Serializer->new('JSON');
-
-Alternately, any combination of the following B<%opts> may be specified:
-
-  $serializer = Bot::Cobalt::Serializer->new(
-    Format =>
-    Logger =>
-    LogMethod =>
-  );
-
-See below for descriptions.
 
 =head3 Format
 
@@ -476,83 +420,11 @@ and talking to other networked apps. JSON is B<a lot faster> than YAML
 (assuming L<JSON::XS> is available).
 It also has the benefit of being included in the Perl core as of perl-5.14.
 
-=head3 Logger
-
-By default, all error output is delivered via C<carp>.
-
-If you're not writing a B<Cobalt> plugin, you can likely stop reading right 
-there; that'll do for the general case, and your module or application can 
-worry about STDERR.
-
-However, if you'd like, you can log error messages via a specified object's 
-interface to a logging mechanism.
-
-B<Logger> is used to specify an object that has a logging method of some 
-sort.
-
-That is to say:
-
-  ## In a typical cobalt2 plugin . . . 
-  ## assumes $core has already been set to the Cobalt core object
-  ## $core provides the ->log attribute containing a Log::Handler:
-  my $serializer = Bot::Cobalt::Serializer->new( Logger => $core->log );
-  ## now errors will go to $core->log->$LogMethod()
-  ## (log->error() by default)
-
-  ##
-  ## Meanwhile, in a stand-alone app or module . . .
-  ##
-  sub configure_logger {
-    . . .
-    ## Pick your poison ... Set up whatever logger you like
-    ## Log::Handler, Log::Log4perl, Log::Log4perl::Tiny, Log::Tiny, 
-    ## perhaps a custom job, whatever ...
-    ## The only real requirement is that it have an OO interface
-  }
-
-  sub do_some_work {
-    ## Typically, a complete logging module provides a mechanism for 
-    ## easy retrieval of the log obj, such as get_logger
-    ## (otherwise keeping track of it is up to you)
-    my $log_obj = Log::Log4perl->get_logger('My.Logger');
-
-    my $serializer = Bot::Cobalt::Serializer->new( Logger => $log_obj );
-    ## Now errors are logged as: $log_obj->error($err)
-    . . .
-  }
-
-
-Also see the L</LogMethod> directive.
-
-=head3 LogMethod
-
-When using a L</Logger>, you can specify LogMethod to change which log
-method is called (typically the priority/verbosity level). 
-
-  ## A slightly lower priority logger:
-  my $serializer = Bot::Cobalt::Serializer->new(
-    Logger => $core,
-    LogMethod => 'warn',
-  );
-
-  ## A module using a Log::Tiny logger:
-  my $serializer = Bot::Cobalt::Serializer->new(
-    Logger => $self->{logger_object},
-    ## Log::Tiny expects uppercase log methods:
-    LogMethod => 'ERROR',
-  );
-
-
-Defaults to B<error>, which should work for at least L<Log::Handler>, 
-L<Log::Log4perl>, and L<Log::Log4perl::Tiny>.
-
-
 =head2 freeze
 
 Turn the specified reference I<$ref> into the configured B<Format>.
 
   my $frozen = $serializer->freeze($ref);
-
 
 Upon success returns a scalar containing the serialized format, suitable for 
 saving to disk, transmission, etc.
@@ -569,25 +441,18 @@ data structure.
 (Try L<Data::Dumper> if you're not sure what your data actually looks like.)
 
 
-
 =head2 writefile
 
 L</freeze> the specified C<$ref> and write the serialized data to C<$path>
 
-  print "failed!" unless $serializer->writefile($path, $ref);
+  $serializer->writefile($path, $ref);
 
-Will fail with errors if $path is not writable for whatever reason; finding 
-out if your destination path is writable is up to you.
+Will croak with a stack trace if the specified path/data could not be 
+written to disk due to an error.
 
 Locks the file by default. You can turn this behavior off:
 
   $serializer->writefile($path, $ref, { Locking => 0 });
-
-B<IMPORTANT:>
-Uses B<flock> to lock the file for writing; the call is non-blocking, therefore 
-writing to an already-locked file will fail with errors rather than waiting.
-
-Will be false on apparent failure, probably with some carping.
 
 
 =head2 readfile
