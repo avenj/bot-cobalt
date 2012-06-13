@@ -332,8 +332,7 @@ sub ev_plugin_error {
   
   $self->log->error("Plugin err: $err");
 
-  ## syndicate a Bot_plugin_error
-  ## FIXME: irc plugin to relay these to irc?
+  ## Bot_plugin_error
   $self->send_event( 'plugin_error', $err );
 }
 

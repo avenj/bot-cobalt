@@ -230,16 +230,14 @@ sub Bot_ircplug_connect {
     prefer_nick => $nick,
   );
 
+  $core->Servers->{$context} = $server_obj;
+  $self->ircobjs->{$context} = $irc;
+
   ## Attempt to spin up a session.
   if ( $self->_spawn_for_context($context) ) {
-    ## Save our Bot::Cobalt::IRC::Server:
-    $core->Servers->{$context} = $server_obj;
-    
-    ## ..and the PoCo::IRC object:
-    $self->ircobjs->{$context} = $irc;
     logger->debug("Successful session creation for context $context");
   }
-
+  
   return PLUGIN_EAT_ALL
 }
 

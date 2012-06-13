@@ -1,9 +1,5 @@
 ## TODO
 
-IRC:
-
-  - Needs some ability to dynamically add/remove servers after a rehash
-
 Plugins:
 
   - Plugins::Extras::BanMgr

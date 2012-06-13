@@ -840,8 +840,6 @@ sub _info_format {
     W => core->url,          ## website
   };
 
-  ## FIXME -- some color code syntax ?
-  
   ##  1~ 2~ .. etc
   my $x = 0;
   for my $item (split ' ', $orig) {
