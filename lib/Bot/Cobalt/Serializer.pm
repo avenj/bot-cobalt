@@ -15,9 +15,8 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Fcntl qw/:flock/;
 
-
 has 'Format' => (
-  is => 'rw', 
+  is  => 'rw', 
   isa => Str,
   
   default => sub { 'YAMLXS' },
@@ -271,9 +270,12 @@ sub _write_serialized {
   my ($self, $path, $data, $opts) = @_;
   return unless $path and defined $data;
 
-  my $lock = 1;
+  my $lock    = 1;
+  my $timeout = 2;
+
   if (defined $opts && ref $opts eq 'HASH') {
-    $lock = $opts->{Locking} if defined $opts->{Locking};
+    $lock    = $opts->{Locking} if defined $opts->{Locking};
+    $timeout = $opts->{Timeout} if $opts->{Timeout};
   }
   
   utf8::decode($data);
@@ -282,12 +284,16 @@ sub _write_serialized {
     or confess "open failed for $path: $!";
 
   if ($lock) {
-    ## Non-blocking attempt to get a write lock.
-    
-    ## FIXME lock timeout, change to blocking
-    ##  w/ short default timeout
-    flock($out_fh, LOCK_EX | LOCK_NB)
-      or confess "LOCK_EX failed for $path: $!";
+    my $timer = 0;
+
+    until ( flock $out_fh, LOCK_EX | LOCK_NB ) {
+      confess "Failed writefile lock ($path), timed out ($timeout)"
+        if $timer > $timeout;
+
+      select undef, undef, undef, 0.1;
+      $timer += 0.1;
+    }
+
   }
 
   seek($out_fh, 0, 0)
@@ -359,6 +365,9 @@ This simple OO frontend makes it trivially easy to work with a selection of
 serialization formats, automatically enabling Unicode encode/decode and 
 optionally providing the ability to read/write files directly.
 
+Errors will typically throw fatal exceptions (usually with a stack 
+trace) via L<Carp> -- you may want to look into L<Try::Tiny> for 
+handling them cleanly.
 
 =head1 METHODS
 
@@ -450,9 +459,16 @@ L</freeze> the specified C<$ref> and write the serialized data to C<$path>
 Will croak with a stack trace if the specified path/data could not be 
 written to disk due to an error.
 
-Locks the file by default. You can turn this behavior off:
+Locks the file by default; blocks for up to 2 seconds attempting to 
+gain a lock. You can turn this behavior off entirely:
 
   $serializer->writefile($path, $ref, { Locking => 0 });
+
+... or change the lock timeout (defaults to 2 seconds):
+
+  $serializer->writefile($path, $ref,
+    { Locking => 1, Timeout => 5 }
+  );
 
 
 =head2 readfile
@@ -462,22 +478,13 @@ L</thaw> the data structures back into a reference.
 
   my $ref = $serializer->readfile($path);
 
-By default, attempts to gain a shared (LOCK_SH) lock on the file.
+By default, attempts to gain a shared (LOCK_SH) lock on the file in a 
+blocking manner.
 You can turn this behavior off:
 
   $serializer->readfile($path, { Locking => 0 });
 
-B<IMPORTANT:>
-This is not a non-blocking lock. C<readfile> will block until a lock is 
-gained (to prevent data structures from "running dry" in between writes).
-This is the opposite of what L</writefile> does, the general concept being 
-that preserving the data existing on disk takes priority.
-Turn off B<Locking> if this is not the behavior you want.
-
-Will fail with errors if $path cannot be found or is unreadable.
-
-If the file is malformed or not of the expected L</Format> the parser will 
-whine at you.
+Will croak with a stack trace if $path cannot be read or deserialized.
 
 
 =head2 version
