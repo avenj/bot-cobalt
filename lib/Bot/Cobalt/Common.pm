@@ -39,8 +39,6 @@ use Object::Pluggable::Constants qw/
 
 use MooX::Types::MooseLike::Base qw/:all/;
 
-## FIXME: These sets should be documented .. eventually ..
-
 our %EXPORT_TAGS = (
 
   string => [ qw/
@@ -230,11 +228,56 @@ See L<Bot::Cobalt::Utils> for details.
 =head4 Warnings
 
   carp
-  
+
 =head4 Errors
 
   confess
   croak
+
+
+=head2 Exported tags
+
+You can load groups of commands by importing named tags:
+
+  use Bot::Cobalt::Common qw/ :types :string /;
+
+=head3 constant
+
+Exports PLUGIN_EAT_NONE, PLUGIN_EAT_ALL constants from 
+L<Object::Pluggable>.
+
+=head3 errors
+
+Exports carp, croak, and confess from L<Carp>.
+
+=head3 host
+
+Exports parse_user, normalize_mask, and matches_mask from L<IRC::Utils>.
+
+=head3 passwd
+
+Exports mkpasswd and passwdcmp from L<App::bmkpasswd>.
+
+=head3 string
+
+Exports from L<Bot::Cobalt::Utils>: color, rplprintf, glob_to_re, 
+glob_to_re_str, glob_grep
+
+Exports from L<IRC::Utils>: lc_irc, eq_irc, uc_irc, decode_irc, 
+strip_color, strip_formatting
+
+=head3 time
+
+Exports timestr_to_secs, secs_to_timestr, and secs_to_str from 
+L<Bot::Cobalt::Utils>.
+
+=head3 types
+
+Exports the L<Moo> types from L<MooX::Types::MooseLike::Base>.
+
+=head3 validate
+
+Exports is_valid_nick_name and is_valid_chan_name from L<IRC::Utils>. 
 
 =head1 AUTHOR
 
