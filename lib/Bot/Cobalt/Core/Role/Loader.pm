@@ -1,4 +1,4 @@
-package Bot::Cobalt::Core::Role::Unloader;
+package Bot::Cobalt::Core::Role::Loader;
 our $VERSION = '0.009_01';
 
 use 5.10.1;
@@ -10,8 +10,9 @@ use Moo::Role;
 use Scalar::Util qw/blessed/;
 
 requires qw/
-  log
+  cfg
   debug
+  log
   send_event
   State
 /;
@@ -41,6 +42,62 @@ sub is_reloadable {
   ## return whether the alias is reloadable
   return 0 if $self->State->{NonReloadable}->{$alias};
   return 1
+}
+
+sub load_plugin {
+  my ($self, $alias) = @_;
+  
+  my $plugins_cf = $self->cfg->{plugins};
+  
+  my $incdir = $plugins_cf->{Include};
+  
+  if ($plugins_cf->{$alias}->{NoAutoLoad}) {
+    $self->log->debug("Skipping $alias; NoAutoLoad is true");
+    return 1
+  }
+  
+  my $module = $plugins_cf->{$alias}->{Module};
+  
+  unless (defined $module) {
+    ## Shouldn't happen unless someone's been naughty.
+    ## Conf.pm checks for missing 'Module' at load-time.
+    $self->log->error("Missing Module directive for $alias");
+    return
+  }
+
+  my $modpath = ($module =~ s/::/\//gr) .".pm";
+
+  my $orig_err;
+  unless (try { require $modpath;1 } catch { $orig_err = $_;0 } ) {
+    my $incdir_err;
+    if ($incdir) {
+      try { require $incdir."/".$modpath;1 }
+        catch { $incdir_err = $_ }
+    } else {
+      $self->log->error("Could not load $module: $orig_err");
+      return
+    }
+    
+    if ($incdir_err) {
+      $self->log->error(
+        "Could not load $module: $orig_err, $incdir_err"
+      );
+      return
+    }
+  }
+
+  my $obj;
+  try {
+    $obj = $module->new();
+  } catch {
+    $self->log->error(
+      "new() failed for $module: $_"
+    ); 0
+  } or return;
+  
+  $self->is_reloadable($alias, $obj);
+
+  return $obj
 }
 
 sub unloader_cleanup {
@@ -73,7 +130,7 @@ sub unloader_cleanup {
 
 1;
 __END__
-
+## FIXME correct pod
 =pod
 
 =head1 NAME

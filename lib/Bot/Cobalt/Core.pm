@@ -166,7 +166,7 @@ extends 'POE::Component::Syndicator';
 with 'Bot::Cobalt::Lang';
 with 'Bot::Cobalt::Core::Role::Singleton';
 with 'Bot::Cobalt::Core::Role::EasyAccessors';
-with 'Bot::Cobalt::Core::Role::Unloader';
+with 'Bot::Cobalt::Core::Role::Loader';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
@@ -238,7 +238,7 @@ sub syndicator_started {
  
   ## add configurable plugins
   $self->log->info("-> Initializing plugins . . .");
-
+  
   my $i = 0;
   my @plugins = sort {
     ($self->cfg->{plugins}->{$b}->{Priority}//1)
@@ -252,6 +252,12 @@ sub syndicator_started {
     
     my $module = $self->cfg->{plugins}->{$plugin}->{Module};
     
+    ## FIXME
+    ##  move this out to a role (pluginmgr needs it also):
+    ##   - support for Include: directive
+    ##   - kill string eval, conv :: to / and add .pm
+    ##   - if require fails for module, try with Include:: appended
+
     {
       local $@;
       eval "require $module";
@@ -435,7 +441,7 @@ L<Bot::Cobalt::Core::Role::Timers>
 
 =item *
 
-L<Bot::Cobalt::Core::Role::Unloader>
+L<Bot::Cobalt::Core::Role::Loader>
 
 =back
 
