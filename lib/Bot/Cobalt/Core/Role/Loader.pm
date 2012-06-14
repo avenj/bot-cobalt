@@ -56,8 +56,6 @@ sub load_plugin {
   
   my $plugins_cf = $self->cfg->{plugins};
   
-  my $incdir = $plugins_cf->{Include};
-  
   my $module = $plugins_cf->{$alias}->{Module};
   
   unless (defined $module) {
@@ -71,21 +69,10 @@ sub load_plugin {
 
   my $orig_err;
   unless (try { require $modpath;1 } catch { $orig_err = $_;0 } ) {
-    my $incdir_err;
-    if ($incdir) {
-      try { require $incdir."/".$modpath;1 }
-        catch { $incdir_err = $_ }
-    } else {
-      $self->log->error("Could not load $module: $orig_err");
-      return
-    }
-    
-    if ($incdir_err) {
-      $self->log->error(
-        "Could not load $module: $orig_err, $incdir_err"
-      );
-      return
-    }
+    $self->log->error(
+      "Could not load $module: $orig_err"
+    );
+    return
   }
 
   my $obj;
