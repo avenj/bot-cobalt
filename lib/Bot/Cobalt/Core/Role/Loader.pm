@@ -51,11 +51,6 @@ sub load_plugin {
   
   my $incdir = $plugins_cf->{Include};
   
-  if ($plugins_cf->{$alias}->{NoAutoLoad}) {
-    $self->log->debug("Skipping $alias; NoAutoLoad is true");
-    return 1
-  }
-  
   my $module = $plugins_cf->{$alias}->{Module};
   
   unless (defined $module) {
@@ -65,7 +60,7 @@ sub load_plugin {
     return
   }
 
-  my $modpath = ($module =~ s/::/\//gr) .".pm";
+  my $modpath = join( '/', split /(?:'|::)/, $module ) . '.pm';
 
   my $orig_err;
   unless (try { require $modpath;1 } catch { $orig_err = $_;0 } ) {
