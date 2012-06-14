@@ -184,8 +184,11 @@ sub Bot_public_msg {
 #  $resp = "No output for $cmd - BUG!" unless $resp;
 
   my $channel = $msg->channel;
-  core->log->debug("dispatching msg -> $channel");
-  broadcast( 'message', $context, $channel, $resp );
+  
+  if (defined $resp) {
+    logger->debug("dispatching msg -> $channel");
+    broadcast( 'message', $context, $channel, $resp );
+  }
 
   return PLUGIN_EAT_NONE
 }
@@ -1168,7 +1171,8 @@ sub poe_got_result {
   
   }
   
-  broadcast( 'message', $context, $channel, $resp ) if $resp;
+  broadcast( 'message', $context, $channel, $resp ) 
+    if defined $resp;
 }  
 
 sub poe_got_error {
