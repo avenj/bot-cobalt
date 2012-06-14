@@ -6,7 +6,8 @@ Bot::Cobalt::Manual::Plugins::Dist - Packaging Cobalt plugins
 
 =head1 DESCRIPTION
 
-Packaging Cobalt plugins is just like packaging any other Perl module. 
+Packaging L<Bot::Cobalt> plugins is just like packaging any other Perl 
+module. 
 
 Typically, the easiest way to do so quickly is via L<Module::Build>. 
 (For more involved distributions you may want to look at 
@@ -36,7 +37,8 @@ Create a dist dir for your module:
 
 L<Module::Build> requires a C<Build.PL> file.
 
-Here's a simple one based around one centralized plugin:
+Here's a simple one based around one centralized plugin; your plugin 
+will need to declare a proper $VERSION:
 
   #!/usr/bin/perl
   ## Simple example Build.PL
@@ -53,19 +55,9 @@ Here's a simple one based around one centralized plugin:
   $build->create_build_script;
 
 
-You'll want to create B<META> files and a B<MANIFEST> for your 
-distribution. L<Module::Build> can do this for you:
+Create a dist tarball:
+  $ ./Build dist
 
-  $ perl Build.PL
-
-   # build a MANIFEST.SKIP for your dist:
-  $ ./Build manifest_skip
-
-   # build MANIFEST:
-  $ ./Build manifest
-
-   # build META files:
-  $ ./Build distmeta
 
 Users of your plugin can install the distribution (and dependencies) via 
 C<cpan> by unpacking your plugin dist and specifying the local directory:
@@ -84,11 +76,10 @@ C<cpan> by unpacking your plugin dist and specifying the local directory:
 
 L<App::cpanminus> makes this even easier:
 
-   # Ereate a dist tarball:
-  $ ./Build dist
-
    # Easy install via cpanm:
   $ cpanm ./Bot-Cobalt-Plugin-MyPlugin-0.001.tar.gz
+
+When your plugin is release-ready, please consider posting it to CPAN.
 
 =head2 Configuration files
 

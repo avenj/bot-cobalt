@@ -85,15 +85,19 @@ sub Bot_public_cmd_join {
   my $channel = $msg->message_array->[0];
   
   unless ($channel) {
-    ## FIXME langset rpl  
+    broadcast( 'message', $context, $msg->channel,
+      "No channel specified."
+    );
+    
     return PLUGIN_EAT_ALL
   }
   
-  $core->log->info("JOIN ($channel) issued by $src_nick");
+  logger->info("JOIN ($channel) issued by $src_nick");
   
   broadcast( 'message', $context, $msg->channel,
     "Joining $channel"
   );
+
   broadcast( 'join', $context, $channel );
   
   return PLUGIN_EAT_ALL
@@ -115,7 +119,7 @@ sub Bot_public_cmd_part {
   
   my $channel = $msg->message_array->[0] // $msg->channel;
   
-  $core->log->info("PART ($channel) issued by $src_nick");
+  logger->info("PART ($channel) issued by $src_nick");
   
   broadcast( 'message', $context, $msg->channel,
       "Leaving $channel"
@@ -126,8 +130,6 @@ sub Bot_public_cmd_part {
   return PLUGIN_EAT_ALL
 }
 
-
-### OP / DEOP
 sub Bot_public_cmd_op {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
@@ -172,8 +174,6 @@ sub Bot_public_cmd_deop {
   
   return PLUGIN_EAT_ALL
 }
-
-## VOICE / DEVOICE
 
 sub Bot_public_cmd_voice {
   my ($self, $core) = splice @_, 0, 2;

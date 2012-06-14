@@ -16,6 +16,7 @@ my $vars = {
 };
 
 my $expect = 'String First variable other Doubled misc trailing!';
+
 my $formatted;
 ok($formatted = rplprintf( $tmpl, $vars ), 'rplprintf format str');
 ok($formatted eq $expect, 'compare formatted str');

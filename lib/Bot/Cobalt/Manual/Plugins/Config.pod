@@ -6,12 +6,14 @@ Bot::Cobalt::Manual::Plugins::Config - Cobalt config file primer
 
 =head1 DESCRIPTION
 
-This document is aimed at plugin authors in need of a better 
-understanding of I<Config:> plugin configuration files.
+This document is a very brief overview aimed at plugin authors in need 
+of a quick reference to plugin configuration files loaded via Config 
+directives.
 
-B<Cobalt> configuration files are typically presented in B<YAML>.
+L<Bot::Cobalt> configuration files are written in YAML. 
+L<http://yaml.org/spec/1.1/>
 
-Typically, you will see structures like this:
+Mostly, you will see hash structures like this:
 
   $ cat etc/plugins/mine/myplugin.conf
   ---
@@ -29,27 +31,28 @@ Typically, you will see structures like this:
     'cmd_refrobulate' => 1,
   };
 
-(See L<Bot::Cobalt::Manual::Plugins/"get_plugin_cfg"> from the plugin authoring 
-documentation for information on retrieving plugin configuration.)
+(These structures would normally be accessed by plugins via the Core's 
+L<Bot::Cobalt::Core::Role::EasyAccessors/"get_plugin_cfg"> method or 
+L<Bot::Cobalt::Core::Sugar/"plugin_cfg"> -- see 
+L<Bot::Cobalt::Manual::Plugins> for details.)
 
-Your text encoding should be UTF-8.
+See L<Bot::Cobalt::Manual::Plugins::Dist> for details on embedding 
+configuration files installable via L<cobalt2-plugin-installcf>.
 
-=head1 INDENTATION
+=head2 Indentation
 
-B<Tab characters are not recognized as valid YAML indentation.>
-
-You should use two spaces to indent elements:
+Indentation builds nested structures; 2 spaces is the standard for 
+L<Bot::Cobalt> configuration files:
 
   Opts:
     SomeOpt: 1
     OtherOpts:
-      DeeperOpt: 2
+      ThisElement: "Some string"
 
+=head2 Boolean values
 
-=head1 BOOLEANS
-
-Many configuration options, especially in the Cobalt core, are simple 
-boolean true/false:
+Many configuration options, especially in the core plugin set, are 
+simple boolean true/false:
 
   ## Example of a boolean true or false
   ## if UseSSL is commented out, 0, or ~ (undef), it is "false"
@@ -59,7 +62,7 @@ boolean true/false:
   ## ...just as valid for a simple boolean check:
   UseSSL: "Yes please!"
 
-=head1 STRINGS
+=head2 Strings
 
   SomeString: A string
 
@@ -67,14 +70,12 @@ Strings can be quoted:
 
   SomeString: "A string"
 
-You can force a data-type for numbers via quoting, for example:
+For example:
 
   SomeNum: 176.100    ## Numeric 176.1
   SomeNum: "176.100"  ## String "176.100"
 
 Within double-quotes, special characters can be escaped C-style.
-
-The YAML spec says that octal escape \0 is also valid.
 
 =head2 Block literals
 
@@ -91,7 +92,7 @@ A block literal might look something like this:
     <p>Some literal html</p>
     <p>More of it</p>
 
-=head1 HASHES
+=head2 Hashes
 
   MyHash:
     Scalar_item: "a scalar"
@@ -102,9 +103,9 @@ A block literal might look something like this:
 Item_two would be available via MyHash->{Another_Hash}->{Item_two}.
 
 
-=head1 LISTS
+=head2 Lists
 
-A list looks something like this:
+A list/array looks something like this:
 
   MyList:
     - An item
@@ -119,18 +120,17 @@ A list looks something like this:
         One_Item: 1
         Another_item: "Some string"
 
-In this example, Another_item would be available via MyUsers[3]->{Another_item}
-
-=head1 AUTHOR
-
-Jon Portnoy <avenj@cobaltirc.org>
-
-L<http://www.cobaltirc.org>
+(In this example, Another_item would be available via 
+MyUsers[3]->{Another_item})
 
 =head1 SEE ALSO
 
 L<http://yaml.org/spec/1.1/>
 
 L<YAML::XS>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
 
 =cut

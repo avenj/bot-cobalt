@@ -25,10 +25,10 @@ Declare our package:
 
 We might need L<Bot::Cobalt::Common> utilities.
 It's good practice to use strict and warnings explicitly, although 
-L<Bot::Cobalt::Common> will import them for you.
+L<Bot::Cobalt::Common> will import them for you. It's even better to 
+make warnings fatal as well via L<strictures>:
 
-  use strict;
-  use warnings;
+  use strictures 1;
   use Bot::Cobalt::Common;
 
 We probably also want the syntax sugar exported by L<Bot::Cobalt>. This 
@@ -59,8 +59,10 @@ have the C<register()> and C<logger()> functions available:
     my ($self, $core) = splice @_, 0, 2;
 
     register( $self, 'SERVER',
-      ## An array reference of events to catch.
-      [ qw/ public_cmd_fortune /],
+      ## A list of events to catch.
+      qw/ 
+        public_cmd_fortune
+      /
     );
     
     ## It's polite to log that we're here now.
@@ -107,7 +109,6 @@ know.
     
     ## We'll write our response method fortune() later.
     my $fortune = $self->fortune;
-    chomp($fortune);
     my $response_string = "$src_nick: $fortune";
     
     ## Relay our response string back to Bot::Cobalt::IRC
@@ -146,7 +147,7 @@ our retrieved B<DATA> -- this is nice and simple:
     $self->{fortunes} = [ readline(DATA) ]
       unless defined $self->{fortunes};
     
-    return $self->{fortunes}[rand(@{ $self->{fortunes} })]
+    return $self->{fortunes}->[ rand( @{$self->{fortunes}} ) ]
   }
 
 =head2 Finished product
@@ -154,8 +155,7 @@ our retrieved B<DATA> -- this is nice and simple:
   package My::Bot::Cobalt::Plugin;
   our $VERSION = '0.01';
 
-  use strict;
-  use warnings;
+  use strictures 1;
   use Bot::Cobalt::Common;
   
   use Bot::Cobalt;
@@ -166,8 +166,10 @@ our retrieved B<DATA> -- this is nice and simple:
     my ($self, $core) = splice @_, 0, 2;
 
     register( $self, 'SERVER',
-      ## An array reference of events to catch.
-      [ qw/ public_cmd_fortune /],
+      ## A list of events to catch.
+      qw/ 
+        public_cmd_fortune
+      /
     );
     
     ## It's polite to log that we're here now.
@@ -212,8 +214,8 @@ our retrieved B<DATA> -- this is nice and simple:
 
     $self->{fortunes} = [ readline(DATA) ]
       unless defined $self->{fortunes};
-    
-    return $self->{fortunes}[rand(@{$self->{fortunes}}) ]
+  
+    return $self->{fortunes}->[ rand( @{$self->{fortunes}} ) ]
   }
 
   1;  ## Perl modules must return a true value
