@@ -234,10 +234,9 @@ sub syndicator_started {
   $kernel->sig('TERM' => 'shutdown');
   $kernel->sig('HUP'  => 'sighup');
 
-  $self->log->info('-> '.__PACKAGE__.' '.$self->version);
+  $self->log->info(''.__PACKAGE__.' '.$self->version);
  
-  ## add configurable plugins
-  $self->log->info("-> Initializing plugins . . .");
+  $self->log->info("--> Initializing plugins . . .");
   
   my $i = 0;
   my @plugins = sort {
@@ -247,28 +246,15 @@ sub syndicator_started {
                 } keys %{ $self->cfg->{plugins} };
 
   for my $plugin (@plugins)
-  { 
-    next if $self->cfg->{plugins}->{$plugin}->{NoAutoLoad};
-    
-    my $module = $self->cfg->{plugins}->{$plugin}->{Module};
-    
-    ## FIXME
-    ##  move this out to a role (pluginmgr needs it also):
-    ##   - support for Include: directive
-    ##   - kill string eval, conv :: to / and add .pm
-    ##   - if require fails for module, try with Include:: appended
+  {
+    my $this_plug_cf = $self->cfg->{plugins}->{$plugin};
 
-    {
-      local $@;
-      eval "require $module";
-      if ($@) {
-        $self->log->warn("Could not load $module: $@");
-        $self->unloader_cleanup($module);
-        next 
-      }
-    }
+    next if $this_plug_cf->{NoAutoLoad};
+
+    my $obj = $self->load_plugin($plugin);
     
-    my $obj = $module->new();
+    ## load_plugin will have thrown an error, skip:
+    next unless $obj;
 
     $self->PluginObjects->{$obj} = $plugin;
 
@@ -276,12 +262,13 @@ sub syndicator_started {
       $self->log->error("plugin_add failure for $plugin");
 
       delete $self->PluginObjects->{$obj};
-      $self->unloader_cleanup($module);
+      
+      $self->unloader_cleanup(
+        $this_plug_cf->{Module}
+      );
 
       next
     }
-
-    $self->is_reloadable($plugin, $obj);
 
     $i++;
   }
