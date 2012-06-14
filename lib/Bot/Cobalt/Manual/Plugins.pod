@@ -1391,7 +1391,7 @@ Alternately, a method named NON_RELOADABLE will do:
 
 All plugin load/unload frontends should make use of the 
 L<Bot::Cobalt::Core> method B<is_reloadable> (provided by 
-L<Bot::Cobalt::Core::Role::Unloader>).
+L<Bot::Cobalt::Core::Role::Loader>).
 
 Before unloading a plugin, a plugin manager should check the reloadable 
 status of the plugin's alias:

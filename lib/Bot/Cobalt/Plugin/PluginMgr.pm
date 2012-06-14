@@ -17,16 +17,19 @@ sub new { bless {}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  $core->plugin_register( $self, 'SERVER',
+
+  register( $self, 'SERVER',
     'public_cmd_plugin',
   );
-  $core->log->info("Registered");
+
+  logger->info("Registered");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  $core->log->info("Unregistered");
+  logger->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
 
@@ -44,27 +47,31 @@ sub _unload {
   unless ($alias) {
     $resp = "Bad syntax; no plugin alias specified";
   } elsif (! $plug_obj ) {
+
     $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
-            { 
               plugin => $alias,
               err => 'No such plugin found, is it loaded?' 
-            }
     );
+
   } elsif (! $core->is_reloadable($alias) ) {
+
     $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
-            {
               plugin => $alias,
               err => "Plugin $alias is marked as non-reloadable",
-            }
    );
+
   } else {
-    $core->log->info("Attempting to unload $alias ($plugisa) per request");
+    logger->info("Attempting to unload $alias ($plugisa) per request");
+
     if ( $core->plugin_del($alias) ) {
       delete $core->PluginObjects->{$plug_obj};
+
       ## ask core to clean up symbol table:
       $core->unloader_cleanup($plugisa);
+
       ## also cleanup our config if there is one:
       delete $core->cfg->{plugin_cf}->{$alias};
+
       ## and timers:
       $core->timer_del_alias($alias);
       
@@ -95,7 +102,7 @@ sub _load_module {
   if ($@) {
     ## 'require' failed
     my $err = $@;
-    $core->log->warn("Plugin load failure; $err");
+    logger->warn("Plugin load failure; $err");
     
     $core->unloader_cleanup($module);
 
@@ -134,7 +141,7 @@ sub _load_module {
   my $loaded = $core->plugin_add( $alias, $obj );
   if ($loaded) {
       unless ( $core->is_reloadable($alias, $obj) ) {
-        $core->log->debug("$alias flagged non-reloadable");
+        logger->debug("$alias flagged non-reloadable");
       }
       
       my $modversion = $obj->can('VERSION') ? $obj->VERSION : 1 ;
@@ -222,9 +229,11 @@ sub _load_conf {
   ## (re)load this plugin's configuration before loadtime
   my $etcdir = $core->cfg->{path};
   my $cconf = Bot::Cobalt::Conf->new(etc => $etcdir);
+
   ## use our current plugins.conf (not a rehash)
   my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
   $thisplugcf = {} unless ref $thisplugcf;
+
   ## directly fuck with core's cfg hash:
   $core->cfg->{plugin_cf}->{$alias} = $thisplugcf;
 }
@@ -250,6 +259,8 @@ sub Bot_public_cmd_plugin {
   unless ( $core->auth->level($context, $nick) >= $required_lev ) {
     $resp = rplprintf( $core->lang->{RPL_NO_ACCESS}, { nick => $nick } );
   } else {
+  
+    ## FIXME proper cmd dispatcher for all this crap
     given ( lc($operation || '') ) {
       when ('load') {
         ## syntax: !plugin load <alias>, !plugin load <alias> <module>
@@ -268,9 +279,10 @@ sub Bot_public_cmd_plugin {
         ## syntax: !plugin reload <alias>
         my $alias = $msg->message_array->[1];
         my $plug_obj = $core->plugin_get($alias);
-        unless ($alias) {
+
+        if (!$alias) {
           $resp = "Bad syntax; no plugin alias specified";
-        } elsif (! $plug_obj ) {
+        } elsif (!$plug_obj) {
           $resp = rplprintf( $core->lang->{RPL_PLUGIN_UNLOAD_ERR},
             { 
               plugin => $alias,
@@ -288,9 +300,12 @@ sub Bot_public_cmd_plugin {
         } else {
           ## call _unload and send any response from there
           my $unload_resp = $self->_unload($alias);
+
           broadcast( 'message', $context, $chan, $unload_resp );
+
           ## call _load on our alias and plug_obj, send that in $resp
           my $pkgisa = ref $plug_obj;
+
           $resp = $self->_load($alias, $pkgisa);
         }
       }
@@ -298,8 +313,11 @@ sub Bot_public_cmd_plugin {
       when ('list') {
         ## don't set a resp, just build and send a list
         my $pluglist = $core->plugin_list();
+
         push(my @loaded, sort keys %$pluglist);
+
         my $str = "Plugins:";
+
         while (my $plugin_alias = shift @loaded) {
           $str .= ' ' . $plugin_alias;
           if ($str && (length($str) > 300 || !@loaded) ) {
@@ -308,12 +326,16 @@ sub Bot_public_cmd_plugin {
             $str = '';
           }
         }
-      }
 
+      }
+      
       ## shouldfix; reordering via ::Pipeline?
 
-      default { $resp = "Valid PluginMgr commands: list / load / unload / reload" }
+      default { 
+        $resp = "Valid PluginMgr commands: list / load / unload / reload"
+      }
     }
+
   }
 
   broadcast('message', $context, $chan, $resp) if $resp;

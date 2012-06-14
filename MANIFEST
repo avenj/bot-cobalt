@@ -29,7 +29,7 @@ lib/Bot/Cobalt/Core/Role/EasyAccessors.pm
 lib/Bot/Cobalt/Core/Role/IRC.pm
 lib/Bot/Cobalt/Core/Role/Singleton.pm
 lib/Bot/Cobalt/Core/Role/Timers.pm
-lib/Bot/Cobalt/Core/Role/Unloader.pm
+lib/Bot/Cobalt/Core/Role/Loader.pm
 lib/Bot/Cobalt/Core/Sugar.pm
 lib/Bot/Cobalt/DB.pm
 lib/Bot/Cobalt/Frontend/RC.pm

@@ -32,13 +32,17 @@ sub Cobalt_register {
   );
 
   $core->log->info("Loaded alarm clock");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   $core->log->info("Unregistering core IRC plugin");
+
   $core->timer_del_alias( $core->get_plugin_alias($self) );
+
   return PLUGIN_EAT_NONE
 }
 
@@ -46,12 +50,15 @@ sub Bot_deleted_timer { Bot_executed_timer(@_) }
 sub Bot_executed_timer {
   my ($self, $core) = splice @_, 0, 2;
   my $timerid = ${$_[0]};
+
   return PLUGIN_EAT_NONE
     unless exists $self->{Active}->{$timerid};
   
   $core->log->debug("clearing timer state for $timerid")
     if $core->debug > 1;  
+
   delete $self->{Active}->{$timerid};
+
   return PLUGIN_EAT_NONE
 }
 
@@ -83,9 +90,13 @@ sub Bot_public_cmd_alarmdel {
   }
   
   my $thistimer = $self->{Active}->{$timerid};
+
   my ($ctxt_set, $ctxt_by) = @$thistimer;
+  
+  ## ... did this user set this timer?
   unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
     my $auth_lev = $core->auth->level($context, $nick);
+
     ## superusers can override:
     unless ($auth_lev == 9999) {
       broadcast( 'message', $context, $channel,
@@ -93,6 +104,7 @@ sub Bot_public_cmd_alarmdel {
           { nick => $nick, timerid => $timerid },
         )
       );
+
       return PLUGIN_EAT_ALL
     }
   }
@@ -105,6 +117,7 @@ sub Bot_public_cmd_alarmdel {
       { nick => $nick, timerid => $timerid },
     )
   );
+
   return PLUGIN_EAT_ALL
 }
 
@@ -122,6 +135,7 @@ sub Bot_public_cmd_alarmclock {
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE 
     unless $core->auth->level($context, $setter) >= $minlevel;
+
   my $auth_usr = $core->auth->username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
@@ -198,7 +212,7 @@ For example:
 
 (Accuracy down to the second is not guaranteed. Plus, this is IRC. Sorry.)
 
-Mimics B<darkbot6> behavior, but with saner time string grammar.
+Mimics B<darkbot6> behavior, but with vaguely sane time string grammar.
 
 =head1 AUTHOR
 

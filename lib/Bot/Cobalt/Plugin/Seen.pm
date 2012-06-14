@@ -142,7 +142,9 @@ sub Bot_seendb_update {
   CONTEXT: for my $context (keys %$buf) {
     unless ($db->dbopen) {
       logger->warn("dbopen failed in update; cannot update SeenDB");
+
       $core->timer_set( 3, { Event => 'seendb_update' } );
+
       return PLUGIN_EAT_ALL
     }
 
@@ -151,7 +153,9 @@ sub Bot_seendb_update {
       ## if we've done a lot of writes, yield back.
       if ($writes && $writes % 50 == 0) {
         $db->dbclose;
+
         broadcast( 'seendb_update' );
+
         return PLUGIN_EAT_ALL
       }
     

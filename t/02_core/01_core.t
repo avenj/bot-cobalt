@@ -80,9 +80,10 @@ can_ok( $core,
     timer_get_alias
   /,
   
-  ## Unloader:
+  ## Loader:
   qw/
     is_reloadable
+    load_plugin
     unloader_cleanup
   /,
   

@@ -40,6 +40,10 @@ our $VERSION = '0.009_01';
 ##
 ## Also see Bot::Cobalt::Core::ContextMeta::Auth
 
+## FIXME
+##  catch rehash, reload superusers
+##   method for superuser loads
+
 use 5.10.1;
 use Moo;
 
@@ -98,7 +102,9 @@ sub Cobalt_register {
   ## Read in configured superusers to AccessList
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
+
   my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
+
   SERVER: for my $context (keys %su) {
   
     USER: for my $user (keys %{$su{$context}}) {
@@ -107,13 +113,16 @@ sub Cobalt_register {
       ## (we probably don't even know the server's CASEMAPPING= yet)
       $user = lc_irc $user;
       ## AccessList entries for superusers:
+
       my $flags;
       ## Handle empty flag values:
       if (ref $su{$context}->{$user}->{Flags} eq 'HASH') {
         $flags = $su{$context}->{$user}->{Flags};
       } else { $flags = { }; }
+
       ## Set superuser flag:
       $flags->{SUPERUSER} = 1;
+
       $self->AccessList->{$context}->{$user} = {
         ## if you're lame enough to exclude a passwd, here's a random one:
         Password => $su{$context}->{$user}->{Password}
@@ -129,7 +138,8 @@ sub Cobalt_register {
       ## ...whether that's sane behavior or not is questionable
       ## (but it's what the comments in auth.conf specify)
       if (exists $su{$context}->{$user}->{Masks} 
-          && !exists $su{$context}->{$user}->{Mask} ) {
+          && !exists $su{$context}->{$user}->{Mask} ) 
+      {
         $su{$context}->{$user}->{Mask} = 
           delete $su{$context}->{$user}->{Masks};
       }
@@ -181,8 +191,11 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   $core->log->info("Unregistering core IRC plugin");
+
   $self->_clear_all;
+
   return PLUGIN_EAT_NONE
 }
 
@@ -193,14 +206,18 @@ sub Bot_connected {
   ## Bot's freshly connected to a context
   ## Clear any auth entries for this pkg + context
   my $context = ${$_[0]};
+
   $self->_clear_context($context);
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_disconnected {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
+
   $self->_clear_context($context);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -227,14 +244,18 @@ sub Bot_self_left {
   my $channel = ${$_[1]};
   ## The bot left a channel. Check auth status of all users.
   ## This method may be unreliable on nets w/ busted CASEMAPPING=
+
   $self->_remove_if_lost($context);
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_self_kicked {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${$_[0]};
+
   $self->_remove_if_lost($context);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -243,7 +264,9 @@ sub Bot_user_kicked {
   my $kick    = ${ $_[0] };
   my $context = $kick->context;
   my $nick    = $kick->src_nick;
+
   $self->_remove_if_lost($context, $nick);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -254,7 +277,9 @@ sub Bot_user_quit {
   my $nick    = $quit->src_nick;
   ## User quit, clear relevant auth entries
   ## We can call _do_logout directly here:
+
   $self->_do_logout($context, $nick);
+
   return PLUGIN_EAT_NONE
 }
 
@@ -829,7 +854,9 @@ sub _user_info {
   );
   
   my @flags = keys %{ $usr->{Flags} };
+
   my $flag_repl = "Flags: ";
+
   while (my $this_flag = shift @flags) {
     $flag_repl .= "  ".$this_flag;
     if (length $flag_repl > 300 || !@flags) {
@@ -839,6 +866,7 @@ sub _user_info {
   }
 
   my $mask_repl = "Masks: ";
+
   while (my $this_mask = shift @masks) {
     $mask_repl .= "  ".$this_mask;
     if (length $mask_repl > 300 || !@masks) {
@@ -994,6 +1022,7 @@ sub _user_chmask {
         || $flags->{SUPERUSER}) )  {
     
     my $src = $msg->src;
+
     core->log->warn(
       "Access denied in chmask: $src tried to chmask $target_user"
     );
