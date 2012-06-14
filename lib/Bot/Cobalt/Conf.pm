@@ -151,11 +151,11 @@ sub _read_core_plugins_conf {
     confess "Conf; plugins.conf; no Module directive for $plugin"
       unless $this_plug_cf->{Module};
     
-    confess "Conf; plugins.conf; $plugin Priority must be numeric"
+    confess "Conf; plugins.conf; $plugin - Priority must be numeric"
       if defined $this_plug_cf->{Priority}
       and $this_plug_cf->{Priority} !~ /^\d+$/;
 
-    confess "Conf; plugins.conf; $plugin Opts must be a hash"
+    confess "Conf; plugins.conf; $plugin - Opts must be a hash"
       if defined $this_plug_cf->{Opts}
       and ref $this_plug_cf->{Opts} ne 'HASH';
 
@@ -229,14 +229,14 @@ sub read_cfg {
   if ($core_cf && ref $core_cf eq 'HASH') {
     $conf->{core} = $core_cf;
   } else {
-    croak "Failed to load cobalt.conf";
+    confess "Failed to load cobalt.conf";
   }
 
   my $chan_cf = $self->_read_core_channels_conf;
   if ($chan_cf && ref $chan_cf eq 'HASH') {
     $conf->{channels} = $chan_cf;
   } else {
-    carp "Failed to load channels.conf, using empty hash";
+    carp "Conf; Failed to load channels.conf, using empty hash";
     ## busted cf, set up an empty context
     $conf->{channels} = { Main => {} } ;
   }
@@ -245,7 +245,7 @@ sub read_cfg {
   if ($plug_cf && ref $plug_cf eq 'HASH') {
     $conf->{plugins} = $plug_cf;
   } else {
-    carp "Failed to load plugins.conf, using empty hash";
+    carp "Conf; Failed to load plugins.conf, using empty hash";
     $conf->{plugins} = { } ;
   }
 

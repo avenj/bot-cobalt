@@ -16,16 +16,21 @@ sub Cobalt_register {
   my $count = $self->_load_games();
 
   $core->log->info("Loaded - $count games");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   $core->log->debug("Cleaning up our games...");
+
   for my $module (@{ $self->{ModuleNames}//[] }) {
     $core->unloader_cleanup($module);
   }
+
   $core->log->info("Unloaded");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -37,6 +42,7 @@ sub _handle_auto {
   my $context = $msg->context;
 
   my $cmd = $msg->cmd;
+
   return PLUGIN_EAT_NONE
     unless defined $self->{Dispatch}->{$cmd};
 

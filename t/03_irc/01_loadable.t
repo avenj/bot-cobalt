@@ -24,4 +24,6 @@ can_ok($irc, qw/
   Bot_part
   Bot_ircplug_connect
   Bot_ircplug_disconnect
+  
+  Bot_public_cmd_server
 / );

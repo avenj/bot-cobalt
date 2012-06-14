@@ -100,7 +100,7 @@ sub Cobalt_register {
   my $superusers = $p_cfg->{SuperUsers};
   my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
   SERVER: for my $context (keys %su) {
-
+  
     USER: for my $user (keys %{$su{$context}}) {
       ## Usernames on accesslist automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
