@@ -28,17 +28,22 @@ sub Bot_message {
 
   unless ($eat == PLUGIN_EAT_ALL) {
     my ($target, $txt) = @msg[1,2];
+    
+    if (defined $target && defined $txt && $txt ne '') {
+      $self->ircobjs->{$context}->yield( 
+        'privmsg',
+        $target,
+        $txt
+      );
 
-    $self->ircobjs->{$context}->yield( 'privmsg',
-      $target,
-      $txt
-    );
+      broadcast( 'message_sent', 
+        $context, $target, $txt 
+      );
 
-    broadcast( 'message_sent', 
-      $context, $target, $txt 
-    );
-
-    ++$core->State->{Counters}->{Sent};
+      ++$core->State->{Counters}->{Sent};
+    } else {
+      logger->error("Bot_message received without defined target and txt")
+    }
   }
 
   return PLUGIN_EAT_NONE
