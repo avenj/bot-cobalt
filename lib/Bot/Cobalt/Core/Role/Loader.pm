@@ -9,6 +9,8 @@ use Moo::Role;
 
 use Scalar::Util qw/blessed/;
 
+use Try::Tiny;
+
 requires qw/
   cfg
   debug
@@ -28,19 +30,24 @@ sub is_reloadable {
     if ( $obj->{NON_RELOADABLE} ||
        ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
     ) {
+
       $self->log->debug("Marked plugin $alias non-reloadable");
+
       $self->State->{NonReloadable}->{$alias} = 1;
+
       ## not reloadable, return 0
-      return 0
+      return
     } else {
       ## reloadable, return 1
       delete $self->State->{NonReloadable}->{$alias};
+
       return 1
     }
   }
   ## passed just an alias (or a bustedass object)
   ## return whether the alias is reloadable
-  return 0 if $self->State->{NonReloadable}->{$alias};
+  return if $self->State->{NonReloadable}->{$alias};
+
   return 1
 }
 
@@ -82,12 +89,12 @@ sub load_plugin {
   }
 
   my $obj;
-  try {
-    $obj = $module->new();
-  } catch {
-    $self->log->error(
-      "new() failed for $module: $_"
-    ); 0
+  try 
+    { $obj = $module->new(); } 
+  catch {
+     $self->log->error(
+       "new() failed for $module: $_"
+     ); 0
   } or return;
   
   $self->is_reloadable($alias, $obj);
