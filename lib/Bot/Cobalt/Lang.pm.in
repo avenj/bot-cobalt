@@ -1,5 +1,5 @@
 package Bot::Cobalt::Lang;
-our $VERSION = '0.009_01';
+our $VERSION = '0.010_01';
 
 ## Emitted events:
 ##  langset_loaded ($lang, $lang-specified, $path)
@@ -81,6 +81,7 @@ sub load_langset {  ## load_langset(language)
       unless (exists $langset->{RPL}->{$rpl}) {
         my $default_repl = $default_langset->{RPL}->{$rpl};
         $langset->{RPL}->{$rpl} = $default_repl;
+
         $self->log->debug("pushed missing RPL from default set: $rpl")
           if $self->can('log');
       }

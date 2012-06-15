@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::PluginMgr;
-our $VERSION = '0.009_01';
+our $VERSION = '0.010_01';
 
 ## handles and eats: !plugin
 

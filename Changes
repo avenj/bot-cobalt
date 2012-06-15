@@ -1,5 +1,14 @@
 # Bot::Cobalt Changes
 
+* 0.009  (15 Jun 2012)
+
+  Fix RDB.pm bug that would cause log noise on certain command 
+  dispatches.
+  
+  Vaguely improved configuration validation.
+
+  The beginnings of some core / PluginMgr plug load/unload cleanup.
+
 * 0.008  (13 Jun 2012)
 
   Core configuration accessors no longer return cloned copies of config 

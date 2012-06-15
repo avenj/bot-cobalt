@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker;
-our $VERSION = '0.009_01';
+our $VERSION = '0.010_01';
 
 use strict;
 use warnings;
