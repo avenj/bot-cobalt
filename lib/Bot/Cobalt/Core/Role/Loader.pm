@@ -124,26 +124,30 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Core::Role::Unloader - Plugin unload role for Bot::Cobalt
+Bot::Cobalt::Core::Role::Loader - Plugin (un)load role for Bot::Cobalt
 
 =head1 SYNOPSIS
+
+  ## Load a plugin (returns object)
+  my $obj = $core->load_plugin($alias);
+
+  ## Clean a package from the symbol table
+  $core->unloader_cleanup($package);
 
   ## Check NON_RELOADABLE State of a plugin
   $core->is_reloadable($alias);
 
   ## Update NON_RELOADABLE State of a plugin
-  ## (usually at load-time, via a plugin manager)
+  ## (usually at load-time)
   $core->is_reloadable($alias, $obj)
-
-  ## Clean a package from the symbol table
-  $core->unloader_cleanup($package);
 
 =head1 DESCRIPTION
 
 This is a L<Moo::Role> consumed by L<Bot::Cobalt::Core>.
 
 These methods are used by plugin managers such as 
-L<Bot::Cobalt::Plugin::PluginMgr> to handle plugin reloads.
+L<Bot::Cobalt::Plugin::PluginMgr> to handle plugin load / unload / 
+reload.
 
 =head1 AUTHOR
 
