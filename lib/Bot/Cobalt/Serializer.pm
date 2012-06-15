@@ -28,14 +28,14 @@ has 'Format' => (
     $format = uc($format);
 
     confess "Unknown format $format"
-      unless $format ~~ [ keys %{ $self->Types } ];
+      unless $format ~~ [ keys %{ $self->_types } ];
 
     confess "Requested format $format but can't find a module for it"
       unless $self->_check_if_avail($format)
   },
 );
 
-has 'Types' => ( 
+has '_types' => ( 
   lazy => 1,
 
   is  => 'ro', 
@@ -211,7 +211,7 @@ sub readfile {
 sub version {
   my ($self) = @_;
   
-  my $module = $self->Types->{ $self->Format }; 
+  my $module = $self->_types->{ $self->Format }; 
   { local $@; eval "require $module" }
   return($module, $module->VERSION);
 }
@@ -224,7 +224,7 @@ sub _check_if_avail {
   ## see if we have this serialization method available to us
   
   my $module;  
-  return unless $module = $self->Types->{$type};
+  return unless $module = $self->_types->{$type};
 
   {
     local $@;
