@@ -14,7 +14,10 @@ use Module::CoreList;
 
 use Try::Tiny;
 
-sub new { bless {}, shift }
+## FIXME cachedb?
+sub CacheDB () { 0 }
+
+sub new { bless [undef], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -25,8 +28,6 @@ sub Cobalt_register {
     'mcpan_plug_resp_recv',
   );
   
-  ## FIXME cachedb ?
-
   logger->info("Loaded: !cpan");
   
   return PLUGIN_EAT_NONE

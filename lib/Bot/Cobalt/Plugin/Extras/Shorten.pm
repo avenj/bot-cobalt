@@ -11,7 +11,7 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use HTTP::Request;
 use URI::Escape;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;

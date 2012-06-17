@@ -13,7 +13,9 @@ use POE::Component::Client::DNS;
 
 use Net::IP::Minimal qw/ip_is_ipv4 ip_is_ipv6/;
 
-sub new { bless {}, shift }
+sub RESOLVER () { 0 }
+
+sub new { bless [undef], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -70,7 +72,7 @@ sub _start {
 
   $kernel->alias_set( 'p_'. core()->get_plugin_alias($self) );
 
-  $self->{Resolver} = POE::Component::Client::DNS->spawn(
+  $self->[RESOLVER] = POE::Component::Client::DNS->spawn(
     Alias => 'named'. core()->get_plugin_alias($self),
   );
 
@@ -146,7 +148,7 @@ sub dns_issue_query {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   my ($context, $channel, $host, $type) = @_[ARG0 .. $#_];
  
-  my $resp = $self->{Resolver}->resolve(
+  my $resp = $self->[RESOLVER]->resolve(
     event => 'dns_resp_recv',
     host  => $host,
     type  => $type,

@@ -14,23 +14,27 @@ use Bot::Cobalt::Utils qw/ color /;
 
 use constant MAX_TEMP => 100_000_000_000;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   $core->plugin_register( $self, 'SERVER',
-    [ 
-      'public_cmd_temp',
-      'public_cmd_tempconv',
-    ],
+    qw/
+      public_cmd_temp
+      public_cmd_tempconv
+    /,
   );
+
   $core->log->info("Registered, cmds: temp tempconv");
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   $core->log->info("Unregistering");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -43,22 +47,28 @@ sub Bot_public_cmd_temp {
 
   my $str = $msg->message_array->[0] || '';
   my ($temp, $type) = $str =~ /(-?\d+\.?\d*)?(\w)?/;
+
   $temp = 0   unless $temp;
   $temp = MAX_TEMP if $temp > MAX_TEMP;
   $type = 'F' unless $type and uc($type) ~~ [qw/F C K/];
-  my ($f, $k, $c) = (0)x3;
+
+  my ($f, $k, $c);
   given (uc $type) {
     ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) when 'F';
     ($f, $k, $c) = ( _c2f($temp), _c2k($temp), $temp ) when 'C';
     ($f, $k, $c) = ( _k2f($temp), $temp, _k2c($temp) ) when 'K';
   }
+
   $_ = sprintf("%.2f", $_) for ($f, $k, $c);
+
   my $resp = color( 'bold', "(${f}F)" )
              . " == " .
              color( 'bold', "(${c}C)" )
              . " == " .
              color( 'bold', "(${k}K)" );
+
   my $channel = $msg->channel;
+
   $core->send_event( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL

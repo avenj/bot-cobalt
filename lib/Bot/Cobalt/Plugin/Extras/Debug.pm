@@ -22,7 +22,7 @@ use Data::Dumper;
 
 use Object::Pluggable::Constants qw/ PLUGIN_EAT_NONE /;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
