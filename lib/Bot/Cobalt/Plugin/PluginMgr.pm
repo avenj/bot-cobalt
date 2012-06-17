@@ -51,7 +51,7 @@ sub _unload {
   my $plug_obj = core()->plugin_get($alias);
   my $plugisa = ref $plug_obj || return "_unload broken? no PLUGISA";
 
-  unless ($alias) {
+  if (! $alias) {
     $resp = "Bad syntax; no plugin alias specified";
   } elsif (! $plug_obj ) {
 
@@ -125,7 +125,7 @@ sub _load_module {
 
   ## plugin_add returns # of plugins in pipeline on success:
   if (my $loaded = core()->plugin_add( $alias, $obj ) ) {
-    unless ( ! Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
+    unless ( Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
       core()->State->{NonReloadable}->{$alias} = 1;
       logger->debug("$alias flagged non-reloadable");
     }
