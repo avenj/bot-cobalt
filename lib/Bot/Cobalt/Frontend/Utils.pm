@@ -82,9 +82,11 @@ sub ask_yesno {
   my %args = @_;
   
   my $question = $args{prompt} || croak "No prompt => specified";
+
   my $default  = lc(
     substr($args{default}||'', 0, 1) || croak "No default => specified"
   );
+
   croak "default should be Y or N"
     unless $default =~ /^[yn]$/;
 
@@ -98,8 +100,10 @@ sub ask_yesno {
     print "$question  [$yn] ";
     $input = <STDIN>;
     chomp($input);
+
     $input = $default if $input eq '';
-    lc(substr $input, 0, 1);
+
+    lc(substr $input, 0, 1)
   };
 
   $print_and_grab->();

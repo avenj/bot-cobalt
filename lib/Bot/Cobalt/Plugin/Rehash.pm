@@ -27,7 +27,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   register( $self, 'SERVER',
-    [ 'rehash', 'public_cmd_rehash' ]
+    'rehash', 'public_cmd_rehash'
   );
 
   logger->info("Registered, commands: !rehash");
@@ -36,15 +36,18 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+
   logger->info("Unregistered");
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_rehash {
   my ($self, $core) = splice @_, 0, 2;
+
   $self->_rehash_core_cf;
   $self->_rehash_channels_cf;
   $self->_rehash_plugins_cf;
+
   return PLUGIN_EAT_NONE
 }
 
@@ -54,6 +57,7 @@ sub Bot_public_cmd_rehash {
   my $context = $msg->context;
 
   my $nick = $msg->src_nick;
+
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
 
@@ -62,9 +66,11 @@ sub Bot_public_cmd_rehash {
 
   unless ($auth_lev >= $required_lev) {
     my $resp = rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nick }
+      nick => $nick
     );
+
     broadcast( 'message', $context, $nick, $resp );
+
     return PLUGIN_EAT_ALL
   }
   
@@ -75,6 +81,7 @@ sub Bot_public_cmd_rehash {
   my $resp;
   given ($type) {
     when ("all") {    ## (except langset)
+
       if ( 
         $self->_rehash_core_cf  
         && $self->_rehash_channels_cf
@@ -84,22 +91,27 @@ sub Bot_public_cmd_rehash {
       } else {
         $resp = "Could not rehash some confs; admin should check logs.";
       }
+
     }
 
     when ("core") {
+
       if ($self->_rehash_core_cf) {
         $resp = "Rehashed core configuration.";
       } else {
         $resp = "Rehash failed; administrator should check logs.";
       }
+
     }
     
     when ("plugins") {
+
       if ($self->_rehash_plugins_cf) {
         $resp = "Rehashed plugins.conf.";
       } else {
         $resp = "Rehashing plugins.conf failed; admin should check logs.";
       }
+
     }
     
     when ("langset") {
@@ -110,14 +122,17 @@ sub Bot_public_cmd_rehash {
       } else {
         $resp = "Rehashing langset failed; administrator should check logs.";
       }
+
     }
     
     when ("channels") {
+
       if ($self->_rehash_channels_cf) {
         $resp = "Rehashed channels configuration.";
       } else {
         $resp = "Rehashing channels failed; administrator should check logs.";
       }
+
     }
     
     default {
@@ -138,7 +153,9 @@ sub _rehash_plugins_cf {
   unless ($newcfg->{plugins} and ref $newcfg->{plugins} eq 'HASH') {
     logger->warn("Rehashed conf appears to be missing plugins conf");
     logger->warn("Is your plugins.conf broken?");
+
     my $etcdir = core()->etc;
+
     logger->warn("(Path to etc/: $etcdir)");
     return
   }
@@ -160,8 +177,10 @@ sub _rehash_core_cf {
   unless ($newcfg->{core} and ref $newcfg->{core} eq 'HASH') {
     logger->warn("Rehashed conf appears to be missing core conf");
     logger->warn("Is your cobalt.conf broken?");
+
     my $etcdir = core()->etc;
     logger->warn("(Path to etc/: $etcdir)");
+
     return
   }
 
@@ -183,14 +202,19 @@ sub _rehash_channels_cf {
   unless ($newcfg->{channels} and ref $newcfg->{channels} eq 'HASH') {
     logger->warn("Rehashed conf appears to be missing channels conf");
     logger->warn("Is your channels.conf broken?");
+
     my $etcdir = core()->etc;
     logger->warn("(Path to etc/: $etcdir)");
+
     return
   }
 
   core()->cfg->{channels} = delete $newcfg->{channels};
+
   logger->info("Reloaded channels config.");
+
   broadcast( 'rehashed', 'channels' );
+
   return 1
 }
 
@@ -206,22 +230,28 @@ sub _rehash_langset {
   unless ($new_rpl && ref $new_rpl eq 'HASH') {
     logger->warn("load_langset() did not return a hash.");
     logger->warn("Failed to load langset $lang");
+
     return
   }
   
   unless (scalar keys %$new_rpl) {
     logger->warn("load_langset() returned a hash with no keys.");
     logger->warn("Failed to load langset $lang");
+
     return
   }
   
   for my $this_rpl (keys %$new_rpl) {
     logger->debug("Updated: $this_rpl")
       if core->debug > 2;
+
     core->lang->{$this_rpl} = delete $new_rpl->{$this_rpl};
   }
+
   logger->info("Reloaded core langset ($lang)");
+
   broadcast( 'rehashed', 'langset' );
+
   return 1
 }
 
@@ -250,6 +280,7 @@ sub _get_new_cfg {
   unless (ref $newcfg eq 'HASH') {
     logger->warn("_get_new_cfg; Bot::Cobalt::Conf did not return a hash");
     logger->warn("(Path to etc/: $etcdir)");
+
     return
   }
   

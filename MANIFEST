@@ -120,6 +120,7 @@ t/04_serial/02_file_rw.t
 t/05_db/01_db.t
 t/05_db/02_dbdump.t
 t/06_plugins/01_loadable_coreset.t
+t/06_plugins/02_with_loader.t
 t/07_cmds/01_cobalt2.t
 t/07_cmds/02_installer.t
 t/07_cmds/03_dbdump.t

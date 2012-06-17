@@ -82,7 +82,7 @@ sub rc_write {
   }
 }
 
-1
+1;
 __END__
 
 =pod
