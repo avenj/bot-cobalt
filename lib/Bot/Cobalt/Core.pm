@@ -264,6 +264,12 @@ sub syndicator_started {
     my $obj;
     try {
       $obj = Bot::Cobalt::Core::Loader->load($module);
+      
+      unless ( Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
+        $self->State->{NonReloadable}->{$plugin} = 1;
+        logger->debug("$plugin marked non-reloadable");
+      }
+
     } catch {
       $self->log->error("Load failure; $_");
       next
