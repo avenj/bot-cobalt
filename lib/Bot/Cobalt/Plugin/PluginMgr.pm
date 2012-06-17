@@ -52,48 +52,46 @@ sub _unload {
   my $plugisa = ref $plug_obj || return "_unload broken? no PLUGISA";
 
   if (! $alias) {
-    $resp = "Bad syntax; no plugin alias specified";
-  } elsif (! $plug_obj ) {
+    return "Bad syntax; no plugin alias specified";
 
-    $resp = rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
-              plugin => $alias,
-              err => 'No such plugin found, is it loaded?' 
+  } elsif (! $plug_obj ) {
+    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+      plugin => $alias,
+      err => 'No such plugin found, is it loaded?' 
     );
 
   } elsif (! Bot::Cobalt::Core::Loader->is_reloadable($plug_obj) ) {
-
-    $resp = rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
-              plugin => $alias,
-              err => "Plugin $alias is marked as non-reloadable",
+    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+      plugin => $alias,
+      err => "Plugin $alias is marked as non-reloadable",
    );
-
-  } else {
-    logger->info("Attempting to unload $alias ($plugisa) per request");
-
-    if ( core()->plugin_del($alias) ) {
-      delete core()->PluginObjects->{$plug_obj};
-
-      Bot::Cobalt::Core::Loader->unload($plugisa);
-
-      ## also cleanup our config if there is one:
-      delete core()->cfg->{plugin_cf}->{$alias};
-
-      ## and timers:
-      core()->timer_del_alias($alias);
-      
-      $resp = rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD}, 
-        plugin => $alias
-      );
-    } else {
-      $resp = rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
-        plugin => $alias, 
-        err => 'Unknown failure'
-      );
-    }
 
   }
 
-  return $resp
+  logger->info("Attempting to unload $alias ($plugisa) per request");
+
+  if ( core()->plugin_del($alias) ) {
+    delete core()->PluginObjects->{$plug_obj};
+
+    Bot::Cobalt::Core::Loader->unload($plugisa);
+
+    ## also cleanup our config if there is one:
+    delete core()->cfg->{plugin_cf}->{$alias};
+
+    ## and timers:
+    core()->timer_del_alias($alias);
+      
+    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD}, 
+        plugin => $alias
+    );
+  } else {
+    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+      plugin => $alias, 
+      err => 'Unknown failure'
+    );
+  }
+
+  return
 }
 
 sub _load_module {
