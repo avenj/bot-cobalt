@@ -9,15 +9,6 @@ use Bot::Cobalt::DB;
 
 use File::Spec;
 
-use constant {
-  TIME     => 0,
-  ACTION   => 1,
-  CHANNEL  => 2,
-  USERNAME => 3,
-  HOST     => 4,
-  META     => 5,
-};
-
 sub new { bless {}, shift }
 
 sub parse_nick {
@@ -35,37 +26,25 @@ sub retrieve {
 
   my $thisbuf = $self->{Buf}->{$context} // {};
 
-  ## attempt to get from internal hashes
-  my($last_ts, $last_act, $last_chan, $last_user, $last_host);
-
   my $ref;
-
   if (exists $thisbuf->{$nickname}) {
     $ref = $thisbuf->{$nickname};
   } else {
     my $db = $self->{SDB};
+
     unless ($db->dbopen) {
       logger->warn("dbopen failed in retrieve; cannot open SeenDB");
       return
     }
+
     ## context%nickname
     my $thiskey = $context .'%'. $nickname;
+
     $ref = $db->get($thiskey);
     $db->dbclose;
   }
 
-  return unless defined $ref and ref $ref;
-
-  $last_ts   = $ref->{TS};
-  $last_act  = $ref->{Action};
-  $last_chan = $ref->{Channel};
-  $last_user = $ref->{Username};
-  $last_host = $ref->{Host};
-  my $meta = $ref->{Meta} // {};
-
-  ## fetchable via constants
-  ## TIME, ACTION, CHANNEL, USERNAME, HOST
-  return($last_ts, $last_act, $last_chan, $last_user, $last_host, $meta)
+  return $ref if defined $ref and ref $ref
 }
 
 sub Cobalt_register {
@@ -91,7 +70,7 @@ sub Cobalt_register {
     unless $rc;
 
   register( $self, 'SERVER', 
-    [ qw/
+    qw/
     
       public_cmd_seen
       
@@ -105,7 +84,7 @@ sub Cobalt_register {
       
       seenplug_deferred_list
       
-    / ],
+    /,
   );
   
   core->timer_set( 6,
@@ -334,21 +313,26 @@ sub Bot_public_cmd_seen {
     return PLUGIN_EAT_NONE
   }
   
-  my @ret = $self->retrieve($context, $targetnick);
+  my $ref = $self->retrieve($context, $targetnick);
   
-  unless (@ret) {
+  unless ($ref) {
     broadcast( 'message',
       $context,
       $channel,
       "${nick}: I don't know anything about $targetnick"
     );
+
     return PLUGIN_EAT_NONE
   }
   
-  my ($last_ts, $last_act, $last_user, $last_host, $last_chan, $meta) = 
-    @ret[TIME, ACTION, USERNAME, HOST, CHANNEL, META];
+  my $last_ts   = $ref->{TS};
+  my $last_act  = $ref->{Action};
+  my $last_chan = $ref->{Channel};
+  my $last_user = $ref->{Username};
+  my $last_host = $ref->{Host};
+  my $meta = $ref->{Meta} // {};
 
-  my $ts_delta = time() - $last_ts ;
+  my $ts_delta = time - $last_ts ;
   my $ts_str   = secs_to_str($ts_delta);
 
   my $resp;

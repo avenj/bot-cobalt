@@ -288,7 +288,7 @@ sub _cmd_plug_list {
   
   my @loaded = sort keys %$pluglist;
 
-  my $str;
+  my $str = 'Loaded:';
   while (my $plugin_alias = shift @loaded) {
     $str .= ' ' . $plugin_alias;
 
