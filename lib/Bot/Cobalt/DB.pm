@@ -271,7 +271,8 @@ sub get {
   my ($self, $key) = @_;
   confess "attempted 'get' on unopened db"
     unless $self->is_open;
-  return undef unless exists $self->Tied->{$key};
+
+  return unless exists $self->Tied->{$key};
 
   return $self->Tied->{$key}
 }
@@ -288,8 +289,11 @@ sub del {
   my ($self, $key) = @_;
   confess "attempted 'del' on unopened db"
     unless $self->is_open;
-  return undef unless exists $self->Tied->{$key};
+
+  return unless exists $self->Tied->{$key};
+
   delete $self->Tied->{$key};
+
   return 1
 }
 
