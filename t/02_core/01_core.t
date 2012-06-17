@@ -1,14 +1,24 @@
-use Test::More tests => 25;
+use Test::More tests => 27;
 use strict; use warnings;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Common' );
   use_ok( 'Bot::Cobalt::Conf' );
   use_ok( 'Bot::Cobalt::Core' );
+  
+  use_ok( 'Bot::Cobalt::Core::Loader' );
 }
 
 can_ok( 'Bot::Cobalt::Conf', 'read_cfg' );
 can_ok( 'Bot::Cobalt::Core', 'init' );
+
+can_ok( 'Bot::Cobalt::Core::Loader',
+  qw/
+    load
+    unload
+    is_reloadable
+  /
+);
 
 use Module::Build;
 use File::Spec;
