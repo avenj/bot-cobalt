@@ -10,10 +10,16 @@ use warnings;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Bot::Cobalt;
+
 use Bot::Cobalt::Utils qw/ rplprintf /;
+
 use Bot::Cobalt::Conf;
 
+use Bot::Cobalt::Core::Loader;
+
 use Scalar::Util qw/blessed/;
+
+use Try::Tiny;
 
 sub new { bless {}, shift }
 
@@ -43,7 +49,7 @@ sub _unload {
   my $resp;
 
   my $plug_obj = core()->plugin_get($alias);
-  my $plugisa = ref $plug_obj || return "_unload broken, no PLUGISA?";
+  my $plugisa = ref $plug_obj || return "_unload broken? no PLUGISA";
 
   unless ($alias) {
     $resp = "Bad syntax; no plugin alias specified";
@@ -54,7 +60,7 @@ sub _unload {
               err => 'No such plugin found, is it loaded?' 
     );
 
-  } elsif (! core()->is_reloadable($alias) ) {
+  } elsif (! Bot::Cobalt::Core::Loader->is_reloadable($plug_obj) ) {
 
     $resp = rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
               plugin => $alias,
@@ -67,8 +73,7 @@ sub _unload {
     if ( core()->plugin_del($alias) ) {
       delete core()->PluginObjects->{$plug_obj};
 
-      ## ask core to clean up symbol table:
-      core()->unloader_cleanup($plugisa);
+      Bot::Cobalt::Core::Loader->unload($plugisa);
 
       ## also cleanup our config if there is one:
       delete core()->cfg->{plugin_cf}->{$alias};
@@ -96,51 +101,32 @@ sub _load_module {
   ## returns a response string for irc
   my ($self, $alias, $module) = @_;
 
-  my $err;
-  ## FIXME needs to be converted to use core->load_plugin
-  {
-    local $@;
-    eval "require $module";
-    $err = $@ if $@;
-  }
+  my ($err, $obj);
+  try {
+    $obj = Bot::Cobalt::Core::Loader->load($module);
+  } catch {
+    $err = $_
+  };
 
   if ($err) {
     ## 'require' failed
-    my $err = $@;
     logger->warn("Plugin load failure; $err");
     
-    core()->unloader_cleanup($module);
+    Bot::Cobalt::Core::Loader->unload($module);
 
     return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
       plugin => $alias,
       err => "Module $module cannot be found/loaded: $err",
     );
-  } else {
-    ## module found, attempt to load it
-    unless ( $module->can('new') ) {
-      return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
-        plugin => $alias,
-        err => "Module $module doesn't appear to have new()",
-      );
-    }
-
-  }
-
-  my $obj = $module->new();
-  unless ($obj && blessed $obj) {
-      return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
-        plugin => $alias,
-        err => "Constructor for $module returned junk",
-      );
   }
 
   ## store plugin objects:
   core()->PluginObjects->{$obj} = $alias;
 
   ## plugin_add returns # of plugins in pipeline on success:
-  my $loaded = core()->plugin_add( $alias, $obj );
-  if ($loaded) {
-    unless ( core()->is_reloadable($alias, $obj) ) {
+  if (my $loaded = core()->plugin_add( $alias, $obj ) ) {
+    unless ( ! Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
+      core()->State->{NonReloadable}->{$alias} = 1;
       logger->debug("$alias flagged non-reloadable");
     }
       
@@ -156,7 +142,8 @@ sub _load_module {
     logger->error("plugin_add failure for $alias");
 
     ## run cleanup  
-    core()->unloader_cleanup($module);
+    Bot::Cobalt::Core::Loader->unload($module);
+
     delete core()->PluginObjects->{$obj};
 
     return rplprintf( core()->lang->{RPL_PLUGIN_ERR},

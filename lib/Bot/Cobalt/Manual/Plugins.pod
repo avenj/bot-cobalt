@@ -1387,33 +1387,6 @@ Alternately, a method named NON_RELOADABLE will do:
   sub NON_RELOADABLE { 1 }
 
 
-=head3 Plugin managers and is_reloadable
-
-All plugin load/unload frontends should make use of the 
-L<Bot::Cobalt::Core> method B<is_reloadable> (provided by 
-L<Bot::Cobalt::Core::Role::Loader>).
-
-Before unloading a plugin, a plugin manager should check the reloadable 
-status of the plugin's alias:
-
-  ## In a plugin manager of some sort, perhaps:
-  unless ( core()->is_reloadable($plugin_alias) ) {
-    ## plugin is not safe to reload on-the-fly
-    # ... refuse to reload the plugin, log it ...
-  }
-
-When loading a plugin, a plugin manager should tell is_reloadable 
-about the new object:
-
-  my $plug_obj = My::Plugin->new;
-   # ... add plugin to pipeline ...
-  if ( core()->is_reloadable($plugin_alias, $plug_obj) ) {
-    ## plugin is reloadable
-  } else {
-    ## plugin is NOT reloadable
-    ## internal state has been updated to note same
-  }
-
 
 =head1 ADVANCED CONCEPTS
 

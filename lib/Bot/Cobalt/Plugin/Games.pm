@@ -8,6 +8,8 @@ use warnings;
 use Bot::Cobalt;
 use Object::Pluggable::Constants qw/ :ALL /;
 
+use Bot::Cobalt::Core::Loader;
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {
@@ -26,7 +28,7 @@ sub Cobalt_unregister {
   $core->log->debug("Cleaning up our games...");
 
   for my $module (@{ $self->{ModuleNames}//[] }) {
-    $core->unloader_cleanup($module);
+    Bot::Cobalt::Core::Loader->unload($module);
   }
 
   $core->log->info("Unloaded");

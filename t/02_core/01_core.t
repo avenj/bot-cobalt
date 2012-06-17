@@ -80,13 +80,6 @@ can_ok( $core,
     timer_get_alias
   /,
   
-  ## Loader:
-  qw/
-    is_reloadable
-    load_plugin
-    unloader_cleanup
-  /,
-  
 );
 
 ok( $core->get_core_cfg, 'get_core_cfg()' );

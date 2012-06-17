@@ -102,6 +102,7 @@ sub rplprintf {
     ## _repl($1, $2, $vars)
     my ($orig, $match, $varref) = @_;
     return $orig unless defined $varref->{$match};
+
     my $replace = $varref->{$match};
     return $replace
   };

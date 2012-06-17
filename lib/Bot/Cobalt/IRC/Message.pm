@@ -113,7 +113,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::IRC::Message - Represent an incoming IRC message
+Bot::Cobalt::IRC::Message - An incoming IRC message
 
 =head1 SYNOPSIS
 

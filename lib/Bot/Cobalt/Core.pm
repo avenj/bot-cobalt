@@ -19,7 +19,11 @@ use Bot::Cobalt::IRC;
 use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
 
+use Bot::Cobalt::Core::Loader;
+
 use Scalar::Util qw/blessed/;
+
+use Try::Tiny;
 
 use File::Spec;
 
@@ -166,7 +170,6 @@ extends 'POE::Component::Syndicator';
 with 'Bot::Cobalt::Lang';
 with 'Bot::Cobalt::Core::Role::Singleton';
 with 'Bot::Cobalt::Core::Role::EasyAccessors';
-with 'Bot::Cobalt::Core::Role::Loader';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
@@ -249,23 +252,32 @@ sub syndicator_started {
   {
     my $this_plug_cf = $self->cfg->{plugins}->{$plugin};
 
-    next if $this_plug_cf->{NoAutoLoad};
-
-    my $obj = $self->load_plugin($plugin);
+    my $module = $this_plug_cf->{Module};
     
-    ## load_plugin will have thrown an error, skip:
-    next unless $obj;
+    unless (defined $module) {
+      $self->log->error("Missing Module directive for $plugin");
+      next
+    }
 
+    next if $this_plug_cf->{NoAutoLoad};
+    
+    my $obj;
+    try {
+      $obj = Bot::Cobalt::Core::Loader->load($module);
+    } catch {
+      $self->log->error("Load failure; $_");
+      next
+    };
+
+    ## save stringified object -> plugin mapping:
     $self->PluginObjects->{$obj} = $plugin;
 
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
 
       delete $self->PluginObjects->{$obj};
-      
-      $self->unloader_cleanup(
-        $this_plug_cf->{Module}
-      );
+            
+      Bot::Cobalt::Core::Loader->unload($module);
 
       next
     }
@@ -426,9 +438,6 @@ L<Bot::Cobalt::Core::Role::IRC>
 
 L<Bot::Cobalt::Core::Role::Timers>
 
-=item *
-
-L<Bot::Cobalt::Core::Role::Loader>
 
 =back
 
