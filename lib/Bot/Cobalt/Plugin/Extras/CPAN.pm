@@ -15,7 +15,7 @@ use Module::CoreList;
 use Try::Tiny;
 
 ## FIXME cachedb?
-sub CacheDB () { 0 }
+sub CACHE () { 0 }
 
 sub new { bless [undef], shift }
 

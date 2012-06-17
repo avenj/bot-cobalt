@@ -18,9 +18,9 @@ sub is_reloadable {
   confess "is_reloadable() needs a plugin object"
     unless $obj and blessed $obj;
   
-  return 1 if $obj->can('NON_RELOADABLE') and $obj->NON_RELOADABLE;
+  return if $obj->can('NON_RELOADABLE') and $obj->NON_RELOADABLE;
 
-  return
+  return 1
 }
 
 sub module_path {
