@@ -9,6 +9,8 @@ use Moo::Role;
 
 use Scalar::Util qw/blessed/;
 
+use Bot::Cobalt::Core::Loader;
+
 use Try::Tiny;
 
 requires qw/
@@ -19,33 +21,27 @@ requires qw/
   State
 /;
 
-
 sub is_reloadable {
   my ($self, $alias, $obj) = @_;
 
-  if ($obj and ref $obj) {
-    ## passed an object
-    ## see if the object is marked non-reloadable
-    ## if it is, update State
-    if ( $obj->{NON_RELOADABLE} ||
-       ( $obj->can("NON_RELOADABLE") && $obj->NON_RELOADABLE() )
-    ) {
+  if ($obj) {
+    ## Passed an object, check reloadable status, update State.
 
+    if (Bot::Cobalt::Core::Loader->is_reloadable($obj)) {
       $self->log->debug("Marked plugin $alias non-reloadable");
-
       $self->State->{NonReloadable}->{$alias} = 1;
 
-      ## not reloadable, return 0
       return
     } else {
-      ## reloadable, return 1
       delete $self->State->{NonReloadable}->{$alias};
-
+      
       return 1
     }
+
   }
-  ## passed just an alias (or a bustedass object)
-  ## return whether the alias is reloadable
+
+  ## passed just an alias
+
   return if $self->State->{NonReloadable}->{$alias};
 
   return 1
@@ -55,7 +51,6 @@ sub load_plugin {
   my ($self, $alias) = @_;
   
   my $plugins_cf = $self->cfg->{plugins};
-  
   my $module = $plugins_cf->{$alias}->{Module};
   
   unless (defined $module) {
@@ -65,28 +60,19 @@ sub load_plugin {
     return
   }
 
-  my $modpath = join( '/', split /(?:'|::)/, $module ) . '.pm';
-
-  my $orig_err;
-  unless (try { require $modpath;1 } catch { $orig_err = $_;0 } ) {
-    $self->log->error(
-      "Could not load $module: $orig_err"
-    );
-    return
-  }
-
-  my $obj;
-  try 
-    { $obj = $module->new(); } 
-  catch {
-     $self->log->error(
-       "new() failed for $module: $_"
-     ); 0
-  } or return;
+  my ($load_err, $plug_obj);
   
-  $self->is_reloadable($alias, $obj);
+  try {
+    $plug_obj = Bot::Cobalt::Core::Loader->load($module)
+  } catch {
+    $self->log->error(
+      "Could not load $alias: $load_err"
+    );
+  };
+  
+  $self->is_reloadable($alias, $plug_obj) if $plug_obj;
 
-  return $obj
+  return $plug_obj
 }
 
 sub unloader_cleanup {
@@ -96,24 +82,7 @@ sub unloader_cleanup {
 
   $self->log->debug("cleaning up after $module (unloader_cleanup)");
 
-  my $included = join( '/', split /(?:'|::)/, $module ) . '.pm';
-
-  $self->log->debug("removing from INC: $included");
-  delete $INC{$included};
-
-  { no strict 'refs';
-
-    @{$module.'::ISA'} = ();
-    my $s_table = $module.'::';
-    for my $symbol (keys %$s_table) {
-      next if $symbol =~ /\A[^:]+::\z/;
-      delete $s_table->{$symbol};
-    }
-
-  }
-
-  $self->log->debug("finished module cleanup");
-  return 1
+  Bot::Cobalt::Core::Loader->unload($module);
 }
 
 
