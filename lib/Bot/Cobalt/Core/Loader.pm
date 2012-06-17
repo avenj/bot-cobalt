@@ -18,9 +18,7 @@ sub is_reloadable {
   confess "is_reloadable() needs a plugin object"
     unless $obj and blessed $obj;
   
-  return 1 if
-      ($obj->can('NON_RELOADABLE') && $obj->NON_RELOADABLE)
-      or $obj->{NON_RELOADABLE};
+  return 1 if $obj->can('NON_RELOADABLE') and $obj->NON_RELOADABLE;
 
   return
 }
