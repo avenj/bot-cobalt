@@ -32,7 +32,7 @@ sub module_path {
 }
 
 sub load {
-  my ($class, $module) = @_;
+  my ($class, $module, @newargs) = @_;
   
   confess "load() needs a module name" unless defined $module;
 
@@ -46,7 +46,7 @@ sub load {
 
   my $obj;
   try {
-    $obj = $module->new()
+    $obj = $module->new(@newargs)
   } catch {
     croak "new() failed for $module: $_"
   };
@@ -79,6 +79,67 @@ sub unload {
   return 1
 }
 
-1
+1;
+__END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Core::Loader - Object loader/unloader
+
+=head1 SYNOPSIS
+
+  use Try::Tiny;
+  require Bot::Cobalt::Core::Loader;
+  
+  ## Attempt to import a module:
+  my $plugin_obj = try {
+    Bot::Cobalt::Core::Loader->load($module_name)
+  } catch {
+    # . . . load failed, maybe die with an error . . .
+  };
+
+  ## Check reloadable status of a plugin object:
+  if ( Bot::Cobalt::Core::Loader->is_reloadable($plugin_obj) ) {
+   . . .
+  }
+  
+  ## Clean up a module after dropping a plugin object:
+  Bot::Cobalt::Core::Loader->unload($module_name);
+
+=head1 DESCRIPTION
+
+A small load/unload class for managing L<Bot::Cobalt> plugins.
+
+=head2 load
+
+Given a module name in the form of 'My::Module', tries to load and 
+instantiate the specified module view C<new()>.
+
+Optional arguments can be specified to be passed to C<new()>:
+
+  $obj = Bot::Cobalt::Core::Loader->load($module_name, @args)
+
+Throws an exception on error.
+
+=head2 unload
+
+Given a module name in the form of 'My::Module', tries to delete the 
+module from %INC and clear relevant symbol table entries.
+
+Always returns boolean true.
+
+=head2 is_reloadable
+
+Given a blessed object, checks to see if the plugin declares itself as 
+NON_RELOADABLE. Returns boolean true if the object appears to be 
+declared reloadable.
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
 
 ## FIXME POD, t/
