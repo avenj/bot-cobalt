@@ -1373,20 +1373,10 @@ refuse to unload or reload the plugin once it is loaded.
 
 =head3 Declaring non-reloadable status
 
-To declare itself as not being reloadable, a plugin simply needs to 
-return a boolean true value in $self->{NON_RELOADABLE} at construction 
-time:
+A plugin can declare itself as not being reloadable with a simple 
+method returning boolean true:
 
-  ## Plugin managers (should) refuse to reload this plugin.
-  sub new { bless { NON_RELOADABLE => 1 }, shift }
-
-Alternately, a method named NON_RELOADABLE will do:
-
-  ## Like above but outside your constructor.
-  ## Must return a boolean true value.
-  sub NON_RELOADABLE { 1 }
-
-
+sub NON_RELOADABLE { 1 }
 
 =head1 ADVANCED CONCEPTS
 

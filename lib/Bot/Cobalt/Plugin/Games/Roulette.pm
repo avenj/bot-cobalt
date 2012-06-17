@@ -34,9 +34,6 @@ sub execute {
     my $chan = $msg->channel;
 
     if ( $irc->is_channel_operator($chan, $bot)
-          ## support silly +q/+a modes also
-          ## (because I feel sorry for the unrealircd kids)
-          ##  - avenj
          || $irc->is_channel_admin($chan, $bot)
          || $irc->is_channel_owner($chan, $bot) )
     {

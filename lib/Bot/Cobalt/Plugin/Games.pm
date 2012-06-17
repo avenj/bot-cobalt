@@ -80,6 +80,7 @@ sub _load_games {
     next unless ref $games->{$game}->{Cmds} eq 'ARRAY';
 
     ## attempt to load module
+    ## FIXME convert to Loader.pm interface
     {
       local $@;
       eval "require $module";

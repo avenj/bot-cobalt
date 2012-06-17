@@ -5,9 +5,9 @@ use 5.10.1;
 use strict;
 use warnings;
 
-our @responses;
+my @responses;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub execute {
   my ($self, $msg) = @_;

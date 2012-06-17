@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Games::Dice;
-our $VERSION = '0.010_01';
-
-our $VERSION = '0.03';
+our $VERSION;
 
 use 5.10.1;
 use strict;
@@ -9,7 +7,7 @@ use warnings;
 
 use Bot::Cobalt::Utils qw/ color /;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub execute {
   my ($self, $msg, $str) = @_;

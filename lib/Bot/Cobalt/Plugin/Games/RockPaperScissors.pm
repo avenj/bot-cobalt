@@ -5,7 +5,7 @@ use 5.10.1;
 use strict;
 use warnings;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub execute {
   my ($self, $msg, $rps) = @_;
@@ -18,8 +18,8 @@ sub execute {
 
   my $beats = {
     scissors => 'paper',
-    paper => 'rock',
-    rock => 'scissors',
+    paper    => 'rock',
+    rock     => 'scissors',
   };
 
   my $throw = (keys %$beats)[rand(keys %$beats)];
