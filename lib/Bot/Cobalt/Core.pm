@@ -248,7 +248,7 @@ sub syndicator_started {
     ($self->cfg->{plugins}->{$a}->{Priority}//1)
                 } keys %{ $self->cfg->{plugins} };
 
-  for my $plugin (@plugins)
+  PLUGIN: for my $plugin (@plugins)
   {
     my $this_plug_cf = $self->cfg->{plugins}->{$plugin};
 
@@ -256,10 +256,10 @@ sub syndicator_started {
     
     unless (defined $module) {
       $self->log->error("Missing Module directive for $plugin");
-      next
+      next PLUGIN
     }
 
-    next if $this_plug_cf->{NoAutoLoad};
+    next PLUGIN if $this_plug_cf->{NoAutoLoad};
     
     my $obj;
     try {
@@ -267,12 +267,13 @@ sub syndicator_started {
       
       unless ( Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
         $self->State->{NonReloadable}->{$plugin} = 1;
-        logger->debug("$plugin marked non-reloadable");
+        $self->log->debug("$plugin marked non-reloadable");
       }
 
     } catch {
       $self->log->error("Load failure; $_");
-      next
+
+      next PLUGIN
     };
 
     ## save stringified object -> plugin mapping:
@@ -285,7 +286,7 @@ sub syndicator_started {
             
       Bot::Cobalt::Core::Loader->unload($module);
 
-      next
+      next PLUGIN
     }
 
     $i++;
@@ -315,14 +316,18 @@ sub sighup {
     ## we were (we think) attached to a terminal and it's (we think) gone
     ## shut down soon as we can:
     $self->log->warn("Lost terminal; shutting down");
+
     $_[KERNEL]->yield('shutdown');
   }
+
   $_[KERNEL]->sig_handled();
 }
 
 sub shutdown {
   my $self = ref $_[0] eq __PACKAGE__ ? $_[0] : $_[OBJECT];
+
   $self->log->warn("Shutdown called, destroying syndicator");
+
   $self->_syndicator_destroy();
 }
 
