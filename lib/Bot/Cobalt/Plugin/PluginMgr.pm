@@ -217,7 +217,6 @@ sub _load_conf {
   my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
   $thisplugcf = {} unless ref $thisplugcf;
 
-  ## directly fuck with core's cfg hash:
   core()->cfg->{plugin_cf}->{$alias} = $thisplugcf;
 }
 
@@ -288,7 +287,7 @@ sub _cmd_plug_list {
   
   my @loaded = sort keys %$pluglist;
 
-  my $str = 'Loaded:';
+  my $str = sprintf("Loaded (%d):", scalar @loaded);
   while (my $plugin_alias = shift @loaded) {
     $str .= ' ' . $plugin_alias;
 
