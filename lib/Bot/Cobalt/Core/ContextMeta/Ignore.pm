@@ -18,14 +18,12 @@ around 'add' => sub {
   
   my ($pkg, $line) = (caller)[0,2];
   
-  unless (defined $context && defined $mask) {
-    carp "Missing arguments in ignore add()";
-    return
-  }  
+  confess "Missing arguments in ignore add()"
+    unless defined $context and defined $mask;
   
   $mask    = normalize_mask($mask);
   $addedby = $pkg unless defined $addedby;
-  $reason  = "Added by $pkg" unless $reason;
+  $reason  = "Added by $pkg" unless defined $reason;
 
   my $meta = {
     AddedBy => $addedby,
