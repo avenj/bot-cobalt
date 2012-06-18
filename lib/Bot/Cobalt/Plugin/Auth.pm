@@ -120,23 +120,16 @@ sub Cobalt_register {
         $flags = $su{$context}->{$user}->{Flags};
       } else { $flags = { }; }
 
-      ## Set superuser flag:
       $flags->{SUPERUSER} = 1;
 
       $self->AccessList->{$context}->{$user} = {
-        ## if you're lame enough to exclude a passwd, here's a random one:
         Password => $su{$context}->{$user}->{Password}
                      // $self->_mkpasswd(rand 10),
-        ## SuperUsers are level 9999, to make life easier on plugins
-        ## (allows for easy numeric level comparison)
         Level => 9999,
-        ## ...standard Auth also provides a SuperUser flag:
         Flags => $flags,
       };
 
       ## Mask and Masks are both valid directives, Mask trumps Masks
-      ## ...whether that's sane behavior or not is questionable
-      ## (but it's what the comments in auth.conf specify)
       if (exists $su{$context}->{$user}->{Masks} 
           && !exists $su{$context}->{$user}->{Mask} ) 
       {
@@ -145,6 +138,7 @@ sub Cobalt_register {
       }
 
       ## the Mask specification in cfg may be an array or a string:
+      ## FIXME sanitize this bullshit
       if (ref $su{$context}->{$user}->{Mask} eq 'ARRAY') {
           $self->AccessList->{$context}->{$user}->{Masks} = [
             ## normalize masks into full, matchable masks:

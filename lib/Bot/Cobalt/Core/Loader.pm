@@ -141,5 +141,3 @@ declared reloadable.
 Jon Portnoy <avenj@cobaltirc.org>
 
 =cut
-
-## FIXME POD, t/

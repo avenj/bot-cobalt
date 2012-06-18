@@ -27,7 +27,7 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
   ## Import some helpful sugar:
   use Bot::Cobalt;
 
-  ## Import lots of useful stuff:
+  ## Import useful constants and utilities:
   use Bot::Cobalt::Common;
   
   ## Minimalist object constructor:
@@ -45,16 +45,16 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
     ## (We could also register for a list or 'all')
     ## Uses register() sugar from Bot::Cobalt
     register( $self, 'SERVER',
-      [ 'public_msg' ]
+      'public_msg'
     );
     
     ## Log that we're here now:
     logger->info("Registered");
 
-    ## *Always* return an Object::Pluggable::Constants value from an 
+    ## Always return an Object::Pluggable::Constants value from an 
     ## event handler.
     ##
-    ## (Importing Bot::Cobalt::Common will also pull _NONE and _ALL in)
+    ## (Importing Bot::Cobalt::Common will pull _NONE and _ALL in)
     ## See "Returning proper values" under "Handling events"
     ## 
     ## PLUGIN_EAT_NONE is the most common:
@@ -68,6 +68,7 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
     . . . do some clean up, perhaps . . .
     
     logger->info("Unregistering; bye!");
+
     return PLUGIN_EAT_NONE
   }
   
@@ -95,7 +96,7 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
 =head3 plugins.conf
 
 Plugins specified in plugins.conf (located in our etc/) will be 
-automatically loaded at runtime unless B<NoAutoLoad> is specified.
+automatically loaded at runtime unless B<NoAutoLoad> is a true value.
 
 C<plugins.conf> is YAML in the following structure:
 
@@ -110,10 +111,10 @@ C<plugins.conf> is YAML in the following structure:
       Level: 2
 
 Configuration files specified in 'Config: ' are expected to be valid 
-B<YAML1.0>. You can read all about YAML at L<http://www.yaml.org> -- 
-for the most part, YAML is fairly self-explanatory.
-See L<Bot::Cobalt::Manual::Plugins::Config> for more about YAML and 
-plugin configs.
+B<YAML1.0>. You can read more about YAML at L<http://www.yaml.org> -- 
+for the most part, the basics are fairly self-explanatory.
+See L<Bot::Cobalt::Manual::Plugins::Config> for more about simple YAML 
+syntax for plugin configuration files.
 
 The config file will be loaded when the plugin is; the data structure 
 loaded will be stored in the core B<cfg> attribute, keyed by the plugin's 
@@ -123,8 +124,8 @@ Simple plugins might only need one or two config options; in this case,
 you can specify a B<Opts:> directive. It should be a hash (or a list, 
 in very odd cases).
 
-If an Opts: directive is supplied, it will be loaded as well; see 
-L</PluginOpts>.
+If an Opts: directive is supplied, it will be loaded under its own hash 
+key; see L</PluginOpts>.
 
 
 =head3 Accessing plugin configuration
@@ -137,9 +138,6 @@ core method B<get_plugin_cfg>:
 
   ## Our $self object or our alias must be specified:
   my $plug_cf = core()->get_plugin_cfg( $self );
-  unless ($plug_cf) {
-    ## No configuration found for our plugin ...
-  }
 
 See also: L</"Core methods">
 
@@ -196,8 +194,8 @@ modification (and it's often a poor idea).
 Plugins are fundamentally event driven.
 
 A plugin will (usually at load-time) register to receive some set of 
-events, which are pushed through the pipeline by the Cobalt core (with 
-help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
+events, which are pushed through the plugin pipeline by the Cobalt core 
+(with help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
 
 If your plugin needs to have a certain priority in the pipeline, you're 
 going to want to spend some quality time reading the L<Object::Pluggable> 
@@ -213,18 +211,14 @@ words, inside C<Cobalt_register>:
 
   ## Using Bot::Cobalt sugar:
   register( $self, 'SERVER', 
-    [ 
       'chan_sync',
       'public_msg',
-    ]
   );
 
   ## Same thing without sugar:
   $core->plugin_register( $self, 'SERVER',
-    [ 
       'chan_sync',
       'public_msg',
-    ],
   );
 
 =head3 Event handlers
@@ -234,7 +228,8 @@ Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
   sub Bot_some_event {
     my ($self, $core) = splice @_, 0, 2;
     my $deref_first_arg = ${ $_[0] };
-    ...
+
+    . . .
   }
 
 B<The arguments passed to event handlers are always references.>
@@ -258,32 +253,22 @@ scalar, or it might be a reference of some sort, such as a hash:
 
     unless (ref $ev_hash eq 'HASH') {
       ## didn't get the input we expected!
-      $core->log->warn("some_event expected a hashref");
+
+      logger->warn("some_event expected a hashref");
+
       return PLUGIN_EAT_NONE
     }
     
     my $item = $ev_hash->{some_item};
+
     . . .
     
     return PLUGIN_EAT_NONE
   }
 
-Be cautious with your argument modifications!
-
-For example, when splicing values from a C<< $msg->message_array >> 
-(see L</Messages>):
-
-  ## copy, then splice/shift/pop
-  my @message = @{ $msg->message_array };
-  my ($first, $second) = splice @message, 0, 2;
-  my $third = shift @message;
-
-  ## even better (and cleaner):
-  my $msgarr = $msg->message_array;
-  my ($first, $second, $third) = @$msgarr;
-
-(Then you never have to worry about trashing events that may be passed 
-to another plugin.)
+Be cautious with your argument modifications; unless a handler eats the 
+event (see L</"Returning proper values">, below), these changes are 
+carried through to the next handler in the pipeline.
 
 =head3 Returning proper values
 

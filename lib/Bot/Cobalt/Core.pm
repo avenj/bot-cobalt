@@ -425,7 +425,7 @@ See L<Bot::Cobalt::Core::Sugar> for details.
 Public methods are documented in L<Bot::Cobalt::Manual::Plugins/"Core 
 methods"> and the classes & roles listed below.
 
-See:
+See also:
 
 =over
 
