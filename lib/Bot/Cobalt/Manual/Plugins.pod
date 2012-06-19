@@ -138,6 +138,10 @@ core method B<get_plugin_cfg>:
 
   ## Our $self object or our alias must be specified:
   my $plug_cf = core()->get_plugin_cfg( $self );
+  
+  ## ... or with Bot::Cobalt sugar:
+  use Bot::Cobalt;
+  my $plug_cf = plugin_cfg($self);
 
 See also: L</"Core methods">
 
@@ -168,39 +172,22 @@ typically counterproductive; use either an external config file or a
 B<Opts:> directive to retain your users' sanity.
 
 
-=head4 Directly accessing cfg hash
-
-If your plugin needs to modify its configuration values directly 
-(which is often unwise!), it will need to access the B<< core()->cfg >> 
-hash directly.
-
-Loaded configuration values for plugins are available via 
-B<< core()->cfg->{plugin_cf} >>, keyed on plugin alias:
-
-  ## Ask Core for our current alias
-  ## (using Bot::Cobalt sugar)
-  my $alias   = plugin_alias($self);
-  my $plug_cf = core()->cfg->{plugin_cf}->{ $alias };
-  ## modify this plugin's conf hash directly:
-  $plug_cf->{Opts}->{Some_Boolean_Opt} = 1;
-
-There is no built-in facility for writing these changes back out as of 
-this writing; plugins are on their own for configuration file 
-modification (and it's often a poor idea).
-
-
 =head2 Handling events
 
-Plugins are fundamentally event driven.
+Plugins are event driven.
 
 A plugin will (usually at load-time) register to receive some set of 
 events, which are pushed through the plugin pipeline by the Cobalt core 
 (with help from L<POE::Component::Syndicator> and L<Object::Pluggable>).
 
-If your plugin needs to have a certain priority in the pipeline, you're 
+Pipeline priority is initially chosen via B<Priority:> 
+directives in C<plugins.conf>; however, online plugin loads/unloads 
+can alter the pipeline order. If your plugin B<needs> to have a 
+certain priority in the pipeline, you're likely 
 going to want to spend some quality time reading the L<Object::Pluggable> 
 and especially L<Object::Pluggable::Pipeline> documentation. The methods 
 described regarding pipeline manipulation are available via C<core()>.
+
 
 =head3 Registering for events
 
@@ -223,7 +210,7 @@ words, inside C<Cobalt_register>:
 
 =head3 Event handlers
 
-Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
+Syndicated SERVER event handlers are prefixed with 'Bot_':
 
   sub Bot_some_event {
     my ($self, $core) = splice @_, 0, 2;
@@ -232,49 +219,16 @@ Syndicated SERVER events become prefixed with Bot_ when handed off to plugins:
     . . .
   }
 
-B<The arguments passed to event handlers are always references.>
+The arguments passed to event handlers are always references.
 (Sometimes, they're references to references, such as a hashref.
 If you don't know what that means, it's time to read L<perlreftut> and 
 L<perlref> immediately.)
-
-This means that it's intended behavior to be able to modify the event's 
-arguments before it continues through the plugin pipeline.
-
-Be aware of this behavior and code appropriately.
-
-B<Don't be confused, yet!> For the most part, you can just dereference args 
-as shown in the example above. The dereferenced value might be a simple 
-scalar, or it might be a reference of some sort, such as a hash:
-
-  sub Bot_some_event {
-    my ($self, $core) = splice @_, 0, 2;
-    ## handler that expects a hash(ref) as the first argument:
-    my $ev_hash = ${ $_[0] };    
-
-    unless (ref $ev_hash eq 'HASH') {
-      ## didn't get the input we expected!
-
-      logger->warn("some_event expected a hashref");
-
-      return PLUGIN_EAT_NONE
-    }
-    
-    my $item = $ev_hash->{some_item};
-
-    . . .
-    
-    return PLUGIN_EAT_NONE
-  }
-
-Be cautious with your argument modifications; unless a handler eats the 
-event (see L</"Returning proper values">, below), these changes are 
-carried through to the next handler in the pipeline.
 
 =head3 Returning proper values
 
 The plugin system is a pipeline, usually beginning with 
 the L<Bot::Cobalt::IRC> plugin. Events will be handed on down the 
-pipeline, B<unless> a handler for a syndicated event returns an 
+pipeline, B<unless> a handler for a syndicated event returns a 
 B<PLUGIN_EAT_ALL> or B<PLUGIN_EAT_PLUGIN> value.
 
 Your Bot_* event handlers should B<always> return an 
@@ -317,6 +271,7 @@ For example, when receiving a public message:
 
   sub Bot_public_msg {
     my ($self, $core) = splice @_, 0, 2;
+
     ## Get this message's server context
     my $msg     = ${ $_[0] };    
     my $context = $msg->context;
@@ -393,7 +348,7 @@ The original, unparsed message text.
 
 =head4 stripped
 
-The stripped message text.
+The color/formatting-stripped message text.
 
 =head4 message_array
 
@@ -404,7 +359,7 @@ The content of the message as an array, split on white space.
 Similar to B<message_array>, except spaces are preserved, including 
 leading spaces.
 
-B<Note that a '/ME' is a CTCP ACTION and not handled by _msg handlers.>
+Note that a '/ME' is a CTCP ACTION and not handled by _msg handlers.
 For that, you'll need to catch B<Bot_ctcp_action>, which carries 
 essentially the same syntax.
 
@@ -415,9 +370,10 @@ B<< See L<Bot::Cobalt::IRC> for more details. >>
 
 =head3 Commands
 
-A B<Cobalt> instance has a B<CmdChar>, usually defined in I<etc/cobalt.conf>.
+A L<Bot::Cobalt> instance has a B<CmdChar>, usually defined in 
+I<etc/cobalt.conf>.
 When any user issues a command prefixed with the bot's CmdChar, the event 
-B<public_cmd_$CMD> is issued in addition to the normal B<public_msg> event.
+B<public_cmd_$CMD> is broadcast in place of a B<public_msg> event.
 
   <JoeUser> !shorten http://www.cobaltirc.org/dev/bots
   ## -> event 'Bot_public_cmd_shorten'
@@ -429,7 +385,7 @@ A plugin can register to receive commands in this format:
   ## in Cobalt_register, usually:
   register( $self, 'SERVER',
     ## register to receive the 'shorten' command:
-    [ 'public_cmd_shorten' ],
+    'public_cmd_shorten',
   );
   
   ## handler for same:
@@ -455,15 +411,11 @@ B<message> and B<stripped> strings.
 
 =head3 Other events
 
-All of the typical instances of "stuff going on" on IRC are 
-reported by the core IRC module in context "Main"
+Most of the typical instances of "stuff going on" on IRC are 
+reported by the core IRC module.
 
-B<
 The documentation for all events parsed and re-broadcast from IRC 
-is available via the Bot::Cobalt::IRC POD
->
-
-See L<Bot::Cobalt::IRC>.
+is available via the L<Bot::Cobalt::IRC> POD.
 
 =head2 Sending IRC events
 
@@ -564,9 +516,8 @@ core's get_irc_obj method. Expects a server context:
     . . .
   }
 
-See L<POE::Component::IRC> and L<POE::Component::IRC::State> for details 
-on the methods you can call against C<$irc> -- they are very complete.
-
+See L<POE::Component::IRC> and L<POE::Component::IRC::State> for 
+details on using the IRC Component object directly.
 
 =head1 USING THE CORE
 
@@ -587,7 +538,7 @@ from any loaded plugin via B<instance>:
 Normally, however, you would simply 'use Bot::Cobalt' and thereby import 
 the L<Bot::Cobalt::Core::Sugar> wrappers:
 
-  my $core = core();
+  my $irc_obj = core()->get_irc_object($context);
 
 See the documentation for L<Bot::Cobalt::Core::Sugar> for the complete 
 list of exported wrappers.
@@ -655,39 +606,19 @@ B<Provided> functionality in the narrowest possible scope; that is to
 say, directly prior to execution of the dependent code, rather than at 
 plugin register-time.
 
-=head4 State
-
-The B<< $core->State >> hashref is the global state hash.
-
-B<Unless you're quite sure of what you're doing, you probably do not 
-want to play with the top-level State hash.>
-
-However, if you absolutely I<must> synchronously share some data 
-between a set of plugins, B<< $core->State->{HEAP} >> is initialized 
-as a hashref and guaranteed to be untouched by the core plugin set.
-(Of course, that doesn't mean 3rd party plugins can't overwrite each 
-other; use a uniquely-named deeper data structure within {HEAP}.)
-
-State should be treated cautiously; you can easily break the 
-current instance by clobbering values. Most important bits available 
-in the top-level hash can be pulled out via methods described herein.
-
 =head4 Servers
 
 B<< $core->Servers >> is a hashref keyed on server "context" name; see 
 L</"Understanding server context">.
 
-B<You should probably be using L</get_irc_server>!>
+You should probably be using L</get_irc_server>.
 
-The only valid reason to access ->Servers directly is to iterate all 
-contexts:
-
-  my $servers = $core->Servers;
-  for my $context ( keys %$servers ) {
+  ## Iterate all contexts:
+  for my $context ( keys %{ $core->Servers } ) {
     . . .
   }
 
-Each value will be a L<Bot::Cobalt::IRC::Server> object.
+The values are L<Bot::Cobalt::IRC::Server> objects.
 
 =head4 var
 
@@ -695,16 +626,11 @@ Returns the path to the current VAR dir, typically used for log files,
 databases, or other potentially dynamic data.
 
 Plugins should typically dump serialized data and place databases in a 
-path under B<< $core->var >> -- to avoid clobbering files, non-trivial 
-plugins using databases or serialization are encouraged to create their 
-own directories under B<< $core->var >> for storage.
+path under C<< $core->var >>.
 
 =head4 version
 
 Returns the current L<Bot::Cobalt::Core> version.
-
-This can be used to require a specific Cobalt version for a 3rd-party 
-plugin (via die()/croak() in Cobalt_register).
 
 =head4 detached
 
@@ -718,9 +644,7 @@ is attached to a terminal or daemonized.
 
   my $core_cf = $core->get_core_cfg()
 
-Retrieves the 'core' configuration directives from C<cobalt.conf>.
-
-This includes configuration for L<Bot::Cobalt::IRC>:
+Retrieves the 'core' configuration directives from C<cobalt.conf>:
 
   my $core_cf = $core->get_core_cfg();
   my $lang    = $core_cf->{Language};
@@ -731,7 +655,7 @@ This includes configuration for L<Bot::Cobalt::IRC>:
 
 Retrieves per-context channel configuration from C<channels.conf>.
 
-The server context must be specified. 'undef' will be returned if it is not.
+The server context must be specified.
 
 Returns an empty hash if there is no channel configuration for this 
 server context.
@@ -742,14 +666,11 @@ server context.
 
 Retrieves the configuration hash for a specific plugin.
 
-Either the plugin's C<$self> object or its current alias must be 
+Either the plugin's $self object or its current alias must be 
 specified.
 
-Returns undef if there is no plugin configuration stored for this 
-plugin:
-
   $core->log->warn("Missing config!")
-    unless $core->get_plugin_cfg( $self );
+    unless $core->get_plugin_cfg($self);
 
 If you 'use Bot::Cobalt' you can make use of the exported B<plugin_cfg> 
 wrapper (see L<Bot::Cobalt::Core::Sugar>):
@@ -759,18 +680,12 @@ wrapper (see L<Bot::Cobalt::Core::Sugar>):
 
 =head4 get_plugin_alias
 
-A plugin can be instanced many times with discrete conf 
-values (although many plugins won't play very nice with multiple 
-instances). 
+Retrieve a plugin object's alias
 
-Sometimes it's necessary to know the name of your current alias.
+Your plugin's $self object can be specified to get the current plugin 
+alias, for example:
 
-Your plugin's $self object must be specified:
-
-  my $plugin_alias = $core->get_plugin_alias( $self );
-
-(Of course, this also works for getting the alias of other plugin 
-objects.)
+  my $plugin_alias = $core->get_plugin_alias($self);
 
 A wrapper is provided if you use 'Bot::Cobalt' (see 
 L<Bot::Cobalt::Core::Sugar>):
@@ -786,10 +701,10 @@ L<Bot::Cobalt::Core::Sugar>):
 Retrieves the CASEMAPPING rules for the specified server context, 
 which should be one of: I<rfc1459>, I<strict-rfc1459>, I<ascii>
 
-The server's casemapping is (should be) declared in ISUPPORT (numeric 005) 
-upon connect and can be used to establish whether or not the character sets 
-{}|^ are equivalent to []\~ -- see L</"IRC CAVEATS"> below for more 
-information.
+The server's casemapping is usually declared in ISUPPORT (numeric 
+005) upon connect and can be used to establish whether or not the 
+character sets {}|^ are equivalent to []\~ -- see L</"IRC CAVEATS"> 
+below for more information.
 
 This can be used to feed the C<lc_irc/uc_irc/eq_irc> functions from 
 L<IRC::Utils> (or L<Bot::Cobalt::Common> and determine issues like 
@@ -864,7 +779,6 @@ Requires a context and a nickname, similar to L</level>:
     ## this user isn't authorized
   }
 
-
 =head3 Logging
 
 The Cobalt core provides a B<log> method that writes to the LogFile 
@@ -895,7 +809,7 @@ manipulate a created timer, you'll likely want to consult that POD.
 Typically most plugins will only need the following functionality; this 
 only covers the hash-based interface to 
 L<Bot::Cobalt::Core::Role::Timers/timer_set>, so review the aforementioned 
-documentation if you'd like to use the pure object interface instead.
+documentation if you'd like to use the object interface instead.
 
 =head4 timer_set
 
