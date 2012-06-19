@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.010_01';
+our $VERSION = '0.010_02';
 
 ## This is the core Syndicator singleton.
 
@@ -219,8 +219,10 @@ sub init {
       $self => [
         'syndicator_started',
         'syndicator_stopped',
+
         'shutdown',
         'sighup',
+
         'ev_plugin_error',
 
         'core_timer_check_pool',
