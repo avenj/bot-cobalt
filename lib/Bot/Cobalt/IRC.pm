@@ -123,12 +123,18 @@ sub Bot_initialize_irc {
   ## The IRC: directive in cobalt.conf provides context 'Main'
   ## (This will override any 'Main' specified in multiserv.conf)
   $pcfg->{Networks}->{Main} = $ccfg->{IRC};
+  
+  if (exists $pcfg->{Networks}->{'-ALL'}) {
+    ## Reserved by core Auth plugin
+    logger->error("-ALL is not a valid context name, disregarding.");
+    delete $pcfg->{Networks}->{'-ALL'}
+  }
 
   my $active_contexts;
   for my $context (keys %{ $pcfg->{Networks} } ) {
     ## Counter is solely to provide an informative error if cfg is fubar:
     ++$active_contexts;
-
+    
     next if defined $pcfg->{Networks}->{$context}->{Enabled}
          and $pcfg->{Networks}->{$context}->{Enabled} == 0;
 
