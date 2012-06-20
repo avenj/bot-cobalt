@@ -259,8 +259,6 @@ sub Bot_info3_relay_string {
   ## format and send info3 response
   ## also received from RDB when handing off ~rdb responses
   
-  return PLUGIN_EAT_NONE unless $string;
-
   logger->debug("info3_relay_string received; calling _info_format");
   
   my $resp = $self->_info_format($context, $nick, $channel, $string, $orig);
