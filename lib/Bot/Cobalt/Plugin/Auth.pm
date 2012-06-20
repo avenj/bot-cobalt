@@ -45,11 +45,12 @@ our $VERSION = '0.010_02';
 ##   method for superuser loads
 
 use 5.10.1;
-use Moo;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Serializer;
+
+use strictures 1;
 
 use Storable qw/dclone/;
 
@@ -59,28 +60,28 @@ use File::Spec;
 
 ### Constants, mostly for internal retvals:
 use constant {
+    ACCESS_LIST => 0,
+    DB_PATH => 1,
+
    ## _do_login RPL constants:
-    SUCCESS   => 1,
-    E_NOSUCH  => 2,
-    E_BADPASS => 3,
-    E_BADHOST => 4,
-    E_NOCHANS => 5,
+    SUCCESS   => 2,
+    E_NOSUCH  => 3,
+    E_BADPASS => 4,
+    E_BADHOST => 5,
+    E_NOCHANS => 6,
 };
 
-
-has 'DB_Path' => ( is => 'rw', isa => Str );
-
-has 'AccessList' => ( is => 'rw', isa => HashRef,
-  default => sub { {} },
-);
-
-has 'NON_RELOADABLE' => ( is => 'ro', default => sub { 1 } );
-
+sub new {
+  bless [
+    {}, ## ACCESS_LIST
+    '', ## DB_PATH  
+  ], shift
+}
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  my $p_cfg = $core->get_plugin_cfg( $self );
+  my $p_cfg = plugin_cfg( $self );
 
   my $relative_path = $p_cfg->{Opts}->{AuthDB} ||
     File::Spec->catfile( 'db', 'authdb.yml');
@@ -90,32 +91,105 @@ sub Cobalt_register {
     File::Spec->splitpath($relative_path)
   );
 
-  $self->DB_Path($authdb);
+  $self->_db_path($authdb);
 
   ## Read in main authdb:
   my $alist = $self->_read_access_list;
+
   unless ($alist) {
-    die "initial _read_access_list failed, check log";
+    die "initial _read_access_list failed, check log\n";
   }
+
   $self->AccessList( $alist );
+  
+  $self->_init_superusers;
+
+  register($self, 'SERVER',
+      'connected',
+      'disconnected',
+
+      'user_quit',
+      'user_left',
+      'self_left',
+
+      'self_kicked',
+      'user_kicked',
+
+      'nick_changed',
+
+      'private_msg',
+  );
+
+  ## clear any remaining auth states.
+  ## (assuming the plugin unloaded cleanly, there should be none)
+  $self->_clear_all;
+
+  logger->info("Loaded");
+
+  return PLUGIN_EAT_NONE
+}
+
+sub Cobalt_unregister {
+  my ($self, $core) = splice @_, 0, 2;
+
+  logger->info("Unregistering core IRC plugin");
+
+  $self->_clear_all;
+
+  return PLUGIN_EAT_NONE
+}
+
+sub _init_superusers {
+  my ($self) = @_;
+  
+  my $p_cfg = plugin_cfg($self);
 
   ## Read in configured superusers to AccessList
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
 
   my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
+  
+  ALL: {
+    if (exists $su{'-ALL'}) {
+      unless (ref $su{'-ALL'} eq 'HASH') {
+        logger->error("Skipping -ALL; configuration is not a hash");
+        last ALL
+      }
+    
+      for my $user (keys %{$su{'-ALL'}}) {
+        my $this_user = delete $su{'-ALL'}->{$user};    
+
+        CONTEXT: for (keys %su) {
+          next CONTEXT if $_ eq '-ALL';
+          $su{$_}->{$user} = $this_user
+        }
+      } 
+    
+      delete $su{'-ALL'}
+    }
+  }
 
   SERVER: for my $context (keys %su) {
+
+    unless (ref $su{$context} eq 'HASH') {
+      logger->error("Skipping $context; configuration is not a hash");
+      next SERVER
+    }
   
     USER: for my $user (keys %{$su{$context}}) {
+      unless (ref $su{$context}->{$user} eq 'HASH') {
+        logger->error("Skipping $user; configuration is not a hash");
+        next USER
+      }
+
       ## Usernames on accesslist automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
       ## (we probably don't even know the server's CASEMAPPING= yet)
       $user = lc_irc $user;
-      ## AccessList entries for superusers:
 
       my $flags;
-      ## Handle empty flag values:
+
       if (ref $su{$context}->{$user}->{Flags} eq 'HASH') {
         $flags = $su{$context}->{$user}->{Flags};
       } else { $flags = { }; }
@@ -151,46 +225,11 @@ sub Cobalt_register {
           ];
       }
 
-      $core->log->debug("added superuser: $user (context: $context)");
+      logger->debug("added superuser: $user (context: $context)");
     } ## USER
 
   } ## SERVER
 
-  register($self, 'SERVER',
-    [
-      'connected',
-      'disconnected',
-
-      'user_quit',
-      'user_left',
-      'self_left',
-
-      'self_kicked',
-      'user_kicked',
-
-      'nick_changed',
-
-      'private_msg',
-    ],
-  );
-
-  ## clear any remaining auth states.
-  ## (assuming the plugin unloaded cleanly, there should be none)
-  $self->_clear_all;
-
-  $core->log->info("Loaded");
-
-  return PLUGIN_EAT_NONE
-}
-
-sub Cobalt_unregister {
-  my ($self, $core) = splice @_, 0, 2;
-
-  $core->log->info("Unregistering core IRC plugin");
-
-  $self->_clear_all;
-
-  return PLUGIN_EAT_NONE
 }
 
 
@@ -304,7 +343,7 @@ sub Bot_private_msg {
   my $resp;
   my $method = "_cmd_".$command;
   if ( $self->can($method) ) {
-    core->log->debug("dispatching '$command' for ".$msg->src_nick);
+    logger->debug("dispatching '$command' for ".$msg->src_nick);
     $resp = $self->$method($context, $msg);
   }
 
@@ -345,12 +384,14 @@ sub _cmd_login {
   ## _do_login returns constants we can translate into a langset RPL:
   ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST E_NOCHANS
   my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
+
   my $rplvars = {
     context => $context,
-    src => $origin,
+    src  => $origin,
     nick => $nick,
     user => $l_user,
   };
+
   my $resp;
   RETVAL: {
     if ($retval == SUCCESS) {
@@ -404,12 +445,10 @@ sub _cmd_chpass {
   my $stored_pass = $user_rec->{Password};
   unless ( passwdcmp($passwd_old, $stored_pass) ) {
     return rplprintf( core->lang->{AUTH_CHPASS_BADPASS},
-      {
-        context => $context,
-        nick => $nick,
-        user => $auth_for_nick,
-        src => $msg->src,
-      }
+      context => $context,
+      nick => $nick,
+      user => $auth_for_nick,
+      src => $msg->src,
     );
   }
   
@@ -417,22 +456,20 @@ sub _cmd_chpass {
   $user_rec->{Password} = $new_hashed;
 
   unless ( $self->_write_access_list ) {
-    core->log->warn(
+    logger->warn(
       "Couldn't _write_access_list in _cmd_chpass",
     );
-    core->send_event( 'message',
-      $context, $nick,
+
+    broadcast( 'message', $context, $nick,
       "Failed access list write! Admin should check logs."
     );
   }
 
   return rplprintf( core->lang->{AUTH_CHPASS_SUCCESS},
-    {
-      context => $context,
-      nick => $nick,
-      user => $auth_for_nick,
-      src  => $msg->src,
-    }
+    context => $context,
+    nick => $nick,
+    user => $auth_for_nick,
+    src  => $msg->src,
   );
 }
 
@@ -440,15 +477,15 @@ sub _cmd_whoami {
   my ($self, $context, $msg) = @_;
   ## return current auth status
   my $nick = $msg->src_nick;
+
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick) 
                  // 'Not Authorized';
+
   return rplprintf( core->lang->{AUTH_STATUS},
-    {
-      user => $auth_usr,
-      nick => $nick,
-      lev  => $auth_lev,
-    }
+    user => $auth_usr,
+    nick => $nick,
+    lev  => $auth_lev,
   );  
 }
 
@@ -478,10 +515,12 @@ sub _cmd_user {
 
   my $method = "_user_".$cmd;
   if ( $self->can($method) ) {
-    core->log->debug("dispatching $method for ".$msg->src_nick);
-    $resp = $self->$method($context, $msg);
+    logger->debug("dispatching $method for ".$msg->src_nick);
+
+    return $self->$method($context, $msg)
   }
-  return $resp;
+
+  return
 }
 
 
@@ -494,33 +533,37 @@ sub _do_login {
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
 
   unless (exists $self->AccessList->{$context}->{$username}) {
-    core->log->debug(
+    logger->debug(
       "[$context] authfail; no such user: $username ($host)"
     );
+
     ## auth_failed_login ($context, $nick, $username, $host, $error_str)
-    core->send_event( 'auth_failed_login',
+    broadcast( 'auth_failed_login',
       $context,
       $nick,
       $username,
       $host,
       'NO_SUCH_USER',
     );
+
     return E_NOSUCH
   }
 
   ## fail if we don't share channels with this user
   my $irc = core->get_irc_obj($context);
   unless ($irc->nick_channels($nick)) {
-    core->log->debug(
+    logger->debug(
       "[$context] authfail; no shared chans: $username ($host)"
     );
-    core->send_event( 'auth_failed_login',
+
+    broadcast( 'auth_failed_login',
       $context,
       $nick,
       $username,
       $host,
       'NO_SHARED_CHANS',
     );
+
     return E_NOCHANS
   }
 
@@ -533,26 +576,30 @@ sub _do_login {
   }
 
   unless (@matched_masks) {
-    core->log->info("[$context] authfail; no host match: $username ($host)");
-    core->send_event( 'auth_failed_login',
+    logger->info("[$context] authfail; no host match: $username ($host)");
+
+    broadcast( 'auth_failed_login',
       $context,
       $nick,
       $username,
       $host,
       'BAD_HOST',
     );
+
     return E_BADHOST
   }
 
   unless ( passwdcmp($passwd, $user_record->{Password}) ) {
-    core->log->info("[$context] authfail; bad passwd: $username ($host)");
-    core->send_event( 'auth_failed_login',
+    logger->info("[$context] authfail; bad passwd: $username ($host)");
+
+    broadcast( 'auth_failed_login',
       $context,
       $nick,
       $username,
       $host,
       'BAD_PASS',
     );
+
     return E_BADPASS
   }
 
@@ -569,12 +616,12 @@ sub _do_login {
     Alias    => core->get_plugin_alias($self),
   );
 
-  core->log->info(
+  logger->info(
     "[$context] successful auth: $username (lev $level) ($host)"
   );
 
   ## send Bot_auth_user_login ($context, $nick, $host, $username, $lev):
-  core->send_event( 'auth_user_login',
+  broadcast( 'auth_user_login',
     $context,
     $nick,
     $username,
@@ -594,20 +641,20 @@ sub _user_add {
   
   unless ($auth_usr) {
     ## not logged in, return rpl
-    core->log->info("Failed user add attempt by $nick on $context");
+    logger->info("Failed user add attempt by $nick on $context");
     return rplprintf( core->lang->{RPL_NO_ACCESS},
       { nick => $nick }
     );
   }
 
-  my $pcfg = core->get_plugin_cfg($self);
+  my $pcfg = plugin_cfg($self);
   
   my $required_base_lev = $pcfg->{RequiredPrivs}->{AddingUsers} // 2;
   
   unless ($auth_lev >= $required_base_lev) {
     ## doesn't match configured required base level
     ## otherwise this user can add users with lower access levs than theirs
-    core->log->info(
+    logger->info(
       "Failed user add; $nick ($auth_usr) has insufficient perms"
     );
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
@@ -630,21 +677,23 @@ sub _user_add {
   }
   
   if ( exists $self->AccessList->{$context}->{$target_usr} ) {
-    core->log->info(
+    logger->info(
       "Failed user add ($nick); $target_usr already exists on $context"
     );
+
     return rplprintf( core->lang->{AUTH_USER_EXISTS},
-      ## old/new username/user syntax:
-      { nick => $nick,  user => $target_usr }
+      nick => $nick,  
+      user => $target_usr
     );
   }
   
   unless ($target_lev < $auth_lev) {
     ## user doesn't have enough access to add this level
     ## (superusers have to be hardcoded in auth.conf)
-    core->log->info(
+    logger->info(
       "Failed user add; lev ($target_lev) too high for $auth_usr ($nick)"
     );
+
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
       { nick => $nick, lev => $auth_lev }
     );
@@ -661,25 +710,24 @@ sub _user_add {
     Flags    => {},
   };
 
-  core->log->info("New user added by $nick ($auth_usr)");
-  core->log->info("New user $target_usr ($mask) level $target_lev");
+  logger->info("New user added by $nick ($auth_usr)");
+  logger->info("New user $target_usr ($mask) level $target_lev");
   
   unless ( $self->_write_access_list ) {
-    core->log->warn("Couldn't _write_access_list in _user_add");
-    broadcast( 'message',
-      $context, $nick,
+    ## added to AccessList but couldn't be written out
+    logger->warn("Couldn't _write_access_list in _user_add");
+
+    broadcast( 'message', $context, $nick,
       "Failed access list write! Admin should check logs."
     );
   }
 
   return rplprintf( core->lang->{AUTH_USER_ADDED},
-    { 
-      nick => $nick, 
-      user => $target_usr,
-      mask => $mask,
-      lev => $target_lev
-    }
-  );
+    nick => $nick, 
+    user => $target_usr,
+    mask => $mask,
+    lev  => $target_lev
+  )
 }
 
 sub _user_delete { _user_del(@_) }
@@ -690,23 +738,25 @@ sub _user_del {
   my $auth_usr = core->auth->username($context, $nick);
   
   unless ($auth_usr) {
-    core->log->info("Failed user del attempt by $nick on $context");
+    logger->info("Failed user del attempt by $nick on $context");
     return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nick }
-    );
+      nick => $nick,
+    )
   }
 
-  my $pcfg = core->get_plugin_cfg($self);
+  my $pcfg = plugin_cfg($self);
   
   my $required_base_lev = $pcfg->{RequiredPrivs}->{DeletingUsers} // 2;
   
   unless ($auth_lev >= $required_base_lev) {
-    core->log->info(
+    logger->info(
       "Failed user del; $nick ($auth_usr) has insufficient perms"
     );
+
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
-      { nick => $nick, lev => $auth_lev }
-    );
+      nick => $nick, 
+      lev  => $auth_lev,
+    )
   }
 
   ## user del <username>
@@ -719,53 +769,61 @@ sub _user_del {
   
   ## check if exists
   my $this_alist = $self->AccessList->{$context};
+
   unless (exists $this_alist->{$target_usr}) {
     return rplprintf( core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_usr }
-    );
+      nick => $nick, 
+      user => $target_usr
+    )
   }
   
   ## get target user's auth_level
   ## check if authed user has a higher identified level  
   my $target_lev = $this_alist->{$target_usr}->{Level};
   unless ($target_lev < $auth_lev) {
-    core->log->info(
+    logger->info(
       "Failed user del; $nick ($auth_usr) has insufficient perms"
     );
+
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
-      { nick => $nick, lev => $auth_lev }
-    );
+      nick => $nick, 
+      lev  => $auth_lev
+    )
   }
 
   ## delete users from AccessList
   delete $this_alist->{$target_usr};
-  core->log->info("User deleted: $target_usr ($target_lev) on $context");
-  core->log->info("Deletion issued by $nick ($auth_usr)");
+
+  logger->info("User deleted: $target_usr ($target_lev) on $context");
+  logger->info("Deletion issued by $nick ($auth_usr)");
   
   ## see if user is logged in, log them out if so
   my $auth_context = core->auth->list($context);
   for my $authnick (keys %$auth_context) {
     my $this_username = $auth_context->{$authnick}->{Username};
+
     next unless $this_username eq $target_usr;
+
     $self->_do_logout($context, $authnick);
   }
   
-  ## call a list sync
   unless ( $self->_write_access_list ) {
-    core->log->warn("Couldn't _write_access_list in _user_add");
-    broadcast( 'message',
-      $context, $nick,
+    logger->warn("Couldn't _write_access_list in _user_add");
+
+    broadcast( 'message', $context, $nick,
       "Failed access list write! Admin should check logs."
     );
   }
 
   return rplprintf( core->lang->{AUTH_USER_DELETED},
-    { nick => $nick, user => $target_usr }
-  );
+    nick => $nick, 
+    user => $target_usr
+  )
 }
 
 sub _user_list {
   my ($self, $context, $msg) = @_;
+
   my $nick = $msg->src_nick;
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
@@ -776,26 +834,28 @@ sub _user_list {
   my $alist = $self->AccessList->{$context} // {};
   
   my $respstr = "Users ($context): ";
+
   USER: for my $username (keys %$alist) {
     my $lev = $alist->{$username}->{Level};
     $respstr .= "$username ($lev)   ";
     
     if ( length($respstr) > 250 ) {
-      broadcast( 'message',
-        $context,
-        $nick,
+      broadcast( 'message', $context, $nick,
         $respstr
       );
+
       $respstr = '';
     }
     
   } ## USER
-  return $respstr if $respstr;
+
+  return $respstr if $respstr
 }
 
 sub _user_whois {
   my ($self, $context, $msg) = @_;
   my $nick = $msg->src_nick;
+
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
 
@@ -806,6 +866,7 @@ sub _user_whois {
   
   if ( my $target_lev = core->auth->level($context, $target_nick) ) {
     my $target_usr = core->auth->username($context, $target_nick);
+
     return "$target_nick is user $target_usr with level $target_lev"
   } else {
     return "$target_nick is not currently logged in"
@@ -815,6 +876,7 @@ sub _user_whois {
 sub _user_info {
   my ($self, $context, $msg) = @_;
   my $nick = $msg->src_nick;
+
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
   
@@ -823,7 +885,7 @@ sub _user_info {
   }
   
   my $target_usr = $msg->message_array->[2];
-  unless ($target_usr) {
+  unless (defined $target_usr) {
     return 'Usage: user info <username>'
   }
   
@@ -833,7 +895,8 @@ sub _user_info {
   
   unless (exists $alist_context->{$target_usr}) {
     return rplprintf( core->lang->{AUTH_USER_NOSUCH},
-      { nick => $nick, user => $target_usr }
+      nick => $nick, 
+      user => $target_usr
     );
   }
 
@@ -843,6 +906,7 @@ sub _user_info {
   my $usr_maskref = $usr->{Masks};
   my @masks = @$usr_maskref;
   my $maskcount = @masks;
+
   broadcast( 'message', $context, $nick,
     "User $target_usr is level $usr_lev, $maskcount masks listed"
   );
@@ -853,6 +917,7 @@ sub _user_info {
 
   while (my $this_flag = shift @flags) {
     $flag_repl .= "  ".$this_flag;
+
     if (length $flag_repl > 300 || !@flags) {
       broadcast('message', $context, $nick, $flag_repl);
       $flag_repl = '';
@@ -892,7 +957,7 @@ sub _user_chflags {
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
   
-  my $pcfg = core->get_plugin_cfg($self);
+  my $pcfg = plugin_cfg($self);
   my $req_lev = $pcfg->{RequiredPrivs}->{DeletingUsers};
   
   my @message = @{ $msg->message_array };
@@ -983,7 +1048,7 @@ sub _user_chmask {
   my $auth_lev = core->auth->level($context, $nick);
   my $auth_usr = core->auth->username($context, $nick);
   
-  my $pcfg = core->get_plugin_cfg($self);
+  my $pcfg = plugin_cfg($self);
   ## If you can't delete users, you probably shouldn't be permitted 
   ## to delete their masks, either
   my $req_lev = $pcfg->{RequiredPrivs}->{DeletingUsers};
@@ -1017,12 +1082,13 @@ sub _user_chmask {
     
     my $src = $msg->src;
 
-    core->log->warn(
+    logger->warn(
       "Access denied in chmask: $src tried to chmask $target_user"
     );
     
     return rplprintf( core->lang->{AUTH_NOT_ENOUGH_ACCESS},
-      { nick => $nick, lev => $auth_lev }
+      nick => $nick, 
+      lev  => $auth_lev
     );
   }
   
@@ -1092,7 +1158,7 @@ sub _user_chpass {
   
   my $hashed = $self->_mkpasswd($new_passwd);
   
-  core->log->info(
+  logger->info(
     "$nick ($auth_usr) CHPASS for $target_user"
   );
   
@@ -1103,7 +1169,7 @@ sub _user_chpass {
       { nick => $nick, user => $target_user },
     );
   } else {
-    core->log->warn(
+    logger->warn(
       "Couldn't _write_access_list in _cmd_chpass",
     );
     
@@ -1184,8 +1250,8 @@ sub _check_for_shared {
 
 sub _clear_context {
   my ($self, $context) = @_;
+
   ## $self->_clear_context( $context )
-  return unless $context;
   for my $nick ( core->auth->list($context) ) {
     $self->_do_logout($context, $nick);
   }
@@ -1202,9 +1268,10 @@ sub _clear_all {
       next NICK unless core->auth->alias($context, $nick)
                     eq core->get_plugin_alias($self);
 
-      core->log->debug("clearing: $nick [$context]");
-      $self->_do_logout($context, $nick);
-    } ## NICK
+      logger->debug("clearing: $nick [$context]");
+      $self->_do_logout($context, $nick)
+    }
+
   }
 }
 
@@ -1220,9 +1287,10 @@ sub _do_logout {
   my $auth_context = core->auth->list($context);
 
   if (exists $auth_context->{$nick}) {
-    my $pkg = core->auth->alias($context, $nick);
+    my $auth_pkg    = core->auth->alias($context, $nick);
     my $current_pkg = core->get_plugin_alias($self);
-    if ($pkg eq $current_pkg) {
+
+    if ($auth_pkg eq $current_pkg) {
       my $host     = core->auth->host($context, $nick);
       my $username = core->auth->username($context, $nick);
       my $level    = core->auth->level($context, $nick);
@@ -1230,21 +1298,18 @@ sub _do_logout {
       ## Bot_auth_user_logout ($context, $nick, $host, $username, $lev, $pkg):
       broadcast( 'auth_user_logout',
         $context,
-        $nick,
-        $host,
-        $username,
+        $nick, $host, $username,
         $level,
-        $pkg,
+        $auth_pkg,
       );
 
-      core->log->debug(
+      logger->debug(
         "cleared auth state: $username ($nick on $context)"
       );
 
-      return core->auth->del($context, $nick);
-      
+      return core->auth->del($context, $nick)
     } else {
-      core->log->debug(
+      logger->debug(
         "skipped auth state, not ours: $nick [$context]"
       );
     }
@@ -1259,7 +1324,7 @@ sub _mkpasswd {
   ## simple frontend to Bot::Cobalt::Utils::mkpasswd()
   ## handles grabbing cfg opts for us:
 
-  my $cfg = core->get_plugin_cfg( $self );
+  my $cfg = plugin_cfg( $self );
 
   my $crypt_method = $cfg->{Method} // 'bcrypt';
   my $bcrypt_cost  = $cfg->{Bcrypt_Cost} || '08';
@@ -1267,6 +1332,26 @@ sub _mkpasswd {
   mkpasswd($passwd, $crypt_method, $bcrypt_cost)
 }
 
+sub _db_path {
+  my ($self, $dbpath) = @_;
+
+  return $self->[DB_PATH] = $dbpath if defined $dbpath;  
+
+  $self->[DB_PATH]
+}
+
+sub AccessList {
+  my ($self, $alist) = @_;
+  
+  if (defined $alist) {
+    confess "AccessList is not a hashref"
+      unless ref $alist eq 'HASH';
+    
+    return $self->[ACCESS_LIST] = $alist
+  }
+  
+  $self->[ACCESS_LIST]
+}
 
 
 ### Access list rw methods (serialize to YAML)
@@ -1274,13 +1359,14 @@ sub _mkpasswd {
 
 sub _read_access_list {
   my ($self, $authdb) = @_;
-  ## Default to $self->DB_Path
-  $authdb = $self->DB_Path unless $authdb;
+  ## Default to $self->_db_path
+  $authdb = $self->_db_path unless $authdb;
   ## read authdb, spit out hash
 
   unless (-f $authdb) {
-    core->log->debug("did not find authdb at $authdb");
-    core->log->info("No existing authdb, creating empty access list.");
+    logger->debug("did not find authdb at $authdb");
+    logger->info("No existing authdb, creating empty access list.");
+
     return { }
   }
 
@@ -1298,7 +1384,7 @@ sub _read_access_list {
 
 sub _write_access_list {
   my ($self, $authdb, $alist) = @_;
-  $authdb = $self->DB_Path unless $authdb;
+  $authdb = $self->_db_path unless $authdb;
   $alist  = $self->AccessList unless $alist;
 
   ## we don't want to write superusers back out
@@ -1326,7 +1412,7 @@ sub _write_access_list {
   try {
     $serializer->writefile($authdb, \%hash);
 
-    my $p_cfg = core->get_plugin_cfg( $self );
+    my $p_cfg = plugin_cfg( $self );
     my $perms = oct( $p_cfg->{Opts}->{AuthDB_Perms} // '0600' );
     chmod($perms, $authdb);
   } catch {
