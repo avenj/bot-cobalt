@@ -59,17 +59,8 @@ use Try::Tiny;
 use File::Spec;
 
 ### Constants, mostly for internal retvals:
-use constant {
-    ACCESS_LIST => 0,
-    DB_PATH => 1,
-
-   ## _do_login RPL constants:
-    SUCCESS   => 2,
-    E_NOSUCH  => 3,
-    E_BADPASS => 4,
-    E_BADHOST => 5,
-    E_NOCHANS => 6,
-};
+sub ACCESS_LIST() { 0 }
+sub DB_PATH() { 1 }
 
 sub new {
   bless [
@@ -148,7 +139,13 @@ sub _init_superusers {
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
 
-  my %su = ref $superusers eq 'HASH' ? %{$superusers} : ();
+  unless (ref $superusers eq 'HASH') {
+    logger->error("Configuration may be broken . . .");
+    logger->error("SuperUsers directive is not a hash, skipping");
+    return
+  }
+
+  my %su = %$superusers;
   
   ALL: {
     if (exists $su{'-ALL'}) {
@@ -230,6 +227,7 @@ sub _init_superusers {
 
   } ## SERVER
 
+  1
 }
 
 
@@ -381,10 +379,6 @@ sub _cmd_login {
   ## case changes are managed by tracking actual nickname changes
   ## (that way we don't have to worry about it when checking access levels)
 
-  ## _do_login returns constants we can translate into a langset RPL:
-  ## SUCCESS E_NOSUCH E_BADPASS E_BADHOST E_NOCHANS
-  my $retval = $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
-
   my $rplvars = {
     context => $context,
     src  => $origin,
@@ -393,32 +387,42 @@ sub _cmd_login {
   };
 
   my $resp;
-  RETVAL: {
-    if ($retval == SUCCESS) {
-      ## add level to rplvars:
-      $rplvars->{lev} = core->auth->level($context, $nick);
-      $resp = rplprintf( core->lang->{AUTH_SUCCESS}, $rplvars );
-      last RETVAL
-    }
-    if ($retval == E_NOSUCH) {
-      $resp = rplprintf( core->lang->{AUTH_FAIL_NO_SUCH}, $rplvars );
-      last RETVAL
-    }
-    if ($retval == E_BADPASS) {
-      $resp = rplprintf( core->lang->{AUTH_FAIL_BADPASS}, $rplvars );
-      last RETVAL
-    }
-    if ($retval == E_BADHOST) {
-      $resp = rplprintf( core->lang->{AUTH_FAIL_BADHOST}, $rplvars );
-      last RETVAL
-    }
-    if ($retval == E_NOCHANS) {
-      $resp = rplprintf( core->lang->{AUTH_FAIL_NO_CHANS}, $rplvars );
-      last RETVAL
-    }
-  }
 
-  broadcast( 'notice', $context, $nick, $resp );
+  try {
+    $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
+    
+    $rplvars->{lev} = core->auth->level($context, $nick);
+    $resp = rplprintf( core->lang->{AUTH_SUCCESS}, $rplvars );
+  } catch {
+    chomp;
+
+    ERR: {
+      if ($_ eq 'E_NOSUCH') {
+        $resp = rplprintf( core->lang->{AUTH_FAIL_NO_SUCH}, $rplvars );
+        last ERR
+      }
+      
+      if ($_ eq 'E_BADPASS') {
+         $resp = rplprintf( core->lang->{AUTH_FAIL_BADPASS}, $rplvars );
+         last ERR
+      }
+      
+      if ($_ eq 'E_BADHOST') {
+        $resp = rplprintf( core->lang->{AUTH_FAIL_BADHOST}, $rplvars );
+        last ERR
+      }
+      
+      if ($_ eq 'E_NOCHANS') {
+        $resp = rplprintf( core->lang->{AUTH_FAIL_NO_CHANS}, $rplvars );
+        last ERR
+      }
+      
+      logger->error("Unknown retval from _do_login");
+      logger->error("BUG; fell through in _cmd_login");
+    }
+  };
+
+  broadcast( 'notice', $context, $nick, $resp ) if $resp;
 
   return
 }
@@ -546,7 +550,7 @@ sub _do_login {
       'NO_SUCH_USER',
     );
 
-    return E_NOSUCH
+    die "E_NOSUCH\n"
   }
 
   ## fail if we don't share channels with this user
@@ -564,7 +568,7 @@ sub _do_login {
       'NO_SHARED_CHANS',
     );
 
-    return E_NOCHANS
+    die "E_NOCHANS\n"
   }
 
   ## check username/passwd/host against AccessList:
@@ -586,7 +590,7 @@ sub _do_login {
       'BAD_HOST',
     );
 
-    return E_BADHOST
+    die "E_BADHOST\n"
   }
 
   unless ( passwdcmp($passwd, $user_record->{Password}) ) {
@@ -600,7 +604,7 @@ sub _do_login {
       'BAD_PASS',
     );
 
-    return E_BADPASS
+    die "E_BADPASS\n"
   }
 
   my $level = $user_record->{Level};
@@ -629,7 +633,7 @@ sub _do_login {
     $level,
   );
 
-  return SUCCESS
+  1
 }
 
 
@@ -1388,38 +1392,38 @@ sub _write_access_list {
   $alist  = $self->AccessList unless $alist;
 
   ## we don't want to write superusers back out
-  ## copy from ref to a fresh hash to fuck with:
-  my $cloned_alist = dclone($alist);
-  my %hash = %$cloned_alist;
-  for my $context (keys %hash) {
-    for my $user (keys %{ $hash{$context} }) {
-      if ( $hash{$context}->{$user}->{Flags}->{SUPERUSER} ) {
+  ## copy from ref to a fresh hash:
+  my $cloned = dclone($alist);
+
+  for my $context (keys %$cloned) {
+    for my $user (keys %{ $cloned->{$context} }) {
+      if ( $cloned->{$context}->{$user}->{Flags}->{SUPERUSER} ) {
         ## FIXME
         ##  sync superusers too so we can preserve flags?
         ##  need to check/delete them at load time if there's a change
-        delete $hash{$context}->{$user};
+        delete $cloned->{$context}->{$user};
       }
     }
     ## don't need to write empty contexts either:
-    delete $hash{$context} unless scalar keys %{ $hash{$context} };
+    delete $cloned->{$context} unless keys %{ $cloned->{$context} };
   }
 
   ## don't need to write empty access lists to disk ...
-  return unless scalar keys %hash;
+  return unless keys %$cloned;
 
   my $serializer = Bot::Cobalt::Serializer->new();
   
-  try {
-    $serializer->writefile($authdb, \%hash);
+  return $authdb if try {
+    $serializer->writefile($authdb, $cloned);
 
     my $p_cfg = plugin_cfg( $self );
     my $perms = oct( $p_cfg->{Opts}->{AuthDB_Perms} // '0600' );
     chmod($perms, $authdb);
-  } catch {
-    logger->error("writefile() failure; $authdb $_")
+    1
   };
 
-  return $authdb  
+  logger->error("writefile() failure; $authdb $_");
+  return
 }
 
 1;
