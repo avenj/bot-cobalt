@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Loader;
-our $VERSION = '0.010_03';
+our $VERSION = '0.010';
 
 use 5.12.1;
 use strict;
@@ -96,7 +96,7 @@ Bot::Cobalt::Core::Loader - Object loader/unloader
   
   ## Attempt to import a module:
   my $plugin_obj = try {
-    Bot::Cobalt::Core::Loader->load($module_name)
+    Bot::Cobalt::Core::Loader->load($module_name, @args)
   } catch {
     # . . . load failed, maybe die with an error . . .
   };

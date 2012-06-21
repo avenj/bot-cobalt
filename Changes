@@ -1,5 +1,23 @@
 # Bot::Cobalt Changes
 
+* 0.010  (21 Jun 2012)
+
+  Add Bot::Cobalt::Core::Loader, a lightweight module load/unload class,
+  and update Bot::Cobalt::Core + Bot::Cobalt::Plugins::PluginMgr to make 
+  use of it. Sanitizes previous module load/unload code.
+
+  Bot::Cobalt::Plugin::Auth:
+    - Handle configured superusers in context '-ALL'
+    - Reloadable
+    - Significant cleanups
+  
+  Bot::Cobalt::IRC::FloodChk; support fractional seconds.
+
+  POD updates, particularly Bot::Cobalt::Manual::Plugins.
+
+  Wide-ranging cleanups, minor optimizations and expanded tests.
+
+
 * 0.009  (15 Jun 2012)
 
   Fix RDB.pm bug that would cause log noise on certain command 
@@ -8,6 +26,7 @@
   Vaguely improved configuration validation.
 
   The beginnings of some core / PluginMgr plug load/unload cleanup.
+
 
 * 0.008  (13 Jun 2012)
 
@@ -39,6 +58,7 @@
   Die with stack traces on most errors (confess rather than croak)
 
   Various syntax / POD / test cleanups.
+
 
 * 0.007  (06 Jun 2012)
   
@@ -95,6 +115,7 @@
    - Explicitly 'use strictures' in IRC::* subclasses
    - Plugin::Auth; log to error() not emerg()
 
+
 * 0.005  (29 May 2012)
 
   Fix an IRC.pm bug that would cause failures if an error event was 
@@ -104,6 +125,7 @@
   operating on an untrue value. Should've been defined() checks.
 
   POD and test improvements and clean-ups.
+
 
 * 0.004  (27 May 2012)
 
@@ -117,12 +139,14 @@
    - Bot::Cobalt::Utils
    - Significant POD cleanups
 
+
 * 0.003  (22 May 2012)
 
   Require perl-5.12.1; given/when changed sometime in there, it seems,
    and I'm tired of playing with EOL Perls anyway.
 
   Some Plugin::RDB cleanups.
+
 
 * 0.002
 
@@ -134,6 +158,7 @@
    - Warn if Info3 seems to be missing
 
   POD tweaks.
+
 
 * 0.001
 
