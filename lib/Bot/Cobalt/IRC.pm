@@ -1222,9 +1222,9 @@ The trick to parsing modes is determining whether or not they have args
 that need to be pulled out.
 You can walk each individual mode and handle known types:
 
-  for my $mode (@modes) {
-    given ($mode) {
-      next when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
+  MODE: for my $mode (@modes) {
+    for ($mode) {
+      next MODE when /[cimnpstCMRS]/; # oftc-hybrid/bc6 param-less modes
       when ("l") {  ## limit mode has an arg
         my $limit = shift @args;
       }

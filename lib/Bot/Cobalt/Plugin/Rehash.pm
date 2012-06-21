@@ -79,7 +79,7 @@ sub Bot_public_cmd_rehash {
   my $channel = $msg->channel;
   
   my $resp;
-  given ($type) {
+  for ($type) {
     when ("all") {    ## (except langset)
 
       if ( 

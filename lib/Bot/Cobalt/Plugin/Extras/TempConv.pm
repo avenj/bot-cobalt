@@ -53,7 +53,7 @@ sub Bot_public_cmd_temp {
   $type = 'F' unless $type and uc($type) ~~ [qw/F C K/];
 
   my ($f, $k, $c);
-  given (uc $type) {
+  for (uc $type) {
     ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) when 'F';
     ($f, $k, $c) = ( _c2f($temp), _c2k($temp), $temp ) when 'C';
     ($f, $k, $c) = ( _k2f($temp), $temp, _k2c($temp) ) when 'K';

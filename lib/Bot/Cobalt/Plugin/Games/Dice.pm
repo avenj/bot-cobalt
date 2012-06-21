@@ -14,7 +14,7 @@ sub execute {
   return "Syntax: roll XdY  [ +/- <modifier> ]" unless $str;
   my ($dice, $modifier, $modify_by) = split ' ', $str;
 
-  given ($dice) {
+  for ($dice) {
   
     when (/^(\d+)?d(\d+)?$/i) {  ## Xd / dY / XdY syntax
       my $n_dice = $1 || 1;

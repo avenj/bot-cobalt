@@ -107,7 +107,7 @@ sub Bot_public_cmd_cpan {
     Link    => 'http://www.metacpan.org'.$url,
   };
   
-  given ( lc($cmd||'') ) {
+  for ( lc($cmd||'') ) {
 
     ## Get latest vers / date and link
     $hints->{Type} = 'latest'   when [qw/latest release/];
@@ -215,7 +215,7 @@ sub Bot_mcpan_plug_resp_recv {
 
   my $prefix = color('bold', 'mCPAN');
   
-  given ($type) {
+  for ($type) {
     
     when ("abstract") {
       my $abs  = $d_hash->{abstract} || 'No abstract available.';
@@ -251,6 +251,10 @@ sub Bot_mcpan_plug_resp_recv {
         $prefix, $dist,
         $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
       );
+    }
+    
+    default {
+      logger->error("BUG; fell through in response handler");
     }
   
   }

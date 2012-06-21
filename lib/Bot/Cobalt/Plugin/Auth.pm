@@ -994,7 +994,7 @@ sub _user_chflags {
       return "Cannot set SUPERUSER flag manually"
     }
     
-    given ($first) {
+    for ($first) {
       when ("+") {
         logger->debug(
           "$nick ($auth_usr) flag add $target_usr $this_flag"
@@ -1011,8 +1011,8 @@ sub _user_chflags {
         delete $alist_ref->{Flags}->{$this_flag};
       }
       
-      default { 
-        return "Bad syntax; flags should be prefixed by + or -" 
+      default {
+        return "Bad syntax; flags should be prefixed by + or -"
       }
     
     }

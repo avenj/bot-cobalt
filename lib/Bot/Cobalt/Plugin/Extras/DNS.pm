@@ -97,7 +97,7 @@ sub dns_resp_recv {
   
   my @send;
   for my $ans ( $nsresp->answer() ) {
-    given ($ans->type()) {
+    for ($ans->type()) {
 
       when ("SOA") {
         push(@send, 
