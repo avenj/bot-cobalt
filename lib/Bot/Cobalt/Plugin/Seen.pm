@@ -336,7 +336,7 @@ sub Bot_public_cmd_seen {
   my $ts_str   = secs_to_str($ts_delta);
 
   my $resp;
-  given ($last_act) {
+  for ($last_act) {
     when ("quit") {
       $resp = 
         "$targetnick was last seen quitting IRC $ts_str ago";
@@ -358,18 +358,18 @@ sub Bot_public_cmd_seen {
     }
     
     when ("nchange") {
-      if      ($meta->{From}) {
-        $resp = 
-          "$targetnick was last seen changing nicknames from "
-          .$meta->{From}.
+      if ($meta->{From}) {
+        $resp = "$targetnick was last seen changing nicknames from "
+          . $meta->{From} .
           " $ts_str ago";
+
       } elsif ($meta->{To}) {
-        $resp = 
-          "$targetnick was last seen changing nicknames to "
-          .$meta->{To}.
+        $resp = "$targetnick was last seen changing nicknames to "
+          . $meta->{To} .
           " $ts_str ago";
       }
     }
+
   }  
 
   broadcast( 'message', 
@@ -388,7 +388,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::Seen - IRC 'seen' plugin
+Bot::Cobalt::Plugin::Seen - Bot::Cobalt 'seen' plugin
 
 =head1 SYNOPSIS
 
