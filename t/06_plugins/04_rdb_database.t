@@ -1,4 +1,4 @@
-use Test::More tests => 8;
+use Test::More tests => 13;
 use strict; use warnings;
 
 use Fcntl qw/:flock/;
@@ -32,6 +32,16 @@ my $newkey;
 ok( $newkey = $rdb->put('test', { Test => 1 }), 'Add key' );
 
 is_deeply( $rdb->get('test', $newkey), { Test => 1 }, 'Retrieve key' );
+
+is_deeply( $rdb->random('test'), { Test => 1 }, 'random()' );
+
+is( ($rdb->get_keys('test'))[0], $newkey, 'get_keys()' );
+is( scalar $rdb->get_keys('test'), 1, 'scalar get_keys()' );
+
+ok( $rdb->del('test', $newkey), 'Del key' );
+ok( ! $rdb->get('test', $newkey), 'Key was deleted' );
+
+undef $newkey;
 
 ## FIXME test search, random
 

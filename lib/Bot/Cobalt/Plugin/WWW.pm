@@ -44,7 +44,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   $core->plugin_register( $self, 'SERVER',
-    [  'www_request'  ],
+     'www_request',
   );
     
   POE::Session->create(

@@ -1201,7 +1201,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Plugin::RDB - Cobalt "random stuff" plugin
+Bot::Cobalt::Plugin::RDB - Bot::Cobalt "random" DB plugin
 
 =head1 DESCRIPTION
 

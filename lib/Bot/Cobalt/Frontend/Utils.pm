@@ -39,13 +39,17 @@ sub ask_question {
   
   my $print_and_grab = sub {
     print "$question ";
+
     if (defined $default) {
       print "[$default] ";
     } else {
       print "> ";
     }
+
     $input = <STDIN>;
+
     chomp($input);
+
     $input = $default if defined $default and $input eq '';
     $input
   };
@@ -98,7 +102,9 @@ sub ask_yesno {
 
   my $print_and_grab = sub {
     print "$question  [$yn] ";
+
     $input = <STDIN>;
+
     chomp($input);
 
     $input = $default if $input eq '';

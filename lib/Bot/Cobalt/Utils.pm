@@ -94,7 +94,7 @@ sub rplprintf {
     if (ref $_[0] eq 'HASH') {
       $vars{$_} = $_[0]->{$_} for keys %{$_[0]}
     } else {
-      croak "rplprintf() expects a hash"
+      confess "rplprintf() expects a hash"
     }
   }
 

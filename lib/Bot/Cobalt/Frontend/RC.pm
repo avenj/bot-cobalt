@@ -25,7 +25,7 @@ sub rc_read {
   my $generic_crappy_err = sub {
     warn(
       "Errors reported during rcfile parse\n",
-      "You may have an old, incompatible rcfile.\n",
+      "You may have an old, incompatible, or broken rcfile.\n",
       "Path: $rcfile\n",
       "Try running cobalt2-installer\n"
     );

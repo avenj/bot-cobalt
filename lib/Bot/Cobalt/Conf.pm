@@ -264,7 +264,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Conf - Parse Cobalt configuration files
+Bot::Cobalt::Conf - Load Bot::Cobalt configuration files
 
 =head1 SYNOPSIS
 

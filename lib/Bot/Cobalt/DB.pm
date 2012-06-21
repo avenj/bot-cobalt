@@ -307,7 +307,8 @@ sub dbdump {
   my %copy = %{ $self->Tied };
   
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
-  return $dumper->freeze(\%copy);
+
+  $dumper->freeze(\%copy)
 }
 
 1;

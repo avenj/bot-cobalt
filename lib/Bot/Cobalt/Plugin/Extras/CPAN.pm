@@ -79,8 +79,7 @@ sub Bot_public_cmd_cpan {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
   
-  my $cmd  = $msg->message_array->[0];
-  my $dist = $msg->message_array->[1];
+  my ($cmd, $dist) = @{ $msg->message_array };
 
   unless ($cmd) {
     broadcast( 'message',

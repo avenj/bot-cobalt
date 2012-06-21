@@ -311,7 +311,6 @@ sub _write_serialized {
 }
 
 1;
-
 __END__
 
 =pod

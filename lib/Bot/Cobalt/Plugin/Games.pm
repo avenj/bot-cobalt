@@ -96,7 +96,7 @@ sub _load_games {
 
     my $obj = $module->new;
     $self->{Objects}->{$game} = $obj;
-    ## build a hash of commands we should handle
+
     for my $cmd (@{ $games->{$game}->{Cmds} }) {
 
       $self->{Dispatch}->{$cmd} = $game;

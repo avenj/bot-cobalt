@@ -55,15 +55,20 @@ sub new {
 
   my %opts = @_;
   
-  require Bot::Cobalt::Core;
-  my $core = Bot::Cobalt::Core->instance;
+  my $core;
+  
+  if (ref $opts{core}) {
+    $core = delete $opts{core};
+  } else {
+    require Bot::Cobalt::Core;
+    $core = Bot::Cobalt::Core->instance;
+  }
+
   $self->{core} = $core;
 
-  my $rdbdir = $opts{RDBDir};  
+  my $rdbdir = delete $opts{RDBDir} || croak "new() needs a RDBDir";
+
   $self->{RDBDir} = $rdbdir;
-  unless ( $self->{RDBDir} ) {
-    croak "new() needs a RDBDir parameter"
-  }
   
   $self->{CacheObj} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => $opts{CacheKeys} // 30,
@@ -158,6 +163,8 @@ sub createdb {
 
 sub deldb {
   my ($self, $rdb) = @_;
+  confess "No RDB specified" unless defined $rdb;
+
   my $core = $self->{core};
 
   $self->Error(0);
@@ -202,6 +209,8 @@ sub deldb {
 
 sub del {
   my ($self, $rdb, $key) = @_;
+  confess "No RDB specified" unless defined $rdb;
+
   my $core = $self->{core};
   
   $self->Error(0);
@@ -250,6 +259,8 @@ sub del {
 
 sub get {
   my ($self, $rdb, $key) = @_;
+  confess "No RDB specified" unless defined $rdb;
+
   my $core = $self->{core};
 
   $self->Error(0);
@@ -288,6 +299,8 @@ sub get {
 
 sub get_keys {
   my ($self, $rdb) = @_;
+  confess "No RDB specified" unless defined $rdb;
+
   return unless $self->dbexists($rdb);
   my $core = $self->{core};
   
@@ -310,6 +323,8 @@ sub get_keys {
 
 sub put {
   my ($self, $rdb, $ref) = @_;
+  confess "put() needs a RDB name and a reference" 
+    unless defined $rdb and defined $ref;
   
   $self->Error(0);
   unless ( $self->dbexists($rdb) ) {
@@ -351,6 +366,7 @@ sub put {
 
 sub random {
   my ($self, $rdb) = @_;
+  confess "No RDB specified" unless defined $rdb;
   
   $self->Error(0);
   unless ( $self->dbexists($rdb) ) {
@@ -411,6 +427,8 @@ sub cache_push {
 
 sub search {
   my ($self, $rdb, $glob, $wantone) = @_;
+  confess "search() needs a RDB name and a glob" 
+    unless defined $rdb and defined $glob;
 
   $self->Error(0);
   unless ( $self->dbexists($rdb) ) {

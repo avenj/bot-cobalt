@@ -225,9 +225,8 @@ sub Bot_ircplug_connect {
   $spawn_opts{password} = $thiscfg->{ServerPass}
     if defined $thiscfg->{ServerPass};
 
-  my $irc = POE::Component::IRC::State->spawn(
-    %spawn_opts
-  ) or logger->error("IRC component spawn() for $context failed")
+  my $irc = POE::Component::IRC::State->spawn(%spawn_opts) 
+    or logger->error("IRC component spawn() for $context failed")
     and return PLUGIN_EAT_ALL;
 
   my $server_obj = Bot::Cobalt::IRC::Server->new(

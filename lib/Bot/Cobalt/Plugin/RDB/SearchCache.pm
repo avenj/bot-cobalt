@@ -52,7 +52,7 @@ sub cache {
 sub fetch {
   my ($self, $ckey, $match) = @_;
   
-  return unless $ckey and $match;
+  return unless defined $ckey and defined $match;
 
   return unless exists $self->{Cache}->{$ckey} 
          and $self->{Cache}->{$ckey}->{$match};
@@ -74,7 +74,7 @@ sub invalidate {
   my ($self, $ckey, $match) = @_;
   ## should be called on add/del operations 
 
-  unless ($ckey) {
+  unless (defined $ckey) {
     ## invalidate all by not passing an arg
     $self->{Cache} = { };
     return
@@ -92,7 +92,7 @@ sub invalidate {
 sub _shrink {
   my ($self, $ckey) = @_;
   
-  return unless $ckey and ref $self->{Cache}->{$ckey};
+  return unless defined $ckey and ref $self->{Cache}->{$ckey};
 
   my $cacheref = $self->{Cache}->{$ckey};
 
@@ -103,6 +103,7 @@ sub _shrink {
     } keys %$cacheref;
   
   my $deleted = 0;
+
   while (scalar keys %$cacheref > $self->MaxKeys) {
     my $nextkey = shift @cached;
     ++$deleted if delete $cacheref->{$nextkey};
