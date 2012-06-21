@@ -40,7 +40,7 @@ our $VERSION = '0.010_02';
 ##
 ## Also see Bot::Cobalt::Core::ContextMeta::Auth
 
-use 5.10.1;
+use 5.12.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -402,21 +402,6 @@ sub _cmd_login {
   return
 }
 
-sub _get_user_rec {
-  my ($self, $context, $user) = @_;
-  
-  confess "_get_user_rec called without required arguments"
-    unless defined $context and defined $user;
-  
-  return unless exists $self->AccessList->{'-ALL'}->{$user}
-    or  exists $self->AccessList->{$context}
-    and exists $self->AccessList->{$context}->{$user};
-  
-  exists $self->AccessList->{'-ALL'}->{$user} ?
-    $self->AccessList->{'-ALL'}->{$user}
-    : $self->AccessList->{$context}->{$user}
-}
-
 sub _cmd_chpass {
   my ($self, $context, $msg) = @_;
   ## 'self' chpass for logged-in users
@@ -703,7 +688,7 @@ sub _user_add {
     )
   }
 
-  $mask   = normalize_mask($mask);
+  $mask = normalize_mask($mask);
   
   ## add to AccessList
   $self->AccessList->{$context}->{$target_usr} = {
@@ -1192,6 +1177,23 @@ sub _user_chpass {
 
 ### Utility methods:
 
+sub _get_user_rec {
+  my ($self, $context, $user) = @_;
+  
+  ## Return user AccessList record, preferring hardcoded -ALL:
+  
+  confess "_get_user_rec called without required arguments"
+    unless defined $context and defined $user;
+  
+  return unless exists $self->AccessList->{'-ALL'}->{$user}
+    or  exists $self->AccessList->{$context}
+    and exists $self->AccessList->{$context}->{$user};
+  
+  exists $self->AccessList->{'-ALL'}->{$user} ?
+    $self->AccessList->{'-ALL'}->{$user}
+    : $self->AccessList->{$context}->{$user}
+}
+
 sub _remove_if_lost {
   my ($self, $context, $nick) = @_;
   ## $self->_remove_if_lost( $context );
@@ -1402,6 +1404,7 @@ sub _write_access_list {
   ## we don't want to write superusers back out
   ## copy from ref to a fresh hash:
   my $cloned = dclone($alist);
+  delete $cloned->{'-ALL'};
 
   for my $context (keys %$cloned) {
     for my $user (keys %{ $cloned->{$context} }) {
