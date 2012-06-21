@@ -1420,7 +1420,7 @@ sub _write_access_list {
   }
 
   ## don't need to write empty access lists to disk ...
-  return unless keys %$cloned;
+  return $authdb unless keys %$cloned;
 
   my $serializer = Bot::Cobalt::Serializer->new();
   
