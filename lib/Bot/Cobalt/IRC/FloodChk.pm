@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::FloodChk;
-our $VERSION = '0.010';
+our $VERSION = '0.011_01';
 
 use Carp;
 use Moo;

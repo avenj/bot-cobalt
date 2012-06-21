@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::OutputFilters::StripColor;
-our $VERSION = '0.010';
+our $VERSION = '0.011_01';
 
 use strictures 1;
 
