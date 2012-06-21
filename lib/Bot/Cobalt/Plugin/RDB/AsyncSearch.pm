@@ -9,7 +9,7 @@ use Config;
 
 use POE qw/Wheel::Run Filter::Reference/;
 
-sub new { bless {}, shift }
+sub new { bless [], shift }
 
 sub spawn {
   my $self = shift;
@@ -34,7 +34,6 @@ sub spawn {
       
       Wheels => {
         PID => {},
-        WID => {},
       },
     },
 
@@ -165,7 +164,6 @@ sub push_pending {
   $kernel->sig_child($pid, 'worker_sigchld');
   
   $heap->{Wheels}->{PID}->{$pid} = $wheel;
-  $heap->{Wheels}->{WID}->{$wid} = $wheel;
 
   my $next_item = shift @{ $heap->{Pending} };
   
@@ -221,7 +219,6 @@ sub worker_sigchld {
 
   my $wid = $wheel->ID;
 
-  delete $heap->{Wheels}->{WID}->{$wid};
   delete $heap->{RequestsByWID}->{$wid};
 
   $kernel->yield( 'push_pending' );
