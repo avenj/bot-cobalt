@@ -266,7 +266,7 @@ sub _load_conf {
 sub _cmd_plug_load {
   my ($self, $msg) = @_;
   
-  my ($alias, $module) = @{ $msg->message_array };
+  my ($alias, $module) = @{ $msg->message_array }[1,2];
   
   return $self->_load($alias, $module)
 }
