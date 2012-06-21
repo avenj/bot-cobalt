@@ -43,6 +43,48 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
+sub Bot_public_cmd_plugin {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${$_[0]};
+  my $context = $msg->context;
+
+  my $chan = $msg->channel;
+  my $nick = $msg->src_nick;
+  
+  my $pcfg = core()->get_plugin_cfg( $self );
+
+  ## default to superuser-only:
+  my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
+
+  my $resp;
+
+  my $operation = lc($msg->message_array->[0]||'');
+
+  if ( core()->auth->level($context, $nick) < $required_lev ) {
+    $resp = rplprintf( core()->lang->{RPL_NO_ACCESS}, { nick => $nick } );
+  } else {
+    unless ($operation && $operation ~~ [qw/load unload reload list/] ) {
+      broadcast( 'message', $context, $chan,
+        "Valid PluginMgr commands: list, load, unload, reload"
+      );
+    }
+
+    my $method = '_cmd_plug_'.lc($operation);
+    
+    if ($self->can($method)) {
+      $resp = $self->$method($msg);
+    } else {
+      logger->error("Bug; can($method) failed in dispatcher");
+      $resp = "Could not find method $method"
+    }
+
+  }
+
+  broadcast('message', $context, $chan, $resp) if defined $resp;
+
+  return PLUGIN_EAT_ALL
+}
+
 sub _unload {
   my ($self, $alias) = @_;
 
@@ -221,63 +263,20 @@ sub _load_conf {
 }
 
 
-sub Bot_public_cmd_plugin {
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${$_[0]};
-  my $context = $msg->context;
-
-  my $chan = $msg->channel;
-  my $nick = $msg->src_nick;
+sub _cmd_plug_load {
+  my ($self, $msg) = @_;
   
-  my $pcfg = core()->get_plugin_cfg( $self );
-
-  ## default to superuser-only:
-  my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
-
-  my $resp;
-
-  my $operation = $msg->message_array->[0];
-
-  unless ( core()->auth->level($context, $nick) >= $required_lev ) {
-    $resp = rplprintf( core()->lang->{RPL_NO_ACCESS}, { nick => $nick } );
-  } else {
+  my ($alias, $module) = @{ $msg->message_array };
   
-    ## FIXME proper cmd dispatcher for all this crap
-    given ( lc($operation || '') ) {
-      when ('load') {
-        ## syntax: !plugin load <alias>, !plugin load <alias> <module>
-        my $alias  = $msg->message_array->[1];
-        my $module = $msg->message_array->[2];
-        $resp = $self->_load($alias, $module);
-      }
+  return $self->_load($alias, $module)
+}
 
-      when ('unload') {
-        ## syntax: !plugin unload <alias>
-        my $alias = $msg->message_array->[1];
-        $resp = $self->_unload($alias) || "Strange, no reply from _unload?";
-      }
+sub _cmd_plug_unload {
+  my ($self, $msg) = @_;
+  
+  my $alias = $msg->message_array->[1];
 
-      when ('reload') {
-        ## syntax: !plugin reload <alias>
-        $resp = $self->_cmd_plug_reload($msg);
-      }
-
-      when ('list') {
-        $resp = $self->_cmd_plug_list($msg);
-      }
-
-      ## shouldfix; reordering via ::Pipeline?
-
-      default { 
-        $resp = "Valid PluginMgr commands: list / load / unload / reload"
-      }
-    }
-
-  }
-
-  broadcast('message', $context, $chan, $resp) if defined $resp;
-
-  return PLUGIN_EAT_ALL
+  return $self->_unload($alias) || "Bug; no reply from _unload"
 }
 
 sub _cmd_plug_list {
