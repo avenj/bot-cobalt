@@ -4,12 +4,17 @@ our $VERSION = '0.010_02';
 ## POD lives in Bot::Cobalt::IRC for now ...
 
 use 5.12.1;
-use strictures 1;
-
-use Moo::Role;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
+
+use Moo::Role;
+
+use strictures 1;
+
+requires qw/
+  ircobjs
+/;
 
 sub Bot_send_message { Bot_message(@_) }
 sub Bot_message {
