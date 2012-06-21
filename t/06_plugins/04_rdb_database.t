@@ -10,15 +10,14 @@ BEGIN {
   use_ok( 'Bot::Cobalt::Plugin::RDB::Database' );
 }
 
-my $core = Bot::Cobalt::Core->instance(
-  cfg => {},
-  var => '',
-);
-
 my $workdir = File::Spec->tmpdir;
 my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
 
-my ($fh, $path) = _newtemp();
+my $core = Bot::Cobalt::Core->instance(
+  cfg => {},
+  var => $tempdir,
+);
+
 my $rdb = new_ok( 'Bot::Cobalt::Plugin::RDB::Database' => [
     RDBDir => $tempdir,
     CacheKeys => 5,
@@ -71,11 +70,3 @@ ok( $resultref = $rdb->search('test', '*tem?'), 'glob search()' );
 cmp_ok(@$resultref, '==', 10, 'search() returned expected count');
 
 ok( $rdb->deldb('test'), 'deldb()' );
-
-sub _newtemp {
-  my ($fh, $filename) = tempfile( 'tmpdbXXXXX',
-    DIR => $tempdir, UNLINK => 1,
-  );
-  flock $fh, LOCK_UN;
-  return($fh, $filename)
-}
