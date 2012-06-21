@@ -1,9 +1,12 @@
 use Test::More tests => 9;
+use strict; use warnings;
 
 BEGIN {
-  use_ok( 'Bot::Cobalt::Utils', qw/
-    rplprintf 
-  / );
+  use_ok( 'Bot::Cobalt::Utils', 
+    qw/
+      rplprintf 
+    / 
+  );
   
   use_ok( 'IRC::Utils', qw/ has_formatting has_color / );
 }
@@ -30,6 +33,7 @@ undef $tmpl;
 my $c_vars = {
   somebold => "Some bold text",
 };
+
 $tmpl = 'String %C_BOLD %somebold %C_NORMAL%normal text %C_BLUE colored';
 
 ok($formatted = rplprintf( $tmpl, $c_vars ), 'rplprintf C_ vars (ref)' );
