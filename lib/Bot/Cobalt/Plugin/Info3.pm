@@ -1,7 +1,7 @@
 package Bot::Cobalt::Plugin::Info3;
 our $VERSION = '0.010_02';
 
-use 5.12.0;
+use 5.12.1;
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -16,7 +16,7 @@ use 5.12.0;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
-## borrow RDB's SearchCache
+
 use Bot::Cobalt::Plugin::RDB::SearchCache;
 
 use DateTime;
@@ -84,14 +84,18 @@ sub Cobalt_register {
   );
 
   logger->info("Loaded, topics: ".($core->Provided->{info_topics}||=0));
-  return PLUGIN_EAT_NONE
+  
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  
   logger->info("Unregistering Info plugin");
+  
   delete $core->Provided->{info_topics};
-  return PLUGIN_EAT_NONE
+  
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_ctcp_action {
@@ -125,8 +129,9 @@ sub Bot_ctcp_action {
   my $match = $self->_info_match($str, 'ACTION') || return PLUGIN_EAT_NONE;
 
   if ( index($match, '~') == 0) {
-    my $rdb = (split ' ', $match)[0];
-    $rdb = substr($rdb, 1);
+
+    my $rdb = substr( (split ' ', $match)[0], 1);
+
     if ($rdb) {
       broadcast( 'rdb_triggered',
         $context,
@@ -145,7 +150,8 @@ sub Bot_ctcp_action {
   broadcast( 'info3_relay_string', 
     $context, $channel, $nick, $match, join(' ', @message)
   );
-  return PLUGIN_EAT_NONE
+  
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_msg {
@@ -245,7 +251,7 @@ sub Bot_public_msg {
     $context, $channel, $nick, $match, $str
   );
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_info3_relay_string {
@@ -307,6 +313,7 @@ sub _over_max_triggered {
         ## we've hit this topic too many times in a row
         ## plugin should EAT_NONE
         logger->debug("Over trigger limit for $str");
+
         ## set a timer to expire this LastTriggered
         core->timer_set( 90,
           {
@@ -315,6 +322,7 @@ sub _over_max_triggered {
             Args => [ $context, $channel ],
           },
         );
+
         return 1
       } else {
         ## haven't hit MAX_TRIGGERED yet.
@@ -328,6 +336,7 @@ sub _over_max_triggered {
   } else {
     $self->{LastTriggered}->{$context}->{$channel} = [ $str, 1 ];
   }
+
   return 0
 }
 
@@ -346,7 +355,7 @@ sub _info_add {
   my $required = $pcfg->{RequiredLevels}->{AddTopic} // 2;
   unless ($auth_level >= $required) {
     return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nick },
+      nick => $nick,
     );
   }    
 
@@ -360,10 +369,8 @@ sub _info_add {
   if (exists $self->{Globs}->{$glob}) {
     ## topic already exists, use replace instead!
     return rplprintf( core->lang->{INFO_ERR_EXISTS},
-      {
-        topic => $glob,
-        nick => $nick,
-      },
+      topic => $glob,
+      nick => $nick,
     );
   }
 
@@ -402,10 +409,8 @@ sub _info_add {
 
   ## return RPL
   return rplprintf( core->lang->{INFO_ADD},
-    {
-      topic => $glob,
-      nick => $nick,
-    },
+    topic => $glob,
+    nick => $nick,
   );
 }
 
@@ -434,10 +439,8 @@ sub _info_del {
   
   unless (exists $self->{Globs}->{$glob}) {
     return rplprintf( core->lang->{INFO_ERR_NOSUCH},
-      {
-        topic => $glob,
-        nick  => $nick,
-      }
+      topic => $glob,
+      nick  => $nick,
     );
   }
 
@@ -461,11 +464,9 @@ sub _info_del {
   logger->debug("topic del: $glob ($regex)");
   
   return rplprintf( core->lang->{INFO_DEL},
-    {
-      topic => $glob,
-      nick  => $nick,
-    },
-  );  
+    topic => $glob,
+    nick  => $nick,
+  )
 }
 
 sub _info_replace {
@@ -496,11 +497,9 @@ sub _info_replace {
   
   unless (exists $self->{Globs}->{$glob}) {
     return rplprintf( core->lang->{INFO_ERR_NOSUCH},
-      {
-        topic => $glob,
-        nick  => $nick,
-      },
-    );
+      topic => $glob,
+      nick  => $nick,
+    )
   }
 
   logger->debug("replace called for $glob by $nick ($auth_user)");
