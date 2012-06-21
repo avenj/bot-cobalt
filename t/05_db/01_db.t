@@ -1,4 +1,5 @@
 use Test::More tests => 32;
+use strict; use warnings;
 
 use 5.10.1;
 use Fcntl qw/ :flock /;
