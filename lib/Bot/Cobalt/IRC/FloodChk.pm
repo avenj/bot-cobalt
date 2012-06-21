@@ -1,8 +1,12 @@
 package Bot::Cobalt::IRC::FloodChk;
 our $VERSION = '0.010_02';
 
+use Carp;
 use Moo;
+
 use Bot::Cobalt::Common qw/:types/;
+
+use strictures;
 
 use Time::HiRes;
 
@@ -45,13 +49,14 @@ sub check {
 
 sub clear {
   my ($self, $context, $key) = @_;
-  return unless defined $context and defined $key;
+  confess "clear() needs a context specified" 
+    unless defined $context;
   
   return unless exists $self->fqueue->{$context};
   
-  return delete $self->fqueue->{$context}->{$key}
-    if defined $key;
-  return delete $self->fqueue->{$context}
+  defined $key ?
+    delete $self->fqueue->{$context}->{$key}
+    : delete $self->fqueue->{$context}
 }
 
 sub expire {
