@@ -23,15 +23,13 @@ sub Cobalt_register {
   $self->{Active} = {};
 
   register($self, 'SERVER', 
-    [ 
-      'public_cmd_alarmclock',
-      'public_cmd_alarmdelete',
-      'public_cmd_alarmdel',
-      'executed_timer',
-    ] 
+    'public_cmd_alarmclock',
+    'public_cmd_alarmdelete',
+    'public_cmd_alarmdel',
+    'executed_timer',
   );
 
-  $core->log->info("Loaded alarm clock");
+  logger->info("Loaded alarm clock");
 
   return PLUGIN_EAT_NONE
 }
@@ -39,7 +37,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
 
-  $core->log->info("Unregistering core IRC plugin");
+  logger->info("Unregistering core IRC plugin");
 
   $core->timer_del_alias( $core->get_plugin_alias($self) );
 
@@ -47,6 +45,7 @@ sub Cobalt_unregister {
 }
 
 sub Bot_deleted_timer { Bot_executed_timer(@_) }
+
 sub Bot_executed_timer {
   my ($self, $core) = splice @_, 0, 2;
   my $timerid = ${$_[0]};
@@ -54,7 +53,7 @@ sub Bot_executed_timer {
   return PLUGIN_EAT_NONE
     unless exists $self->{Active}->{$timerid};
   
-  $core->log->debug("clearing timer state for $timerid")
+  logger->debug("clearing timer state for $timerid")
     if $core->debug > 1;  
 
   delete $self->{Active}->{$timerid};
@@ -74,8 +73,7 @@ sub Bot_public_cmd_alarmdel {
   my $auth_usr = $core->auth->username($context, $nick);
   return PLUGIN_EAT_NONE unless $auth_usr;
 
-  my $msg_arr = $msg->message_array;
-  my $timerid = $msg_arr->[0];
+  my $timerid = $msg->message_array->[0];
   return PLUGIN_EAT_ALL unless $timerid;
   
   my $channel = $msg->channel;
@@ -144,7 +142,7 @@ sub Bot_public_cmd_alarmclock {
   my $timestr = shift @$args;
   ## the rest of this string is the alarm text:
   my $txtstr  = join ' ', @$args;
-
+  
   $txtstr = "$setter: ALARMCLOCK: ".$txtstr ;
 
   ## set a timer
