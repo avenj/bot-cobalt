@@ -93,8 +93,9 @@ sub timer_set_hashref {
   }
   
   my($event_name, @event_args);
-  given ($type) {
-    when ("event") {
+  
+  TYPE: {
+    if ($type eq "event") {
       unless (defined $ev->{Event}) {
         $self->log->warn(
           "timer_set_hashref no Event specified; $d_line"
@@ -104,13 +105,16 @@ sub timer_set_hashref {
 
       $timer->event( $ev->{Event} );
       $timer->args( $ev->{Args}//[] );
+    
+      last TYPE
     }
-
-    when ([qw/msg message privmsg action/]) {
+    
+    if (grep { $type eq $_ } qw/msg message privmsg action/) {
       unless (defined $ev->{Text} && defined $ev->{Target}) {
         $self->log->warn(
           "timer_set_hashref; $type needs Text and Target; $d_line"
         );
+
         return
       }
 
@@ -118,7 +122,12 @@ sub timer_set_hashref {
       $timer->target( $ev->{Target} );
       $timer->text( $ev->{Text} );
       $timer->type( $type );
+
+      last TYPE
     }
+    
+    $self->log->error("Unknown type $type passed to timer_set_hashref");
+    return
   }
 
   ## Tag w/ __PACKAGE__ if no alias is specified
