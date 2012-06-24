@@ -20,7 +20,13 @@ cmp_ok( $cache->MaxKeys('5'), '==', 5, 'MaxKeys(5)' );
 my $i;
 for (0 .. 6) {
   ++$i;
-  select undef, undef, undef, 0.1;
+  
+  if ($^O eq 'MSWin32') {
+    sleep 1;
+  } else {
+    select undef, undef, undef, 0.1;
+  }
+  
   $cache->cache('Cache', 'key'.$i, [ 'value'.$i ] );
 }
 
