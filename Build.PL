@@ -221,7 +221,6 @@ my $build = $class->new(
 
     ### Storage / serialization
       'JSON::XS'    => 0,
-      'YAML::Syck'  => '1.18',
 
     ### Release tools, commented for now
 #      'Dir::Self' => 0,
