@@ -18,6 +18,8 @@ use IO::File;
 use Bot::Cobalt::Serializer;
 use Bot::Cobalt::Common qw/:types/;
 
+use Time::HiRes qw/sleep/;
+
 has 'File'  => ( 
   is  => 'rw', 
   isa => Str, 
@@ -170,7 +172,8 @@ sub dbopen {
       untie %{ $self->_orig };
       return
     }
-    select undef, undef, undef, 0.1;
+
+    sleep 0.1;
     $timer += 0.1;
   }
 
