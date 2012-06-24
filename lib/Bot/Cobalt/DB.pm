@@ -173,8 +173,8 @@ sub dbopen {
       return
     }
 
-    sleep 0.1;
-    $timer += 0.1;
+    sleep 0.01;
+    $timer += 0.01;
   }
 
   ## reopen DB to Tied
