@@ -25,7 +25,7 @@ sub core {
   Bot::Cobalt::Core->instance
 }
 
-sub broadcast {
+sub broadcast (@) {
   core()->send_event( @_ )
 }
 
@@ -33,27 +33,27 @@ sub logger {
   core()->log
 }
 
-sub register {
+sub register (@) {
   core()->plugin_register( @_ )
 }
 
-sub unregister {
+sub unregister (@) {
   core()->plugin_register( @_ )
 }
 
-sub plugin_cfg {
+sub plugin_cfg ($) {
   core()->get_plugin_cfg( @_ )
 }
 
-sub plugin_alias {
+sub plugin_alias ($) {
   core()->get_plugin_alias( @_ )
 }
 
-sub irc_object {
+sub irc_object ($) {
   core()->get_irc_object( @_ )
 }
 
-sub irc_context {
+sub irc_context ($) {
   core()->get_irc_context( @_ );
 }
 
