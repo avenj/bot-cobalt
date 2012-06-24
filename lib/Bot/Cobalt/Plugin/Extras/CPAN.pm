@@ -94,8 +94,10 @@ sub Bot_public_cmd_cpan {
     $dist = $cmd;
     $cmd  = 'abstract';
   }
+
+  $cmd = lc $cmd;
   
-  $dist =~ s/::/-/g;
+  $dist =~ s/::/-/g unless $cmd eq "belongs";
   
   my $url = "/release/$dist";
 
@@ -107,7 +109,7 @@ sub Bot_public_cmd_cpan {
     Link    => 'http://www.metacpan.org'.$url,
   };
   
-  for ( lc($cmd||'') ) {
+  for ($cmd) {
 
     ## Get latest vers / date and link
     $hints->{Type} = 'latest'   when [qw/latest release/];
@@ -116,6 +118,11 @@ sub Bot_public_cmd_cpan {
     $hints->{Type} = 'tests'    when /^tests?$/;
     $hints->{Type} = 'abstract' when [qw/info abstract/];
     $hints->{Type} = 'license'  when "license";
+    
+    when ("belongs") {
+      $hints->{Type} = 'belongs';
+      $url = "/module/$dist";
+    }
     
     default {
       broadcast( 'message',
@@ -246,12 +253,19 @@ sub Bot_mcpan_plug_resp_recv {
           $d_hash->{tests}
           : { pass => 0, fail => 0, na => 0, unknown => 0 }
       };
+      
+      my $vers = $d_hash->{version};
 
-      $resp = sprintf("%s: (%s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
-        $prefix, $dist,
+      $resp = sprintf("%s: (%s %s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
+        $prefix, $dist, $vers,
         $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
       );
     }
+    
+    when ("belongs") {
+      my $release = $d_hash->{release};
+      $resp = "$prefix: $dist belongs to release $release";
+    } 
     
     default {
       logger->error("BUG; fell through in response handler");
