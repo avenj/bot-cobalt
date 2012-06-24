@@ -225,18 +225,19 @@ sub Bot_ircplug_connect {
   $spawn_opts{password} = $thiscfg->{ServerPass}
     if defined $thiscfg->{ServerPass};
 
-  my $irc = POE::Component::IRC::State->spawn(%spawn_opts) 
-    or logger->error("IRC component spawn() for $context failed")
-    and return PLUGIN_EAT_ALL;
-
   my $server_obj = Bot::Cobalt::IRC::Server->new(
     name => $server,
-    irc  => $irc,
     prefer_nick => $nick,
   );
 
   $core->Servers->{$context} = $server_obj;
+
+  my $irc = POE::Component::IRC::State->spawn(%spawn_opts) 
+    or logger->error("IRC component spawn() for $context failed")
+    and return PLUGIN_EAT_ALL;
+
   $self->ircobjs->{$context} = $irc;
+  $server_obj->irc($irc);
 
   ## Attempt to spin up a session.
   if ( $self->_spawn_for_context($context) ) {
@@ -354,6 +355,7 @@ sub _start {
 
   if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
     logger->debug("Adding NickServ ID for $context");
+
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
         Password => $pcfg->{Networks}->{$context}->{NickServPass},
@@ -585,7 +587,7 @@ sub irc_public {
 
 sub irc_msg {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
+  my ($src, $targets, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
@@ -605,7 +607,7 @@ sub irc_msg {
   my $msg_obj = Bot::Cobalt::IRC::Message->new(
     context => $context,
     src     => $src,
-    targets => $target,
+    targets => $$targets,
     message => $txt,
   );
   
@@ -614,7 +616,7 @@ sub irc_msg {
 
 sub irc_notice {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
+  my ($src, $targets, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
@@ -627,7 +629,7 @@ sub irc_notice {
   my $msg_obj = Bot::Cobalt::IRC::Message->new(
     context => $context,
     src     => $src,
-    targets => $target,
+    targets => $targets,
     message => $txt,
   );
   
@@ -636,7 +638,7 @@ sub irc_notice {
 
 sub irc_ctcp_action {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
+  my ($src, $targets, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
@@ -649,7 +651,7 @@ sub irc_ctcp_action {
   my $msg_obj = Bot::Cobalt::IRC::Message->new(
     context => $context,
     src     => $src,
-    targets => $target,
+    targets => $targets,
     message => $txt,
   );
 
@@ -844,6 +846,9 @@ sub irc_invite {
 sub Bot_rehashed {
   my ($self, $core) = splice @_, 0, 2;
   my $type = ${ $_[0] };
+
+  return PLUGIN_EAT_NONE
+    unless $type eq "channels" or $type eq "core";
   
   logger->info("Rehash received, resetting ajoins");
   $self->_reset_ajoins;
