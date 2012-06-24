@@ -15,6 +15,7 @@ use Fcntl qw/:flock/;
 
 use Bot::Cobalt::Common qw/:types/;
 
+use Time::HiRes qw/sleep/;
 
 has 'Format' => (
   is  => 'rw', 
@@ -289,7 +290,7 @@ sub _write_serialized {
       confess "Failed writefile lock ($path), timed out ($timeout)"
         if $timer > $timeout;
 
-      select undef, undef, undef, 0.1;
+      sleep 0.1;
       $timer += 0.1;
     }
 
