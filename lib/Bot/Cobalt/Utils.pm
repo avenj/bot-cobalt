@@ -117,7 +117,7 @@ sub rplprintf {
 
 ## Glob -> regex functions:
 
-sub glob_grep {
+sub glob_grep ($;@) {
   my $glob = shift;
   confess "glob_grep called with no arguments!"
     unless defined $glob;
@@ -129,7 +129,7 @@ sub glob_grep {
   grep { m/$re/ } @array
 }
 
-sub glob_to_re {
+sub glob_to_re ($) {
   my ($glob) = @_;
   confess "glob_to_re called with no arguments!"
     unless defined $glob;
@@ -139,7 +139,7 @@ sub glob_to_re {
   qr/$re/
 }
 
-sub glob_to_re_str {
+sub glob_to_re_str ($) {
   ## Currently allows:
   ##   *  == .*
   ##   ?  == .
@@ -210,7 +210,7 @@ sub glob_to_re_str {
 
 
 ## IRC color codes:
-sub color {
+sub color ($;$) {
   ## color($format, $str)
   ## implements mirc formatting codes, against my better judgement
   ## if format is unspecified, returns NORMAL
@@ -235,7 +235,7 @@ sub color {
 
 
 ## Time/date ops:
-sub timestr_to_secs {
+sub timestr_to_secs ($) {
   ## turn something like 2h3m30s into seconds
   my ($timestr) = @_;
   
@@ -274,19 +274,22 @@ sub timestr_to_secs {
   $secs
 }
 
-sub _time_breakdown {
+sub _time_breakdown ($) {
   my ($diff) = @_;
   return unless defined $diff;
+
   my $days   = int $diff / 86400;
   my $sec    = $diff % 86400;
   my $hours  = int $sec / 3600;  $sec   %= 3600;
   my $mins   = int $sec / 60;    $sec   %= 60;
+
   return($days, $hours, $mins, $sec)
 }
 
-sub secs_to_timestr {
+sub secs_to_timestr ($) {
   my ($diff) = @_;
   return unless defined $diff;
+
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
 
   my $str;
@@ -298,7 +301,7 @@ sub secs_to_timestr {
   $str  
 }
 
-sub secs_to_str {
+sub secs_to_str ($) {
   ## turn seconds into a string like '0 days, 00:00:00'
   my ($diff) = @_;
   return unless defined $diff;
@@ -312,8 +315,8 @@ sub secs_to_str {
 
 
 ## App::bmkpasswd stubs as of 00_35
-sub mkpasswd  { App::bmkpasswd::mkpasswd(@_) }
-sub passwdcmp { App::bmkpasswd::passwdcmp(@_) }
+sub mkpasswd  (@) { App::bmkpasswd::mkpasswd(@_) }
+sub passwdcmp (@) { App::bmkpasswd::passwdcmp(@_) }
 
 1;
 __END__
