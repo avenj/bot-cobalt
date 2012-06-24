@@ -103,7 +103,7 @@ has 'url' => (
   is  => 'ro', 
   isa => Str,
 
-  default => sub { "http://www.cobaltirc.org" },
+  default => sub { "http://www.metacpan.org/dist/Bot-Cobalt" },
 );
 
 has 'lang' => ( 
