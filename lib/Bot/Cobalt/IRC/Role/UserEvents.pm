@@ -19,6 +19,12 @@ requires qw/
 sub Bot_send_message { Bot_message(@_) }
 sub Bot_message {
   my ($self, $core) = splice @_, 0, 2;
+  
+  unless (defined $_[2]) {
+    logger->error("Bot_message received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
@@ -35,8 +41,7 @@ sub Bot_message {
     my ($target, $txt) = @msg[1,2];
     
     if (defined $target && defined $txt && $txt ne '') {
-      $self->ircobjs->{$context}->yield( 
-        'privmsg',
+      $self->ircobjs->{$context}->yield( 'privmsg',
         $target,
         $txt
       );
@@ -47,7 +52,9 @@ sub Bot_message {
 
       ++$core->State->{Counters}->{Sent};
     } else {
-      logger->error("Bot_message received without defined target and txt")
+      logger->error(
+        "Bot_message without defined target and txt after Outgoing_message"
+      )
     }
   }
 
@@ -58,6 +65,12 @@ sub Bot_message {
 sub Bot_send_notice { Bot_notice(@_) }
 sub Bot_notice {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[2]) {
+    logger->error("Bot_notice received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
@@ -88,6 +101,12 @@ sub Bot_notice {
 sub Bot_send_action { Bot_action(@_) }
 sub Bot_action {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[2]) {
+    logger->error("Bot_action received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $target  = ${$_[1]};
   my $txt     = ${$_[2]};
@@ -117,6 +136,12 @@ sub Bot_action {
 
 sub Bot_topic {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[1]) {
+    logger->error("Bot_topic received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $topic   = defined $_[2] ? ${$_[2]} : "" ;
@@ -134,6 +159,12 @@ sub Bot_topic {
 
 sub Bot_mode {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[2]) {
+    logger->error("Bot_mode received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $target  = ${$_[1]}; ## channel or self normally
   my $modestr = ${$_[2]}; ## modes + args
@@ -151,6 +182,12 @@ sub Bot_mode {
 
 sub Bot_kick {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[2]) {
+    logger->error("Bot_kick received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $target  = ${$_[2]};
@@ -171,6 +208,12 @@ sub Bot_kick {
 
 sub Bot_join {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[1]) {
+    logger->error("Bot_join received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
 
@@ -185,6 +228,12 @@ sub Bot_join {
 
 sub Bot_part {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[1]) {
+    logger->error("Bot_part received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
   my $reason  = defined $_[2] ? ${$_[2]} : 'Leaving' ;
@@ -200,6 +249,12 @@ sub Bot_part {
 
 sub Bot_send_raw {
   my ($self, $core) = splice @_, 0, 2;
+
+  unless (defined $_[1]) {
+    logger->error("Bot_send_Raw received without enough arguments");
+    return PLUGIN_EAT_NONE
+  }
+
   my $context = ${$_[0]};
   my $raw     = ${$_[1]};
 
