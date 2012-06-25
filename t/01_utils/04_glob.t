@@ -15,9 +15,9 @@ my $globs = {
 
 for my $glob (keys %$globs) {
     my $regex;
-    ok( glob_to_re($glob), "glob_to_re");
+    ok( glob_to_re $glob, "glob_to_re");
 
-    ok( $regex = glob_to_re_str($glob), "Convert glob" )
+    ok( $regex = glob_to_re_str $glob, "Convert glob" )
       or diag("Could not convert $glob to regex");
 
     ok( $regex eq $globs->{$glob}, "Compare glob<->regex" )

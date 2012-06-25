@@ -8,7 +8,7 @@ BEGIN {
 
 my @alph = ( 'a' .. 'z' );
 my $passwd = join '', map { $alph[rand @alph] } 1 .. 8;
-my $bcrypted = mkpasswd($passwd);
+my $bcrypted = mkpasswd $passwd;
 ok( $bcrypted, 'bcrypt-enabled mkpasswd()' );
 ok( passwdcmp($passwd, $bcrypted), 'bcrypt-enabled passwd comparison' );
 ok( !passwdcmp('a', $bcrypted), 'bcrypt negative comparison' );

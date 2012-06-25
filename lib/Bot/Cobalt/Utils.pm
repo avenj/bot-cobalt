@@ -315,8 +315,8 @@ sub secs_to_str ($) {
 
 
 ## App::bmkpasswd stubs as of 00_35
-sub mkpasswd  (@) { App::bmkpasswd::mkpasswd(@_) }
-sub passwdcmp (@) { App::bmkpasswd::passwdcmp(@_) }
+sub mkpasswd  ($;@) { App::bmkpasswd::mkpasswd(@_) }
+sub passwdcmp ($$) { App::bmkpasswd::passwdcmp(@_) }
 
 1;
 __END__
@@ -400,7 +400,7 @@ See below for a list of exportable functions.
 
 Convert a string such as "2h10m" into seconds.
 
-  my $delay_s = timestr_to_secs('1h33m10s');
+  my $delay_s = timestr_to_secs '1h33m10s';
 
 Useful for dealing with timers.
 
@@ -410,7 +410,7 @@ Useful for dealing with timers.
 Turns seconds back into a timestring suitable for feeding to 
 L</timestr_to_secs>:
 
-  my $timestr = secs_to_timestr(820); ## -> 13m40s
+  my $timestr = secs_to_timestr 820; ## -> 13m40s
 
 
 =head3 secs_to_str
@@ -420,7 +420,7 @@ Convert a timestamp delta into a string.
 Useful for uptime reporting, for example:
 
   my $delta = time() - $your_start_TS;
-  my $uptime_str = secs_to_str($delta);
+  my $uptime_str = secs_to_str $delta;
 
 
 
@@ -460,7 +460,7 @@ C<color()> instead.
 
 glob_to_re_str() converts Cobalt-style globs to regex strings.
 
-  my $re = glob_to_re_str("th?ngs*stuff");
+  my $re = glob_to_re_str "th?ngs*stuff";
   ## or perhaps compile it:
   my $compiled_re = qr/$re/;
 
@@ -559,20 +559,20 @@ Salts are always random.
   ## bcrypt is blowfish with a work cost factor.
   ## if hashes are stolen, they'll be slow to break
   ## see http://codahale.com/how-to-safely-store-a-password/
-  my $hashed = mkpasswd($password);
+  my $hashed = mkpasswd $password;
 
   ## you can specify method options . . .
   ## here's bcrypt with a lower work cost factor.
   ## (must be a two-digit power of 2, possibly padded with 0)
-  my $hashed = mkpasswd($password, 'bcrypt', '06');
+  my $hashed = mkpasswd $password, 'bcrypt', '06';
 
   ## Available methods:
   ##  bcrypt (preferred)
   ##  SHA-256 or -512 (req. modern libc or Crypt::Passwd::XS)
   ##  MD5 (fast, portable, weak)
-  my $sha_passwd = mkpasswd($password, 'sha512');
+  my $sha_passwd = mkpasswd $password, 'sha512';
   ## same as:
-  my $sha_passwd = mkpasswd($password, 'SHA-512');
+  my $sha_passwd = mkpasswd $password, 'SHA-512';
 
 
 =head3 passwdcmp
@@ -582,7 +582,7 @@ Compare hashed passwords.
 Compatible with whatever methods C<mkpasswd> supports on the current 
 system.
 
-  return passwdcmp($password, $hashed);
+  return passwdcmp $password, $hashed;
 
 Returns the hash if the cleartext password is a match. Otherwise returns 
 boolean false.
