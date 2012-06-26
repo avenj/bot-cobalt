@@ -78,8 +78,10 @@ sub Cobalt_register {
     File::Spec->splitpath($relative_path)
   );
 
-  $self->_db_path($authdb);
+  logger->debug("Using authdb path $authdb");
 
+  $self->_db_path($authdb);
+  
   ## Read in main authdb:
   my $alist = $self->_read_access_list;
 

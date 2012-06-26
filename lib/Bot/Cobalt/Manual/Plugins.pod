@@ -88,7 +88,7 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
     return PLUGIN_EAT_NONE 
   }
   
-  1;  ## perl modules must end in '1;'
+  1;  ## perl modules end in '1'
 
 
 =head2 Module paths and configuration
@@ -130,7 +130,7 @@ key; see L</PluginOpts>.
 
 =head3 Accessing plugin configuration
 
-Typically, a plugin's configuration is loaded into memory and stored 
+A plugin-specific configuration is loaded into memory and stored 
 in the Core C<cfg> attribute.
 
 The normal way to access a plugin's configuration structure is via the 
@@ -182,8 +182,8 @@ events, which are pushed through the plugin pipeline by the Cobalt core
 
 Pipeline priority is initially chosen via B<Priority:> 
 directives in C<plugins.conf>; however, online plugin loads/unloads 
-can alter the pipeline order. If your plugin B<needs> to have a 
-certain priority in the pipeline, you're likely 
+can alter the pipeline order. If your plugin needs to have a 
+certain priority in the pipeline, you are likely 
 going to want to spend some quality time reading the L<Object::Pluggable> 
 and especially L<Object::Pluggable::Pipeline> documentation. The methods 
 described regarding pipeline manipulation are available via C<core()>.
@@ -210,6 +210,7 @@ words, inside C<Cobalt_register>:
 
 =head3 Event handlers
 
+Events from IRC and internal events are classified as 'SERVER' events.
 Syndicated SERVER event handlers are prefixed with 'Bot_':
 
   sub Bot_some_event {
@@ -221,8 +222,22 @@ Syndicated SERVER event handlers are prefixed with 'Bot_':
 
 The arguments passed to event handlers are always references.
 (Sometimes, they're references to references, such as a hashref.
-If you don't know what that means, it's time to read L<perlreftut> and 
-L<perlref> immediately.)
+If you don't know what that means, it's time to stop here and read 
+L<perlreftut> & L<perlref>)
+
+=head3 Sending events
+
+Events can be broadcast to the plugin pipeline via either the Core 
+method B<send_event>:
+
+  $core->send_event( $event, @args );
+
+... or via exported sugar from L<Bot::Cobalt::Core::Sugar> 
+(B<broadcast>):
+
+  use Bot::Cobalt;
+  
+  broadcast $event, @args;
 
 =head3 Returning proper values
 
@@ -231,14 +246,14 @@ the L<Bot::Cobalt::IRC> plugin. Events will be handed on down the
 pipeline, B<unless> a handler for a syndicated event returns a 
 B<PLUGIN_EAT_ALL> or B<PLUGIN_EAT_PLUGIN> value.
 
-Your Bot_* event handlers should B<always> return an 
+Your Bot_* event handlers should return an 
 L<Object::Pluggable::Constants> value. The two commonly used values are:
 
 =head4 PLUGIN_EAT_NONE
 
 Allow the event to continue to pass through the pipeline.
 
-B<This is the most common return value for event handlers.>
+This is the most common return value for event handlers
 
 =head4 PLUGIN_EAT_ALL 
 
@@ -263,7 +278,7 @@ event syntax.
 
 =head3 Understanding server context
 
-IRC-driven events always come with a 'server context' attached, mapping 
+IRC-driven events come with a 'server context' attached, mapping 
 the server's configured "name" to server state information and allowing a 
 plugin to make sure responses get to the right place.
 
@@ -289,7 +304,7 @@ For example, when receiving a public message:
 
 IRC-related events always come from or are sent to a specific context.
 
-Each context also has a L<Bot::Cobalt::IRC::Server> object attached; it 
+Each context also has a L<Bot::Cobalt::IRC::Server> object; it 
 can be used to retrieve context-specific metadata such as connected 
 status and the named server's announced casemapping. 
 See L</get_irc_server>.
@@ -307,11 +322,15 @@ A _msg event is passed a context and a L<Bot::Cobalt::IRC::Message> object:
 
   sub Bot_public_msg {
     my ($self, $core) = splice @_, 0, 2;
-    my $msg     = ${ $_[0] };
-    my $context = $msg->context;
     
-    ## You probably don't want to eat IRC events, unless 
-    ## you're quite sure of what you're doing:
+    my $msg     = ${ $_[0] };
+    
+    my $context  = $msg->context;
+    my $channel  = $msg->channel;
+    my $src_nick = $msg->src_nick;
+    
+    . . .
+    
     return PLUGIN_EAT_NONE
   }
 
@@ -533,11 +552,14 @@ L<Bot::Cobalt::Core> is actually an instanced singleton; it can be retrieved
 from any loaded plugin via B<instance>:
 
   require Bot::Cobalt::Core;
+  
   my $core = Bot::Cobalt::Core->instance;
 
-Normally, however, you would simply 'use Bot::Cobalt' and thereby import 
-the L<Bot::Cobalt::Core::Sugar> wrappers:
+... or 'use Bot::Cobalt' and thereby import the 
+L<Bot::Cobalt::Core::Sugar> wrappers:
 
+  use Bot::Cobalt;
+  
   my $irc_obj = core()->get_irc_object($context);
 
 See the documentation for L<Bot::Cobalt::Core::Sugar> for the complete 
@@ -562,7 +584,7 @@ A plugin should declare its Provided functionality at register-time:
     my ($self, $core) = splice @_, 0, 2;
     
     ## ... register for events, etc ...
-
+  
     ## declare that 'tasty_snacks' functionality is available
     ## this example does nothing if it's already defined (//):
     $core->Provided->{tasty_snacks} //= 1;
@@ -570,10 +592,9 @@ A plugin should declare its Provided functionality at register-time:
     return PLUGIN_EAT_NONE
   }
 
-B<The core has no way of automatically knowing that this functionality 
-disappears when your plugin does.>
-
-You should delete the Provided element in your _unregister:
+The core has no way of automatically knowing that this functionality 
+disappears when your plugin does. You should delete the Provided element 
+in your _unregister:
 
   sub Cobalt_unregister {
     my ($self, $core) = splice @_, 0, 2;
@@ -991,7 +1012,7 @@ These are events sent by L<Bot::Cobalt::Core> when various core states
 change.
 
 You should probably return PLUGIN_EAT_NONE on all of these, unless 
-you're absolutely sure of what you're doing.
+you are absolutely sure of what you are doing.
 
 =head3 Plugin related events
 
@@ -1100,19 +1121,23 @@ keep track of, but storing it in memory and serializing to/from disk is
 too expensive.
 
   use Bot::Cobalt::DB;
-   # new object for this db, creating it if it doesn't exist:
+
+  # new object for this db, creating it if it doesn't exist:
   $db = Bot::Cobalt::DB->new(
     File => $some_db_path,
   );
-   # open and lock the db
-   # be sure to error-check dbopen somehow:
+
+  # open and lock the db:
   $db->dbopen || return "database open failed!";
-   # 'put' some data structure in the db:
+
+  # 'put' some data structure in the db:
   my $ref = { Some => [ 'Data', 'Structure' ] };
   $db->put('MyKey', $ref);
-   # 'get' some other data structure:
+  
+  # 'get' some other data structure:
   my $other_data = $db->get('OtherKey');
-   # close/unlock db:
+  
+  # close/unlock db:
   $db->dbclose;
 
 See L<Bot::Cobalt::DB> for complete usage information.
@@ -1129,8 +1154,10 @@ serialization formats, as well as built-in file operations for "freezing"
 and "thawing" data to/from files on disk:
 
   use Bot::Cobalt::Serializer;
+
   ## create a JSON serializer:
   my $jsify = Bot::Cobalt::Serializer->new( Format => 'JSON' );
+
   ## serialize a perl hash:
   my $ref = { Some => { Deep => [ 'Structure' ] } };
   my $json = $jsify->freeze($ref);
@@ -1154,13 +1181,12 @@ See L<Bot::Cobalt::Utils>.
 
 =head3 IRC::Utils
 
-L<IRC::Utils> is a great little module covering many basic IRC-related 
+L<IRC::Utils> is a very useful module covering many basic IRC-related 
 tasks, such as host normalization / matching and casemapping-aware IRC 
 uppercase/lowercase tools.
 
 It is used extensively by both L<Bot::Cobalt> and 
-L<POE::Component::IRC>; thusly it is guaranteed to be available if 
-L<Bot::Cobalt> is.
+L<POE::Component::IRC> and therefore guaranteed to be available for use.
 
 See L<IRC::Utils> for upstream's documentation.
 
@@ -1168,22 +1194,25 @@ See L<IRC::Utils> for upstream's documentation.
 =head3 Bot::Cobalt::Plugin::WWW
 
 It's fairly common to want to make some kind of HTTP request from an 
-IRC bot. Unfortunately, the most common Perl method of speaking HTTP is 
+IRC bot. The most common Perl method of speaking HTTP is 
 L<LWP::UserAgent> -- which will block the plugin pipeline until the 
 request is complete.
 
-L<Bot::Cobalt::Plugin::WWW>, if loaded, provides an easy method of forking 
-HTTP requests and reading responses back asynchronously via the 
-B<www_request> event:
+L<Bot::Cobalt::Plugin::WWW>, if loaded, dispatches HTTP requests 
+asynchronously via L<POE::Component::Client::HTTP> and returns 
+L<HTTP::Response> responses to the plugin pipeline:
 
   ## build a request object via HTTP::Request
   use HTTP::Request;
+
   ## a simple GET, see HTTP::Request docs for more info:
   my $request = HTTP::Request->new( 'GET', $url );
+
   ## push it to www_request with a response event:
-  $core->send_event( 'www_request',
+  broadcast( 'www_request',
     $request,
     'myplugin_resp_recv',
+
      ## you can include a reference containing args
      ## (or a scalar, if you like)
      ##
@@ -1195,17 +1224,26 @@ B<www_request> event:
   ## handle a response when one is received:
   sub Bot_myplugin_resp_recv {
     my ($self, $core) = splice @_, 0, 2;
+
     ## if the request was successful, $_[0] is a ref to the 
-    ## undecoded content from HTTP::Response
+    ## decoded content from HTTP::Response
+    ## (otherwise, it is the HTTP status message)
     my $content  = ${ $_[0] };
+
     ## $_[1] is the HTTP::Response object, see perldoc HTTP::Response
     my $response = ${ $_[1] };
+
     ## $_[2] is whatever argument ref was provided in www_request
     my $argref   = ${ $_[2] };
+
     ## in our example above, it was some contextual info:
     my ($context, $channel, $nickname) = @$argref;
 
-    ## . . . do something with the response . . .
+    if ($response->is_success) {
+      ## . . . do something with the response . . .
+    } else {
+      ## request failed (see HTTP::Response)
+    }
   
     ## eat this event, we're the only handler:
     return PLUGIN_EAT_ALL
@@ -1374,7 +1412,7 @@ L<Object::Pluggable> allows you to manipulate the plugin pipeline order;
 that is to say, the order in which events will hit plugins.
 
 For example, when writing a plugin such as an input filter, it can be useful to move 
-your plugin towards the top of the plugin pipeline.
+your plugin towards the top of the plugin pipeline:
 
   ## With 'use Bot::Cobalt':
   core->pipeline->bump_up( plugin_alias($self) );
@@ -1424,7 +1462,7 @@ See L</get_irc_casemap> and L<IRC::Utils>
 
 IRC doesn't come with a lot of guarantees regarding character encodings.
 
-Hopefully, you're getting either CP1252 or UTF-8.
+Hopefully, you are getting either CP1252 or UTF-8.
 
 The L<IRC::Utils> POD contains an excellent discussion of the general 
 problem; see L<IRC::Utils/ENCODING>.
