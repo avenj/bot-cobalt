@@ -54,9 +54,10 @@ sub clear {
   
   return unless exists $self->fqueue->{$context};
   
-  defined $key ?
-    delete $self->fqueue->{$context}->{$key}
-    : delete $self->fqueue->{$context}
+  return delete $self->fqueue->{$context}->{$key}
+    if defined $key;
+  
+  delete $self->fqueue->{$context}
 }
 
 sub expire {
