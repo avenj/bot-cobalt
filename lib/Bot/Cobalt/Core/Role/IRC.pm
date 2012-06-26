@@ -28,7 +28,7 @@ sub is_connected {
 sub get_irc_server  { get_irc_context(@_) }
 sub get_irc_context {
   my ($self, $context) = @_;
-  return unless $context and exists $self->Servers->{$context};
+  return unless defined $context and exists $self->Servers->{$context};
   return $self->Servers->{$context}
 }
 
