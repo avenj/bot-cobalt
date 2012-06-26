@@ -69,7 +69,7 @@ sub Bot_public_cmd_rehash {
       nick => $nick
     );
 
-    broadcast( 'message', $context, $nick, $resp );
+    broadcast 'message', $context, $nick, $resp;
 
     return PLUGIN_EAT_ALL
   }
@@ -140,7 +140,7 @@ sub Bot_public_cmd_rehash {
     }
   }
 
-  broadcast( 'message', $context, $channel, $resp );
+  broadcast 'message', $context, $channel, $resp;
 
   return PLUGIN_EAT_ALL
 }
@@ -164,7 +164,7 @@ sub _rehash_plugins_cf {
   
   logger->info("Reloaded plugins.conf");
   
-  broadcast( 'rehashed', 'plugins' );
+  broadcast 'rehashed', 'plugins';
   
   return 1
 }
@@ -189,7 +189,7 @@ sub _rehash_core_cf {
   logger->info("Reloaded core config.");
   
   ## Bot_rehash ($type) :
-  broadcast( 'rehashed', 'core' );
+  broadcast 'rehashed', 'core';
   
   return 1
 }
@@ -213,7 +213,7 @@ sub _rehash_channels_cf {
 
   logger->info("Reloaded channels config.");
 
-  broadcast( 'rehashed', 'channels' );
+  broadcast 'rehashed', 'channels';
 
   return 1
 }
@@ -250,7 +250,7 @@ sub _rehash_langset {
 
   logger->info("Reloaded core langset ($lang)");
 
-  broadcast( 'rehashed', 'langset' );
+  broadcast 'rehashed', 'langset';
 
   return 1
 }
