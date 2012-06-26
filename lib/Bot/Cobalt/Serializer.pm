@@ -290,8 +290,8 @@ sub _write_serialized {
       confess "Failed writefile lock ($path), timed out ($timeout)"
         if $timer > $timeout;
 
-      sleep 0.1;
-      $timer += 0.1;
+      sleep 0.01;
+      $timer += 0.01;
     }
 
   }
