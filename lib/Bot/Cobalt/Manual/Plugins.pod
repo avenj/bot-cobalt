@@ -382,8 +382,8 @@ Note that a '/ME' is a CTCP ACTION and not handled by _msg handlers.
 For that, you'll need to catch B<Bot_ctcp_action>, which carries 
 essentially the same syntax.
 
-Additionally, a '/NOTICE' is not a _msg. B<Bot_notice> also carries the 
-same syntax.
+Additionally, a '/NOTICE' is not a _msg. B<Bot_got_notice> also carries 
+the same syntax.
 
 B<< See L<Bot::Cobalt::IRC> for more details. >>
 

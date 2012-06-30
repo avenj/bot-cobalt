@@ -631,7 +631,7 @@ sub irc_notice {
     message => $txt,
   );
   
-  broadcast( 'notice', $msg_obj );
+  broadcast( 'got_notice', $msg_obj );
 }
 
 sub irc_ctcp_action {
@@ -1103,7 +1103,7 @@ The default IRC interface plugins only spawn a single client per server.
 It's fairly safe to assume that C<target> is the bot's current nickname.
 
 
-=head3 Bot_notice
+=head3 Bot_got_notice
 
 Broadcast when a /NOTICE is received.
 
