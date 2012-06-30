@@ -112,6 +112,8 @@ has 'lang' => (
 );
 
 has 'State' => (
+  lazy => 1,
+
   ## global 'heap' of sorts
   is => 'ro',
   isa => HashRef,
@@ -131,6 +133,8 @@ has 'State' => (
 );
 
 has 'PluginObjects' => (
+  lazy => 1,
+
   ## alias -> object mapping
   is  => 'rw',  
   isa => HashRef,
@@ -139,6 +143,8 @@ has 'PluginObjects' => (
 );
 
 has 'Provided' => (
+  lazy => 1,
+
   ## Some plugins provide optional functionality.
   ## This hash lets other plugins see if an event is available.
   is  => 'ro',
@@ -148,7 +154,9 @@ has 'Provided' => (
 );
 
 has 'auth' => ( 
-  is => 'rw', 
+  lazy => 1,
+
+  is  => 'rw', 
   isa => Object,
   
   default => sub {
@@ -157,6 +165,8 @@ has 'auth' => (
 );
 
 has 'ignore' => ( 
+  lazy => 1,
+
   is  => 'rw', 
   isa => Object,
   
@@ -375,6 +385,7 @@ sub core_timer_check_pool {
     
     if ( $timer->execute_if_ready ) {
       my $event = $timer->event;
+
       $self->log->debug("timer execute; $id ($event)")
         if $self->debug > 1;
 
