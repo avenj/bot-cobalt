@@ -16,8 +16,6 @@ use File::Spec;
 
 use List::Util   qw/shuffle/;
 
-## Some de-Moo'd accessors for easy plugin reloads:
-
 sub new { bless {}, shift }
 
 sub DBmgr {
@@ -263,28 +261,31 @@ sub _select_random {
   my ($self, $msg, $rdb, $quietfail) = @_;
   my $dbmgr  = $self->DBmgr;
   my $retval = $dbmgr->random($rdb);
-  ## we'll get either an item as hashref or err status:
+
+  ## we'll get either an item ref or err status:
   
   if ($retval && ref $retval) {
     my $content = ref $retval eq 'HASH' ?
                   $retval->{String}
                   : $retval->[0] ;
-    if ($self->{LastRandom}
-        && $self->{LastRandom} eq $content
-    ) {
+
+    if ($self->{LastRandom} && $self->{LastRandom} eq $content) {
       $retval  = $dbmgr->random($rdb);
-      if      (ref $retval eq 'HASH') {
-        $content = $retval->{String}//''
-      } elsif (ref $retval eq 'ARRAY') {
-        $content = $retval->[0]//''
-      }
+
+      $content = ref $retval eq 'HASH' ?
+                $retval->{String}
+                : $retval->[0] ;
     }
+
     $self->{LastRandom} = $content;
-    return $content
+
+    return $content // ''
+
   } else {
     ## do nothing if we're supposed to fail quietly
     ## (e.g. in a rdb_triggered for an empty rdb)
     return if $quietfail;
+
     my $rpl;
     given ($dbmgr->Error) {
       $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
@@ -294,6 +295,7 @@ sub _select_random {
       ## unknown error status?
       default { $rpl = "RPL_DB_ERR" }
     }
+
     return rplprintf( core->lang->{$rpl},
       {
         nick => $msg->src_nick//'',
@@ -837,7 +839,7 @@ sub Bot_rdb_broadcast {
   }
 
   my $random = $self->_select_random({}, 'main', 'quietfail')
-               || return PLUGIN_EAT_ALL;
+               // return PLUGIN_EAT_ALL;
   
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
@@ -845,6 +847,7 @@ sub Bot_rdb_broadcast {
 
   SERVER: for my $context (keys %$servers) {
     my $c_obj = $core->get_irc_context($context);
+
     next SERVER unless $c_obj->connected;
 
     my $irc   = $core->get_irc_obj($context) || next SERVER;
