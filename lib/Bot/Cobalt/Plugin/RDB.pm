@@ -823,12 +823,26 @@ sub Bot_rdb_broadcast {
   my ($self, $core) = splice @_, 0, 2;
   ## our timer self-event
 
+  ## reset timer unless randdelay is 0
+  if ($self->rand_delay) {
+    $core->timer_set( $self->rand_delay, 
+      { 
+        Event => 'rdb_broadcast', 
+        Alias => $core->get_plugin_alias($self) 
+      }, 
+      'RANDSTUFF'
+    );
+    
+    logger->debug("rdb_broadcast; timer reset; ".$self->rand_delay);
+  }
+
   my $random = $self->_select_random({}, 'main', 'quietfail')
                || return PLUGIN_EAT_ALL;
   
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
   my $servers = $core->Servers;
+
   SERVER: for my $context (keys %$servers) {
     my $c_obj = $core->get_irc_context($context);
     next SERVER unless $c_obj->connected;
@@ -851,31 +865,23 @@ sub Bot_rdb_broadcast {
       $evtype = 'message';
     }
     
+    logger->debug("rdb_broadcast; type is $evtype");
+    
     @channels = grep { $chcfg->{$_}->{rdb_randstuffs}//1 } @channels;
 
     my $maxtargets = $c_obj->maxtargets;
     
     while (my @targets = splice @channels, 0, $maxtargets) {
       my $tcount = @targets;
-      logger->debug(
-        "rdb_broadcast ($evtype) to $tcount targets ($context)"
-      );
       my $targetstr = join ',', @targets;
+      logger->debug(
+        "rdb_broadcast ($evtype) to $tcount targets",
+        "($context -> $targetstr)"
+      );
       broadcast( $evtype, $context, $targetstr, $random );
     }
     
   } # SERVER
-
-  ## reset timer unless randdelay is 0
-  if ($self->rand_delay) {
-    $core->timer_set( $self->rand_delay, 
-      { 
-        Event => 'rdb_broadcast', 
-        Alias => $core->get_plugin_alias($self) 
-      }, 
-      'RANDSTUFF'
-    );
-  }
 
   return PLUGIN_EAT_ALL  ## theoretically no one else cares
 }
