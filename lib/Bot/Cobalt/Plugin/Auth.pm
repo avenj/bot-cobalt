@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Auth;
-our $VERSION = '0.011_01';
+our $VERSION = '0.011';
 
 ## "Standard" Auth module
 ##

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::TempConv;
-our $VERSION = '0.011_01';
+our $VERSION = '0.011';
 
 ## RECEIVES AND EATS:
 ##  _public_cmd_tempconv  ( !tempconv )

@@ -1,5 +1,25 @@
 # Bot::Cobalt Changes
 
+* 0.011  (30 Jun 2012)
+
+  Fix conflated incoming/outgoing notice events:
+   - Outgoing notices still go to 'send_notice' or 'notice'
+   - Incoming notices to 'got_notice'
+
+  Bot::Cobalt::Core::Sugar subs are now prototyped.
+
+  Shorter lock retry delays in Bot::Cobalt::DB, Bot::Cobalt::Serializer.
+  Also remove 4-arg select() statements in favor of Time::HiRes 
+  (Windows doesn't like select-on-undef, I'm told).
+
+  Plugin::RDB bug fix; reset rdb_broadcast timer regardless of whether 
+   _select_random() failed.
+   
+  Plugin::Extras::CPAN; Add 'belongs' command.
+  
+  Various smaller bugfixes, test expansions, POD cleanups.
+
+
 * 0.010  (21 Jun 2012)
 
   Add Bot::Cobalt::Core::Loader, a lightweight module load/unload class,
@@ -68,6 +88,7 @@
   fixes. (Uh, oops?)
   
   Add missing test for Frontend::RC.
+
 
 * 0.006  (05 Jun 2012)
 

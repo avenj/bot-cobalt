@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::DNS;
-our $VERSION = '0.011_01';
+our $VERSION = '0.011';
 
 ## Mostly borrowed from POE::Component::IRC::Plugin::QueryDNS by BinGOs
 

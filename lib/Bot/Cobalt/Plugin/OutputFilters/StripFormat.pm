@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::OutputFilters::StripFormat;
-our $VERSION = '0.011_01';
+our $VERSION = '0.011';
 
 use strict;
 use warnings;
