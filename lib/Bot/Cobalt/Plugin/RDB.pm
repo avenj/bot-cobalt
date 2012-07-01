@@ -259,6 +259,7 @@ sub _cmd_randstuff {
 
 sub _select_random {
   my ($self, $msg, $rdb, $quietfail) = @_;
+
   my $dbmgr  = $self->DBmgr;
   my $retval = $dbmgr->random($rdb);
 
@@ -838,7 +839,14 @@ sub Bot_rdb_broadcast {
     logger->debug("rdb_broadcast; timer reset; ".$self->rand_delay);
   }
 
-  my $random = $self->_select_random({}, 'main', 'quietfail')
+  my $mock_msg = Bot::Cobalt::IRC::Message::Public->new(
+    context => '',
+    src     => '',
+    targets => [],
+    message => '',
+  );
+
+  my $random = $self->_select_random($mock_msg, 'main', 'quietfail')
                // return PLUGIN_EAT_ALL;
   
   ## iterate channels cfg
