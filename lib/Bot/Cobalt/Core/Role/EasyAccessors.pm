@@ -33,13 +33,12 @@ sub get_channels_cfg {
     );
     return
   }
-  ## Returns empty hash if there's no conf for this context:
+  ## Returns empty hash if there's no conf for this context
   my $chcfg = $self->cfg->{channels}->{$context};
   $chcfg = {} unless $chcfg and ref $chcfg eq 'HASH';
   
-  ## Per-channel configuration should be a hash
-  ## (even if someone's been naughty with the ->cfg hash)
   for my $channel (keys %$chcfg) {
+    ## Might be an empty string:
     $chcfg->{$channel} = {} unless ref $chcfg->{$channel} eq 'HASH';
   }
   

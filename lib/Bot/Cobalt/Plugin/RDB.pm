@@ -886,7 +886,7 @@ sub Bot_rdb_broadcast {
       my $tcount = @targets;
       my $targetstr = join ',', @targets;
       logger->debug(
-        "rdb_broadcast ($evtype) to $tcount targets",
+        "rdb_broadcast ($evtype) to $tcount targets (max $maxtargets)",
         "($context -> $targetstr)"
       );
       broadcast( $evtype, $context, $targetstr, $random );
