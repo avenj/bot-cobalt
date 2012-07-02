@@ -175,6 +175,20 @@ has 'ignore' => (
   },
 );
 
+## FIXME not documented
+has 'resolver' => (
+  lazy => 1,
+  
+  is  => 'rwp',
+  isa => Object,
+  
+  default => sub {
+    POE::Component::Client::DNS->spawn(
+      Alias => 'core_resolver',
+    )
+  },
+);
+
 extends 'POE::Component::Syndicator';
 
 with 'Bot::Cobalt::Lang';

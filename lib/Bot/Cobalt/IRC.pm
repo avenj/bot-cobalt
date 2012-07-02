@@ -23,6 +23,7 @@ use Bot::Cobalt::IRC::Event::Quit;
 use Bot::Cobalt::IRC::Event::Topic;
 
 use POE qw/
+  Component::Client::DNS
   Component::IRC::State
   Component::IRC::Plugin::CTCP
   Component::IRC::Plugin::AutoJoin
@@ -82,7 +83,6 @@ with 'Bot::Cobalt::IRC::Role::AdminCmds';
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  ## register for events
   register($self, 'SERVER',
     'all',
   );
@@ -208,6 +208,8 @@ sub Bot_ircplug_connect {
   );
 
   my %spawn_opts = (
+      resolver => core->resolver,
+
       alias    => $context,
       nick     => $nick,
       username => $thiscfg->{Username} // 'cobalt',
@@ -610,6 +612,19 @@ sub irc_msg {
   );
   
   broadcast( 'private_msg', $msg_obj );
+}
+
+sub irc_snotice {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
+  
+  my $context = $heap->{Context};
+
+  ## These are weird.
+  ## There should be at least a string.
+  my ($string, $target, $sender) = @_[ARG0 .. ARG2];
+  
+  ## FIXME test / POD
+  broadcast( 'server_notice', $context, $string, $target, $sender );
 }
 
 sub irc_notice {
