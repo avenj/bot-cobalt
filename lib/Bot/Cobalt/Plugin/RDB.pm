@@ -879,7 +879,7 @@ sub Bot_rdb_broadcast {
     logger->debug("rdb_broadcast; type is $evtype");
     
     @channels = grep { 
-      $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs}//1 
+      $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs} // 1 
     } @channels;
 
     my $maxtargets = $c_obj->maxtargets;
@@ -887,11 +887,13 @@ sub Bot_rdb_broadcast {
     while (my @targets = splice @channels, 0, $maxtargets) {
       my $tcount = @targets;
       my $targetstr = join ',', @targets;
+
       logger->debug(
         "rdb_broadcast ($evtype) to $tcount targets (max $maxtargets)",
         "($context -> $targetstr)"
       );
-      broadcast( $evtype, $context, $targetstr, $random );
+
+      broadcast $evtype, $context, $targetstr, $random;
     }
     
   } # SERVER

@@ -9,6 +9,8 @@ use 5.10.1;
 use Moo;
 use Bot::Cobalt::Common qw/:types/;
 
+use IRC::Utils qw/lc_irc uc_irc/;
+
 has 'name' => ( 
   required => 1,
 
@@ -78,6 +80,16 @@ has 'maxtargets' => (
   default => sub { 4 },
 );
 
+sub lowercase {
+  my ($self, $string) = @_;
+  lc_irc( $string, $self->casemap )  
+}
+
+sub uppercase {
+  my ($self, $string) = @_;
+  uc_irc( $string, $self->casemap )
+}
+
 1;
 __END__
 
@@ -105,54 +117,69 @@ Represents an IRC server context.
 L<Bot::Cobalt::Core> stores a server context object for every configured 
 context; it can be retrieved using B<get_irc_context>.
 
+=head2 Attributes
+
 The following attributes are available:
 
-=head2 name
+=head3 name
 
 The server name.
 
 Note that this is the server we connected to or intend to connect to;
 not necessarily the announced name of a connected server.
 
-=head2 connected
+=head3 connected
 
 A boolean value indicating whether or not this context is marked as 
 connected.
 
 In the case of core-managed contexts, this is set by L<Bot::Cobalt::IRC>.
 
-=head2 connectedat
+=head3 connectedat
 
 The time (epoch seconds) that the server context was marked as 
 connected.
 
-=head2 prefer_nick
+=head3 prefer_nick
 
 The preferred/configured nickname for this context.
 
-=head2 irc
+=head3 irc
 
 The actual IRC object for this configured context; this will typically 
 be a L<POE::Component::IRC> subclass.
 
-=head2 casemap
+=head3 casemap
 
 The available CASEMAPPING value for this server.
 
 See L<Bot::Cobalt::Manual::Plugins/get_irc_casemap>
 
-=head2 maxmodes
+=head3 maxmodes
 
 The maximum number of modes allowed in a single mode change command.
 
 If the server does not announce MAXMODES, the default is 3.
 
-=head2 maxtargets
+=head3 maxtargets
 
 The maximum number of targets allowed for a single message as specified 
 by MAXTARGETS. 
 
 Useful for combining message sends to multiple channels, for example.
+
+=head2 Methods
+
+=head3 lowercase
+
+  my $lower = $server->lowercase($string);
+
+Lowercase a string via L<IRC::Utils/lc_irc> using the 
+currently-configured L</casemap>.
+
+=head3 uppercase
+
+The opposite of L</lowercase>.
 
 =head1 AUTHOR
 
