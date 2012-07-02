@@ -878,7 +878,9 @@ sub Bot_rdb_broadcast {
     
     logger->debug("rdb_broadcast; type is $evtype");
     
-    @channels = grep { $chcfg->{$_}->{rdb_randstuffs}//1 } @channels;
+    @channels = grep { 
+      $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs}//1 
+    } @channels;
 
     my $maxtargets = $c_obj->maxtargets;
     
