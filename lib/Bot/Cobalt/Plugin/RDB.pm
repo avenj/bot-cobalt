@@ -318,7 +318,7 @@ sub _cmd_randq {
   if    ($type eq 'random') {
     ## this is actually deprecated
     ## use '~main' rdb info3 topic trick instead
-    return $self->_select_random($msg, 'main');
+    return $self->_select_random($msg, 'main')
   } elsif ($type eq 'rdb') {
     $rdb = $rdbpassed;
     $str = $strpassed;

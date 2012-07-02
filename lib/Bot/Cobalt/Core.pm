@@ -83,16 +83,19 @@ has 'detached' => (
   default => sub { 0 },
 );
 
-has 'debug'    => ( 
+has 'debug'    => (
+  lazy => 1,
+
   isa => Int, 
   is  => 'rw', 
 
-  default => sub { 0 } 
+  default => sub { 0 },
 );
 
 ## version/url used for var replacement:
 has 'version' => ( 
   lazy => 1,
+
   is   => 'rwp', 
   isa  => Str,
 
@@ -100,7 +103,9 @@ has 'version' => (
 );
 
 has 'url' => ( 
-  is  => 'ro', 
+  lazy => 1,
+
+  is  => 'rwp',
   isa => Str,
 
   default => sub { "http://www.metacpan.org/dist/Bot-Cobalt" },

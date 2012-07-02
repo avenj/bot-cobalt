@@ -1,15 +1,12 @@
 package Bot::Cobalt::Plugin::Extras::DNS;
 our $VERSION = '0.011';
 
-## Mostly borrowed from POE::Component::IRC::Plugin::QueryDNS by BinGOs
-
 use 5.10.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
 use POE;
-use POE::Component::Client::DNS;
 
 use Net::IP::Minimal qw/ip_is_ipv4 ip_is_ipv6/;
 
