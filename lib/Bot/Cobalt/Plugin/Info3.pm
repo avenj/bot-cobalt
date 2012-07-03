@@ -735,13 +735,14 @@ sub _info_exec_dsearch {
   return @matches if @matches;
 
   $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
+  
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
 
     unless (ref $ref eq 'HASH') {
       logger->error(
         "Inconsistent Info3? $glob appears to have no value.",
-        "This could indicate database corruption.";
+        "This could indicate database corruption."
       );
       next
     }
