@@ -680,21 +680,26 @@ sub _info_search {
   
   my @matches = $self->_info_exec_search($str);
   return 'No matches' unless @matches;
+
   my $resp = "Matches: ";
   while ( length($resp) < 350 && @matches) {
     $resp .= ' '.shift(@matches);
   }
-  return $resp;  
+
+  return $resp
 }
 
 sub _info_exec_search {
   my ($self, $str) = @_;
   return 'Nothing to search' unless $str;
+
   my @matches;  
+
   for my $glob (keys %{ $self->{Globs} }) {
     push(@matches, $glob) unless index($glob, $str) == -1;
   }
-  return @matches;
+
+  return @matches
 }
 
 sub _info_dsearch {
@@ -712,10 +717,12 @@ sub _info_dsearch {
 
   my @matches = $self->_info_exec_dsearch($str);
   return 'No matches' unless @matches;
+
   my $resp = "Matches: ";
   while ( length($resp) < 350 && @matches) {
     $resp .= ' '.shift(@matches);
   }
+
   return $resp
 }
 
@@ -730,14 +737,19 @@ sub _info_exec_dsearch {
   $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
+
     unless (ref $ref eq 'HASH') {
-      logger->warn("Inconsistent Info3? $glob appears to have no value");
-      logger->warn("This could indicate database corruption!");
+      logger->error(
+        "Inconsistent Info3? $glob appears to have no value.",
+        "This could indicate database corruption.";
+      );
       next
     }
+
     my $resp_str = $ref->{Response};
     push(@matches, $glob) unless index($resp_str, $str) == -1;
   }
+
   $self->{DB}->dbclose;
 
   $cache->cache('info3', $str, [ @matches ]);
