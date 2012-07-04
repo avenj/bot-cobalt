@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 14;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -41,4 +41,13 @@ cmp_ok( $obj =
   )->unshift("Unshifted")->push("Third")->join(', '),
   'eq',
   "Unshifted, An error, Second, Third"
+);
+
+cmp_ok( $obj =
+  $obj->new(
+    "One",
+    "Two"
+  )->push("Three", "Four")->slice(0 .. 2),
+  'eq',
+  'OneTwoThree'
 );

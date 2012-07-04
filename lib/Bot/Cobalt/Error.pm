@@ -29,6 +29,11 @@ sub unshift {
   $self->new(@$self)
 }
 
+sub slice {
+  my $self = shift;
+  $self->new(@$self[@_])
+}
+
 sub join {
   my ($self, $delim) = @_;
   $delim //= ' ';
@@ -103,6 +108,13 @@ stored list of errors with the specified expression.
 
 Defaults to joining with a single space. Does not modify the existing 
 object.
+
+=head2 slice
+
+  $error = $error->slice(0 .. 2);
+
+Returns a new object whose elements are as specified. Does not modify 
+the existing object.
 
 =head2 push
 
