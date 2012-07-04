@@ -20,13 +20,13 @@ sub string {
 sub push {
   my $self = shift;
   push @$self, @_;
-  $self->new(@$self)
+  $self
 }
 
 sub unshift {
   my $self = shift;
   unshift @$self, @_;
-  $self->new(@$self)
+  $self
 }
 
 sub slice {
@@ -122,7 +122,7 @@ the existing object.
 
 Appends the specified list to the existing array of errors.
 
-Modifies the existing object and also returns a new object.
+Modifies and returns the existing object.
 
 =head2 unshift
 
@@ -130,7 +130,7 @@ Modifies the existing object and also returns a new object.
 
 Prepends the specified list to the existing array of errors.
 
-Modifies the existing object and also returns a new object.
+Modifies and returns the existing object.
 
 =head1 AUTHOR
 
