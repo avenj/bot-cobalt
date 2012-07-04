@@ -228,19 +228,22 @@ sub _cmd_randstuff {
   $rplvars->{nick} = $src_nick;
 
   unless ( core->auth->level($context, $src_nick) >= $required_level ) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS}, $rplvars );
+    return core->rpl( 'RPL_NO_ACCESS', $rplvars )
   }
   
-  my $rdb = 'main';      # randstuff is 'main', darkbot legacy
+  ## randstuff is 'main', darkbot legacy:
+  my $rdb = 'main';      
   $rplvars->{rdb} = $rdb;
+
   ## ...but this may be randstuff ~rdb ... syntax:
   if (@message && index($message[0], '~') == 0) {
     $rdb = substr(shift @message, 1);
     $rplvars->{rdb} = $rdb;
+
     my $dbmgr = $self->DBmgr;
     unless ($rdb && $dbmgr->dbexists($rdb) ) {
       ## ~rdb specified but nonexistant
-      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
+      return core->rpl( 'RDB_ERR_NO_SUCH_RDB', $rplvars );
     }
   }
 
@@ -249,7 +252,7 @@ sub _cmd_randstuff {
   $randstuff_str = decode_irc($randstuff_str);
 
   unless ($randstuff_str) {
-    return rplprintf( core->lang->{RDB_ERR_NO_STRING}, $rplvars );
+    return core->rpl( 'RDB_ERR_NO_STRING', $rplvars )
   }
 
   ## call _add_item
@@ -263,15 +266,15 @@ sub _cmd_randstuff {
   unless ($newidx) {
 
     if ($err eq "RDB_DBFAIL") {
-      return rplprintf( core->lang->{RPL_DB_ERR}, $rplvars )
+      return core->rpl( 'RPL_DB_ERR', $rplvars )
     } elsif ($err eq "RDB_NOSUCH") {
-      return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+      return core->rpl( 'RDB_ERR_NO_SUCH_RDB', $rplvars )
     } else {
       return "Unknown error status: $err"
     }
 
   } else {
-    return rplprintf( core->lang->{RDB_ITEM_ADDED}, $rplvars );
+    return core->rpl( 'RDB_ITEM_ADDED', $rplvars )
   }
   
 }
@@ -291,7 +294,7 @@ sub _select_random {
   } catch {
     ## FIXME handle unknown err strings (special RPL and defined-or in RPL_MAP ?)
     my $rpl = $self->{RPL_MAP}->{$_};
-    $content = core->rplprintf( $rpl,
+    $content = core->rpl( $rpl,
       nick => $msg->src_nick // '',
       rdb  => $rdb,
     );
@@ -307,7 +310,7 @@ sub _select_random {
         : $item_ref->[0] ;
     } catch {
       my $rpl = $self->{RPL_MAP}->{$_};
-      $content = core->rplprintf( $rpl,
+      $content = core->rpl( $rpl,
         nick => $msg->src_nick // '',
         rdb  => $rdb,
       );
@@ -349,8 +352,9 @@ sub _cmd_randq {
     ## if we have asyncsearch, return immediately
     
     unless ( $dbmgr->dbexists($rdb) ) {
-      return rplprintf( core()->lang->{RDB_ERR_NO_SUCH_RDB},
-        { nick => $msg->src_nick, rdb => $rdb },
+      return core->rpl( 'RDB_ERR_NO_SUCH_RDB',
+        nick => $msg->src_nick, 
+        rdb  => $rdb,
       );
     }
         
@@ -382,7 +386,7 @@ sub _cmd_randq {
     $rpl = $self->{RPL_MAP}->{$_};
   };
   
-  return core->rplprintf( $rpl,
+  return core->rpl( $rpl,
     nick => $msg->src_nick,
     rdb  => $rdb,
   ) if defined $rpl;
@@ -394,7 +398,7 @@ sub _cmd_randq {
     $rpl = $self->{RPL_MAP}->{$_};
   };
   
-  return core->rplprintf( $rpl,
+  return core->rpl( $rpl,
         nick  => $msg->src_nick,
         rdb   => $rdb,
         index => $match,
@@ -459,8 +463,8 @@ sub _cmd_rdb {
 
   my $user_lev = core->auth->level($context, $nickname) // 0;
   unless ($user_lev >= $access_levs{$cmd}) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nickname }
+    return core->rpl( 'RPL_NO_ACCESS',
+      nick => $nickname,
     );
   }
 
@@ -499,7 +503,7 @@ sub _cmd_rdb_dbadd {
     op   => 'dbadd',
   );
 
-  return core->rplprintf( $rpl, %rplvars )
+  return core->rpl( $rpl, %rplvars )
 }
 
 sub _cmd_rdb_dbdel {
@@ -531,7 +535,7 @@ sub _cmd_rdb_dbdel {
     }
   }
   
-  return core->rplprintf( $rpl, $rplvars );
+  return core->rpl( $rpl, $rplvars );
 }
 
 sub _cmd_rdb_add {
@@ -564,7 +568,7 @@ sub _cmd_rdb_add {
     }
   }
 
-  return core->rplprintf( $rpl, $rplvars )
+  return core->rpl( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_del {
@@ -597,7 +601,7 @@ sub _cmd_rdb_del {
     }
   }
 
-  return core->rplprintf( $rpl, $rplvars )
+  return core->rpl( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_get {
@@ -624,7 +628,7 @@ sub _cmd_rdb_get {
   };
   
   unless ( $dbmgr->dbexists($rdb) ) {
-    return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
+    return core->rpl( 'RDB_ERR_NO_SUCH_RDB', $rplvars );
   }
   
   my ($item_ref, $rpl);
@@ -635,7 +639,7 @@ sub _cmd_rdb_get {
     $rpl = $self->{RPL_MAP}->{$_}
   };
   
-  return core->rplprintf( $rpl, $rplvars )
+  return core->rpl( $rpl, $rplvars )
     if defined $rpl;
 
   my $content = ref $item_ref eq 'HASH' ?
@@ -660,7 +664,7 @@ sub _cmd_rdb_info {
     rdb  => $rdb,
   };
 
-  return core->rplprintf( 'RDB_ERR_NO_SUCH_RDB', $rplvars )
+  return core->rpl( 'RDB_ERR_NO_SUCH_RDB', $rplvars )
     unless $dbmgr->dbexists($rdb);
 
   if (!$idx) {
@@ -690,7 +694,7 @@ sub _cmd_rdb_info {
     $rpl = $self->{RPL_MAP}->{$_}
   };
   
-  return core->rplprintf( $rpl, $rplvars )
+  return core->rpl( $rpl, $rplvars )
     if defined $rpl;
   
   my $addedat_ts = ref $item_ref eq 'HASH' ?
@@ -707,7 +711,7 @@ sub _cmd_rdb_info {
   $rplvars->{time} = $added_dt->time;
   $rplvars->{addedby} = $added_by // '(undef)' ;  
 
-  return core->rplprintf( 'RDB_ITEM_INFO', $rplvars );
+  return core->rpl( 'RDB_ITEM_INFO', $rplvars );
 }
 
 sub _cmd_rdb_count {
@@ -912,8 +916,9 @@ sub _searchidx {
     ## if we have asyncsearch, return immediately
 
     unless ( $dbmgr->dbexists($rdb) ) {
-      return rplprintf( core()->lang->{RDB_ERR_NO_SUCH_RDB},
-        { nick => $msg->src_nick, rdb => $rdb },
+      return core->rpl( 'RDB_ERR_NO_SUCH_RDB',
+        nick => $msg->src_nick, 
+        rdb  => $rdb,
       );
     }
     
@@ -1148,7 +1153,7 @@ sub poe_got_result {
         };
         
         if (defined $rpl) {
-          $resp = core->rplprintf( $rpl,
+          $resp = core->rpl( $rpl,
             nick  => $nickname,
             rdb   => $rdb,
             index => $itemkey,
