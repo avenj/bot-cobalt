@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 7;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -10,6 +10,14 @@ my $obj = new_ok( 'Bot::Cobalt::Plugin::RDB::Error' => [
   ],
 );
 
-is( $obj->error, 'SOME_ERROR', 'error() seems to work' );
-
 cmp_ok( $obj, 'eq', 'SOME_ERROR', 'Stringification seems to work' );
+
+$obj = new_ok( 'Bot::Cobalt::Plugin::RDB::Error' => [
+    "There are some", "errors here"
+  ],
+);
+
+cmp_ok( $obj, 'eq', 'There are someerrors here' );
+
+isa_ok( $obj->join, 'Bot::Cobalt::Plugin::RDB::Error' );
+cmp_ok( $obj->join, 'eq', 'There are some errors here' );

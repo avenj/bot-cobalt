@@ -298,6 +298,7 @@ sub _select_random {
       : $item_ref->[0] ;
   } catch {
     ## FIXME handle unknown err strings (special RPL and defined-or in RPL_MAP ?)
+    logger->debug("_select_random failure $_");
     my $rpl = $self->{RPL_MAP}->{$_};
     $content = core->rpl( $rpl,
       nick => $msg->src_nick // '',
