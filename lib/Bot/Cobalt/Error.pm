@@ -20,19 +20,19 @@ sub string {
 sub push {
   my $self = shift;
   push @$self, @_;
-  return $self->new(@$self)
+  $self->new(@$self)
 }
 
 sub unshift {
   my $self = shift;
   unshift @$self, @_;
-  return $self->new(@$self)
+  $self->new(@$self)
 }
 
 sub join {
   my ($self, $delim) = @_;
   $delim //= ' ';
-  return $self->new( join($delim, map { "$_" } @$self) )
+  $self->new( join($delim, map { "$_" } @$self) )
 }
 
 

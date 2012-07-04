@@ -11,7 +11,6 @@ use Moo;
 use Log::Handler;
 
 use POE;
-use Object::Pluggable::Constants qw(:ALL);
 
 use Bot::Cobalt::Common;
 use Bot::Cobalt::IRC;

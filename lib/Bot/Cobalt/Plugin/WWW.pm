@@ -57,7 +57,7 @@ sub Cobalt_register {
     ],
   );
 
-  $core->log->info("Loaded WWW interface");
+  logger->info("Loaded WWW interface");
 
   return PLUGIN_EAT_NONE
 }
@@ -73,7 +73,8 @@ sub Cobalt_unregister {
   my $sess_alias = 'www_'.$core->get_plugin_alias($self);  
   $poe_kernel->alias_remove( $sess_alias );
 
-  $core->log->info("Unregistered");
+  logger->info("Unregistered");
+
   return PLUGIN_EAT_NONE
 }
 
@@ -84,7 +85,7 @@ sub Bot_www_request {
   my $args    = defined $_[2] ? ${$_[2]} : undef ;
 
   unless ($request && $request->isa('HTTP::Request')) {
-    $core->log->warn(
+    logger->warn(
       "www_request received but no request at "
       .join ' ', (caller)[0,2]
     );
@@ -107,7 +108,7 @@ sub Bot_www_request {
     Time      => time(),
   };
 
-  $core->log->debug("www_request issue $tag -> $event");
+  logger->debug("www_request issue $tag -> $event");
   
   my $sess_alias = 'www_'.$core->get_plugin_alias($self);
   $poe_kernel->call( $sess_alias, 

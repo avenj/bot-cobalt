@@ -516,7 +516,7 @@ sub _cmd_user {
 ### Auth routines:
 
 sub _do_login {
-  ## backend handler for _cmd_login, returns constants
+  ## backend handler for _cmd_login
   ## $username should've already been normalized via lc_irc:
   my ($self, $context, $nick, $username, $passwd, $host) = @_;
 
@@ -533,6 +533,7 @@ sub _do_login {
       'NO_SUCH_USER',
     );
 
+    ## FIXME switch to Bot::Cobalt::Error objects?
     die "E_NOSUCH\n"
   }
 
