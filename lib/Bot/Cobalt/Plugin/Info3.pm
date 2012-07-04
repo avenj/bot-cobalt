@@ -354,13 +354,13 @@ sub _info_add {
   my $pcfg = plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{AddTopic} // 2;
   unless ($auth_level >= $required) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS},
+    return core->rpl( q{RPL_NO_ACCESS},
       nick => $nick,
     );
   }    
 
   unless ($glob && $string) {
-    return rplprintf( core->lang->{INFO_BADSYNTAX_ADD} );
+    return core->rpl( q{INFO_BADSYNTAX_ADD} );
   }
   
   ## lowercase
@@ -368,7 +368,7 @@ sub _info_add {
 
   if (exists $self->{Globs}->{$glob}) {
     ## topic already exists, use replace instead!
-    return rplprintf( core->lang->{INFO_ERR_EXISTS},
+    return core->rpl( q{INFO_ERR_EXISTS},
       topic => $glob,
       nick => $nick,
     );
@@ -408,10 +408,10 @@ sub _info_add {
   logger->debug("topic add: $glob ($re)");
 
   ## return RPL
-  return rplprintf( core->lang->{INFO_ADD},
+  return core->rpl( q{INFO_ADD},
     topic => $glob,
-    nick => $nick,
-  );
+    nick  => $nick,
+  )
 }
 
 sub _info_del {
@@ -427,18 +427,18 @@ sub _info_del {
   my $pcfg = plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{DelTopic} // 2;
   unless ($auth_level >= $required) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nick },
-    );
+    return core->rpl( q{RPL_NO_ACCESS},
+      nick => $nick,
+    )
   }    
 
   unless ($glob) {
-    return rplprintf( core->lang->{INFO_BADSYNTAX_DEL} );
+    return core->rpl( q{INFO_BADSYNTAX_DEL} )
   }
   
   
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
+    return core->rpl( q{INFO_ERR_NOSUCH},
       topic => $glob,
       nick  => $nick,
     );
@@ -463,7 +463,7 @@ sub _info_del {
 
   logger->debug("topic del: $glob ($regex)");
   
-  return rplprintf( core->lang->{INFO_DEL},
+  return core->rpl( q{INFO_DEL},
     topic => $glob,
     nick  => $nick,
   )
@@ -486,17 +486,17 @@ sub _info_replace {
   my $req_add = $pcfg->{RequiredLevels}->{AddTopic} // 2;
   ## auth check for BOTH add and del reqlevels:
   unless ($auth_level >= $req_add && $auth_level >= $req_del) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $nick },
+    return core->rpl( q{RPL_NO_ACCESS},
+      nick => $nick,
     );
   }
 
   unless ($glob && $string) {
-    return rplprintf( core->lang->{INFO_BADSYNTAX_REPL} );
+    return core->rpl( q{INFO_BADSYNTAX_REPL} );
   }
   
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
+    return core->rpl( q{INFO_ERR_NOSUCH},
       topic => $glob,
       nick  => $nick,
     )
@@ -544,9 +544,10 @@ sub _info_replace {
 
   logger->debug("topic add (replace): $glob ($re)");
 
-  return rplprintf( core->lang->{INFO_REPLACE},
-    { topic => $glob, nick  => $nick }
-  );
+  return core->rpl( q{INFO_REPLACE},
+    topic => $glob, 
+    nick  => $nick,
+  )
 }
 
 sub _info_tell {
@@ -555,16 +556,16 @@ sub _info_tell {
   my $target = shift @args;
 
   unless ($target) {
-    return rplprintf( core->lang->{INFO_TELL_WHO} // "Tell who what?",
-      { nick => $msg->src_nick }
-    );
+    return core->rpl( q{INFO_TELL_WHO},
+      nick => $msg->src_nick,
+    )
   }
 
   unless (@args) {
-    return rplprintf( core->lang->{INFO_TELL_WHAT}
-      // "What should I tell $target about?" ,
-        { nick => $msg->src_nick, target => $target }
-    );
+    return core->rpl( q{INFO_TELL_WHAT},
+      nick   => $msg->src_nick, 
+      target => $target
+    )
   }
 
   my $str_to_match;
@@ -580,8 +581,9 @@ sub _info_tell {
   ## find info match
   my $match = $self->_info_match($str_to_match);
   unless ($match) {
-    return rplprintf( core->lang->{INFO_DONTKNOW},
-      { nick => $msg->src_nick, topic => $str_to_match }
+    return core->rpl( q{INFO_DONTKNOW},
+      nick  => $msg->src_nick,
+      topic => $str_to_match
     );
   }
 
@@ -624,9 +626,10 @@ sub _info_about {
   }
 
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
-      { topic => $glob, nick  => $msg->src_nick },
-    );
+    return core->rpl( q{INFO_ERR_NOSUCH},
+      topic => $glob, 
+      nick  => $msg->src_nick,
+    )
   }
 
   ## parse and display addedat/addedby info
@@ -639,15 +642,13 @@ sub _info_about {
   my $addedat = join ' ', $dt_addedat->date, $dt_addedat->time;
   my $str_len = length( $ref->{Response} );
   
-  return rplprintf( core->lang->{INFO_ABOUT},
-    {
-      nick   => $msg->src_nick,
-      topic  => $glob,
-      author => $addedby,
-      date   => $addedat,
-      length => $str_len,
-    }
-  );
+  return core->rpl( q{INFO_ABOUT},
+    nick   => $msg->src_nick,
+    topic  => $glob,
+    author => $addedby,
+    date   => $addedat,
+    length => $str_len,
+  )
 }
 
 sub _info_display {
@@ -658,12 +659,10 @@ sub _info_display {
 
   ## check if glob exists
   unless (exists $self->{Globs}->{$glob}) {
-    return rplprintf( core->lang->{INFO_ERR_NOSUCH},
-      {
-        topic => $glob,
-        nick  => $msg->src_nick,
-      },
-    );
+    return core->rpl( q{INFO_ERR_NOSUCH},
+      topic => $glob,
+      nick  => $msg->src_nick,
+    )
   }
   
   ##  if so, show unparsed Response
@@ -671,6 +670,7 @@ sub _info_display {
   my $ref = $self->{DB}->get($glob);
   $self->{DB}->dbclose;    
   my $response = $ref->{Response};
+
   return $response
 }
 
@@ -710,9 +710,9 @@ sub _info_dsearch {
   my $req_lev = $pcfg->{RequiredLevels}->{DeepSearch} // 0;
   my $usr_lev = core->auth->level($msg->context, $msg->src_nick);
   unless ($usr_lev >= $req_lev) {
-    return rplprintf( core->lang->{RPL_NO_ACCESS},
-      { nick => $msg->src_nick }
-    );
+    return core->rpl( q{RPL_NO_ACCESS},
+      nick => $msg->src_nick
+    )
   }
 
   my @matches = $self->_info_exec_dsearch($str);

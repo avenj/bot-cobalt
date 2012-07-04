@@ -20,6 +20,7 @@ use Try::Tiny;
 
 sub new { 
   bless {
+
     RPL_MAP => {
       RDB_NOTPERMITTED => "RDB_ERR_NOTPERMITTED",
 
@@ -34,6 +35,7 @@ sub new {
       RDB_NOSUCH      => "RDB_ERR_NO_SUCH_RDB",
       RDB_NOSUCH_ITEM => "RDB_ERR_NO_SUCH_ITEM",
     },
+
   }, shift 
 }
 
