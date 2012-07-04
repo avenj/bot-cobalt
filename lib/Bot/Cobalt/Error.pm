@@ -32,7 +32,7 @@ sub unshift {
 sub join {
   my ($self, $delim) = @_;
   $delim //= ' ';
-  return $self->new( CORE::join($delim, map { "$_" } @$self) )
+  return $self->new( join($delim, map { "$_" } @$self) )
 }
 
 
@@ -76,7 +76,7 @@ Bot::Cobalt::Error - Lightweight error objects
     my $error = $_;
     
     ## Stringifies to the error string:
-    warn "$error\n";    
+    warn "$error\n";
   };
 
 =head1 DESCRIPTION
