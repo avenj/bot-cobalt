@@ -16,7 +16,26 @@ use File::Spec;
 
 use List::Util   qw/shuffle/;
 
-sub new { bless {}, shift }
+use Try::Tiny;
+
+sub new { 
+  bless {
+    RPL_MAP => {
+      RDB_NOTPERMITTED => "RDB_ERR_NOTPERMITTED",
+
+      RDB_INVALID_NAME => "RDB_ERR_INVALID_NAME",
+      
+      RDB_EXISTS      => "RDB_ERR_RDB_EXISTS",
+      
+      RDB_DBFAIL      => "RPL_DB_ERR",
+      
+      RDB_FILEFAILURE => "RDB_UNLINK_FAILED",  ## FIXME ?
+      
+      RDB_NOSUCH      => "RDB_ERR_NO_SUCH_RDB",
+      RDB_NOSUCH_ITEM => "RDB_ERR_NO_SUCH_ITEM",
+    },
+  }, shift 
+}
 
 sub DBmgr {
   my ($self) = @_;
@@ -70,9 +89,9 @@ sub Cobalt_register {
   
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
-  ## DBmgr must be called after core() is set:
   my $dbmgr = $self->DBmgr;
 
+  ## we'll die out here if there's a problem with 'main' :
   my $keys_c = $dbmgr->get_keys('main');
   core->Provided->{randstuff_items} = $keys_c;
 
@@ -261,49 +280,44 @@ sub _select_random {
   my ($self, $msg, $rdb, $quietfail) = @_;
 
   my $dbmgr  = $self->DBmgr;
-  my $retval = $dbmgr->random($rdb);
 
-  ## we'll get either an item ref or err status:
-  
-  if ($retval && ref $retval) {
-    my $content = ref $retval eq 'HASH' ?
-                  $retval->{String}
-                  : $retval->[0] ;
+  my($item_ref, $content);
 
-    if ($self->{LastRandom} && $self->{LastRandom} eq $content) {
-      $retval  = $dbmgr->random($rdb);
-
-      $content = ref $retval eq 'HASH' ?
-                $retval->{String}
-                : $retval->[0] ;
-    }
-
-    $self->{LastRandom} = $content;
-
-    return $content // ''
-
-  } else {
-    ## do nothing if we're supposed to fail quietly
-    ## (e.g. in a rdb_triggered for an empty rdb)
-    return if $quietfail;
-
-    my $rpl;
-    given ($dbmgr->Error) {
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-      ## send nothing if this rdb has no keys:
-      return                       when "RDB_NOSUCH_ITEM";
-      ## unknown error status?
-      default { $rpl = "RPL_DB_ERR" }
-    }
-
-    return rplprintf( core->lang->{$rpl},
-      {
-        nick => $msg->src_nick//'',
-        rdb  => $rdb,
-      },
+  try {
+    $item_ref = $dbmgr->random($rdb);
+    $content = ref $item_ref eq 'HASH' ?
+      $item_ref->{String}
+      : $item_ref->[0] ;
+  } catch {
+    ## FIXME handle unknown err strings (special RPL and defined-or in RPL_MAP ?)
+    my $rpl = $self->{RPL_MAP}->{$_};
+    $content = core->rplprintf( $rpl,
+      nick => $msg->src_nick // '',
+      rdb  => $rdb,
     );
+
+    0
+  } or return if $quietfail;
+
+  if ($self->{LastRandom} && $self->{LastRandom} eq $content) {
+    try {
+      $item_ref = $dbmgr->random($rdb);
+      $content  = ref $item_ref eq 'HASH' ?
+        $item_ref->{String}
+        : $item_ref->[0] ;
+    } catch {
+      my $rpl = $self->{RPL_MAP}->{$_};
+      $content = core->rplprintf( $rpl,
+        nick => $msg->src_nick // '',
+        rdb  => $rdb,
+      );
+      undef
+    } or return if $quietfail;
   }
+
+  $self->{LastRandom} = $content;
+  
+  return $content // ''
 }
 
 
@@ -329,7 +343,7 @@ sub _cmd_randq {
   }
 
 
-  core->log->debug("dispatching search for $str in $rdb");
+  core->log->debug("_cmd_randq; dispatching search for $str in $rdb");
 
   if ( $self->SessionID ) {
     ## if we have asyncsearch, return immediately
@@ -339,7 +353,7 @@ sub _cmd_randq {
         { nick => $msg->src_nick, rdb => $rdb },
       );
     }
-    
+        
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
       $rdb,
@@ -353,54 +367,48 @@ sub _cmd_randq {
         RDB      => $rdb,
       },
     );
+
+    logger->debug("_cmd_randq; search ($rdb) dispatched to AsyncSearch");
     
     return
   }
+
+  my($rpl, $match);
+
+  try { 
+    $match = $dbmgr->search($rdb, $str, 'WANTONE')
+  } catch {
+    logger->debug("_cmd_randq; Database->search() err: $_");
+    $rpl = $self->{RPL_MAP}->{$_};
+  };
   
-  my $match = $dbmgr->search($rdb, $str, 'WANTONE');
+  return core->rplprintf( $rpl,
+    nick => $msg->src_nick,
+    rdb  => $rdb,
+  ) if defined $rpl;
 
-  if (!$match && $dbmgr->Error) {
-    core->log->debug("Error status from search(): $dbmgr->Error");
-    my $rpl;
-    given ($dbmgr->Error) {
-      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
-      ## not an arrayref and not a known error status, wtf?
-      default { $rpl = "RPL_DB_ERR" }
-    }
-    return rplprintf( core->lang->{$rpl},
-      { nick => $msg->src_nick, rdb => $rdb }
-    );
-  }
-
-  return 'No match' if not defined $match;
+  my $item_ref = try {
+    $dbmgr->get($rdb, $match)
+  } catch {
+    logger->debug("_cmd_randq; Database->get() err: $_");
+    $rpl = $self->{RPL_MAP}->{$_};
+  };
   
-  core->log->debug("dispatching get() for $match in $rdb");
+  return core->rplprintf( $rpl,
+        nick  => $msg->src_nick,
+        rdb   => $rdb,
+        index => $match,
+  ) if defined $rpl;
 
-  my $item = $dbmgr->get($rdb, $match);
-  unless ($item && ref $item) {
-    core->log->debug("Error status from get(): $item");
-    my $rpl;
-    given ($dbmgr->Error) {
-      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-      ## an unknown non-hashref $item is also a DB_ERR:
-      default { "RPL_DB_ERR" }
-    }
-    return rplprintf( core->lang->{$rpl},
-      { 
-        nick  => $msg->src_nick//'',
-        rdb   => $rdb, 
-        index => $match 
-      }
-    );
-  }
+  logger->debug("_cmd_randq; item found: $match");
 
-  my $content = ref $item eq 'HASH' ?
-                $item->{String}
-                : $item->[0] ;
-  $content = '(undef - broken db!)' unless defined $content;
+  my $content = ref $item_ref eq 'HASH' ?
+    $item_ref->{String}
+    : $item_ref->[0] ;
+
+  $content //= '(undef - broken db?)';
   
-  return "[$match] $content" ;
+  return "[$match] $content"
 }
 
 
@@ -477,32 +485,25 @@ sub _cmd_rdb_dbadd {
   return 'RDB name must be less than 32 characters'
     unless length $rdb <= 32;
 
-  my $retval = $dbmgr->createdb($rdb);
+  my $rpl;
+  try {
+    $dbmgr->createdb($rdb);
+    $rpl = "RDB_CREATED";
+  } catch {
+    $rpl = $self->{RPL_MAP}->{$_};
+  };
 
-  my $rplvars = {
+  my %rplvars = (
     nick => $msg->src_nick,
     rdb  => $rdb,
     op   => 'dbadd',
-  };
-  
-  my $rpl;      
-  if ($retval) {
-    $rpl = "RDB_CREATED";
-  } else {
-    given ($dbmgr->Error) {
-      $rpl = "RDB_ERR_RDB_EXISTS" when "RDB_EXISTS";
-      $rpl = "RDB_DBFAIL"         when "RDB_DBFAIL";        
-      default { return "Unknown retval $retval from createdb"; }
-    }
-  }
-  
-  return rplprintf( core->lang->{$rpl}, $rplvars );
+  );
+
+  return core->rplprintf( $rpl, %rplvars )
 }
 
 sub _cmd_rdb_dbdel {
   my ($self, $msg, $parsed_args) = @_;
-  
-  my $dbmgr = $self->DBmgr;
   
   my ($rdb) = @$parsed_args;
 
@@ -514,6 +515,7 @@ sub _cmd_rdb_dbdel {
     op   => 'dbdel',
   };
 
+  ## FIXME _delete_rdb needs to handle new Database
   my ($retval, $err) = $self->_delete_rdb($rdb);
   
   my $rpl;
@@ -529,7 +531,7 @@ sub _cmd_rdb_dbdel {
     }
   }
   
-  return rplprintf( core->lang->{$rpl}, $rplvars );
+  return core->rplprintf( $rpl, $rplvars );
 }
 
 sub _cmd_rdb_add {
@@ -562,7 +564,7 @@ sub _cmd_rdb_add {
     }
   }
 
-  return rplprintf( core->lang->{$rpl}, $rplvars )
+  return core->rplprintf( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_del {
@@ -595,7 +597,7 @@ sub _cmd_rdb_del {
     }
   }
 
-  return rplprintf( core->lang->{$rpl}, $rplvars )
+  return core->rplprintf( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_get {
@@ -625,30 +627,22 @@ sub _cmd_rdb_get {
     return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars );
   }
   
-  my $item = $dbmgr->get($rdb, $idx);
-
-  my $resp;
-  if ($item && ref $item) {
-    my $content = ref $item eq 'HASH' ?
-                  $item->{String}
-                  : $item->[0] ;
-    $content = '(undef - broken db?)' unless defined $content;
-
-    $resp = "[$idx] $content"
-  } else {
-    my $err = $dbmgr->Error || 'Unknown error';
-    my $rpl;
-    given ($err) {
-      $rpl = "RDB_ERR_NO_SUCH_ITEM"  when "RDB_NOSUCH_ITEM";
-      $rpl = "RDB_ERR_NO_SUCH_RDB"   when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"            when "RDB_DBFAIL";
-      default { return "Error: $err" }
-    }
-
-    $resp = rplprintf( core->lang->{$rpl}, $rplvars );
-  }
+  my ($item_ref, $rpl);
   
-  return $resp
+  try {
+    $item_ref = $dbmgr->get($rdb, $idx)
+  } catch {
+    $rpl = $self->{RPL_MAP}->{$_}
+  };
+  
+  return core->rplprintf( $rpl, $rplvars )
+    if defined $rpl;
+
+  my $content = ref $item_ref eq 'HASH' ?
+    $item_ref->{String} : $item_ref->[0] ;
+  $content //= '(undef - broken db?)';
+  
+  return "[$idx] $content"
 }
 
 sub _cmd_rdb_info {
@@ -666,41 +660,44 @@ sub _cmd_rdb_info {
     rdb  => $rdb,
   };
 
-  return rplprintf( core->lang->{RDB_ERR_NO_SUCH_RDB}, $rplvars )
+  return core->rplprintf( 'RDB_ERR_NO_SUCH_RDB', $rplvars )
     unless $dbmgr->dbexists($rdb);
 
   if (!$idx) {
-    my $n_keys = $dbmgr->get_keys($rdb);
-    return "RDB $rdb has $n_keys items"
+
+    return try {
+      my $n_keys = $dbmgr->get_keys($rdb);
+
+      "RDB $rdb has $n_keys items"
+    } catch {
+      "RDB::Database error: ".$_
+    }
+
   } else {
     return "Invalid item index ID"
       unless $idx =~ /^[0-9a-f]+$/i;
+
     $idx = lc($idx);
   }
   
   $rplvars->{index} = substr($idx, 0, 16);
 
-  my $item = $dbmgr->get($rdb, $idx);
+  my ($item_ref, $rpl);
+  
+  try {
+    $item_ref = $dbmgr->get($rdb, $idx)
+  } catch {
+    $rpl = $self->{RPL_MAP}->{$_}
+  };
+  
+  return core->rplprintf( $rpl, $rplvars )
+    if defined $rpl;
+  
+  my $addedat_ts = ref $item_ref eq 'HASH' ?
+                   $item_ref->{AddedAt} : $item_ref->[1];
 
-  unless ($item && ref $item) {
-    my $err = $dbmgr->Error || 'Unknown error';
-    my $rpl;
-    given ($err) {
-      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-      default { return "Error: $err" }
-    }
-    return rplprintf( core->lang->{$rpl}, $rplvars );
-  }
-
-  my $addedat_ts = ref $item eq 'HASH' ?
-                   $item->{AddedAt}
-                   : $item->[1];
-
-  my $added_by   = ref $item eq 'HASH' ?
-                   $item->{AddedBy}
-                   : $item->[2];
+  my $added_by   = ref $item_ref eq 'HASH' ?
+                   $item_ref->{AddedBy} : $item_ref->[2];
 
   my $added_dt = DateTime->from_epoch(
     epoch => $addedat_ts // 0
@@ -710,7 +707,7 @@ sub _cmd_rdb_info {
   $rplvars->{time} = $added_dt->time;
   $rplvars->{addedby} = $added_by // '(undef)' ;  
 
-  return rplprintf( core->lang->{RDB_ITEM_INFO}, $rplvars );
+  return core->rplprintf( 'RDB_ITEM_INFO', $rplvars );
 }
 
 sub _cmd_rdb_count {
@@ -937,21 +934,18 @@ sub _searchidx {
     return
   }
 
-  my $ret = $dbmgr->search($rdb, $string);
-  
-  unless (ref $ret eq 'ARRAY') {
-    my $err = $dbmgr->Error;
-    core->log->warn("searchidx failure: retval: $err");
-    return
+  return try {
+    scalar $dbmgr->search($rdb, $string)
+  } catch {
+    core->log->warn("searchidx failure; $_");
+    undef ## FIXME throw exception ?
   }
-  
-  ## Return arrayref on success
-  return $ret
 }
 
 sub _add_item {
   my ($self, $rdb, $item, $username) = @_;
   return unless $rdb and defined $item;
+
   $username = '-undefined' unless $username;
   
   my $dbmgr = $self->DBmgr;
@@ -962,14 +956,14 @@ sub _add_item {
   
   my $itemref = [ $item, time(), $username ];
 
-  my $status = $dbmgr->put($rdb, $itemref);
-  
-  unless ($status) {
-    ##   RDB_NOSUCH
-    ##   RDB_DBFAIL
-    my $err = $dbmgr->Error;
-    return (0, $err)
-  }
+  my ($status, $err);
+  try {
+    $status = $dbmgr->put($rdb, $itemref)
+  } catch {
+    $err = $_
+  };
+
+  return(0, $err) if defined $err;
 
   ## otherwise we should've gotten the new key back:
   my $pref = core->Provided;
@@ -986,16 +980,18 @@ sub _delete_item {
   
   unless ( $dbmgr->dbexists($rdb) ) {
     core->log->debug("cannot delete from nonexistant rdb: $rdb");
-    return (0, 'RDB_NOSUCH')
+    return(0, 'RDB_NOSUCH')
   }
 
-  my $status = $dbmgr->del($rdb, $item_idx);
+  my ($status, $err);
+  try {
+    $status = $dbmgr->del($rdb, $item_idx)
+  } catch {
+    $err = $_
+  };
   
-  unless ($status) {
-    my $err = $dbmgr->Error;
-    core->log->debug("cannot _delete_item: $rdb $item_idx ($err)");
-    return (0, $err)
-  }
+  return(0, $err) if defined $err;
+
   my $pref = core->Provided;
   --$pref->{randstuff_items} if $rdb eq 'main';
 
@@ -1006,6 +1002,7 @@ sub _delete_item {
 sub _delete_rdb {
   my ($self, $rdb) = @_;
   return unless $rdb;
+
   my $pcfg = core->get_plugin_cfg( $self );
 
   my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
@@ -1035,12 +1032,14 @@ sub _delete_rdb {
     }    
   }
 
-  my $status = $dbmgr->deldb($rdb);
+  my ($status, $err);
+  try {
+    $status = $dbmgr->deldb($rdb)
+  } catch {
+    $err = $_
+  };
   
-  unless ($status) {
-    my $err = $dbmgr->Error;
-    return $err
-  }
+  return(0, $err) if defined $err;
 
   return 1
 }
@@ -1138,23 +1137,29 @@ sub poe_got_result {
         $dbmgr->cache_push($rdb, $glob, $resultarr);
       
         my $itemkey = $resultarr->[rand @$resultarr];
-        my $item    = $dbmgr->get($rdb, $itemkey);
         
-        unless ($item && ref $item) {
-          my $err = $dbmgr->Error;
-          logger->warn("Error from get(): $err");
-          my $rpl = $err eq 'RDB_NOSUCH_ITEM' ?
-                      'RDB_ERR_NO_SUCH_ITEM'
-                    : 'RPL_DB_ERR' ;
-          $resp = rplprintf( core()->lang->{$rpl},
-            { nick => $nickname, rdb => $rdb, index => $itemkey }
+        my ($item, $rpl);
+        
+        try {
+          $item = $dbmgr->get($rdb, $itemkey)
+        } catch {
+          logger->warn("poe_got_result; error from get(): $_");
+          $rpl = $self->{RPL_MAP}->{$_}
+        };
+        
+        if (defined $rpl) {
+          $resp = core->rplprintf( $rpl,
+            nick  => $nickname,
+            rdb   => $rdb,
+            index => $itemkey,
           );
         } else {
-          my $content = ref $item eq 'HASH' ?
-                          $item->{String}
-                        : $item->[0] ;
-          $content = '(undef - broken db?)' unless defined $content;
-          $resp = "[$itemkey] $content";
+          my $content = ref $item eq 'HASH' ? 
+            $item->{String} : $item->[0] ;
+
+          $content //= '(undef - broken db?)';
+          
+          $resp = "[$itemkey] $content"
         }
         
       }
