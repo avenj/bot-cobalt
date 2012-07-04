@@ -188,7 +188,7 @@ my $build = $class->new(
 
      # Moo + related
       'Moo'         => '0.091009',
-      'MooX::Types::MooseLike' => '0.05',
+      'MooX::Types::MooseLike' => '0.08',
       
      # Network
       'Net::IP::Minimal' => '0.02',
