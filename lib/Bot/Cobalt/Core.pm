@@ -202,6 +202,19 @@ with 'Bot::Cobalt::Core::Role::EasyAccessors';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
+## FIXME document/test:
+sub rplprintf {
+  my ($self, $rpl) = splice @_, 0, 2;
+
+  confess "rplprintf() requires a RPL tag"
+    unless defined $rpl;
+  
+  my $string = $self->lang->{$rpl}
+    // "Unknown RPL $rpl, vars: ".join(' ', @_);
+  
+  rplprintf( $string, @_ )
+}
+
 sub init {
   my ($self) = @_;
 
