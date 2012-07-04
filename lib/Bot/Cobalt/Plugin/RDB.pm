@@ -504,7 +504,7 @@ sub _cmd_rdb_dbadd {
     $dbmgr->createdb($rdb);
     $rpl = "RDB_CREATED";
   } catch {
-    logger->warn("createdb() failure: $_");
+    logger->debug("createdb() failure: $_");
     $rpl = $self->{RPL_MAP}->{$_};
   };
 
@@ -970,7 +970,7 @@ sub _searchidx {
   return try {
     scalar $dbmgr->search($rdb, $string)
   } catch {
-    logger->warn("searchidx failure; $_");
+    logger->debug("searchidx failure; $_");
     undef ## FIXME throw exception ?
   }
 }
@@ -1176,7 +1176,7 @@ sub poe_got_result {
         try {
           $item = $dbmgr->get($rdb, $itemkey)
         } catch {
-          logger->warn("poe_got_result; error from get(): $_");
+          logger->debug("poe_got_result; error from get(): $_");
           $rpl = $self->{RPL_MAP}->{$_}
         };
         
