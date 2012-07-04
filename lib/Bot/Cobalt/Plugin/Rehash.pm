@@ -65,7 +65,7 @@ sub Bot_public_cmd_rehash {
   my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
 
   unless ($auth_lev >= $required_lev) {
-    my $resp = rplprintf( core->lang->{RPL_NO_ACCESS},
+    my $resp = core->rpl( q{RPL_NO_ACCESS},
       nick => $nick
     );
 
