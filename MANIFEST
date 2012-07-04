@@ -79,6 +79,7 @@ lib/Bot/Cobalt/Plugin/RDB.pm
 lib/Bot/Cobalt/Plugin/RDB/AsyncSearch.pm
 lib/Bot/Cobalt/Plugin/RDB/AsyncSearch/Worker.pm
 lib/Bot/Cobalt/Plugin/RDB/Database.pm
+lib/Bot/Cobalt/Plugin/RDB/Error.pm
 lib/Bot/Cobalt/Plugin/RDB/SearchCache.pm
 lib/Bot/Cobalt/Plugin/Rehash.pm
 lib/Bot/Cobalt/Plugin/Seen.pm
@@ -121,8 +122,9 @@ t/05_db/01_db.t
 t/05_db/02_dbdump.t
 t/06_plugins/01_loadable_coreset.t
 t/06_plugins/02_with_loader.t
-t/06_plugins/03_rdb_searchcache.t
-t/06_plugins/04_rdb_database.t
+t/06_plugins/03_rdb_errors.t
+t/06_plugins/04_rdb_searchcache.t
+t/06_plugins/05_rdb_database.t
 t/07_cmds/01_cobalt2.t
 t/07_cmds/02_installer.t
 t/07_cmds/03_dbdump.t

@@ -1,6 +1,7 @@
 use Test::More tests => 20;
 use strict; use warnings;
 
+use Try::Tiny;
 use Fcntl qw/:flock/;
 use File::Spec;
 use File::Temp qw/ tempfile tempdir /;
@@ -42,7 +43,7 @@ is( ($rdb->get_keys('test'))[0], $newkey, 'get_keys()' );
 cmp_ok( scalar $rdb->get_keys('test'), '==', 1, 'scalar get_keys()' );
 
 ok( $rdb->del('test', $newkey), 'Del key' );
-ok( ! $rdb->get('test', $newkey), 'Key was deleted' );
+ok( ! try { $rdb->get('test', $newkey) }, 'Key was deleted' );
 
 undef $newkey;
 
