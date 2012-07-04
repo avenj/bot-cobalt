@@ -1,4 +1,4 @@
-use Test::More tests => 14;
+use Test::More tests => 16;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -26,8 +26,10 @@ cmp_ok( $obj->join, 'eq', 'There are some errors here' );
 $obj = new_ok( 'Bot::Cobalt::Error' );
 
 cmp_ok( $obj->push("Some error"), 'eq', 'Some error' );
+cmp_ok( $obj, 'eq', 'Some error' );
 cmp_ok( $obj->unshift("Some header"), 'eq', 'Some headerSome error' );
-cmp_ok( $obj->join, 'eq', 'Some header Some error' );
+cmp_ok( $obj, 'eq', 'Some headerSome error' );
+cmp_ok( $obj->join(', '), 'eq', 'Some header, Some error' );
 
 $obj = new_ok( 'Bot::Cobalt::Error' => [
     "An error"
