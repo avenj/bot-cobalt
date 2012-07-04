@@ -32,6 +32,7 @@ lib/Bot/Cobalt/Core/Role/Singleton.pm
 lib/Bot/Cobalt/Core/Role/Timers.pm
 lib/Bot/Cobalt/Core/Sugar.pm
 lib/Bot/Cobalt/DB.pm
+lib/Bot/Cobalt/Error.pm
 lib/Bot/Cobalt/Frontend/RC.pm
 lib/Bot/Cobalt/Frontend/Utils.pm
 lib/Bot/Cobalt/IRC.pm
@@ -79,7 +80,6 @@ lib/Bot/Cobalt/Plugin/RDB.pm
 lib/Bot/Cobalt/Plugin/RDB/AsyncSearch.pm
 lib/Bot/Cobalt/Plugin/RDB/AsyncSearch/Worker.pm
 lib/Bot/Cobalt/Plugin/RDB/Database.pm
-lib/Bot/Cobalt/Plugin/RDB/Error.pm
 lib/Bot/Cobalt/Plugin/RDB/SearchCache.pm
 lib/Bot/Cobalt/Plugin/Rehash.pm
 lib/Bot/Cobalt/Plugin/Seen.pm
@@ -100,6 +100,7 @@ t/01_utils/04_glob.t
 t/01_utils/05_color.t
 t/01_utils/06_frontend.t
 t/01_utils/07_rcfiles.t
+t/02_core/00_error.t
 t/02_core/01_core.t
 t/02_core/02_flood.t
 t/02_core/03_contextmeta.t
@@ -122,9 +123,8 @@ t/05_db/01_db.t
 t/05_db/02_dbdump.t
 t/06_plugins/01_loadable_coreset.t
 t/06_plugins/02_with_loader.t
-t/06_plugins/03_rdb_errors.t
-t/06_plugins/04_rdb_searchcache.t
-t/06_plugins/05_rdb_database.t
+t/06_plugins/03_rdb_searchcache.t
+t/06_plugins/04_rdb_database.t
 t/07_cmds/01_cobalt2.t
 t/07_cmds/02_installer.t
 t/07_cmds/03_dbdump.t

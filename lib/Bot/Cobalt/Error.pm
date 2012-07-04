@@ -1,4 +1,4 @@
-package Bot::Cobalt::Plugin::RDB::Error;
+package Bot::Cobalt::Error;
 
 use 5.12.1;
 use strictures 1;

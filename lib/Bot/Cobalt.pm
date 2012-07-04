@@ -1,5 +1,5 @@
 package Bot::Cobalt;
-our $VERSION = '0.011_05';
+our $VERSION = '0.011_06';
 
 use 5.10.1;
 use strictures 1;

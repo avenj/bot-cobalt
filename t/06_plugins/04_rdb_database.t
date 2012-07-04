@@ -47,7 +47,7 @@ ok( $rdb->del('test', $newkey), 'Del key' );
 try { 
   $rdb->get('test', $newkey)
 } catch {
-  isa_ok( $_, 'Bot::Cobalt::Plugin::RDB::Error' )
+  isa_ok( $_, 'Bot::Cobalt::Error' )
 };
 
 undef $newkey;

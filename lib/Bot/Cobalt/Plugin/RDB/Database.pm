@@ -29,9 +29,10 @@ use strictures 1;
 use Carp;
 
 use Bot::Cobalt::DB;
-use Bot::Cobalt::Plugin::RDB::Error;
-use Bot::Cobalt::Plugin::RDB::SearchCache;
+use Bot::Cobalt::Error;
 use Bot::Cobalt::Utils qw/ glob_to_re_str /;
+
+use Bot::Cobalt::Plugin::RDB::SearchCache;
 
 use Digest::SHA qw/sha256_hex/;
 
@@ -112,7 +113,7 @@ sub path_from_name {
 
 sub error {
   my ($self, $error) = @_;
-  Bot::Cobalt::Plugin::RDB::Error->new( $error )
+  Bot::Cobalt::Error->new( $error )
 }
 
 sub createdb {
