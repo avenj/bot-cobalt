@@ -43,7 +43,12 @@ is( ($rdb->get_keys('test'))[0], $newkey, 'get_keys()' );
 cmp_ok( scalar $rdb->get_keys('test'), '==', 1, 'scalar get_keys()' );
 
 ok( $rdb->del('test', $newkey), 'Del key' );
-ok( ! try { $rdb->get('test', $newkey) }, 'Key was deleted' );
+
+try { 
+  $rdb->get('test', $newkey)
+} catch {
+  isa_ok( $_, 'Bot::Cobalt::Plugin::RDB::Error' )
+};
 
 undef $newkey;
 

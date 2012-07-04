@@ -29,7 +29,7 @@ sub new {
       
       RDB_DBFAIL      => "RPL_DB_ERR",
       
-      RDB_FILEFAILURE => "RDB_UNLINK_FAILED",  ## FIXME ?
+      RDB_FILEFAILURE => "RDB_UNLINK_FAILED",
       
       RDB_NOSUCH      => "RDB_ERR_NO_SUCH_RDB",
       RDB_NOSUCH_ITEM => "RDB_ERR_NO_SUCH_ITEM",
@@ -117,6 +117,8 @@ sub Cobalt_register {
   }
 
   if ($cfg->{Opts}->{AsyncSearch}) {
+    logger->debug("spawning Session to handle AsyncSearch");
+  
     POE::Session->create(
       object_states => [
         $self => [
@@ -140,7 +142,7 @@ sub Cobalt_register {
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
 
-  core->log->info("Unregistering random stuff");
+  logger->info("Unregistering RDB");
 
   $poe_kernel->alias_remove('sess_'. core->get_plugin_alias($self) );
 
@@ -167,16 +169,19 @@ sub Bot_public_msg {
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
   return PLUGIN_EAT_NONE unless $msg->highlight;
+
   ## uses message_array_sp, ie spaces are preserved
   ## (so don't include them prior to rdb names, for example)
   my $msg_arr = $msg->message_array_sp;
+
   ## since this is a highlighted message, bot's nickname is first
   my ($cmd, @message) = @$msg_arr[1 .. (scalar @$msg_arr - 1)];
   $cmd = lc($cmd||'');
+
   ## ..if it's not @handled we don't care:
   return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
 
-  core->log->debug("Dispatching $cmd");
+  logger->debug("dispatching $cmd");
 
   ## dispatcher:
   my ($id, $resp);
@@ -198,8 +203,6 @@ sub Bot_public_msg {
     }
   }
 
-#  $resp = "No output for $cmd - BUG!" unless $resp;
-
   my $channel = $msg->channel;
   
   if (defined $resp) {
@@ -218,10 +221,12 @@ sub _cmd_randstuff {
   ## $msg == original message obj
   my ($self, $parsed_msg_a, $msg) = @_;
   my @message = @{ $parsed_msg_a };
+
   my $src_nick = $msg->src_nick;
   my $context  = $msg->context;
 
   my $pcfg = core->get_plugin_cfg( $self );
+
   my $required_level = $pcfg->{RequiredLevels}->{rdb_add_item} // 1;
 
   my $rplvars;
@@ -306,8 +311,7 @@ sub _select_random {
     try {
       $item_ref = $dbmgr->random($rdb);
       $content  = ref $item_ref eq 'HASH' ?
-        $item_ref->{String}
-        : $item_ref->[0] ;
+        $item_ref->{String} : $item_ref->[0] ;
     } catch {
       my $rpl = $self->{RPL_MAP}->{$_};
       $content = core->rpl( $rpl,
@@ -345,11 +349,10 @@ sub _cmd_randq {
     $str = shift @message // '<*>';
   }
 
-
-  core->log->debug("_cmd_randq; dispatching search for $str in $rdb");
+  logger->debug("_cmd_randq; dispatching search for $str in $rdb");
 
   if ( $self->SessionID ) {
-    ## if we have asyncsearch, return immediately
+    ## if we have asyncsearch, post and return immediately
     
     unless ( $dbmgr->dbexists($rdb) ) {
       return core->rpl( 'RDB_ERR_NO_SUCH_RDB',
@@ -469,7 +472,11 @@ sub _cmd_rdb {
   }
 
   my $method = '_cmd_rdb_'.$cmd;
-  return $self->$method($msg, \@message) if $self->can($method);
+  
+  if ( $self->can($method) ) {
+    logger->debug("dispatching $method");
+    return $self->$method($msg, \@message)
+  }
   
   return "No handler found for command $cmd"
 }
@@ -489,11 +496,14 @@ sub _cmd_rdb_dbadd {
   return 'RDB name must be less than 32 characters'
     unless length $rdb <= 32;
 
+  logger->debug("_cmd_rdb_dbadd; issuing createdb()");
+
   my $rpl;
   try {
     $dbmgr->createdb($rdb);
     $rpl = "RDB_CREATED";
   } catch {
+    logger->warn("createdb() failure: $_");
     $rpl = $self->{RPL_MAP}->{$_};
   };
 
@@ -531,11 +541,16 @@ sub _cmd_rdb_dbdel {
       $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
       $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
-      default { return "Unknown err $err from _delete_rdb" }
+      default { 
+        my $errstr = "BUG; Unknown err $err from _delete_rdb";
+        logger->warn($errstr);
+        return $errstr
+      }
     }
+
   }
   
-  return core->rpl( $rpl, $rplvars );
+  return core->rpl( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_add {
@@ -564,8 +579,13 @@ sub _cmd_rdb_add {
     given ($err) {
       $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-      default { return "Unknown err $err from _add_item" }
+      default { 
+        my $errstr =  "BUG; Unknown err $err from _add_item";
+        logger->warn($errstr);
+        return $errstr
+      }
     }
+    
   }
 
   return core->rpl( $rpl, $rplvars )
@@ -598,7 +618,13 @@ sub _cmd_rdb_del {
       $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
       $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
+      default { 
+        my $errstr =  "BUG; Unknown err $err from _delete_item";
+        logger->warn($errstr);
+        return $errstr
+      }
     }
+    
   }
 
   return core->rpl( $rpl, $rplvars )
@@ -636,6 +662,7 @@ sub _cmd_rdb_get {
   try {
     $item_ref = $dbmgr->get($rdb, $idx)
   } catch {
+    logger->debug("_cmd_rdb_get; Database->get error $_");
     $rpl = $self->{RPL_MAP}->{$_}
   };
   
@@ -671,7 +698,6 @@ sub _cmd_rdb_info {
 
     return try {
       my $n_keys = $dbmgr->get_keys($rdb);
-
       "RDB $rdb has $n_keys items"
     } catch {
       "RDB::Database error: ".$_
@@ -691,6 +717,7 @@ sub _cmd_rdb_info {
   try {
     $item_ref = $dbmgr->get($rdb, $idx)
   } catch {
+    logger->debug("_cmd_rdb_info; Database->get error $_");
     $rpl = $self->{RPL_MAP}->{$_}
   };
   
@@ -792,7 +819,7 @@ sub Bot_rdb_triggered {
   ## grab a random response and throw it back at the pipeline
   ## info3 plugin can pick it up and do variable replacement on it 
 
-  core->log->debug("received rdb_triggered");
+  logger->debug("received rdb_triggered");
 
   my $dbmgr = $self->DBmgr;
   
@@ -862,7 +889,7 @@ sub Bot_rdb_broadcast {
     my $irc   = $core->get_irc_obj($context) || next SERVER;
     my $chcfg = $core->get_channels_cfg($context);
 
-    $core->log->debug("rdb_broadcast to $context");
+    logger->debug("rdb_broadcast to $context");
 
     my $on_channels = $irc->channels || {};
     my $casemap  = $core->get_irc_casemap($context) || 'rfc1459';
@@ -942,7 +969,7 @@ sub _searchidx {
   return try {
     scalar $dbmgr->search($rdb, $string)
   } catch {
-    core->log->warn("searchidx failure; $_");
+    logger->warn("searchidx failure; $_");
     undef ## FIXME throw exception ?
   }
 }
@@ -955,7 +982,7 @@ sub _add_item {
   
   my $dbmgr = $self->DBmgr;
   unless ( $dbmgr->dbexists($rdb) ) {
-    core->log->debug("cannot add item to nonexistant rdb: $rdb");
+    logger->debug("cannot add item to nonexistant rdb: $rdb");
     return (0, 'RDB_NOSUCH')
   }
   
@@ -984,7 +1011,7 @@ sub _delete_item {
   my $dbmgr = $self->DBmgr;
   
   unless ( $dbmgr->dbexists($rdb) ) {
-    core->log->debug("cannot delete from nonexistant rdb: $rdb");
+    logger->debug("cannot delete from nonexistant rdb: $rdb");
     return(0, 'RDB_NOSUCH')
   }
 
@@ -1013,14 +1040,14 @@ sub _delete_rdb {
   my $can_delete = $pcfg->{Opts}->{AllowDelete} // 0;
 
   unless ($can_delete) {
-    core->log->debug("attempted delete but AllowDelete = 0");
+    logger->debug("attempted delete but AllowDelete = 0");
     return (0, 'RDB_NOTPERMITTED')
   }
 
   my $dbmgr = $self->DBmgr;
 
   unless ( $dbmgr->dbexists($rdb) ) {
-    core->log->debug("cannot delete nonexistant rdb $rdb");
+    logger->debug("cannot delete nonexistant rdb $rdb");
     return (0, 'RDB_NOSUCH')
   }
 
@@ -1030,7 +1057,7 @@ sub _delete_rdb {
     ##  default to no
     my $can_del_main = $pcfg->{Opts}->{AllowDeleteMain} // 0;
     unless ($can_del_main) {
-      core->log->debug(
+      logger->debug(
         "attempted to delete main but AllowDelete Main = 0"
       );
       return (0, 'RDB_NOTPERMITTED')
