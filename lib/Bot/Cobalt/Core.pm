@@ -205,7 +205,7 @@ with 'Bot::Cobalt::Core::Role::IRC';
 sub rpl  {
   my ($self, $rpl) = splice @_, 0, 2;
 
-  confess "rplprintf() requires a RPL tag"
+  confess "rpl() method requires a RPL tag"
     unless defined $rpl;
   
   my $string = $self->lang->{$rpl}
@@ -378,6 +378,9 @@ sub syndicator_stopped {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
   $kernel->alarm('core_timer_check_pool');
+
+  $self->log->debug("issuing: POCOIRC_SHUTDOWN, shutdown");
+
   $kernel->signal( $kernel, 'POCOIRC_SHUTDOWN' );
   $kernel->post( $kernel, 'shutdown' );
 

@@ -11,8 +11,6 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Bot::Cobalt;
 
-use Bot::Cobalt::Utils qw/ rplprintf /;
-
 use Bot::Cobalt::Conf;
 
 use Bot::Cobalt::Core::Loader;
@@ -61,7 +59,7 @@ sub Bot_public_cmd_plugin {
   my $operation = lc($msg->message_array->[0]||'');
 
   if ( core()->auth->level($context, $nick) < $required_lev ) {
-    $resp = rplprintf( core()->lang->{RPL_NO_ACCESS}, { nick => $nick } );
+    $resp = core->rpl( q{RPL_NO_ACCESS}, { nick => $nick } );
   } else {
     unless ($operation && $operation ~~ [qw/load unload reload list/] ) {
       broadcast( 'message', $context, $chan,
@@ -97,13 +95,13 @@ sub _unload {
     return "Bad syntax; no plugin alias specified";
 
   } elsif (! $plug_obj ) {
-    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+    return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias,
       err => 'No such plugin found, is it loaded?' 
     );
 
   } elsif (! Bot::Cobalt::Core::Loader->is_reloadable($plug_obj) ) {
-    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+    return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias,
       err => "Plugin $alias is marked as non-reloadable",
    );
@@ -123,11 +121,11 @@ sub _unload {
     ## and timers:
     core()->timer_del_alias($alias);
       
-    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD}, 
+    return core->rpl( q{RPL_PLUGIN_UNLOAD}, 
         plugin => $alias
     );
   } else {
-    return rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+    return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias, 
       err => 'Unknown failure'
     );
@@ -154,7 +152,7 @@ sub _load_module {
     
     Bot::Cobalt::Core::Loader->unload($module);
 
-    return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
+    return core->rpl( q{RPL_PLUGIN_ERR},
       plugin => $alias,
       err => "Module $module cannot be found/loaded: $err",
     );
@@ -172,7 +170,7 @@ sub _load_module {
       
     my $modversion = $obj->can('VERSION') ? $obj->VERSION : 1 ;
       
-    return rplprintf( core()->lang->{RPL_PLUGIN_LOAD},
+    return core->rpl( q{RPL_PLUGIN_LOAD},
       plugin  => $alias,
       module  => $module,
       version => $modversion,
@@ -186,7 +184,7 @@ sub _load_module {
 
     delete core()->PluginObjects->{$obj};
 
-    return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
+    return core->rpl( q{RPL_PLUGIN_ERR},
       plugin => $alias,
       err => "Unknown plugin_add failure",
     );
@@ -218,7 +216,7 @@ sub _load {
 
     unless (exists $pluginscf->{$alias}
             && ref $pluginscf->{$alias} eq 'HASH') {
-      return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
+      return core->rpl( q{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
           err => "No '${alias}' plugin found in plugins.conf",
@@ -228,7 +226,7 @@ sub _load {
 
     my $pkgname = $pluginscf->{$alias}->{Module};
     unless ($pkgname) {
-      return rplprintf( core()->lang->{RPL_PLUGIN_ERR},
+      return core->rpl( q{RPL_PLUGIN_ERR},
         {
           plugin => $alias,
           err => "No Module specified in plugins.conf for plugin '${alias}'",
@@ -317,7 +315,7 @@ sub _cmd_plug_reload {
   } elsif (!$plug_obj) {
 
     broadcast( 'message', $msg->context, $msg->channel,
-      rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
         plugin => $alias,
         err => 'No such plugin found, is it loaded?' 
       )
@@ -328,7 +326,7 @@ sub _cmd_plug_reload {
   } elsif (core()->State->{NonReloadable}->{$alias}) {
 
     broadcast( 'message', $msg->context, $msg->channel,
-      rplprintf( core()->lang->{RPL_PLUGIN_UNLOAD_ERR},
+      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
           plugin => $alias,
           err => "Plugin $alias is marked as non-reloadable",
       )

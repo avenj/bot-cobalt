@@ -511,7 +511,7 @@ sub irc_chan_sync {
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
-  my $resp = rplprintf( core->lang->{RPL_CHAN_SYNC},
+  my $resp = core->rpl( q{RPL_CHAN_SYNC},
     { 'chan' => $chan }
   );
 

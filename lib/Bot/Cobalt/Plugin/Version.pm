@@ -9,7 +9,7 @@ use Bot::Cobalt;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
-use Bot::Cobalt::Utils qw/ secs_to_str rplprintf /;
+use Bot::Cobalt::Utils qw/ secs_to_str /;
 
 sub new { bless [], shift  }
 
@@ -53,7 +53,7 @@ sub Bot_public_msg {
       my $randstuffs = $core->Provided->{randstuff_items} // 0;
       my $infoglobs  = $core->Provided->{info_topics}    // 0;
 
-      $resp = rplprintf( $core->lang->{RPL_INFO},
+      $resp = core->rpl( q{RPL_INFO},
         version => 'Bot::Cobalt '.$core->version,
         plugins => scalar keys %{ $core->plugin_list },
         uptime  => secs_to_str($delta),
@@ -64,7 +64,7 @@ sub Bot_public_msg {
     }
 
     when ("version") {
-      $resp = rplprintf( $core->lang->{RPL_VERSION},
+      $resp = core->rpl( q{RPL_VERSION},
         version => 'Bot::Cobalt '.$core->version,
         perl_v  => sprintf("%vd", $^V),
         poe_v   => $POE::VERSION,
@@ -73,7 +73,7 @@ sub Bot_public_msg {
     }
 
     when ("os") {
-      $resp = rplprintf( $core->lang->{RPL_OS}, { os => $^O } );
+      $resp = core->rpl( q{RPL_OS}, { os => $^O } );
     }
     
     default { return PLUGIN_EAT_NONE }
