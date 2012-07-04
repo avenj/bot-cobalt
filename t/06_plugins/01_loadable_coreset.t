@@ -32,3 +32,8 @@ BEGIN {
 
 new_ok($_) for @core;
 can_ok($_, 'Cobalt_register', 'Cobalt_unregister') for @core;
+
+## FIXME
+## instance a Bot::Cobalt::Core w/ tempdir path for var/
+## issue a plugin_add for each
+## pocoirc t/ has some helpful hints

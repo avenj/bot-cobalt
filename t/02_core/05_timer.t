@@ -6,7 +6,8 @@ BEGIN {
 }
 
 {
-  package MockCore;
+  package 
+    MockCore;
   use strict; use warnings FATAL => 'all';
   use Test::More;
   sub new { bless {}, shift }

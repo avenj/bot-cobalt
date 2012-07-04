@@ -748,7 +748,6 @@ This can be used to query or post events to the IRC component directly.
 See the L<POE::Component::IRC> and L<POE::Component::IRC::State> docs for 
 more on interacting directly with the IRC component.
 
-
 =head4 get_irc_server
 
   my $server_state = $core->get_irc_server( $context );
