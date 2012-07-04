@@ -298,7 +298,6 @@ sub _select_random {
     $content = $self->_content_from_ref($item_ref)
             // '(undef - broken db?)';
   } catch {
-    ## FIXME handle unknown err strings (special RPL and defined-or in RPL_MAP ?)
     logger->debug("_select_random failure $_");
     my $rpl = $self->{RPL_MAP}->{$_};
     $content = core->rpl( $rpl,
@@ -529,7 +528,6 @@ sub _cmd_rdb_dbdel {
     op   => 'dbdel',
   };
 
-  ## FIXME _delete_rdb needs to handle new Database
   my ($retval, $err) = $self->_delete_rdb($rdb);
   
   my $rpl;
@@ -932,6 +930,8 @@ sub Bot_rdb_broadcast {
 ### util methods
 
 sub _content_from_ref {
+  ## Backwards-compat retrieval.
+  ## (Old-style RDB items were hashrefs.)
   my ($self, $ref) = @_;
   ref $ref eq 'HASH' ? $ref->{String} : $ref->[0]
 }

@@ -3,8 +3,10 @@ our $VERSION = '0.011';
 
 use strictures 1;
 use 5.10.1;
+
 use Carp;
 use Moo;
+
 use Bot::Cobalt::Common qw/:types/;
 
 ## my $timer = Bot::Cobalt::Core::Item::Timer->new(
@@ -155,9 +157,10 @@ sub _process_type {
   if ($type ~~ [qw/msg message privmsg action/]) {
     my $ev_name = $type eq 'action' ? 
           'action' : 'message' ;
+    $self->event( $ev_name );
+
     my @ev_args = ( $self->context, $self->target, $self->text );
     $self->args( \@ev_args );
-    $self->event( $ev_name );
   }
 
   return 1
