@@ -203,7 +203,7 @@ with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
 ## FIXME document/test:
-sub rplprintf {
+sub rpl  {
   my ($self, $rpl) = splice @_, 0, 2;
 
   confess "rplprintf() requires a RPL tag"
