@@ -17,9 +17,9 @@
 ### Names must be lowercase:
 NAME: english
 ### Bump +1 on significant revisions:
-REV: 13
+REV: 14
 ### english.yml set is authoritative:
-SPEC: 6
+SPEC: 7
 
 RPL:
 
@@ -167,6 +167,9 @@ RPL:
 
   ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb
   RDB_ERR_NO_SUCH_RDB: "%nick%, RDB %rdb% doesn't appear to exist."
+
+  ## RDB_ERR_INVALID_NAME, %nick
+  RDB_ERR_INVALID_NAME: "%nick%, that RDB name appears to be invalid."
   
   ## RDB_ERR_NO_SUCH_ITEM, %nick, %rdb, %index
   RDB_ERR_NO_SUCH_ITEM: "%nick%, RDB %rdb doesn't appear to have item %index"

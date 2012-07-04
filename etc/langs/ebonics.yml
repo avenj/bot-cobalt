@@ -5,8 +5,8 @@
 ## Loosely based on the original darkbot6 ebonics.h by rapsux
 
 NAME: ebonics
-REV: 5
-SPEC: 6
+REV: 6
+SPEC: 7
 
 RPL:
 
@@ -154,6 +154,9 @@ RPL:
 
   ## RDB_ERR_NO_SUCH_RDB, %nick, %rdb
   RDB_ERR_NO_SUCH_RDB: "yo %nick%, I aint got RDB %rdb%"
+  
+  ## RDB_ERR_INVALID_NAME, %nick
+  RDB_ERR_INVALID_NAME: "yo %nick% that RDB name be nasty!"
   
   ## RDB_ERR_NO_SUCH_ITEM, %nick, %rdb, %index
   RDB_ERR_NO_SUCH_ITEM: "yo %nick%, RDB %rdb aint got item %index"
