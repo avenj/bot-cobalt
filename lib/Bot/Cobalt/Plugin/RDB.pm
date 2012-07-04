@@ -295,9 +295,8 @@ sub _select_random {
 
   try {
     $item_ref = $dbmgr->random($rdb);
-    $content = ref $item_ref eq 'HASH' ?
-      $item_ref->{String}
-      : $item_ref->[0] ;
+    $content = $self->_content_from_ref($item_ref)
+            // '(undef - broken db?)';
   } catch {
     ## FIXME handle unknown err strings (special RPL and defined-or in RPL_MAP ?)
     logger->debug("_select_random failure $_");
@@ -313,8 +312,8 @@ sub _select_random {
   if ($self->{LastRandom} && $self->{LastRandom} eq $content) {
     try {
       $item_ref = $dbmgr->random($rdb);
-      $content  = ref $item_ref eq 'HASH' ?
-        $item_ref->{String} : $item_ref->[0] ;
+      $content = $self->_content_from_ref($item_ref)
+            // '(undef - broken db?)';
     } catch {
       my $rpl = $self->{RPL_MAP}->{$_};
       $content = core->rpl( $rpl,
@@ -412,11 +411,9 @@ sub _cmd_randq {
 
   logger->debug("_cmd_randq; item found: $match");
 
-  my $content = ref $item_ref eq 'HASH' ?
-    $item_ref->{String}
-    : $item_ref->[0] ;
 
-  $content //= '(undef - broken db?)';
+  my $content = $self->_content_from_ref($item_ref)
+            // '(undef - broken db?)';
   
   return "[$match] $content"
 }
@@ -672,9 +669,8 @@ sub _cmd_rdb_get {
   return core->rpl( $rpl, $rplvars )
     if defined $rpl;
 
-  my $content = ref $item_ref eq 'HASH' ?
-    $item_ref->{String} : $item_ref->[0] ;
-  $content //= '(undef - broken db?)';
+  my $content = $self->_content_from_ref($item_ref)
+    // '(undef - broken db?)' ;
   
   return "[$idx] $content"
 }
@@ -933,7 +929,12 @@ sub Bot_rdb_broadcast {
 }
 
 
-  ### 'worker' methods ###
+### util methods
+
+sub _content_from_ref {
+  my ($self, $ref) = @_;
+  ref $ref eq 'HASH' ? $ref->{String} : $ref->[0]
+}
 
 sub _searchidx {
   my ($self, $msg, $type, $rdb, $string) = @_;
@@ -951,6 +952,8 @@ sub _searchidx {
         rdb  => $rdb,
       );
     }
+    
+    logger->debug("_searchidx; dispatching to poe_post_search");
     
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
@@ -970,9 +973,10 @@ sub _searchidx {
   }
 
   return try {
+    logger->debug("_searchidx; dispatching (blocking) search");
     scalar $dbmgr->search($rdb, $string)
   } catch {
-    logger->debug("searchidx failure; $_");
+    logger->debug("_searchidx failure; $_");
     undef ## FIXME throw exception ?
   }
 }
@@ -1189,10 +1193,8 @@ sub poe_got_result {
             index => $itemkey,
           );
         } else {
-          my $content = ref $item eq 'HASH' ? 
-            $item->{String} : $item->[0] ;
-
-          $content //= '(undef - broken db?)';
+          my $content = $self->_content_from_ref($item)
+            // '(undef - broken db?)';
           
           $resp = "[$itemkey] $content"
         }
