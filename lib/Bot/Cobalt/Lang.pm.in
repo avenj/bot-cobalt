@@ -107,7 +107,7 @@ sub BUILD {
   }
 
   ## Load/validate rpls() at construction time.
-  $self->rpls
+  $self->rpls;
 }
 
 sub _build_full_lang_path {

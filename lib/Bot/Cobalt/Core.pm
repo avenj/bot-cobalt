@@ -283,6 +283,9 @@ sub init {
     );
   }
 
+  ## Language set check. Force attrib fill.
+  $self->lang;
+
   $self->_syndicator_init(
     prefix => 'ev_',  ## event prefix for sessions
     reg_prefix => 'Cobalt_',
