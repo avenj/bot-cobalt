@@ -18,7 +18,7 @@
 NAME: english
 ### Bump +1 on significant revisions:
 REV: 14
-### english.yml set is authoritative:
+### english.yml set is authoritative and must match t/02_core/02_lang.t:
 SPEC: 7
 
 RPL:
