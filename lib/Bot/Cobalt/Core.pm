@@ -209,7 +209,7 @@ sub rpl  {
     unless defined $rpl;
   
   my $string = $self->lang->{$rpl}
-    // "Unknown RPL $rpl, vars: ".join(' ', @_);
+    // return "Unknown RPL $rpl, vars: ".join(' ', @_);
   
   rplprintf( $string, @_ )
 }
