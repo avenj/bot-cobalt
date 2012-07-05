@@ -1,13 +1,6 @@
 package Bot::Cobalt::Lang;
 our $VERSION = '0.011';
 
-## Emitted events:
-##  langset_loaded ($lang, $lang-specified, $path)
-##
-## Loads from __DATA__ first (added at build-time by Lang.pm.PL)
-## This provides an up-to-date default English set in case the 
-## on-disk langset is old / incomplete / broken / missing.
-
 use 5.12.1;
 use strictures 1;
 
@@ -22,10 +15,13 @@ use Try::Tiny;
 
 ## Configurable:
 has 'lang_dir' => (
-  required => 1,
+  lazy => 1,
 
-  is  => 'rwp',
+  is  => 'ro',
   isa => Str,
+  
+  predicate => 'has_lang_dir',
+  writer    => '_set_lang_dir',
 );
 
 has 'lang' => (
@@ -33,6 +29,17 @@ has 'lang' => (
   
   is  => 'rwp',
   isa => Str,
+);
+
+## FIXME test for this one:
+has 'absolute_path' => (
+  lazy => 1,
+
+  is  => 'ro',  
+  isa => Str,
+
+  predicate => 'has_absolute_path',
+  writer    => '_set_absolute_path',
 );
 
 has 'use_core' => (
@@ -49,7 +56,7 @@ has 'rpls' => (
   is  => 'rwp',
   isa => HashRef,
   
-  builder => '_build_rpl_hash',
+  builder => '_build_rpls_hash',
 );
 
 has 'spec' => (
@@ -78,8 +85,20 @@ has '_core_set' => (
   builder => '_build_core_set',
 );
 
+sub BUILD {
+  ## Load/validate rpls() at construction time.
+  my ($self) = @_;
+
+  die "Need either a lang_dir or an absolute path"
+    unless $self->has_absolute_path or $self->has_lang_dir;
+
+  $self->rpls
+}
+
 sub _build_full_lang_path {
   my ($self) = @_;
+
+  return $self->absolute_path if $self->has_absolute_path;
   
   my $file_path = $self->lang . ".yml" ;
 
@@ -89,7 +108,19 @@ sub _build_full_lang_path {
   )
 }
 
-sub _build_rpl_hash {
+sub _build_core_set {
+  my ($self) = @_;
+  
+  my $core_set_yaml =
+    $Bot::Cobalt::Lang::BUILTIN_SET 
+     //= do { local $/; <DATA> } ;
+  
+  my $serializer = Bot::Cobalt::Serializer->new;
+  
+  $serializer->thaw( $core_set_yaml )
+}
+
+sub _build_rpls_hash {
   my ($self) = @_;
 
   my $rpl_hash;
@@ -145,18 +176,8 @@ sub _build_rpl_hash {
   $rpl_hash
 }
 
-sub _build_core_set {
-  my ($self) = @_;
-  
-  my $core_set_yaml = do { local $/; <DATA> };
-  
-  my $serializer = Bot::Cobalt::Serializer->new;
-  
-  $serializer->thaw( $core_set_yaml )
-}
-
-## FIXME tests
-## FIXME fix Lang.pod also (should probably just move that sucker here)
+## FIXME fix Lang.pod
+## FIXME fix Rehash.pm
 
 ### this module will have a langset appended at build-time
 1;
