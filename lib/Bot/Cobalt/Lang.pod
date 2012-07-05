@@ -28,7 +28,13 @@ Bot::Cobalt::Lang - Bot::Cobalt language set loader
   my $language = Bot::Cobalt::Lang->new(
     lang => "mylangset",
     absolute_path => $path_to_my_lang_yaml,
-  );  
+  );
+
+  ## Load only the core (built-in) set:
+  my $coreset = Bot::Cobalt::Lang->new(
+    lang => 'coreset',
+    use_core_only => 1,
+  );
 
 =head1 DESCRIPTION
 
@@ -43,7 +49,9 @@ B<new()> requires a 'lang' option and either a 'lang_dir' or
 'lang' is (attempted to be) loaded from the specified 'lang_dir' with an 
 extension of ".yml".
 
-The 'use_core' option will load the built-in language set.
+The 'use_core' option will load the built-in language set. 
+'use_core_only' will not attempt to load anything except the built-in 
+set.
 
 If the load fails, an exception is thrown.
 

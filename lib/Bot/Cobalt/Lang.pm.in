@@ -31,7 +31,6 @@ has 'lang' => (
   isa => Str,
 );
 
-## FIXME test for this one:
 has 'absolute_path' => (
   lazy => 1,
 
@@ -47,6 +46,19 @@ has 'use_core' => (
   isa => Bool,
   
   default => sub { 0 },
+);
+
+has 'use_core_only' => (
+  is  => 'rwp',
+  isa => Bool,
+  
+  default => sub { 0 },
+
+  trigger => sub {
+    my ($self, $val) = @_;
+
+    $self->_set_use_core(1) if $val;
+  },
 );
 
 ## Public:
@@ -85,13 +97,16 @@ has '_core_set' => (
   builder => '_build_core_set',
 );
 
+
 sub BUILD {
-  ## Load/validate rpls() at construction time.
   my ($self) = @_;
 
-  die "Need either a lang_dir or an absolute path"
-    unless $self->has_absolute_path or $self->has_lang_dir;
+  unless ( $self->use_core_only ) {
+    die "Need either a lang_dir or an absolute path"
+      unless $self->has_absolute_path or $self->has_lang_dir;
+  }
 
+  ## Load/validate rpls() at construction time.
   $self->rpls
 }
 
@@ -128,6 +143,11 @@ sub _build_rpls_hash {
   ## Core (built-in) load; shallow copy:
   $rpl_hash = \%{ $self->_core_set->{RPL} }
     if $self->use_core;
+
+  if ( $self->use_core_only ) {
+    $self->_set_spec( $self->_core_set->{SPEC} );
+    return $rpl_hash
+  }
 
   my $serializer = Bot::Cobalt::Serializer->new;
   
@@ -175,9 +195,6 @@ sub _build_rpls_hash {
 
   $rpl_hash
 }
-
-## FIXME fix Lang.pod
-## FIXME fix Rehash.pm
 
 ### this module will have a langset appended at build-time
 1;

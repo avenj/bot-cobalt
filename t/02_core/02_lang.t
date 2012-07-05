@@ -1,9 +1,8 @@
-use Test::More tests => 69;
+use Test::More tests => 15;
 use strict; use warnings;
 
 my %sets = (
   ## Last updated for SPEC: 7
-  ## 58 tests
   CORE => [ qw/  
     RPL_NO_ACCESS
     RPL_DB_ERR
@@ -99,6 +98,9 @@ try {
      ."...are you trying to run the test suite outside of `./Build`?\n"
 };
 
+my $langdir = File::Spec->catdir( $basedir, 'etc', 'langs' );
+
+## Should die:
 try {
   Bot::Cobalt::Lang->new(
     lang => 'somelang',
@@ -108,8 +110,8 @@ try {
   0
 } and fail("Should've died for insufficient args in new()");
 
-my $langdir = File::Spec->catdir( $basedir, 'etc', 'langs' );
 
+## absolute_path :
 my $absolute = new_ok( 'Bot::Cobalt::Lang' => [
     lang => 'english',
     absolute_path => File::Spec->catfile( $langdir, 'english.yml' ),
@@ -118,6 +120,10 @@ my $absolute = new_ok( 'Bot::Cobalt::Lang' => [
 
 ok(keys %{ $absolute->rpls }, 'absolute_path set has RPLs' );
 
+undef $absolute;
+
+
+## use_core + english :
 my $coreset = new_ok( 'Bot::Cobalt::Lang' => [
     use_core => 1,
     
@@ -126,8 +132,24 @@ my $coreset = new_ok( 'Bot::Cobalt::Lang' => [
   ],
 );
 
-ok(keys %{ $coreset->rpls }, 'english set has RPLs' );
+ok_lang_has_all($coreset);
 
+undef $coreset;
+
+
+## use_core_only (also tests that the builtin set can be loaded twice):
+my $coreset_only = new_ok( 'Bot::Cobalt::Lang' => [
+    lang => 'english',
+    use_core_only => 1,
+  ],
+);
+
+ok_lang_has_all($coreset_only);
+
+undef $coreset_only;
+
+
+## english (no use_core):
 my $english = new_ok( 'Bot::Cobalt::Lang' => [
     lang => 'english',
     lang_dir => $langdir,
@@ -138,6 +160,10 @@ ok(keys %{ $english->rpls }, 'english set has RPLs' );
 
 cmp_ok( $english->spec, '>=', 7 );
 
+ok_lang_has_all($english);
+
+
+## ebonics (no use_core):
 my $ebonics = new_ok( 'Bot::Cobalt::Lang' => [
     lang => 'ebonics',
     lang_dir => $langdir,
@@ -146,8 +172,31 @@ my $ebonics = new_ok( 'Bot::Cobalt::Lang' => [
 
 ok( keys %{ $ebonics->rpls }, 'ebonics set has RPLs' );
 
-SET: for my $set (keys %sets) {
-  RPL: for my $rpl (@{$sets{$set}}) {
-    ok( $ebonics->rpls->{$rpl}, "Exists: $rpl" )
+ok_lang_has_all($ebonics);
+
+
+
+sub ok_lang_has_all {
+  my ($lang_obj) = @_;
+
+  my $lang_name = $lang_obj->lang;
+
+  my @failed;
+  
+  SET: for my $set (keys %sets) {
+    RPL: for my $rpl ( @{$sets{$set}} ) {
+      push(@failed, $rpl)
+        unless $lang_obj->rpls->{$rpl};
+    }
+  }
+
+  if (@failed) {
+    diag(
+      "Missing RPLs in $lang_name ; ",
+      join(', ', @failed)
+    );
+    fail("Language set completion");
+  } else {
+    pass("Language set completion");
   }
 }
