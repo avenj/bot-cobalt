@@ -51,7 +51,6 @@ lib/Bot/Cobalt/IRC/Role/UserEvents.pm
 lib/Bot/Cobalt/IRC/Server.pm
 lib/Bot/Cobalt/Lang.pm.in
 lib/Bot/Cobalt/Lang.pm.PL
-lib/Bot/Cobalt/Lang.pod
 lib/Bot/Cobalt/Manual/Plugins.pod
 lib/Bot/Cobalt/Manual/Plugins/Config.pod
 lib/Bot/Cobalt/Manual/Plugins/Dist.pod
