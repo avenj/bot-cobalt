@@ -370,37 +370,25 @@ sub _cmd_login {
     $self->_do_login($context, $nick, $l_user, $l_pass, $origin);
     
     $rplvars->{lev} = core->auth->level($context, $nick);
+
     $resp = core->rpl( q{AUTH_SUCCESS}, $rplvars );
   } catch {
-    chomp;
+    my %rplmap = (
+      E_NOSUCH   => 'AUTH_FAIL_NO_SUCH',
+      E_BADPASS  => 'AUTH_FAIL_BADPASS',
+      E_BADHOST  => 'AUTH_FAIL_BADHOST',
+      E_NOCHANS  => 'AUTH_FAIL_NO_CHANS',
+    );
+    
+    my $rpl = $rplmap{$_};
+    
+    logger->error("BUG; unknown retval from _do_login")
+      unless defined $rpl;
 
-    ERR: {
-      if ($_ eq 'E_NOSUCH') {
-        $resp = core->rpl( q{AUTH_FAIL_NO_SUCH}, $rplvars );
-        last ERR
-      }
-      
-      if ($_ eq 'E_BADPASS') {
-         $resp = core->rpl( q{AUTH_FAIL_BADPASS}, $rplvars );
-         last ERR
-      }
-      
-      if ($_ eq 'E_BADHOST') {
-        $resp = core->rpl( q{AUTH_FAIL_BADHOST}, $rplvars );
-        last ERR
-      }
-      
-      if ($_ eq 'E_NOCHANS') {
-        $resp = core->rpl( q{AUTH_FAIL_NO_CHANS}, $rplvars );
-        last ERR
-      }
-      
-      logger->error("Unknown retval from _do_login");
-      logger->error("BUG; fell through in _cmd_login");
-    }
+    $resp = core->rpl( $rpl, $rplvars );
   };
 
-  broadcast( 'notice', $context, $nick, $resp ) if $resp;
+  broadcast( 'notice', $context, $nick, $resp ) if defined $resp;
 
   return
 }
