@@ -6,7 +6,7 @@ use strictures 1;
 use overload
   bool     => sub { 1 },
   '""'     => sub { shift->string },
-  fallback => 1;
+  fallback => 1 ;
 
 use Devel::StackTrace;
 
@@ -125,7 +125,7 @@ A lightweight exception object for L<Bot::Cobalt>.
 
 B<new()> takes a list of messages used to compose an error string.
 
-The objects themselves stringify to the stored errors.
+The objects themselves stringify to the concatenated stored errors.
 
 A L<Devel::StackTrace> instance is created at construction time; it is 
 accessible via L</trace>.

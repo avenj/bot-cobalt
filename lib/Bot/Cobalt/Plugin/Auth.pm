@@ -44,6 +44,7 @@ use 5.12.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
+use Bot::Cobalt::Error;
 use Bot::Cobalt::Serializer;
 
 use strictures 1;
@@ -534,7 +535,7 @@ sub _do_login {
     );
 
     ## FIXME switch to Bot::Cobalt::Error objects?
-    die "E_NOSUCH\n"
+    die Bot::Cobalt::Error->new("E_NOSUCH")
   }
 
   ## fail if we don't share channels with this user
@@ -550,7 +551,7 @@ sub _do_login {
       'NO_SHARED_CHANS',
     );
 
-    die "E_NOCHANS\n"
+    die Bot::Cobalt::Error->new("E_NOCHANS")
   }
 
   ## masks should be normalized already:
@@ -568,7 +569,7 @@ sub _do_login {
       'BAD_HOST',
     );
 
-    die "E_BADHOST\n"
+    die Bot::Cobalt::Error->new("E_BADHOST")
   }
 
   unless ( passwdcmp($passwd, $user_rec->{Password}) ) {
@@ -580,7 +581,7 @@ sub _do_login {
       'BAD_PASS',
     );
 
-    die "E_BADPASS\n"
+    die Bot::Cobalt::Error->new("E_BADPASS")
   }
 
   my $level = $user_rec->{Level};
