@@ -1,4 +1,4 @@
-use Test::More tests => 66;
+use Test::More tests => 69;
 use strict; use warnings;
 
 my %sets = (
@@ -99,7 +99,24 @@ try {
      ."...are you trying to run the test suite outside of `./Build`?\n"
 };
 
+try {
+  Bot::Cobalt::Lang->new(
+    lang => 'somelang',
+  );
+} catch {
+  pass("Died as expected in new()");
+  0
+} and fail("Should've died for insufficient args in new()");
+
 my $langdir = File::Spec->catdir( $basedir, 'etc', 'langs' );
+
+my $absolute = new_ok( 'Bot::Cobalt::Lang' => [
+    lang => 'english',
+    absolute_path => File::Spec->catfile( $langdir, 'english.yml' ),
+  ],
+);
+
+ok(keys %{ $absolute->rpls }, 'absolute_path set has RPLs' );
 
 my $coreset = new_ok( 'Bot::Cobalt::Lang' => [
     use_core => 1,
