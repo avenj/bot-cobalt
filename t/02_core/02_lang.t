@@ -1,4 +1,4 @@
-use Test::More tests => 65;
+use Test::More tests => 66;
 use strict; use warnings;
 
 my %sets = (
@@ -119,7 +119,7 @@ my $english = new_ok( 'Bot::Cobalt::Lang' => [
 
 ok(keys %{ $english->rpls }, 'english set has RPLs' );
 
-
+cmp_ok( $english->spec, '>=', 7 );
 
 my $ebonics = new_ok( 'Bot::Cobalt::Lang' => [
     lang => 'ebonics',

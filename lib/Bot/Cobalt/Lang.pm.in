@@ -52,6 +52,13 @@ has 'rpls' => (
   builder => '_build_rpl_hash',
 );
 
+has 'spec' => (
+  is  => 'rwp',
+  isa => Int,
+
+  default => sub { 0 },
+);
+
 ## Private:
 has '_full_lang_path' => (
   lazy => 1,
@@ -129,6 +136,8 @@ sub _build_rpl_hash {
 
   confess "Language set loaded but no RPL hash found"
     unless ref $loaded_rpl_hash eq 'HASH';
+
+  $self->_set_spec( $loaded_set->{SPEC} );
   
   @{$rpl_hash}{ keys(%$loaded_rpl_hash) }
     = @{$loaded_set->{RPL}}{ keys(%$loaded_rpl_hash) } ;
