@@ -78,7 +78,6 @@ sub join {
 
 
 1;
-__END__
 
 =pod
 
@@ -126,7 +125,7 @@ A lightweight exception object for L<Bot::Cobalt>.
 
 B<new()> takes a list of messages used to compose an error string.
 
-The objects stringify to the stored errors.
+The objects themselves stringify to the stored errors.
 
 A L<Devel::StackTrace> instance is created at construction time; it is 
 accessible via L</trace>.
@@ -169,10 +168,9 @@ the existing object.
   $err->push( @errors );
   $err->throw
 
-Call die() with the current object.
-
-L<Devel::StackTrace> is reinstanced at the point throw() is called (see 
-L</trace>).
+Throw an exception by calling die() with the current object.
+The L<Devel::StackTrace> object is reinstanced from where throw() is 
+called (see L</trace>).
 
 =head2 trace
 

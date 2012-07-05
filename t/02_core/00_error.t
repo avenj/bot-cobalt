@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 20;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -31,6 +31,14 @@ cmp_ok( $obj, 'eq', 'Some error' );
 cmp_ok( $obj->unshift("Some header"), 'eq', 'Some headerSome error' );
 cmp_ok( $obj, 'eq', 'Some headerSome error' );
 cmp_ok( $obj->join(', '), 'eq', 'Some header, Some error' );
+
+try {
+  $obj->throw;
+} catch {
+  isa_ok( $_, 'Bot::Cobalt::Error' );
+  isa_ok( $_->trace, 'Devel::StackTrace' );
+  is( $_->trace->frame(0)->package, 'main' );
+};
 
 $obj = new_ok( 'Bot::Cobalt::Error' => [
     "An error"
