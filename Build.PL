@@ -184,7 +184,7 @@ my $build = $class->new(
       'YAML::XS'    => '0.34',
 
      # Logging
-      'Devel::StackTrace' => 0,
+      'Devel::StackTrace' => '1.27',
       'Log::Handler'      => '0.71',
 
      # Moo + related

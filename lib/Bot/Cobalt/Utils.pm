@@ -510,29 +510,31 @@ the number of matches in scalar context.
 rplprintf() provides string formatting with replacement of arbitrary 
 variables.
 
-  rplprintf( $string, $hash );
+  rplprintf( $string, %vars_hash );
+  rplprintf( $string, $vars_ref  );
 
 The first argument to C<rplprintf> should be the template string. 
-It may contain variables in the form of B<%var> to be replaced.
+It may contain variables in the form of B<%var> or B<%var%> to be 
+replaced.
 
-The second argument is the hashref mapping B<%var> variables to 
-strings.
+The second argument is the hash (or hash reference) mapping B<%var> 
+variables to strings.
 
 For example:
 
   $string = "Access denied for %user (%host%)";
-  $response = rplprintf( 
-      $string,
-
+  $response = rplprintf(  $string,
       user => "Joe",
       host => "joe!joe@example.org",
-  );  ## -> 'Access denied for Joe (joe!joe@example.org)'
+  );  
+  ## $response = 'Access denied for Joe (joe!joe@example.org)'
 
-Intended for formatting langset RPLs before sending.
+Intended for formatting langset RPLs before sending, but can be used for 
+any simple string template.
 
 Variable names can be terminated with a space or % -- both are demonstrated 
 in the example above. You'll need to terminate with a trailing % if there 
-are characters following, as in the above example: I<(%host%)>
+are non-space characters following, as in the above example: I<(%host%)>
 
 The same color/format strings as L</color> can be applied via %C_* vars:
 
@@ -577,7 +579,7 @@ Salts are always random.
 
 =head3 passwdcmp
 
-Compare hashed passwords.
+Compare hashed passwords via L<App::bmkpasswd>.
 
 Compatible with whatever methods C<mkpasswd> supports on the current 
 system.

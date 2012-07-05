@@ -522,7 +522,6 @@ sub _do_login {
       'NO_SUCH_USER',
     );
 
-    ## FIXME switch to Bot::Cobalt::Error objects?
     die Bot::Cobalt::Error->new("E_NOSUCH")
   }
 

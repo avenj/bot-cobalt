@@ -77,7 +77,7 @@ sub join {
 }
 
 
-1;
+1
 
 =pod
 
