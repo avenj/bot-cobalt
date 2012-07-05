@@ -57,7 +57,7 @@ has 'casemap' => (
   lazy => 1,
 
   is  => 'rw', 
-  isa => Str, 
+  isa => Str,
 
   default => sub { 'rfc1459' },
 ); 
@@ -82,12 +82,12 @@ has 'maxtargets' => (
 
 sub lowercase {
   my ($self, $string) = @_;
-  lc_irc( $string, $self->casemap )  
+  lc_irc( $string // '', $self->casemap )  
 }
 
 sub uppercase {
   my ($self, $string) = @_;
-  uc_irc( $string, $self->casemap )
+  uc_irc( $string // '', $self->casemap )
 }
 
 1;
