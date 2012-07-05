@@ -2,96 +2,69 @@
 
 =head1 NAME
 
-Bot::Cobalt::Lang -- A role for language set loading
+Bot::Cobalt::Lang - Bot::Cobalt language set loader
 
 =head1 SYNOPSIS
 
-  use Moo;
-  with 'Bot::Cobalt::Lang';
-  ## Load an initial langset out of $etcdir/langs/ :
-  $self->lang( $self->load_langset('english') );
+  use Bot::Cobalt::Lang;
+
+  ## Load 'english.yml' from language dir:
+  my $english = Bot::Cobalt::Lang->new(
+    lang     => 'english',    
+    lang_dir => $path_to_lang_dir,
+  );
+  
+  ## Access loaded RPL hash:
+  my $str = $english->rpls->{$rpl};
+
+  ## Fall back to core set:
+  my $language = Bot::Cobalt::Lang->new(
+    use_core => 1,
+    lang     => $language,
+    lang_dir => $lang_dir,
+  );
+  
+  ## Use an absolute path:
+  my $language = Bot::Cobalt::Lang->new(
+    lang => "mylangset",
+    absolute_path => $path_to_my_lang_yaml,
+  );
+
+  ## Load only the core (built-in) set:
+  my $coreset = Bot::Cobalt::Lang->new(
+    lang => 'coreset',
+    use_core_only => 1,
+  );
 
 =head1 DESCRIPTION
 
-Provides language set loading for the Cobalt core (and plugins that want 
-to load their own langset, if you'd like -- just use 
-L</load_langset> as a class method or consume this role).
+Bot::Cobalt::Lang provides language set loading facilities to 
+L<Bot::Cobalt> and extensions.
 
-Langsets should be in a YAML format readable by L<YAML::XS> (YAML1.1).
+This is primarily used by L<Bot::Cobalt::Core> to feed the core 
+B<lang()> hash.
 
-B<IMPORTANT>: 
-Langset names are automatically lowercased. 
-Bear this in mind when naming langsets for plugins. 
-They should always be lowercase.
+B<new()> requires a 'lang' option and either a 'lang_dir' or 
+'absolute_path' -- if an absolute path is not specified, the named 
+'lang' is (attempted to be) loaded from the specified 'lang_dir' with an 
+extension of ".yml".
 
-Responses are expected to be found in the YAML langset's 'RPL:' key.
-(The corresponding hash is what is actually returned when loading a set.)
+The 'use_core' option will load the built-in language set. 
+'use_core_only' will not attempt to load anything except the built-in 
+set.
 
-Typically the keys of the 'RPL' hash contain values which are strings 
-potentially containing variables formattable by C<rplprintf> from 
-L<Bot::Cobalt::Utils>.
+If the load fails, an exception is thrown.
 
-Inspect C<etc/langs/english.yml> for an example.
+=head2 rpls
 
-B<The core English langset is built in to this module at install time.>
-Missing values in the loaded language set will be automatically filled 
-by the compiled-in English set, unless this is a prefixed plugin set.
+The B<rpls> attribute accesses the loaded RPL hash:
 
-Be sure to read the L<Bot::Cobalt::Utils> documentation for more on variable 
-replacement with C<rplprintf>.
+  my $this_str = $language->rpls->{$rpl} // "Missing RPL $rpl";
 
-=head1 METHODS
+=head2 spec
 
-=head2 load_langset
-
-Load a specified language set, converting it into a hash.
-
-If passed a single argument, loads the specified .yml file 
-out of $etcdir/langs/:
-
-  ## done by cobalt core to (re)load the ->lang hash:
-  $core->lang( $core->load_langset('english') );
-
-If passed two arguments, the second argument is considered to be a 
-path prefix.
-Plugins can use this to read in a langset file, if they like:
-
-  ## using Bot::Cobalt::Lang outside of $core (as a class)
-  require Bot::Cobalt::Lang;
-  my $etc = $core->cfg->{path};  ## location of our etc/
-  ## read in etc/langs/plugin/myplugin-english.yml:
-  my $prefix = $etc . "/langs/plugin/myplugin-";
-  my $rpl_hash = Bot::Cobalt::Lang->load_langset('english', $prefix);
-
-It is generally advisable that plugins don't modify the $core->lang 
-hash unless they are also part of the core distribution.
-
-That being said, if you do so, you may want to check for rehashes 
-(if the core reloads ->lang, your changes will go missing).
-
-
-=head1 EMITTED EVENTS
-
-Events are emitted if load_langset is accessed via a Bot::Cobalt::Core 
-instance.
-
-=head2 langset_loaded
-
-Syndicated when a language set is loaded.
-
-${$_[0]} is the (lowercased) langset name.
-
-${$_[1]} is the path to the set that was loaded.
-
-=head2 langset_error
-
-Syndicated when there is some problem loading a langset.
-
-A string describing the general problem is the only argument.
-
-If an appropriate logger is available, the error will also be logged to 
-the 'debug' loglevel.
-
+The B<spec> attribute returns the SPEC: definition for the loaded 
+language set.
 
 =head1 AUTHOR
 

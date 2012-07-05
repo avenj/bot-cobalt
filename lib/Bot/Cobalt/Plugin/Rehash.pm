@@ -18,7 +18,9 @@ use strictures 1;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Conf;
+use Bot::Cobalt::Lang;
 
+use File::Spec;
 use Try::Tiny;
 
 sub new { bless [], shift }
@@ -116,12 +118,13 @@ sub Bot_public_cmd_rehash {
     
     when ("langset") {
       my $lang = $msg->message_array->[1];
-    
-      if ($self->_rehash_langset($lang)) {
+      
+      try {
+        $self->_rehash_langset($lang);
         $resp = "Reloaded core language set ($lang)";
-      } else {
-        $resp = "Rehashing langset failed; administrator should check logs.";
-      }
+      } catch {
+        $resp = "Rehash failure: $_"
+      };
 
     }
     
@@ -220,34 +223,28 @@ sub _rehash_channels_cf {
 
 sub _rehash_langset {
   my ($self, $langset) = @_;
-  
+
   my $newcfg  = $self->_get_new_cfg || return;
 
   my $lang = $langset || $newcfg->{core}->{Language} || 'english' ;
-
-  my $new_rpl = core()->load_langset($lang);
   
-  unless ($new_rpl && ref $new_rpl eq 'HASH') {
-    logger->warn("load_langset() did not return a hash.");
-    logger->warn("Failed to load langset $lang");
+  my $lang_dir = File::Spec->catdir( core()->etc, 'langs' );
 
-    return
-  }
+  ## _rehash_langset() is wrapped in a try{} block.
+  ## Lang will throw an exception as-needed:
+  my $lang_obj =  Bot::Cobalt::Lang->new(
+    use_core => 1,
+      
+    lang_dir => $lang_dir,
+    lang     => $lang,
+  );
+
+  die "Language set $lang has no RPLs"
+    unless scalar keys %{ $lang_obj->rpls } ;
+
+  core()->set_langset( $lang_obj );
+  core()->set_lang( $lang_obj->rpls );
   
-  unless (scalar keys %$new_rpl) {
-    logger->warn("load_langset() returned a hash with no keys.");
-    logger->warn("Failed to load langset $lang");
-
-    return
-  }
-  
-  for my $this_rpl (keys %$new_rpl) {
-    logger->debug("Updated: $this_rpl")
-      if core->debug > 2;
-
-    core->lang->{$this_rpl} = delete $new_rpl->{$this_rpl};
-  }
-
   logger->info("Reloaded core langset ($lang)");
 
   broadcast 'rehashed', 'langset';

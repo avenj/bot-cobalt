@@ -1030,21 +1030,6 @@ L<POE::Component::Syndicator>.
 
 These messages are also logged to 'warn' by default.
 
-=head3 Langset related events
-
-=head4 langset_loaded
-
-Broadcast when a language set load appears to have succeeded.
-
-The first argument is the langset name. The second argument is the path 
-to the langset file that was loaded.
-
-=head4 langset_error
-
-Broadcast when a language set load has failed.
-
-These messages are also logged to 'warn' by default.
-
 =head3 Timer related events
 
 =head4 Bot_executed_timer

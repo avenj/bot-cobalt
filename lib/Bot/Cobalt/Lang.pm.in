@@ -1,111 +1,201 @@
 package Bot::Cobalt::Lang;
 our $VERSION = '0.011';
 
-## Emitted events:
-##  langset_loaded ($lang, $lang-specified, $path)
-##
-## Loads from __DATA__ first (added at build-time by Lang.pm.PL)
-## This provides an up-to-date default English set in case the 
-## on-disk langset is old / incomplete / broken / missing.
-
-use 5.10.1;
+use 5.12.1;
 use strictures 1;
+
 use Carp;
+use Moo;
 
-use Moo::Role;
-
-use File::Spec;
-
-use Try::Tiny;
-
+use Bot::Cobalt::Common qw/:types/;
 use Bot::Cobalt::Serializer;
 
-sub langset_load { load_langset(@_) }
-sub load_langset {  ## load_langset(language)
-  ## read specified language out of etc/langs/
-  ## return hash suitable for core->lang
-  my ($self) = shift;
+use File::Spec;
+use Try::Tiny;
 
-  my $lang = shift || croak 'no language specified in load_langset';
+## Configurable:
+has 'lang_dir' => (
+  lazy => 1,
 
-  ## you can specify a prefix
-  ## f.ex: load_langset('english', '/some/dir/langs/plugin-')
-  ## results in: $path = "/some/dir/langs/plugin-". lc($lang) .".yml"
-  my $prefix = shift || File::Spec->catdir( $self->cfg->{path}, "langs" );
-
-  ## etc/langs/language.yml (lowercase expected)
-  my $path = File::Spec->catfile( $prefix, lc($lang).".yml" );
-
-  unless (-f $path) {
-    $self->send_event( 'langset_error', "not found: ($lang) $path" )
-      if $self->can('send_event');
-    $self->log->warn("langset not found: $lang ($path)")
-      if $self->can('log');
-    return { }
-  }
-
-  $self->log->info("Loading language set: $lang")
-    if $self->can('log');
-
-  my $serializer = Bot::Cobalt::Serializer->new();
+  is  => 'ro',
+  isa => Str,
   
-  my $langset = try {
-    $serializer->readfile($path)
-  } catch {
-    carp "Serializer readfile($path) $_";
-    { }
-  };
+  predicate => 'has_lang_dir',
+  writer    => '_set_lang_dir',
+);
 
-  ## Load __DATA__'s english langset:
-  my $default_langset_yaml = <DATA> ;
-  my $default_langset = $serializer->thaw($default_langset_yaml);
-
-  my $extern_rev  = $langset->{SPEC} // 0;
-  my $builtin_rev = $default_langset->{SPEC} // 0;
+has 'lang' => (
+  required => 1,
   
-  ## not a prefixed load, probably a core langset.
-  ## is the on-disk set out of date?
-  if (!$prefix && $builtin_rev > $extern_rev) {
-      $self->log->warn(
-        "This appears to be a core langset load, but the internal",
-        " set has a higher SPEC number than $path:",
-        " $builtin_rev vs. $extern_rev -- you may want to update langsets.",
-      ) if $self->can('log');
-  }
+  is  => 'rwp',
+  isa => Str,
+);
+
+has 'absolute_path' => (
+  lazy => 1,
+
+  is  => 'ro',  
+  isa => Str,
+
+  predicate => 'has_absolute_path',
+  writer    => '_set_absolute_path',
+);
+
+has 'use_core' => (
+  is  => 'rwp',
+  isa => Bool,
   
-  ## Push anything missing in $langset
-  ## (but only if there was no prefix specified)
-  ## If there was, this is probably a plugin langset
-  unless ($prefix) {
-    for my $rpl (keys %{ $default_langset->{RPL} }) {
-      unless (exists $langset->{RPL}->{$rpl}) {
-        my $default_repl = $default_langset->{RPL}->{$rpl};
-        $langset->{RPL}->{$rpl} = $default_repl;
+  default => sub { 0 },
+);
 
-        $self->log->debug("pushed missing RPL from default set: $rpl")
-          if $self->can('log');
-      }
-    }
+has 'use_core_only' => (
+  is  => 'rwp',
+  isa => Bool,
+  
+  default => sub { 0 },
+
+  trigger => sub {
+    my ($self, $val) = @_;
+
+    $self->_set_use_core(1) if $val;
+  },
+);
+
+## Public:
+has 'rpls' => (
+  lazy => 1,
+  
+  is  => 'rwp',
+  isa => HashRef,
+  
+  builder => '_build_rpls_hash',
+);
+
+has 'spec' => (
+  is  => 'rwp',
+  isa => Int,
+
+  default => sub { 0 },
+);
+
+## Private:
+has '_full_lang_path' => (
+  lazy => 1,
+  
+  is  => 'ro',
+  isa => Str,
+  
+  builder => '_build_full_lang_path',
+);
+
+has '_core_set' => (
+  lazy => 1,
+  
+  is  => 'ro',
+  isa => HashRef,
+  
+  builder => '_build_core_set',
+);
+
+
+sub BUILD {
+  my ($self) = @_;
+
+  unless ( $self->use_core_only ) {
+    die "Need either a lang_dir or an absolute path"
+      unless $self->has_absolute_path or $self->has_lang_dir;
   }
 
-  ## FIXME langset validation ?
-
-  unless (scalar keys %{ $langset->{RPL} }) {
-    $self->send_event( 'langset_error', "empty langset? $lang ($path)" )
-      if $self->can('send_event');
-
-    $self->log->warn("empty language set? no keys for $lang ($path)")
-      if $self->can('log');
-    return { }
-  }
-
-  $self->send_event( 'langset_loaded', lc($lang), $path )
-    if $self->can('send_event');
-
-  return $langset->{RPL}
+  ## Load/validate rpls() at construction time.
+  $self->rpls;
 }
 
-### this module will have a langset appended at build-time ###
+sub _build_full_lang_path {
+  my ($self) = @_;
 
+  return $self->absolute_path if $self->has_absolute_path;
+  
+  my $file_path = $self->lang . ".yml" ;
+
+  File::Spec->catfile(
+    File::Spec->splitdir($self->lang_dir),
+    $file_path
+  )
+}
+
+sub _build_core_set {
+  my ($self) = @_;
+  
+  my $core_set_yaml =
+    $Bot::Cobalt::Lang::BUILTIN_SET 
+     //= do { local $/; <DATA> } ;
+  
+  my $serializer = Bot::Cobalt::Serializer->new;
+  
+  $serializer->thaw( $core_set_yaml )
+}
+
+sub _build_rpls_hash {
+  my ($self) = @_;
+
+  my $rpl_hash;
+
+  ## Core (built-in) load; shallow copy:
+  $rpl_hash = \%{ $self->_core_set->{RPL} }
+    if $self->use_core;
+
+  if ( $self->use_core_only ) {
+    $self->_set_spec( $self->_core_set->{SPEC} );
+    return $rpl_hash
+  }
+
+  my $serializer = Bot::Cobalt::Serializer->new;
+  
+  my $croakable;
+  
+  my $loaded_set = try {
+    $serializer->readfile( $self->_full_lang_path )
+  } catch {
+    ## croak() by default.
+    ## If this is a core set load, return empty hash.
+    if ( !$self->use_core ) {
+      $croakable = "readfile() failure for ". $self->lang().
+        "(". $self->_full_lang_path(). "): ".
+        $_ ;
+      0
+    } else {
+      carp "Language load failure for ".$self->lang.": $_\n";
+      { RPL => {} }
+    }
+  } or croak $croakable;
+
+  if ( $self->use_core ) {
+    my $rev_for_loaded  = $loaded_set->{SPEC}      // 0;
+    my $rev_for_builtin = $self->_core_set->{SPEC} // 0;
+
+    if ($rev_for_builtin > $rev_for_loaded) {
+      warn("Appear to be loading a core language set, but the internal",
+        " set has a higher SPEC number than the loaded set",
+        " ($rev_for_builtin > $rev_for_loaded).\n",
+        " You may want to update language sets.\n",
+      );
+    }
+
+  }
+  
+  my $loaded_rpl_hash = $loaded_set->{RPL};
+
+  confess "Language set loaded but no RPL hash found"
+    unless ref $loaded_rpl_hash eq 'HASH';
+
+  $self->_set_spec( $loaded_set->{SPEC} );
+  
+  @{$rpl_hash}{ keys(%$loaded_rpl_hash) }
+    = @{$loaded_set->{RPL}}{ keys(%$loaded_rpl_hash) } ;
+
+  $rpl_hash
+}
+
+### this module will have a langset appended at build-time
 1;
 __DATA__

@@ -14,6 +14,7 @@ use POE;
 
 use Bot::Cobalt::Common;
 use Bot::Cobalt::IRC;
+use Bot::Cobalt::Lang;
 
 use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
@@ -110,9 +111,45 @@ has 'url' => (
   default => sub { "http://www.metacpan.org/dist/Bot-Cobalt" },
 );
 
+has 'langset' => (
+  lazy => 1,
+  
+  is  => 'ro',
+  isa => sub {
+    die "langset() needs a Bot::Cobalt::Lang"
+      unless blessed $_[0] && $_[0]->isa('Bot::Cobalt::Lang');
+  },
+
+  writer  => 'set_langset',
+  
+  default => sub {
+    my ($self) = @_;
+
+    my $language = $self->cfg->{core}->{Language} // 'english';
+    
+    my $lang_dir = File::Spec->catdir( $self->etc, 'langs' );
+    
+    Bot::Cobalt::Lang->new(
+      use_core => 1,
+      
+      lang_dir => $lang_dir,
+      lang     => $language,
+    )
+  },
+);
+
 has 'lang' => ( 
-  is => 'rw', 
-  isa => HashRef
+  lazy => 1,
+
+  is  => 'ro',
+  isa => HashRef,
+  
+  writer  => 'set_lang',
+  
+  default => sub {
+    my ($self) = @_;
+    $self->langset->rpls
+  }, 
 );
 
 has 'State' => (
@@ -195,13 +232,12 @@ has 'resolver' => (
 
 extends 'POE::Component::Syndicator';
 
-with 'Bot::Cobalt::Lang';
 with 'Bot::Cobalt::Core::Role::Singleton';
 with 'Bot::Cobalt::Core::Role::EasyAccessors';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
-## FIXME document/test:
+## FIXME test needed:
 sub rpl  {
   my ($self, $rpl) = splice @_, 0, 2;
 
@@ -247,9 +283,8 @@ sub init {
     );
   }
 
-  ## Load configured langset (defaults to english)
-  my $language = ($self->cfg->{core}->{Language} //= 'english');
-  $self->lang( $self->load_langset($language) );
+  ## Language set check. Force attrib fill.
+  $self->lang;
 
   $self->_syndicator_init(
     prefix => 'ev_',  ## event prefix for sessions
