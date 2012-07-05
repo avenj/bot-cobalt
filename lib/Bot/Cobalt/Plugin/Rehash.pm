@@ -120,7 +120,7 @@ sub Bot_public_cmd_rehash {
       my $lang = $msg->message_array->[1];
       
       try {
-        $self->_rehash_langset($lang)
+        $self->_rehash_langset($lang);
         $resp = "Reloaded core language set ($lang)";
       } catch {
         $resp = "Rehash failure: $_"
