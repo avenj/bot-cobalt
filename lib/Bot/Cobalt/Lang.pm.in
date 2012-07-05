@@ -31,14 +31,8 @@ has 'lang_dir' => (
 has 'lang' => (
   required => 1,
   
-  is  => 'rw',
+  is  => 'rwp',
   isa => Str,
-  
-  trigger => sub {
-    my ($self) = @_;
-
-    $self->_set_rpls( $self->_build_rpl_hash )
-  },
 );
 
 has 'use_core' => (
