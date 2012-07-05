@@ -200,8 +200,8 @@ sub readfile {
 
   if (!$path) {
     confess "readfile called without path argument";
-  } elsif (!-r $path || -d $path ) {
-    confess "readfile called on unreadable file $path";
+  } elsif (!-e $path ) {
+    confess "readfile called on nonexistant file $path";
   }
   
   my $data = $self->_read_serialized($path, $opts);

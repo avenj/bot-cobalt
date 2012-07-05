@@ -77,8 +77,8 @@ sub join {
 }
 
 
-1
-
+1;
+__END__
 =pod
 
 =head1 NAME

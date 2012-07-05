@@ -225,6 +225,7 @@ sub _rehash_langset {
 
   my $lang = $langset || $newcfg->{core}->{Language} || 'english' ;
 
+  ## FIXME new Cobalt::Lang interface
   my $new_rpl = core()->load_langset($lang);
   
   unless ($new_rpl && ref $new_rpl eq 'HASH') {

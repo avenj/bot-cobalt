@@ -21,18 +21,12 @@ use File::Spec;
 use Try::Tiny;
 
 
-has 'use_core' => (
-  is  => 'rwp',
-  isa => Bool,
-  
-  default => sub { 0 },
-);
-
+## Configurable:
 has 'lang_dir' => (
   required => 1,
-  
+
   is  => 'rwp',
-  isa => Str,  
+  isa => Str,
 );
 
 has 'lang' => (
@@ -48,15 +42,14 @@ has 'lang' => (
   },
 );
 
-has '_full_lang_path' => (
-  lazy => 1,
+has 'use_core' => (
+  is  => 'rwp',
+  isa => Bool,
   
-  is  => 'ro',
-  isa => Str,
-  
-  builder => '_build_full_lang_path',
+  default => sub { 0 },
 );
 
+## Public:
 has 'rpls' => (
   lazy => 1,
   
@@ -64,6 +57,16 @@ has 'rpls' => (
   isa => HashRef,
   
   builder => '_build_rpl_hash',
+);
+
+## Private:
+has '_full_lang_path' => (
+  lazy => 1,
+  
+  is  => 'ro',
+  isa => Str,
+  
+  builder => '_build_full_lang_path',
 );
 
 has '_core_set' => (
@@ -80,10 +83,8 @@ sub _build_full_lang_path {
   
   my $file_path = $self->lang . ".yml" ;
 
-  my @dirs = File::Spec->splitdir( $self->lang_dir );
-
   File::Spec->catfile(
-    @dirs,
+    $self->lang_dir,
     $file_path
   )
 }
@@ -99,21 +100,23 @@ sub _build_rpl_hash {
 
   my $serializer = Bot::Cobalt::Serializer->new;
   
+  my $croakable;
+  
   my $loaded_set = try {
     $serializer->readfile( $self->_full_lang_path )
   } catch {
     ## croak() by default.
     ## If this is a core set load, return empty hash.
-    unless ( $self->use_core ) {
-      croak "readfile() failure for ", $self->lang,
+    if ( !$self->use_core ) {
+      $croakable = "readfile() failure for ", $self->lang,
         "(", $self->_full_lang_path, "): ",
-        $_
+        $_ ;
+      0
+    } else {
+      carp "Language load failure for ".$self->lang.": $_\n";
+      { RPL => {} }
     }
-
-    carp "Language load failure for ".$self->lang.": $_\n";
-
-    { RPL => {} }
-  };
+  } or croak $croakable;
 
   if ( $self->use_core ) {
     my $rev_for_loaded  = $loaded_set->{SPEC}      // 0;
