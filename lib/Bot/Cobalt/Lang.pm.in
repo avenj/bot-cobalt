@@ -20,7 +20,6 @@ use Bot::Cobalt::Serializer;
 use File::Spec;
 use Try::Tiny;
 
-
 ## Configurable:
 has 'lang_dir' => (
   required => 1,
@@ -73,7 +72,7 @@ has '_core_set' => (
   lazy => 1,
   
   is  => 'ro',
-  isa => 'HashRef',
+  isa => HashRef,
   
   builder => '_build_core_set',
 );
