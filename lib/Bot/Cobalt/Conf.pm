@@ -116,8 +116,8 @@ sub _read_core_channels_conf {
 
     CHAN: for my $channel (keys %$ctxt_cfg) {
       unless (ref $ctxt_cfg->{$channel} eq 'HASH') {
-        warn "Conf; channels.conf; ",
-          "cfg for $channel on $context is not a hash\n";
+#        warn "Conf; channels.conf; ",
+#          "cfg for $channel on $context is not a hash\n";
         $ctxt_cfg->{$channel} = {};
       }
     } ## CHAN
