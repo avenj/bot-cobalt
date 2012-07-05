@@ -4,40 +4,71 @@ use 5.12.1;
 use strictures 1;
 
 use overload
+  bool     => sub { 1 },
   '""'     => sub { shift->string },
   fallback => 1;
 
+use Devel::StackTrace;
+
+sub TRACE () { 0 }
+sub ARRAY () { 1 }
+
 sub new {
   my $class = shift;
-  bless [ @_ ], ref $class || $class
+
+  my $trace = Devel::StackTrace->new(
+    ignore_class => 'Bot::Cobalt::Error',
+    no_refs => 1,
+  );
+
+  bless [
+    $trace,    ## TRACE
+    [ @_ ],    ## ARRAY
+  ], ref $class || $class
+}
+
+sub trace {
+  my ($self) = @_;
+  $self->[TRACE]
+}
+
+sub _set_trace {
+  my ($self, $trace) = @_;
+  $self->[TRACE] = $trace;
+  $self
+}
+
+sub throw {
+  my ($self) = @_;
+  die $self
 }
 
 sub string {
   my ($self) = @_;
-  join '', map { "$_" } @$self
+  join '', map { "$_" } @{ $self->[ARRAY] }
 }
 
 sub push {
   my $self = shift;
-  push @$self, @_;
+  push @{ $self->[ARRAY] }, @_;
   $self
 }
 
 sub unshift {
   my $self = shift;
-  unshift @$self, @_;
+  unshift @{ $self->[ARRAY] }, @_;
   $self
 }
 
 sub slice {
   my $self = shift;
-  $self->new(@$self[@_])
+  $self->new( @{ $self->[ARRAY] }[@_] )
 }
 
 sub join {
   my ($self, $delim) = @_;
   $delim //= ' ';
-  $self->new( join($delim, map { "$_" } @$self) )
+  $self->new( join($delim, map { "$_" } @{ $self->[ARRAY] }) )
 }
 
 
@@ -90,7 +121,10 @@ A lightweight exception object for L<Bot::Cobalt>.
 
 B<new()> takes a list of messages used to compose an error string.
 
-These objects stringify to the stored errors.
+The objects stringify to the stored errors.
+
+A L<Devel::StackTrace> instance is created at construction time; it is 
+accessible via L</trace>.
 
 =head2 string
 
@@ -109,13 +143,6 @@ stored list of errors with the specified expression.
 Defaults to joining with a single space. Does not modify the existing 
 object.
 
-=head2 slice
-
-  $error = $error->slice(0 .. 2);
-
-Returns a new object whose elements are as specified. Does not modify 
-the existing object.
-
 =head2 push
 
   $error = $error->push(@errors);
@@ -123,6 +150,20 @@ the existing object.
 Appends the specified list to the existing array of errors.
 
 Modifies and returns the existing object.
+
+=head2 slice
+
+  $error = $error->slice(0 .. 2);
+
+Returns a new object whose elements are as specified. Does not modify 
+the existing object.
+
+=head2 trace
+
+  ## Stack trace as string:
+  warn $error->trace->as_string;
+
+A L<Devel::StackTrace> instance; see L<Devel::StackTrace>.
 
 =head2 unshift
 

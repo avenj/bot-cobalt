@@ -1,4 +1,4 @@
-use Test::More tests => 16;
+use Test::More tests => 17;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -22,6 +22,7 @@ cmp_ok( $obj, 'eq', 'There are someerrors here' );
 isa_ok( $obj->join, 'Bot::Cobalt::Error' );
 cmp_ok( $obj->join, 'eq', 'There are some errors here' );
 
+isa_ok( $obj->trace, 'Devel::StackTrace' );
 
 $obj = new_ok( 'Bot::Cobalt::Error' );
 
