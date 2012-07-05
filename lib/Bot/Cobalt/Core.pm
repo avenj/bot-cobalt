@@ -114,11 +114,13 @@ has 'url' => (
 has 'langset' => (
   lazy => 1,
   
-  is  => 'rwp',
+  is  => 'ro',
   isa => sub {
     die "langset() needs a Bot::Cobalt::Lang"
       unless blessed $_[0] && $_[0]->isa('Bot::Cobalt::Lang');
   },
+
+  writer  => 'set_langset',
   
   default => sub {
     my ($self) = @_;
@@ -139,12 +141,13 @@ has 'langset' => (
 has 'lang' => ( 
   lazy => 1,
 
-  is  => 'rwp', 
+  is  => 'ro',
   isa => HashRef,
+  
+  writer  => 'set_lang',
   
   default => sub {
     my ($self) = @_;
-
     $self->langset->rpls
   }, 
 );
@@ -234,7 +237,7 @@ with 'Bot::Cobalt::Core::Role::EasyAccessors';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
 
-## FIXME document/test:
+## FIXME test needed:
 sub rpl  {
   my ($self, $rpl) = splice @_, 0, 2;
 
