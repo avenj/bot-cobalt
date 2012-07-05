@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Sugar;
-our $VERSION = '0.011';
+our $VERSION = '0.012';
 
 use 5.10.1;
 use strictures 1;

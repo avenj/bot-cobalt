@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf;
-our $VERSION = '0.011';
+our $VERSION = '0.012';
 
 ## Bot::Cobalt::Conf
 ## Looks for the following YAML confs:

@@ -1,5 +1,33 @@
 # Bot::Cobalt Changes
 
+
+* 0.012  (05 Jul 2012)
+
+  Add Bot::Cobalt::Error exception objects.
+  Adds Devel::StackTrace as a dependency.
+
+  Convert Plugin::Auth and Plugin::RDB / Plugin::RDB::Database to 
+  make use of Bot::Cobalt::Error.
+
+  Language sets updated to include RDB_ERR_INVALID_NAME
+  (Core lang SPEC numbers bumped to 7.)
+
+  Rewrite Bot::Cobalt::Lang, related tests & documentation.
+
+  Largely refactored Plugin::RDB; various bugfixes, no functionality 
+  changes.
+
+  Provide core()->rpl method as a frontend to rplprintf.
+  Return proper error strings when a specified RPL is missing.
+
+  Provide POE::Component::Client::DNS instance via core()->resolver; 
+  share amongst IRC sessions & Plugin::Extras::DNS to save some 
+  overhead.
+
+  IRC::Server; provide uppercase()/lowercase() methods making use of 
+  available casemap() value.
+
+
 * 0.011  (30 Jun 2012)
 
   Fix conflated incoming/outgoing notice events:

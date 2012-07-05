@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Loader;
-our $VERSION = '0.011';
+our $VERSION = '0.012';
 
 use 5.12.1;
 use strict;

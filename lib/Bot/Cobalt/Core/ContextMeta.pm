@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::ContextMeta;
-our $VERSION = '0.011';
+our $VERSION = '0.012';
 
 ## Base class for context-specific dynamic hashes
 ## (ignores, auth, .. )

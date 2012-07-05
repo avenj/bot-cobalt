@@ -4,7 +4,7 @@ use strict; use warnings;
 use Try::Tiny;
 use Fcntl qw/:flock/;
 use File::Spec;
-use File::Temp qw/ tempfile tempdir /;
+use File::Temp qw/ tempdir /;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Core' );

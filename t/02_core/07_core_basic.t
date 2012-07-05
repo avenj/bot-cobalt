@@ -22,6 +22,11 @@ can_ok( 'Bot::Cobalt::Core::Loader',
 
 use Module::Build;
 use File::Spec;
+use File::Temp qw/tempdir/;
+
+my $workdir = File::Spec->tmpdir;
+my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
+
 my $basedir;
 
 use Try::Tiny;
@@ -44,7 +49,7 @@ my $core;
 ok( 
   $core = Bot::Cobalt::Core->instance(
     cfg => $cfg,
-    var => '',
+    var => $tempdir,
   ),
   'instance() a Bot::Cobalt::Core',
 );
