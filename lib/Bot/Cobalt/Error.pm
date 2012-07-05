@@ -13,13 +13,17 @@ use Devel::StackTrace;
 sub TRACE () { 0 }
 sub ARRAY () { 1 }
 
+sub __new_trace {
+  Devel::StackTrace->new(
+    ignore_class => 'Bot::Cobalt::Error',
+    no_refs      => 1,
+  )
+}
+
 sub new {
   my $class = shift;
 
-  my $trace = Devel::StackTrace->new(
-    ignore_class => 'Bot::Cobalt::Error',
-    no_refs => 1,
-  );
+  my $trace = __new_trace();
 
   bless [
     $trace,    ## TRACE
@@ -40,6 +44,7 @@ sub _set_trace {
 
 sub throw {
   my ($self) = @_;
+  $self->_set_trace( __new_trace );
   die $self
 }
 
@@ -157,6 +162,17 @@ Modifies and returns the existing object.
 
 Returns a new object whose elements are as specified. Does not modify 
 the existing object.
+
+=head2 throw
+
+  my $err = Bot::Cobalt::Error->new;
+  $err->push( @errors );
+  $err->throw
+
+Call die() with the current object.
+
+L<Devel::StackTrace> is reinstanced at the point throw() is called (see 
+L</trace>).
 
 =head2 trace
 
