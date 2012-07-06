@@ -1,6 +1,10 @@
 ## TODO
 
-Plugins:
+bin/:
+
+  - langset update tool
+
+::Plugins:
 
   - Plugins::Extras::BanMgr
     Channel ban manager plugin
