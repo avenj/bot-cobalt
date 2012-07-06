@@ -1304,7 +1304,6 @@ Search for a specified glob in RDB 'main' (randstuffs):
 
 See L<Bot::Cobalt::Utils/glob_to_re_str> for details regarding glob syntax.
 
-
 =head2 randstuff
 
 Add a new "randstuff" to the 'main' RDB
@@ -1366,7 +1365,8 @@ B<< Opts->AllowDelete >> directive.
   rdb search <rdb> <glob>
 
 Search within a specific RDB. Returns a single random response from the 
-result set.
+result set. Also see L</randq> and L<Bot::Cobalt::Utils/glob_to_re_str> 
+for more details on search syntax.
 
 =head3 rdb searchidx
 

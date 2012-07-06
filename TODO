@@ -1,5 +1,9 @@
 ## TODO
 
+Needs testing:
+  - Dynamic context add / rehash / !server connect
+  - !server disconnect
+
 bin/:
 
   - langset update tool
