@@ -1,6 +1,8 @@
 use Test::More tests => 28;
 use strict; use warnings;
 
+## FIXME needs to be converted to new Bot::Cobalt::Conf interface
+
 BEGIN {
   use_ok( 'Bot::Cobalt::Common' );
   use_ok( 'Bot::Cobalt::Conf' );

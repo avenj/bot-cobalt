@@ -32,7 +32,7 @@ my $conf = new_ok( 'Bot::Cobalt::Conf' => [
 ## path_to_plugins_cf
 for my $type (qw/ core_cf channels_cf plugins_cf /) {
   my $meth = 'path_to_'.$type;
-  ok( $conf->$meth, "attrib $_" )
+  ok( $conf->$meth, "attrib $type" )
 }
 
 

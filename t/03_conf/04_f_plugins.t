@@ -73,3 +73,5 @@ ok( $plugcf->plugin('IRC')->priority, "priority()" );
 ok( $plugcf->plugin('IRC')->config_file, "config_file()" );
 ### ->autoload()  (default true unless NoAutoLoad)
 ok( $plugcf->plugin('IRC')->autoload, "autoload()" );
+
+## FIXME expand to cover most use cases
