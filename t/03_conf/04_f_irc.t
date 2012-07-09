@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 16;
 use strict; use warnings;
 
 
@@ -47,6 +47,20 @@ ok( ref $irccf->list_contexts eq 'ARRAY', 'list_contexts() isa ARRAY' );
 
 ok( ref $irccf->context('Main') eq 'HASH', 'context(MAIN) isa HASH' );
 
-ok( $irccf->context('Main')->{Nickname}, 'context(MAIN) has Nickname' );
-ok( $irccf->context('Main')->{Username}, 'context(MAIN) has Username' );
-ok( $irccf->context('Main')->{Realname}, 'context(MAIN) has Realname' );
+my @expect = qw/
+  Nickname
+  Username
+  Realname
+  
+  ServerAddr
+  
+  ServerPort
+  
+  UseSSL
+  
+  CmdChar
+  
+  NotifyOnSync
+/;
+ok( defined $irccf->context('Main')->{$_}, "context(MAIN) has $_" )
+  for @expect;

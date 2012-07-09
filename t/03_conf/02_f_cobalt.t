@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 8;
 use strict; use warnings;
 
 
@@ -34,8 +34,8 @@ ok( $corecf->validate, 'validate()' );
 
 is( $corecf->language, 'english', 'language()' );
 
-## Test if irc() element is a hash.
-## IRC config instance will need this also.
 ok( ref $corecfg->irc eq 'HASH', 'irc() isa HASH' );
 
 ok( ref $corecfg->opts eq 'HASH', 'opts() isa HASH' );
+
+ok( ref $corecfg->paths eq 'HASH', 'paths() isa HASH' );
