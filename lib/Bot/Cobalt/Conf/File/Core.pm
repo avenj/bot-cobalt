@@ -64,7 +64,7 @@ around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
 
   ## FIXME
-  
+
   1
 };
 
