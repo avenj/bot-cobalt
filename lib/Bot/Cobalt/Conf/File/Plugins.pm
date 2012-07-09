@@ -12,11 +12,21 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Bot::Cobalt::Conf::File::PerPlugin;
 
+use File::Spec;
+
 
 extends 'Bot::Cobalt::Conf::File';
 
 
-has '_per_plug_objs => (
+has 'etcdir' => (
+  required => 1,
+  
+  is  => 'rwp',
+  isa => Str,
+);
+
+
+has '_per_plug_objs' => (
   lazy => 1,
   
   is  => 'ro',
@@ -30,10 +40,12 @@ sub _build_per_plugin_objs {
   my ($self) = @_;
   
   ##  Create PerPlugin cf objs for each plugin
+  my $plugin_objs = {};
   for my $alias (keys %{ $self->cfg_as_hash }) {
-    ## FIXME _create_perplugin_obj
+    $plugin_objs->{$alias} = $self->_create_perplugin_obj($alias);
   }
 
+  $plugin_objs
 }
 
 sub _create_perplugin_obj {
@@ -46,9 +58,18 @@ sub _create_perplugin_obj {
 
   $new_opts{module} = $this_cfg->{Module}
     || confess "No Module defined for plugin $alias";
-  
-  $new_opts{config_file} = $this_cfg->{Config}
-    if defined $this_cfg->{Config};
+
+  if (defined $this_cfg->{Config}) {
+    my $this_cf_path = $this_cfg->{Config};
+    unless ( File::Spec->file_name_is_absolute( $this_cf_path ) ) {
+      $this_cf_path = File::Spec->catfile( 
+        $self->etcdir,
+        $this_cf_path 
+      )
+    }
+
+    $new_opts{config_file} = $this_cf_path  
+  }  
 
   $new_opts{autoload} = 0
     if $this_cfg->{NoAutoLoad};
