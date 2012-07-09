@@ -12,10 +12,6 @@ use Bot::Cobalt::Serializer;
 
 use Try::Tiny;
 
-
-with 'Bot::Cobalt::Conf::Role::Reader';
-
-
 has 'path' => (
   required => 1,
 
@@ -31,6 +27,9 @@ has 'cfg_as_hash' => (
   
   builder => '_build_cfg_hash',
 );
+
+
+with 'Bot::Cobalt::Conf::Role::Reader';
 
 
 sub _build_cfg_hash {

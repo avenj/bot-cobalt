@@ -10,7 +10,7 @@ use Bot::Cobalt::Common qw/:types/;
 use Scalar::Util qw/blessed/;
 
 
-extends 'Bot::Cobalt::Conf::File';
+with 'Bot::Cobalt::Conf::Role::Reader';
 
 
 has 'extra_opts' => (
