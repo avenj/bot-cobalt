@@ -12,6 +12,10 @@ use Bot::Cobalt::Serializer;
 
 use Try::Tiny;
 
+
+with 'Bot::Cobalt::Conf::Role::Reader';
+
+
 has 'path' => (
   required => 1,
 
@@ -41,23 +45,6 @@ sub _build_cfg_hash {
   };
   
   $cfg
-}
-
-sub readfile {
-  my ($self, $path) = @_;
-
-  confess "readfile() needs a path to read"
-    unless defined $path;
-  
-  my $thawed_cf;
-  
-  try {
-    $thawed_cf = $self->_serializer->readfile( $path );
-  } catch {
-    croak "Serializer readfile() failed for $path; $_"
-  };
-  
-  $thawed_cf
 }
 
 sub validate {

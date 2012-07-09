@@ -27,3 +27,5 @@ my $cfg_obj = new_ok( 'Bot::Cobalt::Conf::File' => [
 
   ],
 );
+
+## FIXME quick readfile() etc. test
