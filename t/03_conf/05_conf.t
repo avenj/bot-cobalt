@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 8;
 use strict; use warnings;
 
 BEGIN {
@@ -9,6 +9,7 @@ use File::Spec;
 
 my $basedir;
 
+use Module::Build;
 use Try::Tiny;
 try {
   $basedir = Module::Build->current->base_dir
@@ -28,21 +29,20 @@ my $conf = new_ok( 'Bot::Cobalt::Conf' => [
 ### Path attribs:
 ## path_to_core_cf
 ## path_to_channels_cf
-## path_to_irc_cf
 ## path_to_plugins_cf
+for my $type (qw/ core_cf channels_cf plugins_cf /) {
+  my $meth = 'path_to_'.$type;
+  ok( $conf->$meth, "attrib $_" )
+}
 
-ok( $conf->'path_to_'.$_, "attrib $_" )
-  for qw/ core_cf channels_cf irc_cf plugins_cf /;
+
 
 ### Config objects:
 ## ->core
-## ->irc
 ## ->channels
 ## ->plugins
 
 isa_ok( $conf->core, 'Bot::Cobalt::Conf::File::Core' );
-
-isa_ok( $conf->irc, 'Bot::Cobalt::Conf::File::IRC' );
 
 isa_ok( $conf->channels, 'Bot::Cobalt::Conf::File::Channels' );
 

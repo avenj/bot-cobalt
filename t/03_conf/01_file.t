@@ -1,4 +1,4 @@
-use Test::More tests => 1;
+use Test::More tests => 3;
 use strict; use warnings;
 
 
@@ -24,8 +24,8 @@ try {
 my $etcdir = File::Spec->catdir( $basedir, 'etc' );
 
 my $cfg_obj = new_ok( 'Bot::Cobalt::Conf::File' => [
-
+    path => File::Spec->catfile( $etcdir, 'cobalt.conf' )
   ],
 );
 
-## FIXME quick readfile() etc. test
+ok( ref $cfg_obj->cfg_as_hash eq 'HASH', 'cfg_as_hash isa HASH' );

@@ -1,4 +1,4 @@
-use Test::More tests => 50;
+use Test::More tests => 52;
 use strict; use warnings;
 
 
@@ -21,12 +21,12 @@ try {
     "... are you trying to run the test suite outside of `./Build`?\n",
 };
 
-my $plug_cf_path = File::Spec->catfile( 
-  $basedir, 'etc', 'plugins.conf' 
-);
+my $etcdir = File::Spec->catdir( $basedir, 'etc' );
+my $plug_cf_path = File::Spec->catfile( $etcdir, 'plugins.conf' );
 
 my $plugcf = new_ok( 'Bot::Cobalt::Conf::File::Plugins' => [
-    path => $plug_cf_path,
+    path   => $plug_cf_path,
+    etcdir => $etcdir,    
   ],
 );
 

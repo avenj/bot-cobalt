@@ -34,8 +34,8 @@ ok( $corecf->validate, 'validate()' );
 
 is( $corecf->language, 'english', 'language()' );
 
-ok( ref $corecfg->irc eq 'HASH', 'irc() isa HASH' );
+ok( ref $corecf->irc eq 'HASH', 'irc() isa HASH' );
 
-ok( ref $corecfg->opts eq 'HASH', 'opts() isa HASH' );
+ok( ref $corecf->opts eq 'HASH', 'opts() isa HASH' );
 
-ok( ref $corecfg->paths eq 'HASH', 'paths() isa HASH' );
+ok( ref $corecf->paths eq 'HASH', 'paths() isa HASH' );

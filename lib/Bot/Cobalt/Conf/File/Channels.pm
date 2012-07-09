@@ -8,6 +8,7 @@ use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
+
 extends 'Bot::Cobalt::Conf::File';
 
 
