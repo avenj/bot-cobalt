@@ -96,9 +96,6 @@ sub plugin {
   confess "plugin() requires a plugin alias"
     unless defined $plugin;
 
-  confess "No config loaded for plugin alias $plugin"
-    unless exists $self->_per_plug_objs->{$plugin};
-
   $self->_per_plug_objs->{$plugin}
 }
 
