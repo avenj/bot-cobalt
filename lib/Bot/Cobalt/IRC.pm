@@ -64,9 +64,11 @@ has 'flood' => (
   
   default => sub { 
     my ($self) = @_;
+
     my $ccfg  = core->get_core_cfg;
-    my $count = $ccfg->{Opts}->{FloodCount} || 5;
-    my $secs  = $ccfg->{Opts}->{FloodTime}  || 6;
+    my $count = $ccfg->opts->{FloodCount} || 5;
+    my $secs  = $ccfg->opts->{FloodTime}  || 6;
+
     Bot::Cobalt::IRC::FloodChk->new(
       count => $count,
       in    => $secs,
@@ -117,26 +119,27 @@ sub Cobalt_unregister {
 sub Bot_initialize_irc {
   my ($self, $core) = splice @_, 0, 2;
 
-  my $pcfg = $core->get_plugin_cfg( $self );
-  my $ccfg = $core->get_core_cfg;
-
   ## The IRC: directive in cobalt.conf provides context 'Main'
   ## (This will override any 'Main' specified in multiserv.conf)
-  $pcfg->{Networks}->{Main} = $ccfg->{IRC};
-  
-  if (exists $pcfg->{Networks}->{'-ALL'}) {
+  ## Munge core->irc() hash into our plugin's opts()
+  my $p_cfg = $core->cfg->plugins->plugin( plugin_alias($self) );
+  $p_cfg->opts->{Networks}->{Main}
+    = $core->cfg->core->irc;
+
+  if (exists $p_cfg->opts->{Networks}->{'-ALL'}) {
     ## Reserved by core Auth plugin
     logger->error("-ALL is not a valid context name, disregarding.");
-    delete $pcfg->{Networks}->{'-ALL'}
+
+    delete $p_cfg->opts->{Networks}->{'-ALL'}
   }
 
   my $active_contexts;
-  for my $context (keys %{ $pcfg->{Networks} } ) {
+  for my $context (keys %{ $p_cfg->opts->{Networks} } ) {
     ## Counter is solely to provide an informative error if cfg is fubar:
     ++$active_contexts;
     
-    next if defined $pcfg->{Networks}->{$context}->{Enabled}
-         and $pcfg->{Networks}->{$context}->{Enabled} == 0;
+    next if defined $p_cfg->opts->{Networks}->{$context}->{Enabled}
+         and $p_cfg->opts->{Networks}->{$context}->{Enabled} == 0;
 
     logger->debug("Found configured context $context");
 
@@ -178,9 +181,8 @@ sub Bot_ircplug_connect {
 
   logger->debug("ircplug_connect issued for $context");
   
-  my $pcfg = core->get_plugin_cfg( $self );
-  
-  my $thiscfg = $pcfg->{Networks}->{$context};
+  my $pcfg    = core->cfg->plugins->plugin( plugin_alias($self) );
+  my $thiscfg = $pcfg->opts->{Networks}->{$context};
   
   unless (ref $thiscfg eq 'HASH' && keys %$thiscfg) {
     logger->error("Connect issued for context without valid cfg ($context)");
@@ -331,15 +333,15 @@ sub _start {
   my $irc     = $self->ircobjs->{$context};
 
   my $ccfg = core->get_core_cfg;
-  my $pcfg = core->get_plugin_cfg($self);
+  my $pcfg = core->cfg->plugins->plugin( plugin_alias($self) );
 
   logger->debug("pocoirc plugin load");
 
   ## autoreconn plugin:
   my %connector;
 
-  $connector{delay}     = $ccfg->{Opts}->{StonedCheck}    || 300;
-  $connector{reconnect} = $ccfg->{Opts}->{ReconnectDelay} || 60;
+  $connector{delay}     = $ccfg->opts->{StonedCheck}    || 300;
+  $connector{reconnect} = $ccfg->opts->{ReconnectDelay} || 60;
 
   $irc->plugin_add('Connector' =>
     POE::Component::IRC::Plugin::Connector->new(
@@ -350,20 +352,20 @@ sub _start {
   ## attempt to regain primary nickname:
   $irc->plugin_add('NickReclaim' =>
     POE::Component::IRC::Plugin::NickReclaim->new(
-        poll => $ccfg->{Opts}->{NickRegainDelay} // 30,
+        poll => $ccfg->opts->{NickRegainDelay} // 30,
       ), 
     );
 
-  if (defined $pcfg->{Networks}->{$context}->{NickServPass}) {
+  if (defined $pcfg->opts->{Networks}->{$context}->{NickServPass}) {
     logger->debug("Adding NickServ ID for $context");
     $irc->plugin_add('NickServID' =>
       POE::Component::IRC::Plugin::NickServID->new(
-        Password => $pcfg->{Networks}->{$context}->{NickServPass},
+        Password => $pcfg->opts->{Networks}->{$context}->{NickServPass},
       ),
     );
   }
 
-  my $chanhash = core->get_channels_cfg($context);
+  my $chanhash = core->cfg->channels->context($context) // {};
   ## AutoJoin plugin takes a hash in form of { $channel => $passwd }:
   my %ajoin;
   for my $chan (%$chanhash) {
@@ -374,10 +376,10 @@ sub _start {
   $irc->plugin_add('AutoJoin' =>
     POE::Component::IRC::Plugin::AutoJoin->new(
       Channels     => \%ajoin,
-      RejoinOnKick => $ccfg->{Opts}->{Chan_RetryAfterKick} // 1,
-      Rejoin_delay => $ccfg->{Opts}->{Chan_RejoinDelay}    // 5,
-      NickServ_delay    => $ccfg->{Opts}->{Chan_NickServDelay} // 1,
-      Retry_when_banned => $ccfg->{Opts}->{Chan_RetryAfterBan} // 60,
+      RejoinOnKick => $ccfg->opts->{Chan_RetryAfterKick} // 1,
+      Rejoin_delay => $ccfg->opts->{Chan_RejoinDelay}    // 5,
+      NickServ_delay    => $ccfg->opts->{Chan_NickServDelay} // 1,
+      Retry_when_banned => $ccfg->opts->{Chan_RetryAfterBan} // 60,
     ),
   );
 
@@ -395,6 +397,7 @@ sub _start {
   $irc->yield(register => 'all');
   ## initiate ze connection:
   $irc->yield(connect => {});
+
   logger->debug("irc component connect issued");
 }
 
@@ -520,10 +523,9 @@ sub irc_chan_sync {
 
   ## on if cobalt.conf->Opts->NotifyOnSync is true or not specified:
   my $cf_core = core->get_core_cfg();
-  my $notify = 
-    ($cf_core->{Opts}->{NotifyOnSync} //= 1) ? 1 : 0;
+  my $notify  = ($cf_core->opts->{NotifyOnSync} //= 1) ? 1 : 0 ;
 
-  my $chan_h = core->get_channels_cfg( $context ) || {};
+  my $chan_h = core->cfg->channels->context( $context ) || {};
 
   ## check if we have a specific setting for this channel (override):
   $notify = $chan_h->{$chan}->{notify_on_sync}
@@ -906,7 +908,7 @@ sub flood_ignore {
   my ($self, $context, $mask) = @_;
   
   my $corecf = core->get_core_cfg;
-  my $ignore_time = $corecf->{Opts}->{FloodIgnore} || 20;
+  my $ignore_time = $corecf->opts->{FloodIgnore} || 20;
   
   $self->flood->clear($context, $mask);
   
@@ -935,9 +937,10 @@ sub _reset_ajoins {
   my $servers = core->Servers;
   
   CONTEXT: for my $context (keys %$servers) {
-    my $chanscf = core->get_channels_cfg($context);
+    my $chanscf = core->get_channels_cfg($context) // {};
     
     my $irc = core->get_irc_obj($context) || next CONTEXT;
+
     my %ajoin;
 
     CHAN: for my $channel (keys %$chanscf) {
@@ -952,10 +955,10 @@ sub _reset_ajoins {
     $irc->plugin_add('AutoJoin' =>
       POE::Component::IRC::Plugin::AutoJoin->new(
         Channels => \%ajoin,
-        RejoinOnKick => $corecf->{Opts}->{Chan_RetryAfterKick} // 1,
-        Rejoin_delay => $corecf->{Opts}->{Chan_RejoinDelay}    // 5,
-        NickServ_delay    => $corecf->{Opts}->{Chan_NickServDelay} // 1,
-        Retry_when_banned => $corecf->{Opts}->{Chan_RetryAfterBan} // 60,
+        RejoinOnKick => $corecf->opts->{Chan_RetryAfterKick} // 1,
+        Rejoin_delay => $corecf->opts->{Chan_RejoinDelay}    // 5,
+        NickServ_delay    => $corecf->opts->{Chan_NickServDelay} // 1,
+        Retry_when_banned => $corecf->opts->{Chan_RetryAfterBan} // 60,
       ),
     );
  

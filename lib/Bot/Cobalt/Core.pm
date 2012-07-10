@@ -27,11 +27,14 @@ use Try::Tiny;
 
 use File::Spec;
 
-has 'cfg' => ( 
-  ## usually a hashref from Bot::Cobalt::Conf created via frontend
+has 'cfg' => (
   required => 1,
+
   is  => 'rw', 
-  isa => HashRef,
+  isa => sub {
+    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf')
+      or die "cfg() attrib should be a Bot::Cobalt::Conf"
+  },
 );
 
 has 'var' => (
@@ -42,11 +45,16 @@ has 'var' => (
 );
 
 has 'etc' => (
+  ## Convenience method for getting our etc/ path:
   lazy => 1,
+
   is  => 'ro',
   isa => Str, 
 
-  default => sub { $_[0]->cfg->{path} }
+  default => sub {
+    my ($self) = @_;
+    $self->cfg->etc
+  },
 );
 
 has 'log'      => ( 
@@ -125,7 +133,7 @@ has 'langset' => (
   default => sub {
     my ($self) = @_;
 
-    my $language = $self->cfg->{core}->{Language} // 'english';
+    my $language = $self->cfg->core->language;
     
     my $lang_dir = File::Spec->catdir( $self->etc, 'langs' );
     
@@ -255,7 +263,7 @@ sub init {
 
   my $maxlevel = $self->debug ? 'debug' : $self->loglevel ;
 
-  my $logfile  = $self->cfg->{core}->{Paths}->{Logfile}
+  my $logfile  = $self->cfg->core->paths->{Logfile}
                 // File::Spec->catfile( $self->var, 'cobalt.log' );
 
   $self->log->add(
@@ -315,29 +323,28 @@ sub syndicator_started {
   $kernel->sig('TERM' => 'shutdown');
   $kernel->sig('HUP'  => 'sighup');
 
-  $self->log->info(''.__PACKAGE__.' '.$self->version);
+  $self->log->info(__PACKAGE__.' '.$self->version);
  
   $self->log->info("--> Initializing plugins . . .");
-  
-  my $i = 0;
+
+  my $i;
   my @plugins = sort {
-    ($self->cfg->{plugins}->{$b}->{Priority}//1)
+    $self->cfg->plugins->plugin($b)->priority
     <=>
-    ($self->cfg->{plugins}->{$a}->{Priority}//1)
-                } keys %{ $self->cfg->{plugins} };
+    $self->cfg->plugins->plugin($a)->priority
+  } @{ $self->cfg->plugins->list_plugins };
 
   PLUGIN: for my $plugin (@plugins)
   {
-    my $this_plug_cf = $self->cfg->{plugins}->{$plugin};
+    my $this_plug_cf = $self->cfg->plugins->plugin($plugin);
 
-    my $module = $this_plug_cf->{Module};
+    my $module = $this_plug_cf->module;
+
+    unless ( $this_plug_cf->autoload ) {
+      $self->log->debug("Skipping $plugin - NoAutoLoad is true");
     
-    unless (defined $module) {
-      $self->log->error("Missing Module directive for $plugin");
       next PLUGIN
     }
-
-    next PLUGIN if $this_plug_cf->{NoAutoLoad};
     
     my $obj;
     try {
@@ -347,7 +354,6 @@ sub syndicator_started {
         $self->State->{NonReloadable}->{$plugin} = 1;
         $self->log->debug("$plugin marked non-reloadable");
       }
-
     } catch {
       $self->log->error("Load failure; $_");
 
@@ -367,7 +373,7 @@ sub syndicator_started {
       next PLUGIN
     }
 
-    $i++;
+    ++$i;
   }
 
   $self->log->info("-> $i plugins loaded");
@@ -531,28 +537,26 @@ L<Bot::Cobalt::Core::Role::IRC>
 
 L<Bot::Cobalt::Core::Role::Timers>
 
-
 =back
 
 =head1 Custom frontends
 
-It's actually possible to write custom frontends to spawn a Cobalt 
+It's trivially possible to write custom frontends to spawn a Cobalt 
 instance; Bot::Cobalt::Core just needs to be initialized with a valid 
-configuration hash and spawned via L<POE::Kernel>'s run() method.
+configuration object and spawned via L<POE::Kernel>'s run() method.
 
-A configuration hash is typically created by L<Bot::Cobalt::Conf>:
+A configuration object is an instanced L<Bot::Cobalt::Conf>:
 
-  my $cconf = Bot::Cobalt::Conf->new(
+  my $cconf_obj = Bot::Cobalt::Conf->new(
     etc => $path_to_etc_dir,
   );
-  my $cfg_hash = $cconf->read_cfg;
 
 . . . then passed to Bot::Cobalt::Core before the POE kernel is started:
 
   ## Instance a Bot::Cobalt::Core singleton
   ## Further instance() calls will return the singleton
   Bot::Cobalt::Core->instance(
-    cfg => $cfg_hash,
+    cfg => $cconf_obj,
     var => $path_to_var_dir,
     
     ## See perldoc Log::Handler regarding log levels:
@@ -561,11 +565,12 @@ A configuration hash is typically created by L<Bot::Cobalt::Conf>:
     ## Debug levels:
     debug => $debug,
     
-    ## Indicate whether or not we're forked to the background:
+    ## Indicate whether or not we're a daemon
+    ## (Changes behavior of logging and signals)
     detached => $detached,
   )->init;
 
-Frontends have to worry about fork()/exec() on their own.
+Frontends have to worry about daemonization on their own.
 
 =head1 AUTHOR
 
