@@ -172,18 +172,6 @@ sub _start_cobalt {
 }
 
 
-sub _dumpcfg {
-  require Bot::Cobalt::Conf;
-  my $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg;
-  require Data::Dumper;
-  no warnings;
-  $Data::Dumper::Sortkeys = 1;
-  $Data::Dumper::Useqq = 1;
-  use warnings;
-  print Data::Dumper::Dumper($cfg);
-  exit 0
-}
-
 say "-> debug ON, overrides loglevel" if $opt_debug;
 ## Bot::Cobalt::Core does this anyway, but just for the validator:
 $loglevel = $opt_debug ? 'debug' : lc $loglevel ;
@@ -220,7 +208,6 @@ if ($basedir) {
 
 _check_dirs();
 _check_cfs();
-_dumpcfg() if $ENV{COBALT_DUMP_CONFIG};
 _start_cobalt();
 
 __END__
@@ -251,9 +238,6 @@ cobalt2 - Bot::Cobalt IRC bot frontend
 
   # Start cobalt2, only log warnings and above
   cobalt2 --loglevel=warn
-
-  # Dump current configuration
-  COBALT_DUMP_CONFIG=1 cobalt2
 
 =head1 DESCRIPTION
 
