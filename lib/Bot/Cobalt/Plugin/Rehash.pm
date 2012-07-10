@@ -64,7 +64,7 @@ sub Bot_public_cmd_rehash {
   my $auth_usr = core->auth->username($context, $nick);
 
   my $pcfg = plugin_cfg($self) || {};
-  my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
+  my $required_lev = $pcfg->{LevelRequired} // 9999;
 
   unless ($auth_lev >= $required_lev) {
     my $resp = core->rpl( q{RPL_NO_ACCESS},

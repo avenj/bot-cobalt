@@ -51,8 +51,7 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
     
   my $pcfg = $core->get_plugin_cfg($self);
-  my $seendb_path = $pcfg->{PluginOpts}->{SeenDB}
-                    || "seen.db" ;
+  my $seendb_path = $pcfg->{SeenDB} || "seen.db" ;
   
   $seendb_path = File::Spec->catfile( $core->var, $seendb_path );
   

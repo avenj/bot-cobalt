@@ -133,7 +133,7 @@ sub Bot_public_cmd_alarmclock {
 
   my $cfg = plugin_cfg( $self );
 
-  my $minlevel = $cfg->{PluginOpts}->{LevelRequired} // 1;
+  my $minlevel = $cfg->{LevelRequired} // 1;
 
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE 

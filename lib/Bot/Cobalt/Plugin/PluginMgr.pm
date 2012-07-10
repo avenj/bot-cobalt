@@ -52,7 +52,7 @@ sub Bot_public_cmd_plugin {
   my $pcfg = core()->get_plugin_cfg( $self );
 
   ## default to superuser-only:
-  my $required_lev = $pcfg->{PluginOpts}->{LevelRequired} // 9999;
+  my $required_lev = $pcfg->{LevelRequired} // 9999;
 
   my $resp;
 

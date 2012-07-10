@@ -52,7 +52,8 @@ sub Bot_public_cmd_cycle {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{Level_joinpart} // 3; 
+
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   ## fail quietly for unauthed users
@@ -77,7 +78,8 @@ sub Bot_public_cmd_join {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{Level_joinpart} // 3; 
+
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -112,7 +114,7 @@ sub Bot_public_cmd_part {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_joinpart} // 3; 
+  my $requiredlev = $pcfg->{Level_joinpart} // 3; 
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -139,7 +141,7 @@ sub Bot_public_cmd_op {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_op} // 3;
+  my $requiredlev = $pcfg->{Level_op} // 3;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -162,7 +164,7 @@ sub Bot_public_cmd_deop {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_op} // 3;
+  my $requiredlev = $pcfg->{Level_op} // 3;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -184,7 +186,7 @@ sub Bot_public_cmd_voice {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_voice} // 2;
+  my $requiredlev = $pcfg->{Level_voice} // 2;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -207,7 +209,7 @@ sub Bot_public_cmd_devoice {
 
   my $pcfg = plugin_cfg($self);
 
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_voice} // 2;
+  my $requiredlev = $pcfg->{Level_voice} // 2;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
@@ -230,7 +232,7 @@ sub Bot_public_cmd_die {
   
   my $pcfg = plugin_cfg($self);
   
-  my $requiredlev = $pcfg->{PluginOpts}->{Level_die} || 9999;
+  my $requiredlev = $pcfg->{Level_die} || 9999;
   my $authed_lev  = $core->auth->level($context, $src_nick);
   
   return PLUGIN_EAT_ALL unless $authed_lev >= $requiredlev;
