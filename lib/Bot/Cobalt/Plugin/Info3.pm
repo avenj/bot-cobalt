@@ -829,7 +829,7 @@ sub _info_format {
   return $str unless ref $irc_obj;
 
   my $ccfg = core->get_core_cfg;
-  my $cmdchar = $ccfg->{Opts}->{CmdChar};
+  my $cmdchar = $ccfg->opts->{CmdChar};
   my @users   = $irc_obj->channel_list($channel) if $channel;
   my $random  = $users[ rand @users ] if @users;
   my $website = core->url;
