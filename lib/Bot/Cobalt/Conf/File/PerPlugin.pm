@@ -39,6 +39,8 @@ has 'priority' => (
   
   writer    => 'set_priority',
   predicate => 'has_priority',
+  
+  default => sub { 1 },
 );
 
 has 'config_file' => (
@@ -87,7 +89,7 @@ sub _build_opts {
       for keys %{ $self->extra_opts };
   }
 
-  $opts_hash 
+  $opts_hash // {}
 }
 
 1;
