@@ -4,59 +4,60 @@ our $VERSION = '0.012';
 use strictures 1;
 use Moo::Role;
 
+use Scalar::Util qw/blessed/;
+use Carp;
+
+
 requires qw/
   cfg
-  log
   PluginObjects
 /;
 
-use Scalar::Util qw/blessed/;
-
-sub get_plugin_alias {
-  my ($self, $plugobj) = @_;
-  return unless blessed $plugobj;
-  my $alias = $self->PluginObjects->{$plugobj} || undef;
-  return $alias
-}
-
-sub get_core_cfg {
-  my ($self) = @_;
-  $self->cfg->{core}
-}
 
 sub get_channels_cfg {
   my ($self, $context) = @_;
-  unless ($context) {
-    $self->log->warn(
-      "get_channels_cfg called with no context at "
-       .join ' ', (caller)[0,2]
-    );
-    return
-  }
+
+  confess "get_channels_cfg expects a server context name"
+    unless defined $context;
+
   ## Returns empty hash if there's no conf for this context
-  my $chcfg = $self->cfg->{channels}->{$context};
-  $chcfg = {} unless $chcfg and ref $chcfg eq 'HASH';
+  my $chcfg = $self->cfg->channels->context($context) || {};
   
   for my $channel (keys %$chcfg) {
     ## Might be an empty string:
     $chcfg->{$channel} = {} unless ref $chcfg->{$channel} eq 'HASH';
   }
   
-  return $chcfg
+  $chcfg
+}
+
+sub get_core_cfg {
+  my ($self) = @_;
+
+  $self->cfg->core
+}
+
+sub get_plugin_alias {
+  my ($self, $plugobj) = @_;
+  confess "get_plugin_alias expects an object" 
+    unless blessed $plugobj;
+  
+  $self->PluginObjects->{$plugobj}
 }
 
 sub get_plugin_cfg {
   my ($self, $plugin) = @_;
   ## my $plugcf = $core->get_plugin_cfg( $self )
-  ## Returns undef if no cfg was found
+
+  confess "get_plugin_cfg expects a plugin alias or loaded object"
+    unless defined $plugin;
 
   my $alias;
 
   if (blessed $plugin) {
-    ## plugin obj (theoretically) specified
-    $alias = $self->PluginObjects->{$plugin};
-    unless ($alias) {
-      $self->log->error("No alias for $plugin");
+    ## plugin obj specified
+    unless ($alias = $self->PluginObjects->{$plugin}) {
+      carp "get_plugin_cfg; No alias for $plugin";
       return
     }
   } else {
@@ -64,20 +65,12 @@ sub get_plugin_cfg {
     $alias = $plugin;
   }
 
-  unless ($alias) {
-    $self->log->error("get_plugin_cfg: no plugin alias");
-    return
-  }
+  my $pcfg_obj = $self->cfg->plugins->plugin($alias);
 
-  ## Return empty hash if there is no loaded config for this alias
-  my $plugin_cf = $self->cfg->{plugin_cf}->{$alias} // return {};
-
-  unless (ref $plugin_cf eq 'HASH') {
-    $self->log->error("get_plugin_cfg; $alias cfg not a HASH");
-    return {}
-  }
-
-  return $plugin_cf
+  return {} unless blessed $pcfg_obj;
+  
+  ## Return opts() hash
+  $pcfg_obj->opts
 }
 
 
@@ -92,13 +85,18 @@ Bot::Cobalt::Core::Role::EasyAccessors - Easy configuration accessors
 
 =head1 SYNOPSIS
 
-  ## Inside a Cobalt plugin
+  ## Inside a Cobalt plugin:
+  
+  # Current plugin alias:
   my $current_alias = $core->get_plugin_alias($self);
 
+  ## Channels hash for specified context:
   my $chan_cf_hash = $core->get_channels_cfg($context);
   
+  ## opts() hash for specified plugin object or alias:
   my $plugin_cf = $core->get_plugin_cfg($self);
   
+  ## Core configuration object (Bot::Cobalt::Conf::File::Core):
   my $core_cf = $core->get_core_cfg;
   
 =head1 DESCRIPTION
@@ -108,31 +106,45 @@ L<Bot::Cobalt::Core>.
 
 You might prefer L<Bot::Cobalt::Core::Sugar> when writing plugins.
 
+=head2 get_channels_cfg
+
+Returns the channel configuration hash for the specified context (or an 
+empty hash).
+
+Same as:
+
+  $core->cfg->channels->context($context) || {};
+
+=head2 get_core_cfg
+
+Returns the core's L<Bot::Cobalt::Conf::File::Core> object.
+
+Same as: 
+
+  $core->cfg->core
+
 =head2 get_plugin_alias
 
 Takes an object (or a stringified object, but this happens 
 automatically) and returns the registered alias for the plugin if it is 
 loaded.
 
-=head2 get_channels_cfg
-
-Returns the channel configuration hash for the specified context.
-
 =head2 get_plugin_cfg
 
-Retrieves the current configuration hash for the specified plugin.
+Retrieves the current 'opts()' configuration hash for the specified 
+plugin (or an empty hash).
 
 Takes either a plugin object (as a reference only) or a plugin alias (as 
 a string).
 
-=head2 get_core_cfg
+Same as:
 
-Returns the 'core' configuration hash.
+  $core->cfg->plugins->plugin(
+    $core->get_plugin_alias($self)
+  );
 
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
-
-L<http://www.cobaltirc.org>
 
 =cut
