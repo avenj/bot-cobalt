@@ -25,6 +25,7 @@ has 'etc'   => (
 );
 
 has 'debug' => (
+  ## FIXME unused in new Conf code at the moment ...
   is  => 'rw', 
   isa => Bool, 
   

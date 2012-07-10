@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 22;
 use strict; use warnings;
 
 use Try::Tiny;
@@ -7,6 +7,7 @@ use File::Spec;
 use File::Temp qw/ tempdir /;
 
 BEGIN {
+  use_ok( 'Bot::Cobalt::Conf' );
   use_ok( 'Bot::Cobalt::Core' );
   use_ok( 'Bot::Cobalt::Plugin::RDB::Database' );
 }
@@ -14,8 +15,24 @@ BEGIN {
 my $workdir = File::Spec->tmpdir;
 my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
 
+my $basedir;
+use Module::Build;
+try {
+  $basedir = Module::Build->current->base_dir;
+} catch {
+  die 
+    "\nFailed to retrieve base_dir() from Module::Build\n",
+    " ... are you trying to run the test suite outside of `./Build`?\n",
+};
+
+my $etcdir = File::Spec->catdir( $basedir, 'etc' );
+my $cfg = new_ok( 'Bot::Cobalt::Conf' => [
+    etc => $etcdir,
+  ],
+);
+
 my $core = Bot::Cobalt::Core->instance(
-  cfg => {},
+  cfg => $cfg,
   var => $tempdir,
 );
 

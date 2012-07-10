@@ -1,17 +1,13 @@
-use Test::More tests => 28;
+use Test::More tests => 27;
 use strict; use warnings;
-
-## FIXME needs to be converted to new Bot::Cobalt::Conf interface
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Common' );
   use_ok( 'Bot::Cobalt::Conf' );
   use_ok( 'Bot::Cobalt::Core' );
-  
   use_ok( 'Bot::Cobalt::Core::Loader' );
 }
 
-can_ok( 'Bot::Cobalt::Conf', 'read_cfg' );
 can_ok( 'Bot::Cobalt::Core', 'init' );
 
 can_ok( 'Bot::Cobalt::Core::Loader',
@@ -40,12 +36,10 @@ try {
 };
 
 my $etcdir  = File::Spec->catdir( $basedir, 'etc' );
-my $cfg;
-ok( 
-  $cfg = Bot::Cobalt::Conf->new(etc => $etcdir)->read_cfg,
-  'read_cfg()'
+my $cfg = new_ok( 'Bot::Cobalt::Conf' => [
+    etc => $etcdir,
+  ],
 );
-ok( ref $cfg eq 'HASH', 'cfg() is a hash' );
 
 my $core;
 ok( 
@@ -102,11 +96,18 @@ can_ok( $core,
 );
 
 ok( $core->get_core_cfg, 'get_core_cfg()' );
+isa_ok( $core->get_core_cfg, 'Bot::Cobalt::Conf::File::Core' );
 
-ok( $core->get_channels_cfg('Main'), 'get_channels_cfg(Main)' );
-ok( $core->get_plugin_cfg('None'), 'get_plugin_cfg(None)' );
+ok( 
+  ref $core->get_channels_cfg('Main') eq 'HASH', 
+  'get_channels_cfg(Main)' 
+);
+ok( 
+  ref $core->get_plugin_cfg('None') eq 'HASH',
+  'get_plugin_cfg(None)' 
+);
 
-ok( !$core->is_connected('Main'), 'is_connected(Main)' );
+ok( !$core->is_connected('Main'),    'is_connected(Main)' );
 ok( !$core->get_irc_context('Main'), 'get_irc_context(Main)' );
-ok( !$core->get_irc_object('Main'), 'get_irc_object(Main)' );
+ok( !$core->get_irc_object('Main'),  'get_irc_object(Main)' );
 ok( !$core->get_irc_casemap('Main'), 'get_irc_casemap(Main)' );
