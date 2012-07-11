@@ -117,3 +117,43 @@ around 'validate' => sub {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Conf::File::Plugins - Bot::Cobalt plugins config
+
+=head1 SYNOPSIS
+
+  my $plugins_cfg = Bot::Cobalt::Conf::File::Plugins->new(
+    etcdir => $path_to_etcdir,
+
+    path => $path_to_plugins_cf,    
+  );
+
+  ## Retrieve array reference of plugin aliases seen:
+  my $plugins_arr = $plugins_cfg->list_plugins;
+
+  ## Retrieve Bot::Cobalt::Conf::File::PerPlugin object:
+  my $this_plugin_cf = $plugins_cfg->plugin( $alias );
+
+=head1 DESCRIPTION
+
+This is the L<Bot::Cobalt::Conf::File> subclass for "plugins.conf" -- its 
+primary purpose is to handle L<Bot::Cobalt::Conf::File::PerPlugin> 
+instances, retrievable via L</plugin>.
+
+The constructor requires a B<etcdir> to be used as a relative base path 
+for plugin-specific configuration files.
+
+=head2 plugin
+
+Returns the L<Bot::Cobalt::Conf::File::PerPlugin> object for the 
+specified plugin alias (or boolean false).
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
