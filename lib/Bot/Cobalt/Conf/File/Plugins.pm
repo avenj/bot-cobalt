@@ -147,6 +147,9 @@ instances, retrievable via L</plugin>.
 The constructor requires a B<etcdir> to be used as a relative base path 
 for plugin-specific configuration files.
 
+(This is a core configuration class; there is generally no need for 
+plugin authors to use these objects directly.)
+
 =head2 plugin
 
 Returns the L<Bot::Cobalt::Conf::File::PerPlugin> object for the 

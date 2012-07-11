@@ -54,6 +54,12 @@ Bot::Cobalt::Conf::File::Channels - Bot::Cobalt channels conf
 
 This is the L<Bot::Cobalt::Conf::File> subclass for "channels.conf."
 
+This is a core configuration class; plugin authors should use 
+B<get_channels_cfg> instead:
+
+  use Bot::Cobalt;
+  my $channels_cfg = core()->get_channels_cfg( $context_name );
+
 =head2 context
 
 The 'context' method takes a context name and returns the relevant hash 

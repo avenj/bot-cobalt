@@ -94,3 +94,52 @@ sub _build_opts {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Conf::File::PerPlugin - Bot::Cobalt plugin configs
+
+=head1 SYNOPSIS
+
+  my $this_plugin_cf = Bot::Cobalt::Conf::File::PerPlugin->new(
+    module => 'Plugin::Module',
+        
+    ## Optional; loads to ->opts attrib:
+    config_file => $path_to_cf_file,
+    
+    ## Optional; overrides config_file settings in ->opts:
+    extra_opts => {
+      LevelRequired => 1,
+    },
+
+    ## Optional; used by Bot::Cobalt::Core    
+    autoload => 1,    
+    priority => 1,
+  );
+
+  my $priority = $this_plugin_cf->priority;
+  
+  my $autoload = $this_plugin_cf->autoload;
+  
+  my $plugin_opts = $this_plugin_cf->opts;
+
+=head1 DESCRIPTION
+
+A plugin-specific configuration.
+
+These objects are usually managed by a 
+L<Bot::Cobalt::Conf::File::Plugins> instance.
+
+This class consumes Bot::Cobalt::Conf::Role::Reader.
+
+(This is a core configuration class; Plugin authors should 'use 
+Bot::Cobalt;' and retrieve the B<opts> attribute via 
+B<plugin_cfg> instead.)
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut

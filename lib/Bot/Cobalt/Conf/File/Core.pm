@@ -108,6 +108,12 @@ Bot::Cobalt::Conf::File::Core - Bot::Cobalt core config
 This is the L<Bot::Cobalt::Conf::File> subclass for "cobalt.conf" (the 
 core L<Bot::Cobalt> configuration file).
 
+From a L<Bot::Cobalt> plugin instance it would normally be accessed 
+something like:
+
+  use Bot::Cobalt;
+  my $core_cfg = core()->get_core_cfg;
+
 =head2 irc
 
 Returns the 'IRC:' directive as a HASH.

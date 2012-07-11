@@ -103,7 +103,7 @@ Bot::Cobalt::Conf::File - Base class for Bot::Cobalt cfg files
 =head1 DESCRIPTION
 
 This is the base class for L<Bot::Cobalt> configuration files.
-It consumes the L<Bot::Cobalt::Conf::Role::Reader> role and loads a 
+It consumes the Bot::Cobalt::Conf::Role::Reader role and loads a 
 configuration hash from a YAML file specified by the required B<path> 
 attribute.
 
