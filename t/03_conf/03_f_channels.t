@@ -1,4 +1,4 @@
-use Test::More tests => 5;
+use Test::More tests => 4;
 use strict; use warnings;
 
 
@@ -29,8 +29,6 @@ my $chancf = new_ok( 'Bot::Cobalt::Conf::File::Channels' => [
 );
 
 isa_ok( $chancf, 'Bot::Cobalt::Conf::File' );
-
-ok( $chancf->validate, 'validate()' );
 
 ok( ref $chancf->context('Main') eq 'HASH', 'context(Main) isa HASH' );
 

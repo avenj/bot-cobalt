@@ -1,4 +1,6 @@
 package Bot::Cobalt::Conf::File::PerPlugin;
+## This is in File:: but NOT a subclass of File.pm
+##   possible it should move ...
 
 use strictures 1;
 

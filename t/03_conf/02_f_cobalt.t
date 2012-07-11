@@ -1,4 +1,4 @@
-use Test::More tests => 8;
+use Test::More tests => 7;
 use strict; use warnings;
 
 
@@ -29,8 +29,6 @@ my $corecf = new_ok( 'Bot::Cobalt::Conf::File::Core' => [
 );
 
 isa_ok( $corecf, 'Bot::Cobalt::Conf::File' );
-
-ok( $corecf->validate, 'validate()' );
 
 is( $corecf->language, 'english', 'language()' );
 

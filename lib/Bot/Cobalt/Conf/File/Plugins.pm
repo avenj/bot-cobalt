@@ -109,8 +109,6 @@ sub list_plugins {
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
 
-  ## FIXME
-
   1
 };
 

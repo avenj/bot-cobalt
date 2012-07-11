@@ -25,7 +25,14 @@ sub context {
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
 
-  ## FIXME
+  my @contexts;
+  die "There are no contexts defined.\n"
+    unless @contexts = keys %$cfg;
+  
+  for my $context (keys %$cfg) {  
+    die "Context directive $context is not a hash"
+      unless ref $cfg->{$context} eq 'HASH';
+  }
 
   1
 };
