@@ -1,4 +1,4 @@
-use Test::More tests => 52;
+use Test::More tests => 54;
 use strict; use warnings;
 
 
@@ -73,5 +73,11 @@ ok( $plugcf->plugin('IRC')->priority, "priority()" );
 ok( $plugcf->plugin('IRC')->config_file, "config_file()" );
 ### ->autoload()  (default true unless NoAutoLoad)
 ok( $plugcf->plugin('IRC')->autoload, "autoload()" );
+
+ok( $plugcf->plugin('Alarmclock')->reload_conf, "reload_conf()" );
+ok( 
+  $plugcf->plugin('Alarmclock')->opts->{LevelRequired},
+  "opts() after reload_conf()"
+);
 
 ## FIXME expand to cover most use cases

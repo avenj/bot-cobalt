@@ -94,6 +94,11 @@ sub _build_opts {
   $opts_hash // {}
 }
 
+sub reload_conf {
+  my ($self) = @_;
+  $self->_set_opts( $self->_build_opts )
+}
+
 1;
 __END__
 
@@ -126,6 +131,9 @@ Bot::Cobalt::Conf::File::PerPlugin - Bot::Cobalt plugin configs
   my $autoload = $this_plugin_cf->autoload;
   
   my $plugin_opts = $this_plugin_cf->opts;
+
+  ## Force a reload:
+  $this_plugin_cf->reload_conf;
 
 =head1 DESCRIPTION
 
