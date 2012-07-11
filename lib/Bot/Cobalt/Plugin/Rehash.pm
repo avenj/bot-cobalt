@@ -12,7 +12,7 @@ our $VERSION = '0.012';
 ##
 ## Also doesn't make very many guarantees regarding consequences ...
 
-use 5.10.1;
+use 5.12.1;
 use strictures 1;
 
 use Bot::Cobalt;
@@ -79,7 +79,9 @@ sub Bot_public_cmd_rehash {
   my $type = lc($msg->message_array->[0] || 'all');
 
   my $channel = $msg->channel;
-  
+
+  ## FIXME split out to method dispatch
+  ## <<<< FIXME <<<<
   my $resp;
   for ($type) {
     when ("all") {    ## (except langset)
@@ -142,6 +144,8 @@ sub Bot_public_cmd_rehash {
       $resp = "Unknown config group, try: core, plugins, langset, channels";
     }
   }
+  
+  ## >>>> FIXME >>>>
 
   broadcast 'message', $context, $channel, $resp;
 
@@ -150,20 +154,20 @@ sub Bot_public_cmd_rehash {
 
 sub _rehash_plugins_cf {
   my ($self) = @_;
-  
-  my $newcfg = $self->_get_new_cfg || return;
-  
-  unless ($newcfg->{plugins} and ref $newcfg->{plugins} eq 'HASH') {
-    logger->warn("Rehashed conf appears to be missing plugins conf");
-    logger->warn("Is your plugins.conf broken?");
 
-    my $etcdir = core()->etc;
+  my $new_cfg_obj = try {
+    require Bot::Cobalt::Conf::File::Plugins;
 
-    logger->warn("(Path to etc/: $etcdir)");
-    return
-  }
-  
-  core()->cfg->{plugins} = delete $newcfg->{plugins};
+    Bot::Cobalt::Conf::File::Plugins->new(
+      etcdir => core()->etc,
+      path   => core()->cfg->plugins->path,
+    )
+  } catch {
+    logger->error("Loading new Conf::File::Plugins failed: $_");
+    undef
+  } || return ;
+
+  core()->cfg->set_plugins( $new_cfg_obj );
   
   logger->info("Reloaded plugins.conf");
   
@@ -175,19 +179,19 @@ sub _rehash_plugins_cf {
 sub _rehash_core_cf {
   my ($self) = @_;
 
-  my $newcfg = $self->_get_new_cfg || return;
-  
-  unless ($newcfg->{core} and ref $newcfg->{core} eq 'HASH') {
-    logger->warn("Rehashed conf appears to be missing core conf");
-    logger->warn("Is your cobalt.conf broken?");
+  my $new_cfg_obj = try {
+    require Bot::Cobalt::Conf::File::Core;
+    
+    Bot::Cobalt::Conf::File::Core->new(
+      path => core()->cfg->core->path,
+    )
+  } catch {
+    logger->error("Loading new Conf::File::Core failed: $_");
+    undef
+  } || return ;
 
-    my $etcdir = core()->etc;
-    logger->warn("(Path to etc/: $etcdir)");
 
-    return
-  }
-
-  core()->cfg->{core} = delete $newcfg->{core};
+  core()->cfg->set_core( $new_cfg_obj );
   
   logger->info("Reloaded core config.");
   
@@ -199,20 +203,19 @@ sub _rehash_core_cf {
 
 sub _rehash_channels_cf {
   my ($self) = @_;
-  
-  my $newcfg = $self->_get_new_cfg || return;
-  
-  unless ($newcfg->{channels} and ref $newcfg->{channels} eq 'HASH') {
-    logger->warn("Rehashed conf appears to be missing channels conf");
-    logger->warn("Is your channels.conf broken?");
 
-    my $etcdir = core()->etc;
-    logger->warn("(Path to etc/: $etcdir)");
+  my $new_cfg_obj = try {
+    require Bot::Cobalt::Conf::File::Channels;
+    
+    Bot::Cobalt::Conf::File::Channels->new(
+      path => core()->cfg->channels->path,
+    )
+  } catch {
+    logger->error("Loading new Conf::File::Channels failed: $_");
+    undef
+  } || return ;
 
-    return
-  }
-
-  core()->cfg->{channels} = delete $newcfg->{channels};
+  core()->cfg->set_channels( $new_cfg_obj );
 
   logger->info("Reloaded channels config.");
 
@@ -224,14 +227,13 @@ sub _rehash_channels_cf {
 sub _rehash_langset {
   my ($self, $langset) = @_;
 
-  my $newcfg  = $self->_get_new_cfg || return;
+  ## FIXME document that you should rehash core then rehash langset
+  ##  for updated Language: directives
 
-  my $lang = $langset || $newcfg->{core}->{Language} || 'english' ;
+  my $lang = $langset || core()->cfg->core->language;
   
   my $lang_dir = File::Spec->catdir( core()->etc, 'langs' );
 
-  ## _rehash_langset() is wrapped in a try{} block.
-  ## Lang will throw an exception as-needed:
   my $lang_obj =  Bot::Cobalt::Lang->new(
     use_core => 1,
       
@@ -239,6 +241,7 @@ sub _rehash_langset {
     lang     => $lang,
   );
 
+  ## Wrapped in a try{} in dispatcher
   die "Language set $lang has no RPLs"
     unless scalar keys %{ $lang_obj->rpls } ;
 
@@ -250,38 +253,6 @@ sub _rehash_langset {
   broadcast 'rehashed', 'langset';
 
   return 1
-}
-
-sub _get_new_cfg {
-  my ($self) = @_;
-
-  logger->debug("Grabbing fresh config read . . . ");
-
-  my $etcdir = core->cfg->{path};
-  
-  logger->debug("Using etcdir $etcdir");
-  
-  my $ccf = Bot::Cobalt::Conf->new(
-    etc   => $etcdir,
-    debug => core()->debug,
-  );
-  
-  my $newcfg;
-  try 
-    { $newcfg = $ccf->read_cfg }
-  catch {
-    logger->error("Failed read_cfg: $_");
-    return
-  };
-  
-  unless (ref $newcfg eq 'HASH') {
-    logger->warn("_get_new_cfg; Bot::Cobalt::Conf did not return a hash");
-    logger->warn("(Path to etc/: $etcdir)");
-
-    return
-  }
-  
-  return $newcfg
 }
 
 
