@@ -84,7 +84,11 @@ has 'path_to_plugins_cf' => (
 has 'core' => (
   lazy => 1,
   
-  is  => 'rwp',
+  is  => 'ro',
+
+  predicate => 'has_core',
+  writer    => 'set_core',
+
   isa => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Core')
       or die "core() should be a Bot::Cobalt::Conf::File::Core"
@@ -102,7 +106,11 @@ has 'core' => (
 has 'channels' => (
   lazy => 1,
   
-  is  => 'rwp',
+  is  => 'ro',
+
+  predicate => 'has_channels',
+  writer    => 'set_channels',
+
   isa => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Channels')
       or die "channels() should be a Bot::Cobalt::Conf::File:Channels"
@@ -120,7 +128,11 @@ has 'channels' => (
 has 'plugins' => (
   lazy => 1,
   
-  is  => 'rwp',
+  is  => 'ro',
+
+  predicate => 'has_plugins',
+  writer    => 'set_plugins',
+
   isa => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Plugins')
       or die "plugins() should be a Bot::Cobalt::Conf::File::Plugins"
@@ -142,5 +154,53 @@ __END__
 
 =pod
 
+=head1 NAME
+
+Bot::Cobalt::Conf - Bot::Cobalt configuration manager
+
+=head1 SYNOPSIS
+
+  my $cfg = Bot::Cobalt::Conf->new(
+    etc => $path_to_etc_dir,
+  );
+
+  ## Or with specific paths
+  ## (Still need an etcdir)
+  my $cfg = Bot::Cobalt::Conf->new(
+    etc => $path_to_etc_dir,
+    path_to_core_cf     => $core_cf_path,
+    path_to_channels_cf => $chan_cf_path,
+    path_to_plugins_cf  => $plugins_cf_path,
+  );
+
+  ## Bot::Cobalt::Conf::File::Core
+  $cfg->core;
+
+  ## Bot::Cobalt::Conf::File::Channels
+  $cfg->channels;
+  
+  ## Bot::Cobalt::Conf::File::Plugins
+  $cfg->plugins;
+
+=head1 DESCRIPTION
+
+A configuration manager class for L<Bot::Cobalt> -- L<Bot::Cobalt::Core> 
+loads and accesses configuration objects via instances of this class.
+
+=head1 SEE ALSO
+
+L<Bot::Cobalt::Conf::File::Core>
+
+L<Bot::Cobalt::Conf::File::Channels>
+
+L<Bot::Cobalt::Conf::File::Plugins>
+
+L<Bot::Cobalt::Conf::File::PerPlugin>
+
+L<Bot::Cobalt::Conf::File>
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
 
 =cut
