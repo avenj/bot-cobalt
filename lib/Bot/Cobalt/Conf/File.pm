@@ -46,6 +46,12 @@ sub _build_cfg_hash {
   $cfg
 }
 
+sub rehash {
+  my ($self) = @_;
+  
+  $self->_set_cfg_as_hash( $self->_build_cfg_hash )
+}
+
 sub validate {
   my ($self, $cfg) = @_;
   
@@ -122,6 +128,11 @@ actual path to the YAML configuration file.
 The B<cfg_as_hash> attribute returns the loaded file as a hash reference. 
 This is normally used by subclasses to fill attributes, and not used 
 directly.
+
+=head2 rehash
+
+The B<rehash> method attempts to reload the current
+B<cfg_as_hash> from B<path>.
 
 =head1 AUTHOR
 

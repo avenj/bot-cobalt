@@ -1,4 +1,4 @@
-use Test::More tests => 3;
+use Test::More tests => 6;
 use strict; use warnings;
 
 
@@ -28,4 +28,11 @@ my $cfg_obj = new_ok( 'Bot::Cobalt::Conf::File' => [
   ],
 );
 
-ok( ref $cfg_obj->cfg_as_hash eq 'HASH', 'cfg_as_hash isa HASH' );
+my $this_hash;
+ok( $this_hash = $cfg_obj->cfg_as_hash, 'cfg_as_hash()' );
+
+ok( ref $this_hash eq 'HASH', 'cfg_as_hash isa HASH' );
+
+ok( $cfg_obj->rehash, 'rehash()' );
+
+is_deeply( $cfg_obj->cfg_as_hash, $this_hash );

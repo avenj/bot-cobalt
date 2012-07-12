@@ -168,8 +168,24 @@ plugin authors to use these objects directly.)
 
 =head2 plugin
 
+Takes a plugin alias.
 Returns the L<Bot::Cobalt::Conf::File::PerPlugin> object for the 
-specified plugin alias (or boolean false).
+specified plugin (or boolean false).
+
+=head2 list_plugins
+
+Returns an array reference of currently tracked plugin aliases.
+
+=head2 load_plugin
+
+Takes a plugin alias.
+Loads or re-instances the L<Bot::Cobalt::Conf::File::PerPlugin> object 
+for the specified plugin.
+
+=head2 clear_plugin
+
+Takes a plugin alias.
+Removes the configuration object for the specified plugin.
 
 =head1 AUTHOR
 
