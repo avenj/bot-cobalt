@@ -1,4 +1,4 @@
-use Test::More tests => 54;
+use Test::More tests => 58;
 use strict; use warnings;
 
 
@@ -80,4 +80,11 @@ ok(
   "opts() after reload_conf()"
 );
 
-## FIXME expand to cover most use cases
+ok( $plugcf->clear_plugin('Alarmclock'), 'clear_plugin()' );
+ok( ! $plugcf->plugin('Alarmclock'), 'clear_plugin() was successful' );
+
+ok( $plugcf->load_plugin('Alarmclock'), 'load_plugin()' );
+ok( 
+  $plugcf->plugin('Alarmclock')->opts->{LevelRequired},
+  "opts() after load_plugin"
+);

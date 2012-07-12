@@ -105,6 +105,24 @@ sub list_plugins {
   [ keys %{ $self->_per_plug_objs } ]
 }
 
+sub clear_plugin {
+  my ($self, $plugin) = @_;
+  
+  confess "clear_plugin requires a plugin alias"
+    unless defined $plugin;
+
+  delete $self->_per_plug_objs->{$plugin}
+}
+
+sub load_plugin {
+  my ($self, $plugin) = @_;
+  
+  confess "load_plugin requires a plugin alias"
+    unless defined $plugin;
+    
+  $self->_per_plug_objs->{$plugin} 
+    = $self->_create_perplugin_obj($plugin)
+}
 
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
