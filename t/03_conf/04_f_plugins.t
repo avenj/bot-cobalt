@@ -1,9 +1,10 @@
-use Test::More tests => 58;
+use Test::More tests => 63;
 use strict; use warnings;
 
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Conf::File::Plugins' );
+  use_ok( 'Bot::Cobalt::Conf::File::PerPlugin' );
 }
 
 use Module::Build;
@@ -87,4 +88,19 @@ ok( $plugcf->load_plugin('Alarmclock'), 'load_plugin()' );
 ok( 
   $plugcf->plugin('Alarmclock')->opts->{LevelRequired},
   "opts() after load_plugin"
+);
+
+my $new_plug = new_ok( 'Bot::Cobalt::Conf::File::PerPlugin' => [
+   module => 'Example::Module',
+ ],
+);
+
+ok( $plugcf->install_plugin('Test', $new_plug), 'install_plugin()' );
+
+ok( $plugcf->plugin('Test'), 'install_plugin() seems successful' );
+
+is( 
+  $plugcf->plugin('Test')->module, 
+  'Example::Module',
+   'module() after install_plugin()' 
 );

@@ -15,6 +15,13 @@ use Scalar::Util qw/blessed/;
 with 'Bot::Cobalt::Conf::Role::Reader';
 
 
+has 'module' => (
+  required => 1,
+  
+  is  => 'rwp',
+  isa => Str,
+);
+
 has 'extra_opts' => (
   ## Overrides the plugin-specific cfg.
   lazy => 1,
@@ -24,13 +31,6 @@ has 'extra_opts' => (
 
   predicate => 'has_extra_opts',
   writer    => 'set_extra_opts',
-);
-
-has 'module' => (
-  required => 1,
-  
-  is  => 'rwp',
-  isa => Str,
 );
 
 has 'priority' => (

@@ -89,7 +89,6 @@ sub _create_perplugin_obj {
   );
 }
 
-
 sub plugin {
   my ($self, $plugin) = @_;
   
@@ -123,6 +122,25 @@ sub load_plugin {
   $self->_per_plug_objs->{$plugin} 
     = $self->_create_perplugin_obj($plugin)
 }
+
+sub install_plugin {
+  my ($self, $plugin, $plugin_obj) = @_;
+  
+  unless (defined $plugin_obj) {
+    confess
+      "install_plugin requires a plugin alias and Conf object"
+  }
+  
+  unless (blessed $plugin_obj &&
+    $plugin_obj->isa('Bot::Cobalt::Conf::File::PerPlugin') ) {
+  
+    confess
+      "install_plugin requires a Bot::Cobalt::Conf::File::PerPlugin object"
+  }
+  
+  $self->_per_plug_objs->{$plugin} = $plugin_obj
+}
+
 
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
@@ -166,11 +184,16 @@ for plugin-specific configuration files.
 (This is a core configuration class; there is generally no need for 
 plugin authors to use these objects directly.)
 
-=head2 plugin
+=head2 clear_plugin
 
 Takes a plugin alias.
-Returns the L<Bot::Cobalt::Conf::File::PerPlugin> object for the 
-specified plugin (or boolean false).
+Removes the configuration object for the specified plugin.
+
+=head2 install_plugin
+
+Takes a plugin alias and a L<Bot::Cobalt::Conf::File::PerPlugin> or 
+subclass thereof.
+Installs the new object under the specified alias.
 
 =head2 list_plugins
 
@@ -182,10 +205,11 @@ Takes a plugin alias.
 Loads or re-instances the L<Bot::Cobalt::Conf::File::PerPlugin> object 
 for the specified plugin.
 
-=head2 clear_plugin
+=head2 plugin
 
 Takes a plugin alias.
-Removes the configuration object for the specified plugin.
+Returns the L<Bot::Cobalt::Conf::File::PerPlugin> object for the 
+specified plugin (or boolean false).
 
 =head1 AUTHOR
 
