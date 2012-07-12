@@ -3,25 +3,6 @@ our $VERSION = '0.012';
 
 ## handles and eats: !plugin
 
-## FIXME Bot::Cobalt::Conf new-conf :
-##  Probably makes the most sense to drop old conf load behavior.
-##  Previously we could just directly fuck with hashes and get the 
-##  expected result; now a plugins.conf rehash replaces the Plugins
-##  obj altogether.
-##
-##  Need either:
-##   - Conf::File::Plugins that can rebuild itself to tweak / add / del
-##     specific plugin configs
-##     - document that 'rehash plugins' also
-##       loads/rehashes plugin-specific configs 
-##        (here, Rehash.pm, Manual::Config)
-##     - or add some mechanism for
-##       passing new Plugins objs a preexisting set of PerPlugin objs
-##       and tweak Rehash behavior appropriately
-##
-##   - Drop old behavior entirely, document that rehashing plugins also
-##     loads/rehashes plugin-specific configs (here, Rehash.pm)
-
 use 5.12.1;
 use strictures 1;
 
@@ -195,22 +176,18 @@ sub _unload {
   my $plug_obj = core()->plugin_get($alias);
   my $plugisa = ref $plug_obj || return "_unload broken? no PLUGISA";
 
-  if (! $alias) {
-    return "Bad syntax; no plugin alias specified";
+  return "Bad syntax; no plugin alias specified"
+    unless defined $alias;
 
-  } elsif (! $plug_obj ) {
-    return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
+  return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias,
       err => 'No such plugin found, is it loaded?' 
-    );
+  ) unless $plug_obj;
 
-  } elsif (! Bot::Cobalt::Core::Loader->is_reloadable($plug_obj) ) {
-    return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
+  return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias,
       err => "Plugin $alias is marked as non-reloadable",
-   );
-
-  }
+ ) unless Bot::Cobalt::Core::Loader->is_reloadable($plug_obj);
 
   logger->info("Attempting to unload $alias ($plugisa) per request");
 
@@ -219,28 +196,55 @@ sub _unload {
 
     Bot::Cobalt::Core::Loader->unload($plugisa);
 
-    ## FIXME Bot::Cobalt::Conf
-    ## also cleanup our config if there is one:
-    delete core()->cfg->{plugin_cf}->{$alias};
-
     ## and timers:
     core()->timer_del_alias($alias);
       
     return core->rpl( q{RPL_PLUGIN_UNLOAD}, 
         plugin => $alias
-    );
+    )
   } else {
     return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias, 
-      err => 'Unknown failure'
-    );
+      err => 'Unknown core->plugin_del failure'
+    )
   }
 
   return
 }
 
+sub _load {
+  my ($self, $alias, $module) = @_;
+  
+  ## Called for !load / !reload
+  ## Return string for IRC
+  
+  return "Bad syntax; usage: load <alias> [module]"
+    unless defined $alias;
+
+  return "Plugin already loaded: $alias"
+    if $alias ~~ [ keys %{ core->plugin_list } ] ;
+
+  return $self->_load_module($alias, $module)
+    if defined $module;
+
+  my $plugin_cfg;
+  ## No module specified; do we know this alias?
+  unless ( $plugin_cfg = core()->cfg->plugins->plugin($alias) ) {
+    return core->rpl( q{RPL_PLUGIN_ERR},
+      plugin => $alias,
+      err => "Plugin '$alias' not found in plugins conf",
+    )
+  }
+  
+  return $self->_load_module(
+    $alias,
+    $plugin_cfg->module
+  )
+}
+
 sub _load_module {
   ## _load_module( 'Auth', 'Bot::Cobalt::Plugin::Auth' ) f.ex
+  ## load to Core
   ## returns a response string for irc
   my ($self, $alias, $module) = @_;
 
@@ -252,7 +256,6 @@ sub _load_module {
   };
 
   if ($err) {
-    ## 'require' failed
     logger->warn("Plugin load failure; $err");
     
     Bot::Cobalt::Core::Loader->unload($module);
@@ -295,76 +298,6 @@ sub _load_module {
     );
   }
 
-}
-
-sub _load {
-  my ($self, $alias, $module, $reload) = @_;
-
-  return "Bad syntax; usage: load <alias> [module]"
-    unless $alias;
-
-  ## check list to see if alias is already loaded
-  my $pluglist = core()->plugin_list;
-
-  return "Plugin already loaded: $alias"
-    if $alias ~~ [ keys %$pluglist ] ;
-
-  ## FIXME Bot::Cobalt::Conf interface
-  my $pluginscf = core()->cfg->{plugins};  # plugins.conf
-
-  if ($module) {
-    ## user (or 'reload') specified a module for this alias
-    ## it could still have conf opts specified:
-    ## FIXME Bot::Cobalt::Conf iface; drop pluginscf, use objs
-    $self->_load_conf($alias, $module, $pluginscf);
-    return $self->_load_module($alias, $module);
-
-  } else {
-
-    unless (exists $pluginscf->{$alias}
-            && ref $pluginscf->{$alias} eq 'HASH') {
-      return core->rpl( q{RPL_PLUGIN_ERR},
-        plugin => $alias,
-        err => "No '${alias}' plugin found in plugins.conf",
-      )
-    }
-
-    my $pkgname = $pluginscf->{$alias}->{Module};
-    unless ($pkgname) {
-      return core->rpl( q{RPL_PLUGIN_ERR},
-        {
-          plugin => $alias,
-          err => "No Module specified in plugins.conf for plugin '${alias}'",
-        }
-      );
-    }
-
-    ## read conf into core:
-    $self->_load_conf($alias, $pkgname, $pluginscf);
-
-    ## load the plugin:
-    return $self->_load_module($alias, $pkgname);
-  }
-
-}
-
-sub _load_conf {
-  ## FIXME Bot::Cobalt::Conf interface
-
-  my ($self, $alias, $pkgname, $pluginscf) = @_;
-
-  $pluginscf = $self->_read_core_plugins_conf unless $pluginscf;
-
-  ## (re)load this plugin's configuration before loadtime
-  my $cconf = Bot::Cobalt::Conf->new(
-    etc => core()->cfg->{path}
-  );
-
-  ## use our current plugins.conf (not a rehash)
-  my $thisplugcf = $cconf->_read_plugin_conf($alias, $pluginscf);
-  $thisplugcf = {} unless ref $thisplugcf;
-
-  core()->cfg->{plugin_cf}->{$alias} = $thisplugcf;
 }
 
 
@@ -423,8 +356,9 @@ Otherwise, a module must be specified:
 
   <JoeUser> !plugin load Shorten Bot::Cobalt::Plugin::Extras::Shorten
 
-If the module's alias has a Config or Opts specified, they will 
-also be loaded.
+As of Bot-Cobalt-0.013, '!load' no longer rehashes plugin configuration 
+values; use '!rehash plugins' from L<Bot::Cobalt::Plugin::Rehash> 
+instead.
 
 =head2 unload
 
@@ -434,9 +368,7 @@ The only argument is the plugin's alias.
 
 =head2 reload
 
-Unload and re-load the specified plugin, rehashing any applicable 
-configuration.
-
+Unload and re-load the specified plugin.
 
 =head1 AUTHOR
 
