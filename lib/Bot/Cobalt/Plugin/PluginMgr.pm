@@ -3,16 +3,31 @@ our $VERSION = '0.012';
 
 ## handles and eats: !plugin
 
-use 5.10.1;
-use strict;
-use warnings;
+## FIXME Bot::Cobalt::Conf new-conf :
+##  Probably makes the most sense to drop old conf load behavior.
+##  Previously we could just directly fuck with hashes and get the 
+##  expected result; now a plugins.conf rehash replaces the Plugins
+##  obj altogether.
+##
+##  Need either:
+##   - Conf::File::Plugins that can rebuild itself to tweak / add / del
+##     specific plugin configs
+##     - document that 'rehash plugins' also
+##       loads/rehashes plugin-specific configs 
+##        (here, Rehash.pm, Manual::Config)
+##     - or add some mechanism for
+##       passing new Plugins objs a preexisting set of PerPlugin objs
+##       and tweak Rehash behavior appropriately
+##
+##   - Drop old behavior entirely, document that rehashing plugins also
+##     loads/rehashes plugin-specific configs (here, Rehash.pm)
 
-use Object::Pluggable::Constants qw/ :ALL /;
+use 5.12.1;
+use strictures 1;
 
 use Bot::Cobalt;
-
+use Bot::Cobalt::Common;
 use Bot::Cobalt::Conf;
-
 use Bot::Cobalt::Core::Loader;
 
 use Scalar::Util qw/blessed/;
@@ -44,8 +59,8 @@ sub Cobalt_unregister {
 sub Bot_public_cmd_plugin {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${$_[0]};
-  my $context = $msg->context;
 
+  my $context = $msg->context;
   my $chan = $msg->channel;
   my $nick = $msg->src_nick;
   
@@ -83,6 +98,95 @@ sub Bot_public_cmd_plugin {
   return PLUGIN_EAT_ALL
 }
 
+sub _cmd_plug_load {
+  my ($self, $msg) = @_;
+
+  ## !load Alias
+  ## !load Alias Module
+  
+  my ($alias, $module) = @{ $msg->message_array }[1,2];
+  
+  return $self->_load($alias, $module)
+}
+
+sub _cmd_plug_unload {
+  my ($self, $msg) = @_;
+
+  ## !unload Alias
+  
+  my $alias = $msg->message_array->[1];
+
+  return $self->_unload($alias) || "Bug; no reply from _unload"
+}
+
+sub _cmd_plug_list {
+  my ($self, $msg) = @_;
+  
+  my $pluglist = core()->plugin_list;
+  
+  my @loaded = sort keys %$pluglist;
+
+  my $str = sprintf("Loaded (%d):", scalar @loaded);
+  while (my $plugin_alias = shift @loaded) {
+    $str .= ' ' . $plugin_alias;
+
+    if ($str && (length($str) > 300 || !@loaded) ) {
+      ## either this string has gotten long or we're done
+      broadcast( 'message', $msg->context, $msg->channel, $str );
+      $str = '';
+    }
+  }
+}
+
+sub _cmd_plug_reload {
+  my ($self, $msg) = @_;
+
+  my $alias = $msg->message_array->[1];
+
+  my $plug_obj = core()->plugin_get($alias);
+
+  my $resp;
+  if (!$alias) {
+
+    broadcast( 'message', $msg->context, $msg->channel,
+      "Bad syntax; no plugin alias specified"
+    );
+    
+    return
+
+  } elsif (!$plug_obj) {
+
+    broadcast( 'message', $msg->context, $msg->channel,
+      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
+        plugin => $alias,
+        err => 'No such plugin found, is it loaded?' 
+      )
+    );
+    
+    return
+
+  } elsif (core()->State->{NonReloadable}->{$alias}) {
+
+    broadcast( 'message', $msg->context, $msg->channel,
+      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
+          plugin => $alias,
+          err => "Plugin $alias is marked as non-reloadable",
+      )
+    );
+    
+    return
+  }
+
+   ## call _unload and send any response from there
+  my $unload_resp = $self->_unload($alias);
+
+  broadcast( 'message', $msg->context, $msg->channel, $unload_resp );
+
+  my $pkgisa = ref $plug_obj;
+
+  return $self->_load($alias, $pkgisa);
+}
+
 sub _unload {
   my ($self, $alias) = @_;
 
@@ -115,6 +219,7 @@ sub _unload {
 
     Bot::Cobalt::Core::Loader->unload($plugisa);
 
+    ## FIXME Bot::Cobalt::Conf
     ## also cleanup our config if there is one:
     delete core()->cfg->{plugin_cf}->{$alias};
 
@@ -204,11 +309,13 @@ sub _load {
   return "Plugin already loaded: $alias"
     if $alias ~~ [ keys %$pluglist ] ;
 
+  ## FIXME Bot::Cobalt::Conf interface
   my $pluginscf = core()->cfg->{plugins};  # plugins.conf
 
   if ($module) {
     ## user (or 'reload') specified a module for this alias
     ## it could still have conf opts specified:
+    ## FIXME Bot::Cobalt::Conf iface; drop pluginscf, use objs
     $self->_load_conf($alias, $module, $pluginscf);
     return $self->_load_module($alias, $module);
 
@@ -217,11 +324,9 @@ sub _load {
     unless (exists $pluginscf->{$alias}
             && ref $pluginscf->{$alias} eq 'HASH') {
       return core->rpl( q{RPL_PLUGIN_ERR},
-        {
-          plugin => $alias,
-          err => "No '${alias}' plugin found in plugins.conf",
-        }
-      );
+        plugin => $alias,
+        err => "No '${alias}' plugin found in plugins.conf",
+      )
     }
 
     my $pkgname = $pluginscf->{$alias}->{Module};
@@ -244,6 +349,8 @@ sub _load {
 }
 
 sub _load_conf {
+  ## FIXME Bot::Cobalt::Conf interface
+
   my ($self, $alias, $pkgname, $pluginscf) = @_;
 
   $pluginscf = $self->_read_core_plugins_conf unless $pluginscf;
@@ -260,90 +367,6 @@ sub _load_conf {
   core()->cfg->{plugin_cf}->{$alias} = $thisplugcf;
 }
 
-
-sub _cmd_plug_load {
-  my ($self, $msg) = @_;
-  
-  my ($alias, $module) = @{ $msg->message_array }[1,2];
-  
-  return $self->_load($alias, $module)
-}
-
-sub _cmd_plug_unload {
-  my ($self, $msg) = @_;
-  
-  my $alias = $msg->message_array->[1];
-
-  return $self->_unload($alias) || "Bug; no reply from _unload"
-}
-
-sub _cmd_plug_list {
-  my ($self, $msg) = @_;
-  
-  my $pluglist = core()->plugin_list;
-  
-  my @loaded = sort keys %$pluglist;
-
-  my $str = sprintf("Loaded (%d):", scalar @loaded);
-  while (my $plugin_alias = shift @loaded) {
-    $str .= ' ' . $plugin_alias;
-
-    if ($str && (length($str) > 300 || !@loaded) ) {
-      ## either this string has gotten long or we're done
-      broadcast( 'message', $msg->context, $msg->channel, $str );
-      $str = '';
-    }
-  }
-}
-
-sub _cmd_plug_reload {
-  my ($self, $msg) = @_;
-
-  my $alias = $msg->message_array->[1];
-
-  my $plug_obj = core()->plugin_get($alias);
-
-  my $resp;
-  if (!$alias) {
-
-    broadcast( 'message', $msg->context, $msg->channel,
-      "Bad syntax; no plugin alias specified"
-    );
-    
-    return
-
-  } elsif (!$plug_obj) {
-
-    broadcast( 'message', $msg->context, $msg->channel,
-      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
-        plugin => $alias,
-        err => 'No such plugin found, is it loaded?' 
-      )
-    );
-    
-    return
-
-  } elsif (core()->State->{NonReloadable}->{$alias}) {
-
-    broadcast( 'message', $msg->context, $msg->channel,
-      core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
-          plugin => $alias,
-          err => "Plugin $alias is marked as non-reloadable",
-      )
-    );
-    
-    return
-  }
-
-   ## call _unload and send any response from there
-  my $unload_resp = $self->_unload($alias);
-
-  broadcast( 'message', $msg->context, $msg->channel, $unload_resp );
-
-  my $pkgisa = ref $plug_obj;
-
-  return $self->_load($alias, $pkgisa);
-}
 
 1;
 __END__
