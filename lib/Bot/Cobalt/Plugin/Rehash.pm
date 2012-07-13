@@ -23,14 +23,14 @@ sub Cobalt_register {
   );
 
   logger->info("Registered, commands: !rehash");
-  return PLUGIN_EAT_NONE
+
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
   logger->info("Unregistered");
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_rehash {
@@ -40,7 +40,7 @@ sub Bot_rehash {
   $self->_rehash_channels_cf;
   $self->_rehash_plugins_cf;
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_rehash {
@@ -87,7 +87,7 @@ sub Bot_public_cmd_rehash {
 
   broadcast 'message', $context, $channel, $resp;
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 ## Command handlers:
@@ -98,7 +98,7 @@ sub _cmd_all {
   $self->_rehash_channels_cf;
   $self->_rehash_plugins_cf;
 
-  return "Rehashed loaded configuration objects."
+  "Rehashed loaded configuration objects."
 }
 
 sub _cmd_channels {
@@ -106,7 +106,7 @@ sub _cmd_channels {
   
   $self->_rehash_channels_cf;
   
-  return "Rehashed current channels configuration."
+  "Rehashed current channels configuration."
 }
 
 sub _cmd_core {
@@ -114,7 +114,7 @@ sub _cmd_core {
 
   $self->_rehash_core_cf;
   
-  return "Rehashed core configuration."
+  "Rehashed core configuration."
 }
 
 sub _cmd_plugins {
@@ -122,7 +122,7 @@ sub _cmd_plugins {
   
   $self->_rehash_plugins_cf;
   
-  return "Rehashed plugins configuration."
+  "Rehashed plugins configuration."
 }
 
 sub _cmd_langset {
@@ -132,7 +132,7 @@ sub _cmd_langset {
   
   $self->_rehash_langset($lang);
       
-  return "Rehashed loaded language set ($lang)"
+  "Rehashed loaded language set ($lang)"
 }
 
 
@@ -152,8 +152,6 @@ sub _rehash_plugins_cf {
   logger->info("Reloaded plugins.conf");
   
   broadcast 'rehashed', 'plugins';
-  
-  return 1
 }
 
 sub _rehash_channels_cf {
@@ -170,8 +168,6 @@ sub _rehash_channels_cf {
   logger->info("Reloaded channels config.");
 
   broadcast 'rehashed', 'channels';
-
-  return 1
 }
 
 sub _rehash_core_cf {
@@ -189,8 +185,6 @@ sub _rehash_core_cf {
   
   ## Bot_rehash ($type) :
   broadcast 'rehashed', 'core';
-  
-  return 1
 }
 
 sub _rehash_langset {
@@ -219,8 +213,6 @@ sub _rehash_langset {
   logger->info("Reloaded core langset ($langset)");
 
   broadcast 'rehashed', 'langset';
-
-  return 1
 }
 
 
