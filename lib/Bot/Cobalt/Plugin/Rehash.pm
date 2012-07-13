@@ -70,6 +70,8 @@ sub Bot_public_cmd_rehash {
   my $type = lc($msg->message_array->[0] || 'all');
   
   my $meth = '_cmd_'.$type;
+  
+  logger->debug("dispatching $meth for $nick ($auth_usr)");
 
   my $resp;
   if ( $self->can($meth) ) {
@@ -132,7 +134,7 @@ sub _cmd_langset {
   
   $self->_rehash_langset($lang);
       
-  "Rehashed loaded language set ($lang)"
+  "Rehashed loaded language set"
 }
 
 
