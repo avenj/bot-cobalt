@@ -1,5 +1,7 @@
 ## TODO
 
+  - Try to make sure coreset plugins are rehash-safe
+
 Needs testing:
   - Dynamic context add / rehash / !server connect
   - !server disconnect

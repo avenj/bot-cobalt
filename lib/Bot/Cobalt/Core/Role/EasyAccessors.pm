@@ -67,6 +67,7 @@ sub get_plugin_cfg {
 
   my $pcfg_obj = $self->cfg->plugins->plugin($alias);
 
+  ## Return empty hash if this plugin has no config
   return {} unless blessed $pcfg_obj;
   
   ## Return opts() hash

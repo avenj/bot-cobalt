@@ -23,13 +23,8 @@ Mostly, you will see hash structures like this:
     cmd_ensnackulate: 2
     cmd_refrobulate: 1
 
-...which would be converted, upon load, into something like this:
-
-  my $pkg = __PACKAGE__;
-  $core->cfg->{plugin_cf}->{$pkg}->{RequiredLevels} = {
-    'cmd_ensnackulate' => 2,
-    'cmd_refrobulate' => 1,
-  };
+...which would be converted, upon load, into a 
+L<Bot::Cobalt::Conf::File::PerPlugin> object.
 
 (These structures would normally be accessed by plugins via the Core's 
 L<Bot::Cobalt::Core::Role::EasyAccessors/"get_plugin_cfg"> method or 

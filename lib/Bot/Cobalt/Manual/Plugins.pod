@@ -73,7 +73,6 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
   }
   
   ## Syndicated events become prefixed with 'Bot_' when dispatched
-  ## (when calling send_event, leave the prefix out)
   sub Bot_public_msg {
     my ($self, $core) = splice @_, 0, 2;
 
@@ -95,9 +94,6 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
 
 =head3 plugins.conf
 
-Plugins specified in plugins.conf (located in our etc/) will be 
-automatically loaded at runtime unless B<NoAutoLoad> is a true value.
-
 C<plugins.conf> is YAML in the following structure:
 
   ---
@@ -106,7 +102,7 @@ C<plugins.conf> is YAML in the following structure:
     Config: plugins/mine/myplugin.conf
     ## Enable to skip runtime auto-loading:
     #NoAutoLoad: 1
-    ## Optional:
+    ## Optional, overrides Config: file:
     Opts:
       Level: 2
 
@@ -116,25 +112,12 @@ for the most part, the basics are fairly self-explanatory.
 See L<Bot::Cobalt::Manual::Plugins::Config> for more about simple YAML 
 syntax for plugin configuration files.
 
-The config file will be loaded when the plugin is; the data structure 
-loaded will be stored in the core B<cfg> attribute, keyed by the plugin's 
-alias.
-
-Simple plugins might only need one or two config options; in this case, 
-you can specify a B<Opts:> directive. It should be a hash (or a list, 
-in very odd cases).
-
-If an Opts: directive is supplied, it will be loaded under its own hash 
-key; see L</PluginOpts>.
-
 
 =head3 Accessing plugin configuration
 
-A plugin-specific configuration is loaded into memory and stored 
-in the Core C<cfg> attribute.
-
 The normal way to access a plugin's configuration structure is via the 
-core method B<get_plugin_cfg>:
+core method B<get_plugin_cfg> (or 
+L<Bot::Cobalt::Core::Sugar/plugin_cfg>):
 
   ## Our $self object or our alias must be specified:
   my $plug_cf = core()->get_plugin_cfg( $self );
@@ -145,32 +128,22 @@ core method B<get_plugin_cfg>:
 
 See also: L</"Core methods">
 
-=head4 PluginOpts
+These accessors will return the B<opts> hash from the plugin's 
+configuration object. The per-plugin configuration object itself is a 
+L<Bot::Cobalt::Conf::File::PerPlugin> and can be accessed via the core's 
+L<Bot::Cobalt::Conf::File::Plugins> instance:
 
-A plugin with a fairly involved configuration set should have its own 
-configuration file.
+  my $plug_alias  = core()->get_plugin_alias( $self );
+  my $plug_cf_obj = core()->cfg->plugins->plugin( $plug_alias );
 
-If the plugin only has a small number of configuration directives, it is 
-possible to specify options in C<plugins.conf> directly via B<Opts>:
+  my $module = $plug_cf_obj->module;
+  
+  my $opts = $plug_cf_obj->opts;
+  ## Same as:
+  my $opts = plugin_cfg( $self );
 
-  ## plugins.conf:
-  MyPlugin:
-    Module: Bot::Cobalt::Plugin::User::MyPlugin
-    Opts:
-      Some_Option: value
-      ## ..etc
-
-Any B<Opts> specified in C<plugins.conf> directly will be available to the 
-plugin via the B<PluginOpts> key:
-
-  use Bot::Cobalt;
-  . . .
-  my $opt = plugin_cfg($self)->{PluginOpts}->{Some_Option};
-
-a B<Config:> directive can be specified as normal, although this is 
-typically counterproductive; use either an external config file or a 
-B<Opts:> directive to retain your users' sanity.
-
+See the documentation for L<Bot::Cobalt::Conf::File::PerPlugin> for more 
+details.
 
 =head2 Handling events
 
@@ -618,9 +591,6 @@ status instead of boolean value:
     ## we have RDB.pm
   }
 
-(More complicated data-sharing should be done via event interfaces or 
-I<if absolutely necessary> via a data structure in L</State>; see below.)
-
 Since plugin load order is generally not guaranteed and plugins may 
 be dynamically (un)loaded, it is good practice to only check for 
 B<Provided> functionality in the narrowest possible scope; that is to 
@@ -661,31 +631,33 @@ is attached to a terminal or daemonized.
 
 =head3 Configuration-related methods
 
-=head4 get_core_cfg
-
-  my $core_cf = $core->get_core_cfg()
-
-Retrieves the 'core' configuration directives from C<cobalt.conf>:
-
-  my $core_cf = $core->get_core_cfg();
-  my $lang    = $core_cf->{Language};
-
 =head4 get_channels_cfg
 
-  my $chan_cf = $core->get_channels_cfg( $context );
+Retrieves per-context channel configuration from C<channels.conf>:
 
-Retrieves per-context channel configuration from C<channels.conf>.
+  my $chan_cf = $core->get_channels_cfg( $context );
 
 The server context must be specified.
 
 Returns an empty hash if there is no channel configuration for this 
 server context.
 
+=head4 get_core_cfg
+
+Retrieves the 'core' configuration object 
+(L<Bot::Cobalt::Conf::File::Core>), representing the "cobalt.conf" 
+configuration values:
+
+  my $core_cf = $core->get_core_cfg();
+  my $lang    = $core_cf->language;
+
+See L<Bot::Cobalt::Conf::File::Core> for more details.
+
 =head4 get_plugin_cfg
 
-  my $plug_cf = $core->get_plugin_cfg( $self ) || {};
+Retrieves the configuration hash for a specific plugin:
 
-Retrieves the configuration hash for a specific plugin.
+  my $plug_cf = $core->get_plugin_cfg( $self ) || {};
 
 Either the plugin's $self object or its current alias must be 
 specified.
@@ -717,10 +689,10 @@ L<Bot::Cobalt::Core::Sugar>):
 
 =head4 get_irc_casemap
 
-  my $casemapping = $core->get_irc_casemap( $context );
-
 Retrieves the CASEMAPPING rules for the specified server context, 
-which should be one of: I<rfc1459>, I<strict-rfc1459>, I<ascii>
+which should be one of I<rfc1459>, I<strict-rfc1459>, I<ascii> :
+
+  my $casemapping = $core->get_irc_casemap( $context );
 
 The server's casemapping is usually declared in ISUPPORT (numeric 
 005) upon connect and can be used to establish whether or not the 
@@ -784,8 +756,9 @@ Requires a context and a nickname:
   my $level   = $core->auth->level($context, $nick);
 
 Auth levels are fairly flexible; it is generally a good idea for your 
-plugin to provide some method of configuring required access levels 
-(perhaps in plugins.conf via L</PluginOpts>).
+plugin to provide some method of configuring required access levels, 
+either via a configuration file or a B<Opts> directive in 
+C<plugins.conf>.
 
 =head4 username
 
