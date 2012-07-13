@@ -861,9 +861,11 @@ sub irc_invite {
 sub Bot_rehashed {
   my ($self, $core) = splice @_, 0, 2;
   my $type = ${ $_[0] };
-  
-  logger->info("Rehash received, resetting ajoins");
-  $self->_reset_ajoins;
+
+  if ($type eq 'core' || $type eq 'channels') {
+    logger->info("Rehash received ($type), resetting ajoins");
+    $self->_reset_ajoins;
+  }
   
   ## FIXME nickservid rehash if needed
   
