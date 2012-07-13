@@ -1,19 +1,7 @@
 package Bot::Cobalt::Plugin::Rehash;
 our $VERSION = '0.012';
 
-## HANDLES AND EATS:
-##  !rehash
-##
-##  Rehash langs + channels.conf & plugins.conf
-##
-##  Does NOT rehash plugin confs
-##  Plugins often do some initialization after a conf load
-##  Reload them using PluginMgr's !reload function instead.
-##
-## Also doesn't make very many guarantees regarding consequences ...
-
 use 5.12.1;
-use strictures 1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -22,6 +10,8 @@ use Bot::Cobalt::Lang;
 
 use File::Spec;
 use Try::Tiny;
+
+use strictures 1;
 
 sub new { bless [], shift }
 
@@ -56,8 +46,9 @@ sub Bot_rehash {
 sub Bot_public_cmd_rehash {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
-  my $context = $msg->context;
 
+  my $context = $msg->context;
+  my $channel = $msg->channel;
   my $nick = $msg->src_nick;
 
   my $auth_lev = core->auth->level($context, $nick);
@@ -71,101 +62,90 @@ sub Bot_public_cmd_rehash {
       nick => $nick
     );
 
-    broadcast 'message', $context, $nick, $resp;
+    broadcast 'message', $context, $channel, $resp;
 
     return PLUGIN_EAT_ALL
   }
   
   my $type = lc($msg->message_array->[0] || 'all');
-
-  my $channel = $msg->channel;
-
-  ## FIXME split out to method dispatch
-  ## <<<< FIXME <<<<
-  my $resp;
-  for ($type) {
-    when ("all") {    ## (except langset)
-
-      if ( 
-        $self->_rehash_core_cf  
-        && $self->_rehash_channels_cf
-        && $self->_rehash_plugins_cf
-      ) {
-        $resp = "Rehashed configuration files.";
-      } else {
-        $resp = "Could not rehash some confs; admin should check logs.";
-      }
-
-    }
-
-    when ("core") {
-
-      if ($self->_rehash_core_cf) {
-        $resp = "Rehashed core configuration.";
-      } else {
-        $resp = "Rehash failed; administrator should check logs.";
-      }
-
-    }
-    
-    when ("plugins") {
-
-      if ($self->_rehash_plugins_cf) {
-        $resp = "Rehashed plugins.conf.";
-      } else {
-        $resp = "Rehashing plugins.conf failed; admin should check logs.";
-      }
-
-    }
-    
-    when ("langset") {
-      my $lang = $msg->message_array->[1];
-      
-      try {
-        $self->_rehash_langset($lang);
-        $resp = "Reloaded core language set ($lang)";
-      } catch {
-        $resp = "Rehash failure: $_"
-      };
-
-    }
-    
-    when ("channels") {
-
-      if ($self->_rehash_channels_cf) {
-        $resp = "Rehashed channels configuration.";
-      } else {
-        $resp = "Rehashing channels failed; administrator should check logs.";
-      }
-
-    }
-    
-    default {
-      $resp = "Unknown config group, try: core, plugins, langset, channels";
-    }
-  }
   
-  ## >>>> FIXME >>>>
+  my $meth = '_cmd_'.$type;
+
+  my $resp;
+  if ( $self->can($meth) ) {
+    ## Handlers return a response or die() :
+    $resp = try { 
+      $self->$meth($msg) 
+    } catch {
+      my $error = $_;
+      logger->error("Rehash ($type) failure; $error");
+      $error
+    };
+  } else {
+    $resp = "Unknown config group, try: core, plugins, langset, channels"
+  }
 
   broadcast 'message', $context, $channel, $resp;
 
   return PLUGIN_EAT_ALL
 }
 
+## Command handlers:
+sub _cmd_all {
+  my ($self, $msg) = @_;
+
+  $self->_rehash_core_cf;
+  $self->_rehash_channels_cf;
+  $self->_rehash_plugins_cf;
+
+  return "Rehashed loaded configuration objects."
+}
+
+sub _cmd_channels {
+  my ($self, $msg) = @_;
+  
+  $self->_rehash_channels_cf;
+  
+  return "Rehashed current channels configuration."
+}
+
+sub _cmd_core {
+  my ($self, $msg) = @_;
+
+  $self->_rehash_core_cf;
+  
+  return "Rehashed core configuration."
+}
+
+sub _cmd_plugins {
+  my ($self, $msg) = @_;
+  
+  $self->_rehash_plugins_cf;
+  
+  return "Rehashed plugins configuration."
+}
+
+sub _cmd_langset {
+  my ($self, $msg) = @_;
+
+  my $lang = $msg->message_array->[1];
+  
+  $self->_rehash_langset($lang);
+      
+  return "Rehashed loaded language set ($lang)"
+}
+
+
+## Actual configuration reloaders:
 sub _rehash_plugins_cf {
   my ($self) = @_;
 
-  my $new_cfg_obj = try {
-    require Bot::Cobalt::Conf::File::Plugins;
+  require Bot::Cobalt::Conf::File::Plugins;
 
-    Bot::Cobalt::Conf::File::Plugins->new(
+  my $new_cfg_obj = Bot::Cobalt::Conf::File::Plugins->new(
       etcdir => core()->etc,
       path   => core()->cfg->plugins->path,
-    )
-  } catch {
-    logger->error("Loading new Conf::File::Plugins failed: $_");
-    undef
-  } || return ;
+  );
 
   core()->cfg->set_plugins( $new_cfg_obj );
   
@@ -176,20 +156,32 @@ sub _rehash_plugins_cf {
   return 1
 }
 
+sub _rehash_channels_cf {
+  my ($self) = @_;
+
+  require Bot::Cobalt::Conf::File::Channels;
+    
+  my $new_cfg_obj = Bot::Cobalt::Conf::File::Channels->new(
+      path => core()->cfg->channels->path,
+  );
+
+  core()->cfg->set_channels( $new_cfg_obj );
+
+  logger->info("Reloaded channels config.");
+
+  broadcast 'rehashed', 'channels';
+
+  return 1
+}
+
 sub _rehash_core_cf {
   my ($self) = @_;
 
-  my $new_cfg_obj = try {
-    require Bot::Cobalt::Conf::File::Core;
+  require Bot::Cobalt::Conf::File::Core;
     
-    Bot::Cobalt::Conf::File::Core->new(
+  my $new_cfg_obj = Bot::Cobalt::Conf::File::Core->new(
       path => core()->cfg->core->path,
-    )
-  } catch {
-    logger->error("Loading new Conf::File::Core failed: $_");
-    undef
-  } || return ;
-
+  );
 
   core()->cfg->set_core( $new_cfg_obj );
   
@@ -201,36 +193,13 @@ sub _rehash_core_cf {
   return 1
 }
 
-sub _rehash_channels_cf {
-  my ($self) = @_;
-
-  my $new_cfg_obj = try {
-    require Bot::Cobalt::Conf::File::Channels;
-    
-    Bot::Cobalt::Conf::File::Channels->new(
-      path => core()->cfg->channels->path,
-    )
-  } catch {
-    logger->error("Loading new Conf::File::Channels failed: $_");
-    undef
-  } || return ;
-
-  core()->cfg->set_channels( $new_cfg_obj );
-
-  logger->info("Reloaded channels config.");
-
-  broadcast 'rehashed', 'channels';
-
-  return 1
-}
-
 sub _rehash_langset {
   my ($self, $langset) = @_;
 
   ## FIXME document that you should rehash core then rehash langset
   ##  for updated Language: directives
 
-  my $lang = $langset || core()->cfg->core->language;
+  $langset ||= core()->cfg->core->language;
   
   my $lang_dir = File::Spec->catdir( core()->etc, 'langs' );
 
@@ -238,17 +207,16 @@ sub _rehash_langset {
     use_core => 1,
       
     lang_dir => $lang_dir,
-    lang     => $lang,
+    lang     => $langset,
   );
 
-  ## Wrapped in a try{} in dispatcher
-  die "Language set $lang has no RPLs"
+  die "Language set $langset has no RPLs"
     unless scalar keys %{ $lang_obj->rpls } ;
 
   core()->set_langset( $lang_obj );
   core()->set_lang( $lang_obj->rpls );
   
-  logger->info("Reloaded core langset ($lang)");
+  logger->info("Reloaded core langset ($langset)");
 
   broadcast 'rehashed', 'langset';
 
@@ -273,7 +241,7 @@ Bot::Cobalt::Plugin::Rehash - Rehash config or langs on-the-fly
   Rehash 'channels.conf':
    !rehash channels
  
-  Rehash 'plugins.conf':
+  Rehash 'plugins.conf' and plugin-specific configs:
    !rehash plugins
   
   All of the above:
@@ -292,8 +260,8 @@ playing with core configuration options might not necessarily always do
 what you expect. (Feel free to report as bugs via either RT or e-mail, 
 of course.)
 
-B<IMPORTANT:> The Rehash plugin does B<not> reload plugin-specific 
-configs. For that, use a plugin manager's reload ability. See L<Bot::Cobalt::Plugin::PluginMgr>.
+Note that plugin-specific configs will be reloaded when the 'plugins' 
+target is. This is new behavior as of Bot-Cobalt-0.013.
 
 =head1 EMITTED EVENTS
 
