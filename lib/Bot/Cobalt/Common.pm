@@ -3,14 +3,13 @@ our $VERSION = '0.012';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 ##
-## Does some Evil; the importing package will also have strict, warnings, 
+## Does some Evil; the importing package will also have 'strictures 1'
 ## and the '5.10' featureset ('say', 'given/when', ..)
 ##  -> under 5.15.9, feature->import no longer seems to work as it did
 ##     no longer documented.
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 
 use base 'Exporter';
 
@@ -119,8 +118,7 @@ our @EXPORT;
 }
 
 sub import {
-  strict->import;
-  warnings->import;
+  strictures->import;
   feature->import( ':5.10' );
   __PACKAGE__->export_to_level(1, @_);  
 }
@@ -139,11 +137,7 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
   package Bot::Cobalt::Plugin::User::MyPlugin;
   our $VERSION = '0.10';
 
-  ## Import useful stuff from:
-  ##  IRC::Utils
-  ##  Bot::Cobalt::Utils
-  ##  Object::Pluggable::Constants
-  ## also get strict + warnings
+  ## Import useful stuff:
   use Bot::Cobalt::Common;
 
 =head1 DESCRIPTION
@@ -151,8 +145,8 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
 This is a small exporter module providing easy inclusion of commonly 
 used tools and constants to make life easier on plugin authors.
 
-By default, B<strict> and B<warnings> are also enabled.
-
+L<strictures> is also enabled. This will turn on 'strict' and make all 
+warnings fatal.
 
 =head2 Exported
 
