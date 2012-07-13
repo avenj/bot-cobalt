@@ -79,7 +79,7 @@ sub Bot_public_cmd_rehash {
     } catch {
       my $error = $_;
       logger->error("Rehash ($type) failure; $error");
-      $error
+      "Failed rehash: $error"
     };
   } else {
     $resp = "Unknown config group, try: core, plugins, langset, channels"
