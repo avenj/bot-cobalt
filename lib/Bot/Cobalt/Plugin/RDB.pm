@@ -21,19 +21,20 @@ use Try::Tiny;
 sub new { 
   bless {
 
+    ## Errors from DB -> RPL values:
     RPL_MAP => {
       RDB_NOTPERMITTED => "RDB_ERR_NOTPERMITTED",
 
       RDB_INVALID_NAME => "RDB_ERR_INVALID_NAME",
       
-      RDB_EXISTS      => "RDB_ERR_RDB_EXISTS",
+      RDB_EXISTS       => "RDB_ERR_RDB_EXISTS",
       
-      RDB_DBFAIL      => "RPL_DB_ERR",
+      RDB_DBFAIL       => "RPL_DB_ERR",
       
-      RDB_FILEFAILURE => "RDB_UNLINK_FAILED",
+      RDB_FILEFAILURE  => "RDB_UNLINK_FAILED",
       
-      RDB_NOSUCH      => "RDB_ERR_NO_SUCH_RDB",
-      RDB_NOSUCH_ITEM => "RDB_ERR_NO_SUCH_ITEM",
+      RDB_NOSUCH       => "RDB_ERR_NO_SUCH_RDB",
+      RDB_NOSUCH_ITEM  => "RDB_ERR_NO_SUCH_ITEM",
     },
 
   }, shift 
