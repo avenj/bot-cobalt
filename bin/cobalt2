@@ -132,7 +132,6 @@ sub _start_cobalt {
     if $pid->alive;
 
   ## POSIX fork dance
-  ## Uh. No guarantee when RUNNING_IN_HELL. Too bad.
   use POSIX ();
   if ($opt_detach)
   {
@@ -155,10 +154,11 @@ sub _start_cobalt {
   require Bot::Cobalt::Conf;
   require Bot::Cobalt::Core;
   
+  ## FIXME could take paths to specific confs now
   my $cfg = Bot::Cobalt::Conf->new(
     etc   => $etcdir,
     debug => $opt_debug,
-  )->read_cfg;
+  );
   
   Bot::Cobalt::Core->instance(
     cfg => $cfg,
