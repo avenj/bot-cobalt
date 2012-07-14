@@ -32,6 +32,12 @@ has 'cfg_as_hash' => (
   builder => '_build_cfg_hash',
 );
 
+has 'debug' => (
+  is  => 'rw',
+  isa => Bool,
+  
+  default => sub { 0 },
+);
 
 sub BUILD {
   my ($self) = @_;
@@ -40,6 +46,11 @@ sub BUILD {
 
 sub _build_cfg_hash {
   my ($self) = @_;
+
+  if ($self->debug) {
+    warn 
+      ref $self, " (debug) reading cfg_as_hash from ", $self->path, "\n"
+  }
   
   my $cfg = $self->readfile( $self->path );
 

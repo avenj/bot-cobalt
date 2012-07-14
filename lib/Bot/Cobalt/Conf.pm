@@ -25,7 +25,6 @@ has 'etc'   => (
 );
 
 has 'debug' => (
-  ## FIXME unused in new Conf code at the moment ...
   is  => 'rw', 
   isa => Bool, 
   
@@ -98,7 +97,8 @@ has 'core' => (
     my ($self) = @_;
 
     Bot::Cobalt::Conf::File::Core->new(
-      path => $self->path_to_core_cf,
+      debug => $self->debug,
+      path  => $self->path_to_core_cf,
     )
   },
 );
@@ -120,7 +120,8 @@ has 'channels' => (
     my ($self) = @_;
 
     Bot::Cobalt::Conf::File::Channels->new(
-      path => $self->path_to_channels_cf,
+      debug => $self->debug,
+      path  => $self->path_to_channels_cf,
     )
   },
 );
@@ -142,6 +143,7 @@ has 'plugins' => (
     my ($self) = @_;
 
     Bot::Cobalt::Conf::File::Plugins->new(
+      debug  => $self->debug,
       path   => $self->path_to_plugins_cf,
       etcdir => $self->etc,
     )
