@@ -139,13 +139,11 @@ my $build = $class->new(
       
       'File::Find'       => 0,
       'File::Spec'       => 0,
-      'File::Basename'   => 0,
       'File::Path'       => '2.00',
       
       'Getopt::Long'     => 0,
 
       'IO::File'         => 0,
-      'IO::Handle'       => 0,
 
       'List::Util'       => 0,
 
@@ -218,6 +216,7 @@ my $build = $class->new(
       'Term::ReadLine::Perl' => 0,
 
     ### Release tools, commented for now
+#      'File::Basename'   => 0,
 #      'Dir::Self' => 0,
      # templating (cpodconv/release tools)
 #      'Template' => 0,
