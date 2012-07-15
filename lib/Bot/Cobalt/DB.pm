@@ -356,8 +356,6 @@ BerkDB is a fast and simple key/value store. This module uses JSON to
 store nested Perl data structures, providing easy database-backed 
 storage for L<Bot::Cobalt> plugins.
 
-B<< Performance will suffer miserably if you don't have L<JSON::XS>! >>
-
 =head2 Constructor
 
 B<new()> is used to create a new Bot::Cobalt::DB object representing your 
@@ -471,7 +469,7 @@ You can serialize/export the entirety of the DB via B<dbdump>.
   my $yamlified = $db->dbdump('YAML');
   ## YAML::XS
   my $yamlified = $db->dbdump('YAMLXS');
-  ## JSON (::XS or ::PP)
+  ## JSON::XS
   my $jsonified = $db->dbdump('JSON');
 
 See L<Bot::Cobalt::Serializer> for more on C<freeze()> and valid formats.

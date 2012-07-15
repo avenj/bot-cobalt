@@ -179,7 +179,7 @@ my $build = $class->new(
       'Term::ReadKey' => 0,
 
      # Serialization
-      'JSON'        => '2.00',
+      'JSON::XS'    => '2.00',
       'YAML::XS'    => '0.34',
 
      # Logging
@@ -218,9 +218,6 @@ my $build = $class->new(
     ### Utils / misc
       # terminal interaction
       'Term::ReadLine::Perl' => 0,
-
-    ### Storage / serialization
-      'JSON::XS'    => 0,
 
     ### Release tools, commented for now
 #      'Dir::Self' => 0,

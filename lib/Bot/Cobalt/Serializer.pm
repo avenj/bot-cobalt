@@ -9,7 +9,7 @@ use Carp;
 
 ## These two must be present anyway:
 use YAML::XS ();
-use JSON ();
+use JSON::XS ();
 
 use Fcntl qw/:flock/;
 
@@ -46,7 +46,7 @@ has '_types' => (
     {
       YAML   => 'YAML::Syck',
       YAMLXS => 'YAML::XS',
-      JSON   => 'JSON',
+      JSON   => 'JSON::XS',
       XML    => 'XML::Dumper',
     }
   },
@@ -95,7 +95,7 @@ has 'json_from_ref' => (
   lazy => 1,
   
   coerce => sub {
-    my $jsify = JSON->new->allow_nonref;
+    my $jsify = JSON::XS->new->allow_nonref;
     $jsify->utf8->encode($_[0]);
   },
 );
@@ -105,7 +105,7 @@ has 'ref_from_json' => (
   lazy => 1,
   
   coerce => sub {
-    my $jsify = JSON->new->allow_nonref;
+    my $jsify = JSON::XS->new->allow_nonref;
     $jsify->utf8->decode($_[0])
   },
 );
@@ -410,7 +410,7 @@ B<YAMLXS> - YAML1.1 via L<YAML::XS>  I<(default)>
 
 =item *
 
-B<JSON> - JSON via L<JSON::XS> or L<JSON::PP>
+B<JSON> - JSON via L<JSON::XS>
 
 =item *
 
@@ -424,9 +424,7 @@ YAML is very powerful, and the appearance of the output makes it easy for
 humans to read and edit.
 
 JSON is a more simplistic format, often more suited for network transmission 
-and talking to other networked apps. JSON is B<a lot faster> than YAML
-(assuming L<JSON::XS> is available).
-It also has the benefit of being included in the Perl core as of perl-5.14.
+and talking to other networked apps. JSON is noticably faster than YAML.
 
 =head2 freeze
 
