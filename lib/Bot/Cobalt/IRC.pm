@@ -23,7 +23,6 @@ use Bot::Cobalt::IRC::Event::Quit;
 use Bot::Cobalt::IRC::Event::Topic;
 
 use POE qw/
-  Component::Client::DNS
   Component::IRC::State
   Component::IRC::Plugin::CTCP
   Component::IRC::Plugin::AutoJoin
