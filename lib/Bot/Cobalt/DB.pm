@@ -212,6 +212,7 @@ sub dbopen {
       $_ .= "\0";
     }
   );
+
   return 1
 }
 
@@ -423,6 +424,9 @@ exclusive (write) lock.
 
 Try to call a B<dbclose> as quickly as possible to reduce locking 
 contention.
+
+dbopen() will return false (and possibly warn) if the database could 
+not be opened (probably due to lock timeout).
 
 =head3 is_open
 
