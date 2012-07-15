@@ -156,6 +156,8 @@ sub Cobalt_unregister {
   }
 
   delete core->Provided->{randstuff_items};
+  
+  core->timer_del('RANDSTUFF');
 
   return PLUGIN_EAT_NONE
 }
