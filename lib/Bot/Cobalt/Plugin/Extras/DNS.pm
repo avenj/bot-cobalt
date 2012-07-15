@@ -29,6 +29,8 @@ sub Cobalt_register {
     qw/
       public_cmd_dns
       public_cmd_nslookup
+      public_cmd_hextoip
+      public_cmd_iptohex
     /
   );
   
@@ -58,6 +60,42 @@ sub Bot_public_cmd_dns {
   my ($host, $type) = @{ $msg->message_array };
   
   $self->_run_query($context, $channel, $host, $type);
+  
+  return PLUGIN_EAT_ALL
+}
+
+sub Bot_public_cmd_hextoip {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  my $msg = ${ $_[0] };
+  
+  my $hexip = $msg->message_array->[0];
+  
+  my $ip = join '.', unpack "C*", pack "H*", $hexip;
+  
+  broadcast( 'message',
+    $msg->context,
+    $msg->channel,
+    "hex: $hexip --> ip: $ip"
+  );
+  
+  return PLUGIN_EAT_ALL
+}
+
+sub Bot_public_cmd_iptohex {
+  my ($self, $core) = splice @_, 0, 2;
+  
+  my $msg = ${ $_[0] };
+  
+  my $ip = $msg->message_array->[0];
+  
+  my $hexip = unpack 'H*', pack 'C*', split(/\./, $ip);
+  
+  broadcast( 'message',
+    $msg->context,
+    $msg->channel,
+    "ip: $ip --> hex: $hexip"
+  );
   
   return PLUGIN_EAT_ALL
 }
@@ -170,16 +208,22 @@ Bot::Cobalt::Plugin::Extras::DNS - Issue DNS queries from IRC
   ## Optionally specify a type:
    !dns irc.cobaltirc.org aaaa
 
+  ## Convert an IPv4 address to its hexadecimal representation:
+   !iptohex 127.0.0.1
+  
+  ## Reverse of above:
+   !hextoip 7f000001
+
 =head1 DESCRIPTION
 
 A Cobalt plugin providing DNS query results on IRC.
 
 Uses L<POE::Component::Client::DNS> for asynchronous lookups.
 
+Also performs some rudimentary address manipulation.
+
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>
-
-L<http://www.cobaltirc.org>
 
 =cut
