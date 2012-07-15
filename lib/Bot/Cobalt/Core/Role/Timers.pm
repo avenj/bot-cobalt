@@ -144,7 +144,7 @@ sub timer_get {
   return unless $id;
 
   $self->log->debug("timer retrieved; $id")
-    if $self->debug > 2;
+    if $self->debug > 1;
 
   return $self->TimerPool->{$id}
 }
