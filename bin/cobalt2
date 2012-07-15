@@ -180,11 +180,11 @@ my @loglevels = qw/debug info notice warn warning
                    err error crit critical alert
                    emerg emergency/;
 
-unless ($loglevel ~~ @loglevels)
-{ 
+unless ($loglevel ~~ @loglevels) {
   say("Invalid loglevel ($loglevel)");
   say("Possible loglevels, most verbose to least: ".join(' ',@loglevels));
   say("Setting loglevel to INFO");
+
   $loglevel = 'info';
 }
 

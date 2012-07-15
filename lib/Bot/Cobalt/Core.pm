@@ -547,7 +547,7 @@ configuration object and spawned via L<POE::Kernel>'s run() method.
 
 A configuration object is an instanced L<Bot::Cobalt::Conf>:
 
-  my $cconf_obj = Bot::Cobalt::Conf->new(
+  my $conf_obj = Bot::Cobalt::Conf->new(
     etc => $path_to_etc_dir,
   );
 
@@ -556,7 +556,7 @@ A configuration object is an instanced L<Bot::Cobalt::Conf>:
   ## Instance a Bot::Cobalt::Core singleton
   ## Further instance() calls will return the singleton
   Bot::Cobalt::Core->instance(
-    cfg => $cconf_obj,
+    cfg => $conf_obj,
     var => $path_to_var_dir,
     
     ## See perldoc Log::Handler regarding log levels:
