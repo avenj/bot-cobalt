@@ -6,8 +6,7 @@ our $VERSION = '0.012';
 ##  _public_cmd_temp      ( !temp )
 
 use 5.10.1;
-use strict;
-use warnings;
+use strictures 1;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 use Bot::Cobalt::Utils qw/ color /;

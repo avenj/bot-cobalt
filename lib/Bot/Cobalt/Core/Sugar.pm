@@ -54,7 +54,7 @@ sub irc_object ($) {
 }
 
 sub irc_context ($) {
-  core()->get_irc_context( @_ );
+  core()->get_irc_context( @_ )
 }
 
 1;
