@@ -336,7 +336,7 @@ sub put {
     die $self->error("RDB_DBFAIL")
   }
   
-  my $newkey = $self->_gen_unique_key($ref);
+  my $newkey = $self->_gen_unique_key;
   
   unless ( $db->put($newkey, $ref) ) {
     $db->dbclose;
@@ -480,7 +480,8 @@ sub cache_push {
 }
 
 sub _gen_unique_key {
-  my ($self, $ref) = @_;
+  my ($self) = @_;
+
   my $db = $self->{CURRENT} 
            || croak "_gen_unique_key called but no db to check";
 
@@ -489,7 +490,7 @@ sub _gen_unique_key {
   $newkey .= $v[rand @v] while exists $db->Tied->{$newkey};
 
   ## regen 0000 keys:
-  return $newkey || $self->_gen_unique_key($ref)
+  return $newkey || $self->_gen_unique_key
 }
 
 sub _rdb_switch {
