@@ -13,8 +13,6 @@ use Bot::Cobalt::DB;
 
 use IRC::Utils qw/decode_irc/;
 
-use Digest::SHA qw/sha256_hex/;
-
 use Time::HiRes;
 
 $|++;
@@ -35,13 +33,17 @@ close $rstuff_fh;
 
 my $rdbref = { };
 $rdbref->{main} = { };
+
 for my $item (@randstuff_ini) {
   $item =~ s/\s+$//;
   $item = decode_irc($item);
-  my $digest = sha256_hex($item.rand.Time::HiRes::time);
-  my @splitd = split //, $digest;
-  my $idx = join '', splice(@splitd, -4);
-  $idx .= pop @splitd while exists $rdbref->{main}->{$idx} and @splitd;
+
+  my @v = ( 'a' .. 'f', 0 .. 9 );
+  my $idx = join '', map { $v[rand @v] } 1 .. 4;
+  ## regen 0000 keys:
+  $idx ||= join '', map { $v[rand @v] } 1 .. 4;
+  $idx .= $v[rand @v] while exists $rdbref->{main}->{$idx};
+
   $rdbref->{main}->{$idx} = [ $item, time(), '-Imported' ];
 }
 

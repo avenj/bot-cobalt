@@ -106,7 +106,7 @@ my $build = $class->new(
   },
   
   configure_requires => {
-    'Module::Build' => '0.38',
+    'Module::Build' => '0.40',
   },
   
   build_requires => {
@@ -132,8 +132,6 @@ my $build = $class->new(
       'Data::Dumper'     => 0,
 
       'DB_File'          => 0,
-
-      'Digest::SHA'      => 0,
 
       'Exporter'         => 0,
 
