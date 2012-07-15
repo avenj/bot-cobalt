@@ -19,9 +19,9 @@ use Bot::Cobalt::DB;
 
 use Bot::Cobalt::Plugin::RDB::SearchCache;
 
-use DateTime;
-
 use File::Spec;
+
+use POSIX ();
 
 sub new { bless {}, shift }
 
@@ -36,10 +36,10 @@ sub Cobalt_register {
     MaxKeys => 8,
   );
 
-  my $cfg = plugin_cfg( $self );
+  my $pcfg = plugin_cfg( $self );
   my $var = core->var;
   
-  my $relative_to_var = $cfg->{Opts}->{InfoDB} // 
+  my $relative_to_var = $pcfg->{Opts}->{InfoDB} // 
     File::Spec->catfile( 'db', 'info3.db' );
     
   my $dbpath = File::Spec->catfile(
@@ -52,7 +52,7 @@ sub Cobalt_register {
     File => $dbpath,
   );
 
-  $self->{MAX_TRIGGERED} = $cfg->{Opts}->{MaxTriggered} || 3;
+  $self->{MAX_TRIGGERED} = $pcfg->{Opts}->{MaxTriggered} || 3;
 
   ## hash mapping contexts/channels to previously-triggered topics
   ## used for MaxTriggered
@@ -118,7 +118,7 @@ sub Bot_ctcp_action {
     unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
 
   ## should we be sending info3 responses anyway?
-  my $chcfg = $core->get_channels_cfg($context) || {};
+  my $chcfg = $core->get_channels_cfg($context);
   return PLUGIN_EAT_NONE
     if defined $chcfg->{$channel}->{info3_response}
     and $chcfg->{$channel}->{info3_response} == 0;
@@ -638,8 +638,11 @@ sub _info_about {
   $self->{DB}->dbclose;
 
   my $addedby = $ref->{AddedBy} || '(undef)';
-  my $dt_addedat = DateTime->from_epoch( epoch => $ref->{AddedAt} );
-  my $addedat = join ' ', $dt_addedat->date, $dt_addedat->time;
+
+  my $addedat = POSIX::strftime( 
+    "%H:%M:%S (%Z) %Y-%m-%d", localtime( $ref->{AddedAt} )
+  );
+
   my $str_len = length( $ref->{Response} );
   
   return core->rpl( q{INFO_ABOUT},

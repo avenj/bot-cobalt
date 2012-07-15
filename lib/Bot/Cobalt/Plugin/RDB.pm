@@ -18,6 +18,8 @@ use List::Util   qw/shuffle/;
 
 use Try::Tiny;
 
+use POSIX ();
+
 sub new { 
   bless {
 
@@ -728,12 +730,14 @@ sub _cmd_rdb_info {
   my $added_by   = ref $item_ref eq 'HASH' ?
                    $item_ref->{AddedBy} : $item_ref->[2];
 
-  my $added_dt = DateTime->from_epoch(
-    epoch => $addedat_ts // 0
+  $rplvars->{date} = POSIX::strftime( 
+    "%Y-%m-%d", localtime( $addedat_ts )
+  );
+  
+  $rplvars->{time} = POSIX::strftime(
+    "%H:%M:%S (%Z)", localtime( $addedat_ts )
   );
 
-  $rplvars->{date} = $added_dt->date;
-  $rplvars->{time} = $added_dt->time;
   $rplvars->{addedby} = $added_by // '(undef)' ;  
 
   return core->rpl( 'RDB_ITEM_INFO', $rplvars );

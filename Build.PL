@@ -175,7 +175,6 @@ my $build = $class->new(
       'URI::Escape'    => 0,
 
      # Utils
-      'DateTime'      => 0,
       'IRC::Utils'    => '0.12',
       'Term::ReadKey' => 0,
 
