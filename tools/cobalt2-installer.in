@@ -1,8 +1,6 @@
 #!perl
 my $version = '0.15';
 
-## This is still a disaster.  :|
-
 use 5.10.1;
 use strictures 1;
 

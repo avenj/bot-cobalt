@@ -498,7 +498,7 @@ retrieve the Core via the B<instance> method:
 
 You can also query to find out if Core has been properly instanced:
 
-  if ( Bot::Cobalt::Core->is_instanced ) {
+  if ( Bot::Cobalt::Core->has_instance ) {
   
   }
 

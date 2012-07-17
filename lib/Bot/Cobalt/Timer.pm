@@ -26,8 +26,10 @@ has 'core'  => (
   
   default => sub { 
     require Bot::Cobalt::Core;
+
     die "Cannot find active Bot::Cobalt::Core instance"
-      unless Bot::Cobalt::Core->is_instanced;
+      unless Bot::Cobalt::Core->has_instance;
+
     Bot::Cobalt::Core->instance 
   },
 );

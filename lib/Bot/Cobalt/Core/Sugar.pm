@@ -21,7 +21,7 @@ our @EXPORT = qw/
 sub core {
   require Bot::Cobalt::Core;
   confess "core sugar called but no Bot::Cobalt::Core instance"
-    unless Bot::Cobalt::Core->is_instanced;
+    unless Bot::Cobalt::Core->has_instance;
   Bot::Cobalt::Core->instance
 }
 

@@ -9,18 +9,26 @@ sub instance {
   my $class = shift;
   
   no strict 'refs';
-  my $instance = \${$class.'::_instance'};
+
+  my $this_obj = \${$class.'::_singleton'};
   
-  return defined $$instance ?
-    $$instance
-    : ( $$instance = $class->new(@_) );
+  defined $$this_obj ?
+    $$this_obj
+    : ( $$this_obj = $class->new(@_) )
 }
 
-sub has_instance { is_instanced(@_) }
-sub is_instanced {
+sub has_instance {
   my $class = ref $_[0] || $_[0];
+
   no strict 'refs';
-  return ${$class.'::_instance'}
+
+  return unless ${$class.'::_singleton'};
+  1
+}
+
+sub is_instanced {
+  require Carp;
+  Carp::confess("is_instanced is deprecated; use has_instance")
 }
 
 1;

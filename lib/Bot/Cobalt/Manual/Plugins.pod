@@ -1251,7 +1251,7 @@ retrieve the running L<Bot::Cobalt::Core> via the B<instance> method:
     
     require Bot::Cobalt::Core;
     croak "No Core instance available"
-      unless Bot::Cobalt::Core->is_instanced;
+      unless Bot::Cobalt::Core->has_instance;
     my $core = Bot::Cobalt::Core->instance;
   }
 
