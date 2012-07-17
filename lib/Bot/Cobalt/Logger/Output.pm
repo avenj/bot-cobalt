@@ -9,6 +9,8 @@ use Bot::Cobalt::Common qw/:types :string/;
 
 use POSIX ();
 
+use Try::Tiny;
+
 ## Configurables.
 has 'time_format' => (
   is  => 'rw',
@@ -43,11 +45,42 @@ has '_outputs' => (
 ## Public.
   ## FIXME add or remove Output:: objs from _outputs
 sub add {
+  my ($self, @args) = shift;
+  
+  unless (@args && @args % 2 == 0) {
+    carp "add() expects an even number of arguments, ",
+         "mapping an Output class to constructor arguments";
+    return
+  }
+  
+  my $prefix = 'Bot::Cobalt::Logger::' ;
+  
+  CONFIG: while (my ($subclass, $opts) = splice @args, 0, 2) {
+    confess "add() expects constructor arguments to be a HASH"
+      unless ref $opts eq 'HASH';
 
-}
+    my $target_pkg = $subclass . $prefix;
 
-sub del {
+    { local $@;
+      eval "require $target_pkg";
+      
+      if (my $err = $@) {
+        carp "Could not add $subclass: $err";
+        next CONFIG
+      }
+    }
 
+    my $new_obj = try {
+      $target_pkg->new(%$opts)
+    } catch {
+      carp "Could not add $subclass, new() died: $_";
+      undef
+    } or next CONFIG;
+
+    push( @{ $self->_outputs }, $new_obj )
+  }  ## CONFIG
+
+  1
 }
 
 
