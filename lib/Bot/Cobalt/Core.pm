@@ -13,8 +13,12 @@ use Log::Handler;
 use POE;
 
 use Bot::Cobalt::Common;
+
 use Bot::Cobalt::IRC;
+
 use Bot::Cobalt::Lang;
+
+use Bot::Cobalt::Logger;
 
 use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
@@ -58,6 +62,8 @@ has 'etc' => (
 );
 
 has 'log'      => ( 
+  lazy => 1,
+
   is => 'rw', 
 
   isa => sub {
@@ -72,7 +78,11 @@ has 'log'      => (
   },
   
   default => sub {
-    Log::Handler->create_logger("cobalt");
+    my ($self) = @_;
+    Bot::Cobalt::Logger->new(
+      level => $self->loglevel,
+      ## FIXME configurable time_format / log_format
+    )
   },
 );
 
@@ -80,7 +90,7 @@ has 'loglevel' => (
   is  => 'rw', 
   isa => Str, 
 
-  default => sub { 'info' } 
+  default => sub { 'info' },
 );
 
 has 'detached' => ( 
@@ -261,33 +271,17 @@ sub rpl  {
 sub init {
   my ($self) = @_;
 
-  my $maxlevel = $self->debug ? 'debug' : $self->loglevel ;
-
   my $logfile  = $self->cfg->core->paths->{Logfile}
                 // File::Spec->catfile( $self->var, 'cobalt.log' );
-
-  $self->log->add(
-    file => {
-      maxlevel => $maxlevel,
-      timeformat     => "%Y/%m/%d %H:%M:%S",
-      message_layout => "[%T] %L %p %m",
-
-      filename => $logfile,
-      filelock => 1,
-      fileopen => 1,
-      reopen   => 1,
-      autoflush => 1,
-    },
+  $self->log->output->add(
+    'Output::File' =>
+       { file => $logfile, }
   );
 
   unless ($self->detached) {
-    $self->log->add(
-      screen => {
-        log_to => "STDOUT",
-        maxlevel => $maxlevel,
-        timeformat     => "%Y/%m/%d %H:%M:%S",
-        message_layout => "[%T] %L (%p) %m",
-      },
+    $self->log->output->add(
+      'Output::Term' =>
+        { },
     );
   }
 
