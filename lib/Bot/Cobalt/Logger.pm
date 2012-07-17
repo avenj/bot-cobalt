@@ -11,6 +11,7 @@ use Scalar::Util qw/blessed/;
 
 use Bot::Cobalt::Common qw/:types/;
 
+use Bot::Cobalt::Logger::Output;
 
 has 'level' => (
   required => 1,
@@ -19,7 +20,7 @@ has 'level' => (
   writer => 'set_level',
   
   isa => sub {
-    die "Unknown log level $_[0]"
+    confess "Unknown log level, should be one of: error warn info debug"
       unless $_[0] ~~ [qw/error warn info debug/];
   },
 );
