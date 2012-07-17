@@ -81,6 +81,15 @@ sub add {
   1
 }
 
+## FIXME
+sub del {
+  $self = shift;
+  
+  for my $subclass ( @_ ) {
+    ## FIXME find and remove output objs for specified classes
+  }
+}
+
 
 ## Private.
 sub _format {
@@ -121,3 +130,114 @@ sub _write {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Logger::Output - Log handler output manager
+
+=head1 SYNOPSIS
+
+  ## Normally constructed by Bot::Cobalt::Logger
+
+  my $log_output = Bot::Cobalt::Logger::Output->new(
+    log_format  => $log_format,
+    time_format => $time_format,
+  );
+  
+  $log_output->add(
+    'Output::File' =>
+      { file => $path_to_log },
+  );
+
+=head1 DESCRIPTION
+
+This is the output manager for L<Bot::Cobalt::Logger>, handling dispatch 
+to log writers such as L<Bot::Cobalt::Logger::Output::File> and 
+L<Bot::Cobalt::Logger::Output::Term>.
+
+=head2 Methods
+
+=head3 add
+
+B<add()> takes the name of a Bot::Cobalt::Logger:: class and some 
+arguments (via a HASH) to pass to the specified class' constructor:
+
+  $log_output->add(
+    ## Add a Bot::Cobalt::Logger::Output::File
+    ## new() is passed 'file => $path_to_log'
+    'Output::File' =>
+      { file => $path_to_log },
+  );
+
+(Multiple outputs can be added in a single call.)
+
+The specified outputs will be initialized and tracked; their write method 
+is called when log messages are received.
+
+=head3 log_format
+
+B<log_format> can be specified at construction time or changed on the 
+fly.
+
+This is used to specify the actual layout of each individual logged 
+message (for the default formatter; specific output classes may choose 
+to override the formatter and disregard log_format).
+
+Takes a L<Bot::Cobalt::Utils/rplprintf> template string; normal rplprintf 
+usage rules apply -- a replacement sequence starts with '%' and is 
+terminated by either a space or a trailing '%'.
+
+Defaults to "%time %pkg (%level%) %msg"
+
+Replacement variables passed in to the template are:
+
+  msg     Actual (concatenated) log message
+  level   Level this message was logged to
+  time    Current date and time (see time_format)
+  pkg     Package this log method was called from
+  file    File called from
+  line    Line called from
+  sub     Subroutine called from
+
+=head3 time_format
+
+B<time_format> can be specified at construction time or changed on the 
+fly.
+
+This is used to create the '%time' template variable for L</log_format>.
+
+It is fed to C<strftime> to create a time/date string; see the 
+documentation for C<strftime> on your system for a complete list of 
+usable replacement sequences.
+
+Defaults to "%Y-%m-%d %H:%M:%S"
+
+Commonly used replacement sequences include:
+
+  %Y   Current year including century.  
+  %m   Current month (as a number)
+  %d   Current day of the month.
+
+  %A   Full weekday name
+  %a   Abbreviated weekday name
+  %B   Full month name
+  %b   Abbreviated month name
+
+  %H   Hour of the day (on a 24-hour clock)
+  %I   Hour of the day (on a 12-hour clock)
+  %p   'AM' or 'PM' indication
+  %M   Current minute
+  %S   Current second
+  %Z   Current timezone
+
+  %s   Seconds since epoch ("Unix time")
+    
+  %%   Literal %
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut

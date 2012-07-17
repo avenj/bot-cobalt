@@ -131,3 +131,65 @@ sub _write {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Bot::Cobalt::Logger::Output::File - Bot::Cobalt::Logger file output
+
+=head1 SYNOPSIS
+
+  $output_obj->add(
+    'Output::File' => {
+      file => $path_to_log,
+      
+      ## Optional:
+      # perms() defaults to 0666 and is modified by umask:
+      perms => 0666,
+      # mode() should be Fcntl constants suitable for sysopen()
+      # defaults to O_WRONLY | O_APPEND | O_CREAT
+      mode => O_WRONLY | O_APPEND | O_CREAT,
+    },
+  );
+
+See L<Bot::Cobalt::Logger::Output>.
+
+=head1 DESCRIPTION
+
+This is a L<Bot::Cobalt::Logger::Output> writer for logging messages to a 
+file.
+
+The constructor requires a B<file> specification (the path to the actual 
+file to write).
+
+Attempts to lock the file for every write.
+
+Expects UTF-8.
+
+=head2 file
+
+Retrieve or set the current file path.
+
+=head2 perms
+
+Retrieve or set the permissions passed to C<sysopen()>.
+
+This should be an octal mode and will be modified by the current 
+C<umask>. 
+
+Defaults to 0666
+
+=head2 mode
+
+Retrieve or set the open mode passed to C<sysopen()>.
+
+See L<Fcntl>.
+
+Defaults to O_WRONLY | O_APPEND | O_CREAT
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
