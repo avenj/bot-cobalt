@@ -69,6 +69,7 @@ sub _format {
     line => $caller->[2],
     sub  => $caller->[3],
   )
+   . "\n"
 }
 
 sub _write {

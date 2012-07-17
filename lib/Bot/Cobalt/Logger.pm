@@ -9,24 +9,60 @@ use Moo;
 
 use Scalar::Util qw/blessed/;
 
-use 'Bot::Cobalt::Common' qw/:types/;
+use Bot::Cobalt::Common qw/:types/;
 
-with 'Bot::Cobalt::Core::Role::Singleton';
 
 has 'level' => (
   required => 1,
+
+  is => 'ro',
+  writer => 'set_level',
   
   isa => sub {
     die "Unknown log level $_[0]"
-      unless $_[0] ~~ qw/error warn info debug/;
+      unless $_[0] ~~ [qw/error warn info debug/];
+  },
+);
+
+## time_format / log_format are passed to ::Output
+has 'time_format' => (
+  lazy => 1,
+
+  is  => 'rw',
+  isa => Str,
+
+  predicate => 'has_time_format',  
+  
+  trigger => sub {
+    my ($self, $val) = @_;
+    
+    $self->output->time_format($val)
+      if $self->has_output;
+  },
+);
+
+has 'log_format' => (
+  lazy => 1,
+  
+  is  => 'rw',
+  isa => Str,
+  
+  predicate => 'has_log_format',
+  
+  trigger => sub {
+    my ($self, $val) = @_;
+    
+    $self->output->log_format($val)
+      if $self->has_output;
   },
 );
 
 
-has '_output' => (
+has 'output' => (
   lazy => 1,
 
   is   => 'rwp',
+  predicate => 'has_output',
   
   isa => sub {
     confess "Not a Bot::Cobalt::Logger::Output subclass"
@@ -42,7 +78,6 @@ has '_levmap' => (
   
   default => sub {
     {
-#      fatal => 0,
       error => 1,
       warn  => 2,
       info  => 3,
@@ -54,11 +89,17 @@ has '_levmap' => (
 sub _build_output {
   my ($self) = @_;
 
-  ## FIXME
-  ##  figure out what needs passed to Logger::Output
+  my %opts;
   
-  
-  $output_obj
+  $opts{log_format} = $self->log_format
+    if $self->has_log_format;
+
+  $opts{time_format} = $self->time_format
+    if $self->has_time_format;
+
+  Bot::Cobalt::Logger::Output->new(
+    %opts  
+  );
 }
 
 sub _should_log {
@@ -69,16 +110,15 @@ sub _should_log {
 
   my $accept = $self->_levmap->{ $self->level };
 
-  ## Is the target level less/equal accepted level?  
   $accept >= $num_lev ? 1 : 0
 }
 
 sub _log_to_level {
   my ($self, $level) = splice @_, 0, 2;
 
-  return unless $self->_should_log($level);
+  return 1 unless $self->_should_log($level);
 
-  $self->_output->write(
+  $self->output->_write(
     $level,
     [ caller(1) ],
     @_
@@ -87,10 +127,10 @@ sub _log_to_level {
   1
 }
 
-sub debug { shift->_log_to_level( @_ ) }
-sub info  { shift->_log_to_level( @_ ) }
-sub warn  { shift->_log_to_level( @_ ) }
-sub error { shift->_log_to_level( @_ ) }
+sub debug { shift->_log_to_level( 'debug', @_ ) }
+sub info  { shift->_log_to_level( 'info', @_ )  }
+sub warn  { shift->_log_to_level( 'warn', @_ )  }
+sub error { shift->_log_to_level( 'error', @_ ) }
 
 1;
 __END__
