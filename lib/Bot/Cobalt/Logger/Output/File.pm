@@ -32,6 +32,12 @@ sub new {
 
   $self->file( $args{file} );
 
+  $self->mode( $args{mode} )
+    if defined $args{mode};
+
+  $self->perms( $args{perms} )
+    if defined $args{perms};
+
   $self
 }
 
@@ -74,6 +80,7 @@ sub _open {
   
   binmode $fh, ':utf8';
   $fh->autoflush;
+
   $self->[HANDLE] = $fh
 }
 
