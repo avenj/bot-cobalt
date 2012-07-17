@@ -47,9 +47,8 @@ sub add {
   my ($self, @args) = @_;
   
   unless (@args && @args % 2 == 0) {
-    carp "add() expects an even number of arguments, ",
-         "mapping an Output class to constructor arguments";
-    return
+    confess "add() expects an even number of arguments, ",
+         "mapping an Output class to constructor arguments"
   }
   
   my $prefix = 'Bot::Cobalt::Logger::' ;
