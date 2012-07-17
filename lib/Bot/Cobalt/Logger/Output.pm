@@ -43,7 +43,6 @@ has '_outputs' => (
 
 
 ## Public.
-  ## FIXME add or remove Output:: objs from _outputs
 sub add {
   my ($self, @args) = @_;
   
@@ -111,7 +110,11 @@ sub _write {
   my $fmt = $self->_format( @_ );
 
   for my $output (@{ $self->_outputs }) {
-    $output->_write( $fmt )
+    $output->_write(
+      ## Output classes can provide their own _format
+      $output->can('_format') ?  $output->_format( @_ )
+        : $self->_format( @_ )
+    )
   }
 
   1
