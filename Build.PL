@@ -110,8 +110,9 @@ my $build = $class->new(
   },
   
   build_requires => {
-    'Test::More' => 0,
+    'Test::Exception' => 0,
     'Test::Cmd'  => 0,
+    'Test::More' => 0,
 
     'Data::Dumper'   => 0,
     'File::Find'     => 0,
