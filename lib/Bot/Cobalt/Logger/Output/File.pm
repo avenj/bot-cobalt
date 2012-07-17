@@ -38,6 +38,10 @@ sub new {
   $self->perms( $args{perms} )
     if defined $args{perms};
 
+  ## Try to open/create file when object is constructed
+  $self->_open or croak "Could not open specified file ".$args{file};
+  $self->_close;
+
   $self
 }
 
@@ -75,8 +79,10 @@ sub _open {
   return if $self->_is_open;
 
   sysopen(my $fh, $self->file, $self->mode, $self->perms)
-    or croak "Log file could not be opened: ",
-             join ' ', $self->file, $!;
+    or warn(
+      "Log file could not be opened: ", 
+      join ' ', $self->file, $!
+    ) and return;
   
   binmode $fh, ':utf8';
   $fh->autoflush;
