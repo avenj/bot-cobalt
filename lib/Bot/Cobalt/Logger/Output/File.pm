@@ -5,17 +5,21 @@ use strictures 1;
 
 use Carp;
 
-use Fcntl qw/:flock/;
+use Fcntl qw/:DEFAULT :flock/;
 
 sub PATH   () { 0 }
 sub HANDLE () { 1 }
+sub MODE   () { 2 }
+sub PERMS  () { 3 }
 
 sub new {
   my $class = shift;
 
   my $self = [ 
-    '',    ## PATH
-    undef  ## HANDLE
+    '',     ## PATH
+    undef,  ## HANDLE
+    undef,  ## MODE
+    undef,  ## PERMS
   ];
 
   bless $self, $class;
@@ -43,15 +47,33 @@ sub file {
   $self->[PATH]
 }
 
+sub mode {
+  my ($self, $mode) = @_;
+  
+  return $self->[MODE] = $mode if defined $mode;
+  
+  $self->[MODE] //= O_WRONLY | O_APPEND | O_CREAT
+}
+
+sub perms {
+  my ($self, $perms) = @_;
+  
+  return $self->[PERMS] = $perms if defined $perms;
+  
+  $self->[PERMS] //= 0666
+}
+
 sub _open {
   my ($self) = @_;
-  
+
   return if $self->_is_open;
 
-  open my $fh, '+<:encoding(UTF-8)', $self->file
+  sysopen(my $fh, $self->file, $self->mode, $self->perms)
     or croak "Log file could not be opened: ",
              join ' ', $self->file, $!;
   
+  binmode $fh, ':utf8';
+  $fh->autoflush;
   $self->[HANDLE] = $fh
 }
 
