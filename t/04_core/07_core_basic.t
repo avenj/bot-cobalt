@@ -1,4 +1,4 @@
-use Test::More tests => 27;
+use Test::More tests => 29;
 use strict; use warnings;
 
 BEGIN {
@@ -111,3 +111,6 @@ ok( !$core->is_connected('Main'),    'is_connected(Main)' );
 ok( !$core->get_irc_context('Main'), 'get_irc_context(Main)' );
 ok( !$core->get_irc_object('Main'),  'get_irc_object(Main)' );
 ok( !$core->get_irc_casemap('Main'), 'get_irc_casemap(Main)' );
+
+ok( $core->clear_instance, 'clear_instance()' );
+ok( ! $core->has_instance, 'has_instance() false after clear' );
