@@ -183,8 +183,6 @@ L<POE::Component::Syndicator> (and L<Object::Pluggable>)
 
 Consult their documentation for all the gory details.
 
-Logging facilities are provided by L<Log::Handler>.
-
 =head1 AUTHOR
 
 Jon Portnoy <avenj@cobaltirc.org>

@@ -166,17 +166,8 @@ my $build = $class->new(
       'HTTP::Response' => 0,
       'URI::Escape'    => 0,
 
-     # Utils
-      'IRC::Utils'     => '0.12',
-      'Term::ReadKey'  => 0,
-
-     # Serialization
-      'JSON::XS'       => '2.00',
-      'YAML::XS'       => '0.34',
-
      # Logging
       'Devel::StackTrace' => '1.27',
-      'Log::Handler'      => '0.71',
 
      # Moo + related
       'Moo'                    => '0.091009',
@@ -199,8 +190,16 @@ my $build = $class->new(
       'POE::Component::Syndicator'  => '0.06',
       'Object::Pluggable'           => '1.27',
 
-     # Process mgmt
+     # Process
       'Proc::PID::File' => '1.26',
+
+     # Serialization
+      'JSON::XS'       => '2.00',
+      'YAML::XS'       => '0.34',
+
+     # Utils
+      'IRC::Utils'     => '0.12',
+      'Term::ReadKey'  => 0,
   },
 
   recommends => {

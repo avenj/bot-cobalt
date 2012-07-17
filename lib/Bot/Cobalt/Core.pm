@@ -8,8 +8,6 @@ use strictures 1;
 use Carp;
 use Moo;
 
-use Log::Handler;
-
 use POE;
 
 use Bot::Cobalt::Common;
@@ -482,7 +480,7 @@ Bot::Cobalt::Core - Bot::Cobalt core and event syndicator
 
 This module is the core of L<Bot::Cobalt>, tying an event syndicator 
 (via L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
-L<Log::Handler> instance, configuration manager, and other useful tools.
+logger instance, configuration manager, and other useful tools.
 
 Core is a singleton; within a running Cobalt instance, you can always 
 retrieve the Core via the B<instance> method:
@@ -553,7 +551,7 @@ A configuration object is an instanced L<Bot::Cobalt::Conf>:
     cfg => $conf_obj,
     var => $path_to_var_dir,
     
-    ## See perldoc Log::Handler regarding log levels:
+    ## See perldoc Bot::Cobalt::Logger regarding log levels:
     loglevel => $loglevel,
     
     ## Debug levels:

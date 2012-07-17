@@ -777,7 +777,8 @@ Requires a context and a nickname, similar to L</level>:
 The Cobalt core provides a B<log> method that writes to the LogFile 
 specified in cobalt.conf (and possibly STDOUT, if running with --nodetach).
 
-This is actually a L<Log::Handler> instance, so all methods found there 
+This is actually a L<Bot::Cobalt::Logger> instance, so all methods found 
+there 
 apply. Typically, plugins should log to B<info>, B<warn>, or B<debug>:
 
   core()->log->info("An informational message");
@@ -1461,9 +1462,6 @@ L<POE::Component::IRC> and L<POE::Component::IRC::State>
 
 L<POE::Component::Syndicator>
 
-=item *
-
-L<Log::Handler>
 
 =back
 
