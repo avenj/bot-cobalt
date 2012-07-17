@@ -28,7 +28,7 @@ has 'log_format' => (
   
   default => sub {
     ## rplprintf
-    "%date %pkg (%level%) %msg"
+    "%time %pkg (%level%) %msg"
   },
 );
 
@@ -45,7 +45,7 @@ has '_outputs' => (
 ## Public.
   ## FIXME add or remove Output:: objs from _outputs
 sub add {
-  my ($self, @args) = shift;
+  my ($self, @args) = @_;
   
   unless (@args && @args % 2 == 0) {
     carp "add() expects an even number of arguments, ",
@@ -59,7 +59,7 @@ sub add {
     confess "add() expects constructor arguments to be a HASH"
       unless ref $opts eq 'HASH';
 
-    my $target_pkg = $subclass . $prefix;
+    my $target_pkg = $prefix . $subclass;
 
     { local $@;
       eval "require $target_pkg";
