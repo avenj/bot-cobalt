@@ -105,7 +105,7 @@ sub get {
 sub _format {
   my ($self, $level, $caller, @strings) = @_;
   
-  rplprintf( $self->log_format,
+  rplprintf( $self->log_format, {
     level => $level,
 
     ## Actual message.
@@ -118,8 +118,7 @@ sub _format {
     file => $caller->[1],
     line => $caller->[2],
     sub  => $caller->[3],
-  )
-   . "\n"
+  }) . "\n"
 }
 
 sub _write {
