@@ -85,7 +85,14 @@ sub _open {
     ) and return;
   
   binmode $fh, ':utf8';
-  $fh->autoflush;
+## Current code is closing / reopening after each write, so no autoflush.
+## It would be nice to implement persistent open, but the catch is
+## that we may end up writing to an undefined location if the file is
+## deleted or moved. Win32 (and VMS, but 'eh') has no fucking clue about 
+## inodes, so we need some mechanism for detecting a handle is not the 
+## same path on at least Win32 before we can maintain persistently-open
+## log files properly.
+#  $fh->autoflush;
 
   $self->[HANDLE] = $fh
 }
