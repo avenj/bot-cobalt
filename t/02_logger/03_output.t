@@ -31,11 +31,13 @@ dies_ok( sub { $output->add(1) }, "add() dies with odd args" );
 
 ok( 
   $output->add(
-    'Output::File' => {
+    myfile => {
+      type => 'File',
       file => $test_log_path,
     },
     
-    'Output::Term' => {
+    myterm => {
+      type => 'Term',
     },
   ),
   'add() file and term'

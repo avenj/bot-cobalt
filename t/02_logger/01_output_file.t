@@ -55,3 +55,5 @@ ok( -e $test_log_path, 'Log file was recreated' );
 $contents = do { local (@ARGV, $/) = $test_log_path ; <> };
 chomp $contents;
 cmp_ok( $contents, 'eq', "Testing against fresh log" );
+
+unlink $test_log_path;

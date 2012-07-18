@@ -272,14 +272,17 @@ sub init {
   my $logfile  = $self->cfg->core->paths->{Logfile}
                 // File::Spec->catfile( $self->var, 'cobalt.log' );
   $self->log->output->add(
-    'Output::File' =>
-       { file => $logfile, }
+    'logfile' => {
+       type => 'File',
+       file => $logfile,
+     },
   );
 
   unless ($self->detached) {
     $self->log->output->add(
-      'Output::Term' =>
-        { },
+      'screen' => {
+        type => 'Term',
+      },
     );
   }
 

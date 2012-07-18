@@ -36,9 +36,9 @@ has 'log_format' => (
 ## Internals.
 has '_outputs' => (
   is  => 'rwp',
-  isa => ArrayRef,
+  isa => HashRef,
   
-  default => sub { [] },
+  default => sub { {} },
 );
 
 
@@ -51,19 +51,22 @@ sub add {
          "mapping an Output class to constructor arguments"
   }
   
-  my $prefix = 'Bot::Cobalt::Logger::' ;
+  my $prefix = 'Bot::Cobalt::Logger::Output::' ;
   
-  CONFIG: while (my ($subclass, $opts) = splice @args, 0, 2) {
-    confess "add() expects constructor arguments to be a HASH"
+  CONFIG: while (my ($alias, $opts) = splice @args, 0, 2) {
+    confess "Can't add $alias, opts are not a HASH"
       unless ref $opts eq 'HASH';
 
-    my $target_pkg = $prefix . $subclass;
+    confess "Can't add $alias, no type specified"
+      unless $opts->{type};
+
+    my $target_pkg = $prefix . delete $opts->{type};
 
     { local $@;
       eval "require $target_pkg";
       
       if (my $err = $@) {
-        carp "Could not add $subclass: $err";
+        carp "Could not add logger $alias: $err";
         next CONFIG
       }
     }
@@ -71,23 +74,31 @@ sub add {
     my $new_obj = try {
       $target_pkg->new(%$opts)
     } catch {
-      carp "Could not add $subclass, new() died: $_";
+      carp "Could not add logger $alias; new() died: $_";
       undef
     } or next CONFIG;
 
-    push( @{ $self->_outputs }, $new_obj )
+    $self->_outputs->{$alias} = $new_obj;
   }  ## CONFIG
 
   1
 }
 
-## FIXME
+## FIXME tests / POD
 sub del {
-  my $self = shift;
-  
-  for my $subclass ( @_ ) {
-    ## FIXME find and remove output objs for specified classes
+  my ($self, @aliases) = @_;
+  my $x;
+
+  for my $alias (@aliases) {
+    ++$x if delete $self->_outputs->{$alias}
   }
+
+  $x
+}
+
+sub get {
+  my ($self, $alias) = @_;
+  $self->_outputs->{$alias}
 }
 
 
@@ -117,7 +128,8 @@ sub _write {
 
   my $fmt = $self->_format( @_ );
 
-  for my $output (@{ $self->_outputs }) {
+  for my $alias (keys %{ $self->_outputs }) {
+    my $output = $self->_outputs->{$alias};
     $output->_write(
       ## Output classes can provide their own _format
       $output->can('_format') ?  $output->_format( @_ )
@@ -147,8 +159,10 @@ Bot::Cobalt::Logger::Output - Log handler output manager
   );
   
   $log_output->add(
-    'Output::File' =>
-      { file => $path_to_log },
+    'my_alias' => {
+      type => 'File',
+      file => $path_to_log,
+    },
   );
 
 =head1 DESCRIPTION
@@ -161,20 +175,26 @@ L<Bot::Cobalt::Logger::Output::Term>.
 
 =head3 add
 
-B<add()> takes the name of a Bot::Cobalt::Logger:: class and some 
-arguments (via a HASH) to pass to the specified class' constructor:
+C<add()> takes a list of aliases to add, mapped to a HASH containing the 
+name of their writer class (B<type>) and arguments to pass to the writer 
+class constructor:
 
   $log_output->add(
     ## Add a Bot::Cobalt::Logger::Output::File
     ## new() is passed 'file => $path_to_log'
-    'Output::File' =>
-      { file => $path_to_log },
+    MyLogger => {
+      type => 'File',
+      file => $path_to_log,
+    },
+    
+    ## Add a Logger::Output::Term also:
+    Screen => {
+      type => 'Term',
+    },
   );
 
-(Multiple outputs can be added in a single call.)
-
-The specified outputs will be initialized and tracked; their write method 
-is called when log messages are received.
+The specified outputs will be initialized and tracked; their C<_write> 
+method is called when log messages are received.
 
 =head3 log_format
 

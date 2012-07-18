@@ -51,7 +51,8 @@ ok( ! $logobj->_should_log('info'), 'should not log info()' );
 isa_ok( $logobj->output, 'Bot::Cobalt::Logger::Output' );
 ok(
   $logobj->output->add(
-    'Output::File' => {
+    myfile => {
+      type => 'File',
       file => $test_log_path,
     },
   ),
