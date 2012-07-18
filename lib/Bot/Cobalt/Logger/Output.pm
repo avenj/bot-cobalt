@@ -84,7 +84,6 @@ sub add {
   1
 }
 
-## FIXME tests / POD
 sub del {
   my ($self, @aliases) = @_;
   my $x;
@@ -125,8 +124,6 @@ sub _format {
 
 sub _write {
   my $self = shift;
-
-  my $fmt = $self->_format( @_ );
 
   for my $alias (keys %{ $self->_outputs }) {
     my $output = $self->_outputs->{$alias};
