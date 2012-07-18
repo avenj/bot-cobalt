@@ -84,15 +84,16 @@ sub rplprintf {
   ## $vars should be a hash keyed by variable, f.ex:
   ##   'user' => $username,
   ##   'err'  => $error,
-  
-  my %vars = %default_fmt_vars;
+
+  my %vars;  
+#  my %vars = %default_fmt_vars;
   
   if (@_ > 1) {
     my %args = @_;
-    $vars{$_} = delete $args{$_} for keys %args;
+    %vars = ( %default_fmt_vars, %args );
   } else {
     if (ref $_[0] eq 'HASH') {
-      $vars{$_} = $_[0]->{$_} for keys %{$_[0]}
+      %vars = ( %default_fmt_vars, %{$_[0]} );
     } else {
       confess "rplprintf() expects a hash"
     }
@@ -100,16 +101,15 @@ sub rplprintf {
 
   my $repl = sub {
     ## _repl($1, $2, $vars)
-    my ($orig, $match, $varref) = @_;
-    return $orig unless defined $varref->{$match};
-
-    my $replace = $varref->{$match};
+    my ($orig, $match, %varh) = @_;
+    return $orig unless defined $varh{$match};
+    my $replace = $varh{$match};
     return $replace
   };
 
   my $regex = qr/(%([^\s%]+)%?)/;
 
-  $string =~ s/$regex/$repl->($1, $2, \%vars)/ge;
+  $string =~ s/$regex/$repl->($1, $2, %vars)/ge;
 
   $string
 }
