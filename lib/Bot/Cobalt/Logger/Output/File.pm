@@ -48,7 +48,6 @@ sub new {
 
   ## Try to open/create file when object is constructed
   $self->_open or croak "Could not open specified file ".$args{file};
-
   $self->_close if $self->[RUNNING_IN_HELL];
 
   $self

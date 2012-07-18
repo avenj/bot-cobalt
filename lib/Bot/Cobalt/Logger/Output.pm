@@ -28,7 +28,7 @@ has 'log_format' => (
   
   default => sub {
     ## rplprintf
-    "%time %pkg (%level%) %msg"
+    "%level %time (%pkg%) %msg"
   },
 );
 
@@ -189,7 +189,7 @@ Takes a L<Bot::Cobalt::Utils/rplprintf> template string; normal rplprintf
 usage rules apply -- a replacement sequence starts with '%' and is 
 terminated by either a space or a trailing '%'.
 
-Defaults to "%time %pkg (%level%) %msg"
+Defaults to "%level %time (%pkg%) %msg"
 
 Replacement variables passed in to the template are:
 
