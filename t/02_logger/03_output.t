@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 13;
 use Test::Exception;
 
 use strict; use warnings;
@@ -67,3 +67,9 @@ ok(
 ## FIXME test with modified time_format / log_format ?
 
 unlink $test_log_path;
+
+my $tobj;
+ok( $tobj = $output->get('myterm'), 'get()' );
+isa_ok( $tobj, 'Bot::Cobalt::Logger::Output::Term' );
+
+cmp_ok( $output->del('myterm', 'myfile'), '==', 2, 'del() 2 objects' );

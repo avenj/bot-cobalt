@@ -196,6 +196,17 @@ class constructor:
 The specified outputs will be initialized and tracked; their C<_write> 
 method is called when log messages are received.
 
+=head3 del
+
+C<del()> takes a list of aliases to delete.
+
+Returns the number of aliases actually deleted.
+
+=head3 get
+
+C<get()> takes an alias and returns the appropriate writer object (or 
+undef).
+
 =head3 log_format
 
 B<log_format> can be specified at construction time or changed on the 
