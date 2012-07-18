@@ -11,6 +11,8 @@ sub PATH   () { 0 }
 sub HANDLE () { 1 }
 sub MODE   () { 2 }
 sub PERMS  () { 3 }
+sub INODE  () { 4 }
+sub RUNNING_IN_HELL () { 5 }
 
 sub new {
   my $class = shift;
@@ -20,6 +22,8 @@ sub new {
     undef,  ## HANDLE
     undef,  ## MODE
     undef,  ## PERMS
+    undef,  ## INODE
+    0,      ## RUNNING_IN_HELL
   ];
 
   bless $self, $class;
@@ -38,9 +42,12 @@ sub new {
   $self->perms( $args{perms} )
     if defined $args{perms};
 
+  ++$self->[RUNNING_IN_HELL] if $^O eq 'MSWin32';
+
   ## Try to open/create file when object is constructed
   $self->_open or croak "Could not open specified file ".$args{file};
-  $self->_close;
+
+  $self->_close if $self->[RUNNING_IN_HELL];
 
   $self
 }
@@ -51,7 +58,9 @@ sub file {
   if (defined $file) {
     $self->_close if $self->_is_open;
     
-    $self->[PATH] = $file
+    $self->[PATH] = $file;
+    
+    $self->_open unless $self->[RUNNING_IN_HELL];
   }
 
   $self->[PATH]
@@ -76,23 +85,17 @@ sub perms {
 sub _open {
   my ($self) = @_;
 
-  return if $self->_is_open;
-
   sysopen(my $fh, $self->file, $self->mode, $self->perms)
     or warn(
       "Log file could not be opened: ", 
       join ' ', $self->file, $!
     ) and return;
-  
+
   binmode $fh, ':utf8';
-## Current code is closing / reopening after each write, so no autoflush.
-## It would be nice to implement persistent open, but the catch is
-## that we may end up writing to an undefined location if the file is
-## deleted or moved. Win32 (and VMS, but 'eh') has no fucking clue about 
-## inodes, so we need some mechanism for detecting a handle is not the 
-## same path on at least Win32 before we can maintain persistently-open
-## log files properly.
-#  $fh->autoflush;
+  $fh->autoflush;
+
+  $self->[INODE] = ( stat $self->file )[1]
+    unless $self->[RUNNING_IN_HELL];
 
   $self->[HANDLE] = $fh
 }
@@ -100,10 +103,9 @@ sub _open {
 sub _close {
   my ($self) = @_;
   
-  return unless $self->_is_open;
+  return 1 unless $self->_is_open;
   
   close $self->[HANDLE];
-
   $self->[HANDLE] = undef;
 
   1
@@ -111,14 +113,33 @@ sub _close {
 
 sub _is_open {
   my ($self) = @_;
-  
   $self->[HANDLE]
+}
+
+sub _do_reopen {
+  my ($self) = @_;
+
+  ## Boolean true if the file should be reopened on _write
+
+  ## Are we on a stupid system or dealing with a not-open file?
+  return 1 unless $self->_is_open;
+
+  unless ( $self->[RUNNING_IN_HELL] ) {
+    ## Do the inodes match?
+    return if -e $self->file
+      and $self->[INODE] == ( stat $self->file )[1];
+  }
+  
+  1
 }
 
 sub _write {
   my ($self, $str) = @_;
-  
-  $self->_open;
+
+  if ($self->_do_reopen) {
+    $self->_close;
+    $self->_open or warn "_open failure" and return;
+  }
 
   ## FIXME if flock fails, buffer and try next _write up to X items ?
   ## FIXME maybe we should just fail silently (and document same)?
@@ -130,7 +151,7 @@ sub _write {
 
   flock($self->[HANDLE], LOCK_UN);
   
-  $self->_close;
+  $self->_close if $self->[RUNNING_IN_HELL];
 
   1
 }

@@ -1,4 +1,4 @@
-use Test::More tests => 8;
+use Test::More tests => 11;
 use Test::Exception;
 
 use strict; use warnings;
@@ -34,7 +34,7 @@ is( $output->perms, 0666, 'perms() returned 0666' );
 
 ok( $output->_write("This is a test string"), '_write()' );
 
-ok( -e $test_log_path, "Log file was created" );
+ok( -e $test_log_path, 'Log file was created' );
 
 my $contents = do { local (@ARGV, $/) = $test_log_path ; <> };
 
@@ -44,3 +44,14 @@ cmp_ok( $contents, 'eq', "This is a test string" );
 ## FIXME test mode / perms ?
 
 unlink $test_log_path;
+
+ok( 
+  $output->_write("Testing against fresh log"), 
+  '_write() after unlink()' 
+);
+
+ok( -e $test_log_path, 'Log file was recreated' );
+
+$contents = do { local (@ARGV, $/) = $test_log_path ; <> };
+chomp $contents;
+cmp_ok( $contents, 'eq', "Testing against fresh log" );

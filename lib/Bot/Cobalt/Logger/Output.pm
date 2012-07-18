@@ -83,7 +83,7 @@ sub add {
 
 ## FIXME
 sub del {
-  $self = shift;
+  my $self = shift;
   
   for my $subclass ( @_ ) {
     ## FIXME find and remove output objs for specified classes
