@@ -101,15 +101,15 @@ sub rplprintf {
 
   my $repl = sub {
     ## _repl($1, $2, $vars)
-    my ($orig, $match, %varh) = @_;
-    return $orig unless defined $varh{$match};
-    my $replace = $varh{$match};
+    my ($orig, $match, $varref) = @_;
+    return $orig unless defined $varref->{$match};
+    my $replace = $varref->{$match};
     return $replace
   };
 
   my $regex = qr/(%([^\s%]+)%?)/;
 
-  $string =~ s/$regex/$repl->($1, $2, %vars)/ge;
+  $string =~ s/$regex/$repl->($1, $2, \%vars)/ge;
 
   $string
 }
