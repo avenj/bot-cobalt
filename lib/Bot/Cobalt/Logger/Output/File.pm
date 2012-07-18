@@ -42,7 +42,9 @@ sub new {
   $self->perms( $args{perms} )
     if defined $args{perms};
 
-  ++$self->[RUNNING_IN_HELL] if $^O eq 'MSWin32';
+  if ($^O eq 'MSWin32' or $^O eq 'VMS') {
+    ++$self->[RUNNING_IN_HELL]
+  }
 
   ## Try to open/create file when object is constructed
   $self->_open or croak "Could not open specified file ".$args{file};
@@ -119,8 +121,6 @@ sub _is_open {
 sub _do_reopen {
   my ($self) = @_;
 
-  ## Boolean true if the file should be reopened on _write
-
   ## Are we on a stupid system or dealing with a not-open file?
   return 1 unless $self->_is_open;
 
@@ -145,7 +145,7 @@ sub _write {
   ## FIXME maybe we should just fail silently (and document same)?
   flock($self->[HANDLE], LOCK_EX)
     or warn "flock failure for ".$self->file
-    and $self->_close and return;
+    and return;
 
   print { $self->[HANDLE] } $str;
 
@@ -188,8 +188,15 @@ See L<Bot::Cobalt::Logger::Output>.
 This is a L<Bot::Cobalt::Logger::Output> writer for logging messages to a 
 file.
 
-The constructor requires a B<file> specification (the path to the actual 
-file to write).
+The constructor requires a L</file> specification (the path to the actual 
+file to write). L</perms> or </mode> can also be set at construction 
+time but are optional.
+
+The log file is kept open persistently, but closed and reopened if the 
+file's inode has changed or the file has disappeared. This doesn't apply 
+on Windows, which has no concept of inodes; an open-write-close cycle 
+will be executed for each logged message on systems without useful inode 
+details, in order to ensure messages are going to the expected file.
 
 Attempts to lock the file for every write.
 
@@ -214,7 +221,9 @@ Retrieve or set the open mode passed to C<sysopen()>.
 
 See L<Fcntl>.
 
-Defaults to O_WRONLY | O_APPEND | O_CREAT
+Defaults to:
+
+   O_WRONLY | O_APPEND | O_CREAT
 
 =head1 AUTHOR
 
