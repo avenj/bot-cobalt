@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Role::AdminCmds;
-our $VERSION = '0.012';
+our $VERSION = '0.012_03';
 
 use 5.12.1;
 use Moo::Role;
