@@ -111,8 +111,12 @@ t/01_utils/05_color.t
 t/01_utils/06_frontend.t
 t/01_utils/07_rcfiles.t
 t/01_utils/08_error.t
-t/02_serial/01_freezethaw.t
-t/02_serial/02_file_rw.t
+t/01_utils/09_serial_freezethaw.t
+t/01_utils/10_serial_file.t
+t/02_logger/01_output_file.t
+t/02_logger/02_output_term.t
+t/02_logger/03_output.t
+t/02_logger/04_logger.t
 t/03_conf/01_file.t
 t/03_conf/02_f_cobalt.t
 t/03_conf/03_f_channels.t
