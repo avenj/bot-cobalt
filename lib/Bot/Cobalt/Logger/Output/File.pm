@@ -169,7 +169,10 @@ Bot::Cobalt::Logger::Output::File - Bot::Cobalt::Logger file output
 =head1 SYNOPSIS
 
   $output_obj->add(
-    'Output::File' => {
+    'MyFile' => {
+      type => 'File',
+
+      ## Required:
       file => $path_to_log,
       
       ## Optional:

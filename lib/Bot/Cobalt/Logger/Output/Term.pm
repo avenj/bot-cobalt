@@ -33,7 +33,9 @@ Bot::Cobalt::Logger::Output::Term - Bot::Cobalt::Logger console output
 =head1 SYNOPSIS
 
   $output_obj->add(
-    'Output::Term' => { },
+    'MyScreen' => {
+      type => 'Term',
+    },
   );
 
 See L<Bot::Cobalt::Logger::Output>.
