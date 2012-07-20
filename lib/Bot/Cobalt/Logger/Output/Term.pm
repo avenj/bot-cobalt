@@ -2,7 +2,6 @@ package Bot::Cobalt::Logger::Output::Term;
 our $VERSION = '0.012_03';
 
 use strictures 1;
-use Carp;
 
 sub new {
   my $class = shift;
