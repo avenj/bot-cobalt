@@ -1,5 +1,44 @@
 # Bot::Cobalt Changes
 
+* 0.013  (20 Jul 2012)
+
+  Fully reworked configuration file handling.
+  See docs for Bot::Cobalt::Conf for details.
+  Incompatible changes:
+    - get_core_cfg() now returns a Bot::Cobalt::Conf::File::Core
+      Previously returned a HASH.
+    - 'PluginOpts' no longer exists. Opts directives specified in 
+      plugins.conf will override directives from loaded configuration 
+      files.
+
+  Dropped Log::Handler dependency. Logging is now handled by 
+  Bot::Cobalt::Logger (and twice as fast per message!)
+
+  Importing Bot::Cobalt::Common will now import 'strictures 1' rather 
+  than strict + warnings.
+  
+  Fix Bot::Cobalt::IRC to be more discerning about Bot_rehash events and 
+  triggered autojoin reloads.
+
+  Drop DateTime dependency; strftime() will do.
+  
+  Explicitly use JSON::XS. Saves some overhead vs. 'use JSON' and 
+  performance sucks without it anyway. (We are already pulling in XS 
+  bits, so 'eh')
+
+  Plugin::RDB; Revert to strictly random item IDs; hashing is unnecessary 
+  overhead. Drops Digest::SHA dependency.
+  
+  Plugin::RDB; Clean up randstuff timer in _unregister.
+
+  Plugin::Extras::DNS; add simplistic iptohex and hextoip command 
+  handlers.
+
+  Core::Role::Singleton; kill is_instanced in favor of Moosey 
+  'has_instance'
+
+  Optimized Bot::Cobalt::Utils::rplprintf()
+
 
 * 0.012  (05 Jul 2012)
 

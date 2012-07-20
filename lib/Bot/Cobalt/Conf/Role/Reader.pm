@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf::Role::Reader;
-our $VERSION = '0.012_03';
+our $VERSION = '0.013';
 
 use Moo::Role;
 use Carp;

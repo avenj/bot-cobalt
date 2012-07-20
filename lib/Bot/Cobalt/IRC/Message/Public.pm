@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Message::Public;
-our $VERSION = '0.012_03';
+our $VERSION = '0.013';
 
 use 5.10.1;
 
