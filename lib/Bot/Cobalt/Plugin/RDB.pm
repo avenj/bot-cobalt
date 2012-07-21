@@ -597,40 +597,53 @@ sub _cmd_rdb_add {
 sub _cmd_rdb_del {
   my ($self, $msg, $parsed_args) = @_;
   
-  my ($rdb, $item_idx) = @$parsed_args;
+  my ($rdb, @item_indexes) = @$parsed_args;
 
   return 'Syntax: rdb del <RDB> <index number>'
-    unless $rdb and $item_idx;
+    unless $rdb and @item_indexes;
 
   my $rplvars = {
     nick => $msg->src_nick,
     rdb  => $rdb,
-    index => $item_idx,
   };
   
   my $username = core->auth->username($msg->context, $msg->src_nick);
 
-  my ($retval, $err) = 
-    $self->_delete_item($rdb, $item_idx, $username);
+  INDEX: for my $item_idx (@item_indexes) {
+    my ($retval, $err) = 
+      $self->_delete_item($rdb, $item_idx, $username);
 
-  my $rpl;
-  if ($retval) {
-    $rpl = "RDB_ITEM_DELETED";
-  } else {
-    given ($err) {
-      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-      $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-      default { 
-        my $errstr =  "BUG; Unknown err $err from _delete_item";
-        logger->warn($errstr);
-        return $errstr
+    $rplvars->{index} = $item_idx;
+
+    my $rpl;
+
+    if ($retval) {
+      $rpl = "RDB_ITEM_DELETED";
+    } else {
+
+      given ($err) {
+        $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
+        $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
+        $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
+        default { 
+          my $errstr =  "BUG; Unknown err $err from _delete_item";
+          logger->warn($errstr);
+          return $errstr
+        }
+
       }
-    }
-    
-  }
 
-  return core->rpl( $rpl, $rplvars )
+    }
+
+    broadcast( 'message',
+      $msg->context,
+      $msg->channel,
+      core->rpl($rpl, $rplvars)
+    );
+
+  } ## INDEX
+
+  return
 }
 
 sub _cmd_rdb_get {
@@ -1348,9 +1361,9 @@ Add a new item to the specified RDB. Also see L</randstuff>
 
 =head3 rdb del
 
-  rdb del <rdb> <itemID>
+  rdb del <rdb> <itemID> [itemID ...]
 
-Deletes an item from the specified RDB by item index ID.
+Deletes items from the specified RDB.
 
 =head3 rdb dbadd
 
