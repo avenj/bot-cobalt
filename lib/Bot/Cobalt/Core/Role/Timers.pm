@@ -1,5 +1,4 @@
 package Bot::Cobalt::Core::Role::Timers;
-our $VERSION = '0.013';
 
 use 5.10.1;
 use strict;

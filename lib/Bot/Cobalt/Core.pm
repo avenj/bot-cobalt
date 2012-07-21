@@ -3,8 +3,9 @@ our $VERSION = '0.013';
 
 ## This is the core Syndicator singleton.
 
-use 5.10.1;
+use 5.12.1;
 use strictures 1;
+
 use Carp;
 use Moo;
 

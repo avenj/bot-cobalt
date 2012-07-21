@@ -1,5 +1,4 @@
 package Bot::Cobalt::Frontend::RC;
-our $VERSION = '0.013';
 
 use strictures 1;
 
