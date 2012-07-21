@@ -77,10 +77,20 @@ has 'log'      => (
   
   default => sub {
     my ($self) = @_;
-    Bot::Cobalt::Logger->new(
+
+    my %opts = (
       level => $self->loglevel,
-      ## FIXME configurable time_format / log_format
-    )
+    );
+    
+    if (my $log_format = $self->cfg->core->opts->{LogFormat}) {
+      $opts{log_format} = $log_format
+    }
+    
+    if (my $log_time_fmt = $self->cfg->core->opts->{LogTimeFormat}) {
+      $opts{time_format} = $log_time_fmt
+    }
+
+    Bot::Cobalt::Logger->new( %opts )
   },
 );
 
