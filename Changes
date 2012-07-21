@@ -1,5 +1,15 @@
 # Bot::Cobalt Changes
 
+* 0.014  (21 Jul 2012)
+
+  Add logging-related opts LogFormat and LogTimeFormat (cobalt.conf)
+  Also some example etc/ cleanups.
+
+  Plugin::RDB; allow for deletion of multiple items via 'rdb del'
+
+  POD updates; documentation for Logger::Output:: classes was old/wrong.
+
+
 * 0.013  (20 Jul 2012)
 
   Fully reworked configuration file handling.

@@ -1,4 +1,5 @@
 package Bot::Cobalt::IRC::Role::UserEvents;
+our $VERSION = '0.014';
 
 ## POD lives in Bot::Cobalt::IRC for now ...
 
