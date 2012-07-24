@@ -122,13 +122,11 @@ sub Bot_initialize_irc {
   ## (This will override any 'Main' specified in multiserv.conf)
   ## Munge core->irc() hash into our plugin's opts()
   my $p_cfg = $core->cfg->plugins->plugin( plugin_alias($self) );
-  $p_cfg->opts->{Networks}->{Main}
-    = $core->cfg->core->irc;
+  $p_cfg->opts->{Networks}->{Main} = $core->cfg->core->irc;
 
   if (exists $p_cfg->opts->{Networks}->{'-ALL'}) {
     ## Reserved by core Auth plugin
     logger->error("-ALL is not a valid context name, disregarding.");
-
     delete $p_cfg->opts->{Networks}->{'-ALL'}
   }
 
