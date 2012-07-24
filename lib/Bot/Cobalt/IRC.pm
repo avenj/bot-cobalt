@@ -464,6 +464,15 @@ sub irc_001 {
     ## http://www.irc.org/tech_docs/draft-brocklesby-irc-isupport-03.txt
   }
 
+  ## May have configured umodes to set:
+  my $pcfg    = core->cfg->plugins->plugin( plugin_alias($self) );
+  my $thiscfg = $pcfg->opts->{Networks}->{$context};
+  
+  if (my $umode = $thiscfg->{Umodes}) {
+    logger->debug("Setting umode $umode on $context");
+    $irc->yield('mode', $irc->nick_name => $umode)
+  }
+
   my $server = $irc->server_name;
   logger->info("Connected: $context: $server");
 
