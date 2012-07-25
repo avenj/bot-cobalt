@@ -12,6 +12,7 @@ my $hash = {
   Int => 3,
   Array => [ qw/Two Items/ ],
   Hash  => { Some => { Deep => 'Hash' } },
+  Unicode => "\x{263A}",
 };
 
 ## JSON and YAMLXS (default) are the only ones we use in core

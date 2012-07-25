@@ -1,4 +1,4 @@
-use Test::More tests => 32;
+use Test::More tests => 36;
 use strict; use warnings;
 
 use 5.10.1;
@@ -78,6 +78,14 @@ ok( $db->del('intkey'), 'Database del() 1' );
 ok( $db->del('testkey'), 'Database del() 2' );
 is( $db->dbkeys, 1, "DB has expected keys after del");
 is( ($db->dbkeys)[0], 'scalarkey', "DB has expected key after del");
+
+ok( $db->put('unicode', "\x{263A}"), "UTF8 put()" );
+is( $db->get('unicode'), "\x{263A}", "UTF8 get()" );
+
+my $uni = "\x{263A}";
+utf8::encode($uni);
+ok( $db->put($uni, "Data"), "UTF8 encoded key put()" );
+is( $db->get($uni), "Data", "UTF8 encoded key get()" );
 
 $db->dbclose;
 

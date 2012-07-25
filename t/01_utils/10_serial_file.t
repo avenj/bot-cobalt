@@ -12,6 +12,7 @@ my $hash = {
   Int => 3,
   Array => [ qw/Two Items/ ],
   Hash  => { Some => { Deep => 'Hash' } },
+  Unicode => "\x{263A}",
 };
 
 JSONRW: {
