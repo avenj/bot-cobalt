@@ -225,7 +225,7 @@ sub _read_serialized {
     $lock = $opts->{Locking} if defined $opts->{Locking};
   }
 
-  open(my $in_fh, '<', $path)
+  open(my $in_fh, '<:encoding(UTF-8)', $path)
     or confess "open failed for $path: $!";
   
   if ($lock) {
@@ -239,8 +239,6 @@ sub _read_serialized {
 
   close($in_fh)
     or carp "close failed for $path: $!";
-
-  utf8::encode($data);
 
   return $data
 }
@@ -256,10 +254,8 @@ sub _write_serialized {
     $lock    = $opts->{Locking} if defined $opts->{Locking};
     $timeout = $opts->{Timeout} if $opts->{Timeout};
   }
-  
-  utf8::decode($data);
 
-  open(my $out_fh, '>>', $path)
+  open(my $out_fh, '>>:encoding(UTF-8)', $path)
     or confess "open failed for $path: $!";
 
   if ($lock) {

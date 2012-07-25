@@ -446,6 +446,12 @@ The B<put> method adds an entry to the database:
 The value can be any data structure serializable by JSON::XS; that is to 
 say, any shallow or deep data structure NOT including blessed references.
 
+Note that keys should be properly encoded:
+
+  my $key = "\x{263A}";
+  utf8::encode($key);
+  $db->put($key, $data);
+
 =head3 get
 
 The B<get> method retrieves a (deserialized) key.

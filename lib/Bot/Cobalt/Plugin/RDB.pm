@@ -1276,8 +1276,7 @@ sub poe_got_error {
   );
 }
 
-
-1
+1;
 
 =pod
 
