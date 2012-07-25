@@ -47,7 +47,6 @@ has '_types' => (
       YAML   => 'YAML::Syck',
       YAMLXS => 'YAML::XS',
       JSON   => 'JSON::XS',
-      XML    => 'XML::Dumper',
     }
   },
 );
@@ -107,26 +106,6 @@ has 'ref_from_json' => (
   coerce => sub {
     my $jsify = JSON::XS->new->allow_nonref;
     $jsify->utf8->decode($_[0])
-  },
-);
-
-has 'xml_from_ref' => ( 
-  is   => 'rw', 
-  lazy => 1,
-  
-  coerce => sub {
-    require XML::Dumper;
-    XML::Dumper->new->pl2xml($_[0])
-  },
-);
-
-has 'ref_from_xml' => ( 
-  is   => 'rw', 
-  lazy => 1,
-  
-  coerce => sub {
-    require XML::Dumper;
-    XML::Dumper->new->xml2pl($_[0])
   },
 );
 
@@ -412,10 +391,6 @@ B<YAMLXS> - YAML1.1 via L<YAML::XS>  I<(default)>
 
 B<JSON> - JSON via L<JSON::XS>
 
-=item *
-
-B<XML> - XML via L<XML::Dumper> I<(glacially slow)>
-
 =back
 
 The default is YAML I<(YAML Ain't Markup Language)> 1.1 (B<YAMLXS>)
@@ -513,10 +488,6 @@ L<YAML::XS> -- YAML1.1: L<http://yaml.org/spec/1.1/>
 =item *
 
 L<JSON>, L<JSON::XS> -- JSON: L<http://www.json.org/>
-
-=item *
-
-L<XML::Dumper>
 
 =back
 

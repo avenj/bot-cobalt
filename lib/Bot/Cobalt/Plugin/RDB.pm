@@ -4,7 +4,7 @@ our $VERSION = '0.014';
 ## 'Random' DBs, often used for quotebots or random chatter
 
 use strictures 1;
-use 5.12.0;
+use 5.12.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -1277,8 +1277,7 @@ sub poe_got_error {
 }
 
 
-1;
-__END__
+1
 
 =pod
 
