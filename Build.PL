@@ -52,27 +52,23 @@ my $class = Module::Build->subclass(
               or die "open: $path $!";
             my @thisf = readline($fh);
             close $fh;
-            
-            my $package_l = shift @thisf || return;
+
+            my $package_l = $thisf[0] || return;
             my $pkg;
             unless (($pkg) = $package_l =~ /^package\s+(\S+)$/) {
               warn "\nSkipping, no package: $path\n";
               return
             }
-            
+
             ++$x;
             print ". ";
-            
+
             my $v_line = "our \$VERSION = '$vers';\n";
-            
-            if ($thisf[0] =~ /VERSION/) {
-              $thisf[0] = $v_line
-            } else {
-              unshift(@thisf, $v_line)
+
+            if ($thisf[1] =~ /VERSION/) {
+              $thisf[1] = $v_line
             }
-            
-            unshift(@thisf, $package_l);
-            
+
             open $fh, '>', $path
               or die "open: $path $!";
             print $fh @thisf;
