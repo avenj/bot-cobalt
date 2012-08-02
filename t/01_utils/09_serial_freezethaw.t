@@ -1,5 +1,7 @@
 use Test::More tests => 13;
 
+use Encode;
+
 BEGIN {
   use_ok( 'Bot::Cobalt::Serializer' );
 }
@@ -7,12 +9,14 @@ BEGIN {
 new_ok( 'Bot::Cobalt::Serializer' => [ Format => 'JSON' ] );
 new_ok( 'Bot::Cobalt::Serializer' );
 
+my $str = "a\372\360b";
 my $hash = {
   Scalar => "A string",
   Int => 3,
   Array => [ qw/Two Items/ ],
   Hash  => { Some => { Deep => 'Hash' } },
-  Unicode => "\x{263A}",
+  Decoded => $str,
+  Encoded => encode('utf8', $str),
 };
 
 ## JSON and YAMLXS (default) are the only ones we use in core
