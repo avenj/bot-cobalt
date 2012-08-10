@@ -30,6 +30,10 @@ sub timeout {
   $_[0]->opts->{Timeout}    || 90
 }
 
+sub max_per_host {
+  $_[0]->opts->{MaxPerHost} || 5
+}
+
 sub max_workers {
   $_[0]->opts->{MaxWorkers} || 25
 }
@@ -165,16 +169,19 @@ sub _start {
   $opts{Timeout}  = $self->timeout;
 
   ## Create "ht_${plugin_alias}" session
-  ## We use a very short keepalive; HTTP reqs are usually one-offs
   POE::Component::Client::HTTP->spawn(
+
     FollowRedirects => 5,
+
     Agent => __PACKAGE__,
+
     Alias => 'ht_'. core()->get_plugin_alias($self),
+
     ConnectionManager => POE::Component::Client::Keepalive->new(
-      keep_alive   => 2,
-      max_per_host => 4,
-      max_open => $self->max_workers,
-      timeout  => $self->timeout,
+      keep_alive   => 1,
+      max_per_host => $self->max_per_host,
+      max_open     => $self->max_workers,
+      timeout      => $self->timeout,
     ),
     
     %opts,
