@@ -47,7 +47,7 @@ sub new { bless {}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  $core->plugin_register( $self, 'SERVER',
+  register( $self, 'SERVER',
      'www_request',
   );
     
