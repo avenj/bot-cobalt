@@ -140,7 +140,7 @@ sub Bot_currencyconv_rate_recv {
   my($rate,$converted);
   if ( $content =~ /<double.*>(.*)<\/double>/i ) {
     $rate = $1||1;
-    $converted = $value * $rate ;
+    $converted = sprintf(".2f", $value * $rate);
   } else {
     broadcast( 'message', $context, $channel,
       "Failed to retrieve currency conversion ($from -> $to)"
