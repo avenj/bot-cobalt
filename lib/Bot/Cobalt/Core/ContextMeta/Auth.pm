@@ -99,6 +99,7 @@ sub flags {
   return $self->_list->{$context}->{$nickname}->{Flags}
 }
 
+sub user { goto &username }
 sub username {
   my ($self, $context, $nickname) = @_;
   
