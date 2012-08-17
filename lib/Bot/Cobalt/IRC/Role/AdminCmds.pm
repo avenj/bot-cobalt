@@ -139,7 +139,7 @@ sub _cmd_connect {
   );
   
   my $src_nick = $msg->src_nick;
-  my $auth_usr = core->auth->user($msg->context, $src_nick);
+  my $auth_usr = core->auth->username($msg->context, $src_nick);
   
   logger->info(
    "Issuing connect for context $target_ctxt",
@@ -194,10 +194,10 @@ sub _cmd_disconnect {
   );
 
   my $src_nick = $msg->src_nick;
-  my $auth_usr = core->auth->user($msg->context, $src_nick);
+  my $auth_usr = core->auth->username($msg->context, $src_nick);
   
   logger->info(
-   "Issuing connect for context $target_ctxt",
+   "Issuing disconnect for context $target_ctxt",
    "(Issued by $src_nick [$auth_usr])"
   );
   
