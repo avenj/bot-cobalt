@@ -1,4 +1,4 @@
-use Test::More tests => 14;
+use Test::More tests => 15;
 use strict; use warnings;
 
 BEGIN{
@@ -24,6 +24,9 @@ ok( $cmeta->add(
 ok( $cmeta->level('Context', 'somebody') == 3, 'level()' );
 
 ok( $cmeta->username('Context', 'somebody') eq 'someuser', 'username()' );
+ok( $cmeta->user('Context', 'somebody') eq 'someuser', 
+  'user() same as username()' 
+);
 
 ok( $cmeta->host('Context', 'somebody') eq 'somebody!user@example.org', 
   'host()' 

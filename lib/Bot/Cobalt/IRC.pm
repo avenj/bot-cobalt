@@ -542,121 +542,6 @@ sub irc_chan_sync {
   $irc->yield(privmsg => $chan => $resp) if $notify;
 }
 
-sub irc_public {
-  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
-  
-  my $context = $heap->{Context};
-  my $irc     = $self->ircobjs->{$context};
-
-  my $casemap = core->get_irc_casemap( $context );
-  for my $mask ( core->ignore->list($context) ) {
-    ## Check against ignore list
-    ## (Ignore list should be keyed by hostmask)
-    return if matches_mask( $mask, $src, $casemap );
-  }
-
-  my $msg_obj = Bot::Cobalt::IRC::Message::Public->new(
-    context => $context,
-    src     => $src,
-    targets => $where,
-    message => $txt,
-  );
-  
-  my $floodchk = sub {
-    if ( $self->flood->check(@_) ) {
-      $self->flood_ignore($context, $src);
-      return 1
-    }
-  };
-  
-  ## Bot_public_msg / Bot_public_cmd_$cmd  
-  ## FloodChk cmds and highlights
-  if (my $cmd = $msg_obj->cmd) {
-
-    $floodchk->($context, $src) ?
-      return
-      : broadcast( 'public_cmd_'.$cmd, $msg_obj);
-
-  } elsif ($msg_obj->highlight) {
-
-    $floodchk->($context, $src) ?
-      return
-      : broadcast( 'public_msg', $msg_obj);
-
-  } else {
-    ## In the interests of keeping memory usage low on a 
-    ## large channel, we don't flood-check every incoming public 
-    ## message; plugins that respond to these may want to create 
-    ## their own Bot::Cobalt::IRC::FloodChk
-    broadcast( 'public_msg', $msg_obj );
-  }
-}
-
-sub irc_msg {
-  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
-
-  my $context = $heap->{Context};
-  my $irc     = $self->ircobjs->{$context};
-
-  my $casemap = core->get_irc_casemap( $context );
-  for my $mask ( core->ignore->list($context) ) {
-    return if matches_mask( $mask, $src, $casemap );
-  }
-
-  if ( $self->flood->check($context, $src) ) {
-    my $nick = parse_user($src);
-    $self->flood_ignore($context, $src)
-      unless core->auth->level($context, $nick);
-    return
-  }
-
-  my $msg_obj = Bot::Cobalt::IRC::Message->new(
-    context => $context,
-    src     => $src,
-    targets => $target,
-    message => $txt,
-  );
-  
-  broadcast( 'private_msg', $msg_obj );
-}
-
-sub irc_snotice {
-  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  
-  my $context = $heap->{Context};
-
-  ## These are weird.
-  ## There should be at least a string.
-  my ($string, $target, $sender) = @_[ARG0 .. ARG2];
-  
-  ## FIXME test / POD
-  broadcast( 'server_notice', $context, $string, $target, $sender );
-}
-
-sub irc_notice {
-  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
-
-  my $context = $heap->{Context};
-  my $irc     = $self->ircobjs->{$context};
-  
-  my $casemap = core->get_irc_casemap($context);
-  for my $mask ( core->ignore->list($context) ) {
-    return if matches_mask( $mask, $src, $casemap );
-  }
-
-  my $msg_obj = Bot::Cobalt::IRC::Message->new(
-    context => $context,
-    src     => $src,
-    targets => $target,
-    message => $txt,
-  );
-  
-  broadcast( 'got_notice', $msg_obj );
-}
-
 sub irc_ctcp_action {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $target, $txt) = @_[ARG0 .. ARG2];
@@ -677,6 +562,46 @@ sub irc_ctcp_action {
   );
 
   broadcast( 'ctcp_action', $msg_obj );
+}
+
+sub irc_invite {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($src, $channel) = @_[ARG0, ARG1];
+  
+  my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
+
+  my $invite = Bot::Cobalt::IRC::Event::Channel->new(
+    context => $context,
+    src     => $src,
+    channel => $channel,
+  );
+  
+  ## Bot_invited
+  broadcast( 'invited', $invite );
+}
+
+sub irc_join {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($src, $channel) = @_[ARG0, ARG1];
+
+  my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
+
+  my $join = Bot::Cobalt::IRC::Event::Channel->new(
+    context => $context,
+    src     => $src,
+    channel => $channel,
+  );
+
+  my $me = $irc->nick_name();
+  my $casemap = core->get_irc_casemap($context);
+  if ( eq_irc($me, $join->src_nick, $casemap) ) {
+    broadcast( 'self_joined', $context, $channel );
+  }
+
+  ## Bot_user_joined
+  broadcast( 'user_joined', $join );
 }
 
 sub irc_kick {
@@ -734,22 +659,33 @@ sub irc_mode {
   broadcast( 'mode_changed', $mode_obj);
 }
 
-sub irc_topic {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($src, $channel, $topic) = @_[ARG0 .. ARG2];
+sub irc_msg {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
+  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
-  my $topic_obj = Bot::Cobalt::IRC::Event::Topic->new(
+  my $casemap = core->get_irc_casemap( $context );
+  for my $mask ( core->ignore->list($context) ) {
+    return if matches_mask( $mask, $src, $casemap );
+  }
+
+  if ( $self->flood->check($context, $src) ) {
+    my $nick = parse_user($src);
+    $self->flood_ignore($context, $src)
+      unless core->auth->level($context, $nick);
+    return
+  }
+
+  my $msg_obj = Bot::Cobalt::IRC::Message->new(
     context => $context,
     src     => $src,
-    channel => $channel,
-    topic   => $topic,
+    targets => $target,
+    message => $txt,
   );
-
-  ## Bot_topic_changed
-  broadcast( 'topic_changed', $topic_obj );
+  
+  broadcast( 'private_msg', $msg_obj );
 }
 
 sub irc_nick {
@@ -776,27 +712,26 @@ sub irc_nick {
   broadcast( 'nick_changed', $nchg );
 }
 
-sub irc_join {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($src, $channel) = @_[ARG0, ARG1];
+sub irc_notice {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
+  my ($src, $target, $txt) = @_[ARG0 .. ARG2];
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
-
-  my $join = Bot::Cobalt::IRC::Event::Channel->new(
-    context => $context,
-    src     => $src,
-    channel => $channel,
-  );
-
-  my $me = $irc->nick_name();
+  
   my $casemap = core->get_irc_casemap($context);
-  if ( eq_irc($me, $join->src_nick, $casemap) ) {
-    broadcast( 'self_joined', $context, $channel );
+  for my $mask ( core->ignore->list($context) ) {
+    return if matches_mask( $mask, $src, $casemap );
   }
 
-  ## Bot_user_joined
-  broadcast( 'user_joined', $join );
+  my $msg_obj = Bot::Cobalt::IRC::Message->new(
+    context => $context,
+    src     => $src,
+    targets => $target,
+    message => $txt,
+  );
+  
+  broadcast( 'got_notice', $msg_obj );
 }
 
 sub irc_part {
@@ -826,6 +761,57 @@ sub irc_part {
   broadcast( 'user_left', $part );
 }
 
+sub irc_public {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
+  my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
+  
+  my $context = $heap->{Context};
+  my $irc     = $self->ircobjs->{$context};
+
+  my $casemap = core->get_irc_casemap( $context );
+  for my $mask ( core->ignore->list($context) ) {
+    ## Check against ignore list
+    ## (Ignore list should be keyed by hostmask)
+    return if matches_mask( $mask, $src, $casemap );
+  }
+
+  my $msg_obj = Bot::Cobalt::IRC::Message::Public->new(
+    context => $context,
+    src     => $src,
+    targets => $where,
+    message => $txt,
+  );
+  
+  my $floodchk = sub {
+    if ( $self->flood->check(@_) ) {
+      $self->flood_ignore($context, $src);
+      return 1
+    }
+  };
+  
+  ## Bot_public_msg / Bot_public_cmd_$cmd  
+  ## FloodChk cmds and highlights
+  if (my $cmd = $msg_obj->cmd) {
+
+    $floodchk->($context, $src) ?
+      return
+      : broadcast( 'public_cmd_'.$cmd, $msg_obj);
+
+  } elsif ($msg_obj->highlight) {
+
+    $floodchk->($context, $src) ?
+      return
+      : broadcast( 'public_msg', $msg_obj);
+
+  } else {
+    ## In the interests of keeping memory usage low on a 
+    ## large channel, we don't flood-check every incoming public 
+    ## message; plugins that respond to these may want to create 
+    ## their own Bot::Cobalt::IRC::FloodChk
+    broadcast( 'public_msg', $msg_obj );
+  }
+}
+
 sub irc_quit {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $msg, $common) = @_[ARG0 .. ARG2];
@@ -844,21 +830,35 @@ sub irc_quit {
   broadcast( 'user_quit', $quit );
 }
 
-sub irc_invite {
-  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  my ($src, $channel) = @_[ARG0, ARG1];
+sub irc_snotice {
+  my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   
+  my $context = $heap->{Context};
+
+  ## These are weird.
+  ## There should be at least a string.
+  my ($string, $target, $sender) = @_[ARG0 .. ARG2];
+  
+  ## FIXME test / POD
+  broadcast( 'server_notice', $context, $string, $target, $sender );
+}
+
+sub irc_topic {
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  my ($src, $channel, $topic) = @_[ARG0 .. ARG2];
+
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
-  my $invite = Bot::Cobalt::IRC::Event::Channel->new(
+  my $topic_obj = Bot::Cobalt::IRC::Event::Topic->new(
     context => $context,
     src     => $src,
     channel => $channel,
+    topic   => $topic,
   );
-  
-  ## Bot_invited
-  broadcast( 'invited', $invite );
+
+  ## Bot_topic_changed
+  broadcast( 'topic_changed', $topic_obj );
 }
 
 
