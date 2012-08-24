@@ -186,7 +186,7 @@ sub Bot_public_msg {
   $cmd = lc($cmd||'');
 
   ## ..if it's not @handled we don't care:
-  return PLUGIN_EAT_NONE unless $cmd and $cmd ~~ @handled;
+  return PLUGIN_EAT_NONE unless $cmd and grep { $_ eq $cmd } @handled;
 
   logger->debug("dispatching $cmd");
 
@@ -459,7 +459,7 @@ sub _cmd_rdb {
   $cmd = 'del' if $cmd eq 'delete';
 
   my @handled = keys %access_levs;
-  unless ($cmd && $cmd ~~ @handled) {
+  unless ($cmd && grep { $_ eq $cmd } @handled) {
     return "Commands: add <rdb> <item> ; del <rdb> <idx>, info <rdb> <idx> ; "
            ."get <rdb> <idx> ; search(idx) <rdb> <str> ; count <rdb> <str> ; "
            ."dbadd <rdb> ; dbdel <rdb>";

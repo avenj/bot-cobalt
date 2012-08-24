@@ -114,8 +114,9 @@ sub Bot_ctcp_action {
   my $channel = $msg->target;
 
   ## is this a channel? ctcp_action doesn't differentiate on its own
+  my $first = substr($channel, 0, 1);
   return PLUGIN_EAT_NONE
-    unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
+    unless grep { $_ eq $first } ( '#', '&', '+' );
 
   ## should we be sending info3 responses anyway?
   my $chcfg = $core->get_channels_cfg($context);
@@ -178,7 +179,8 @@ sub Bot_public_msg {
       'infovars' => '_info_varhelp',
     );
 
-    if (lc($message[1]) ~~ [ keys %handlers ]) {
+    $message[1] = lc($message[1]) if $message[1];
+    if ($message[1] && grep { $_ eq $message[1] } keys %handlers) {
       ## this is apparently a valid command
       my @args = @message[2 .. $#message];
       my $method = $handlers{ $message[1] };

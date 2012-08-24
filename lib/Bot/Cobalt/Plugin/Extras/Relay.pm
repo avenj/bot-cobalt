@@ -219,7 +219,7 @@ sub Bot_public_msg {
   my @handled = qw/ relay rwhois /;
   if ($msg->cmd) {
     return PLUGIN_EAT_NONE if $msg->cmd
-      and $msg->cmd ~~ @handled;
+      and grep { $_ eq $msg->cmd } @handled;
   }
 
   my $src_nick = $msg->src_nick;
@@ -272,14 +272,17 @@ sub Bot_ctcp_action {
 sub Bot_user_joined {
   my ($self, $core) = splice @_, 0, 2;
   my $join    = ${ $_[0] };
+
   my $context = $join->context;
   my $channel = $join->channel;
 
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
 
   my $src_nick = $join->src_nick;
+
   push( @{ $self->{JoinQueue}->{$context}->{$channel} }, $src_nick )
-    unless $src_nick ~~ @{ $self->{JoinQueue}->{$context}->{$channel}//[] };
+    unless grep { $_ eq $src_nick }
+            @{ $self->{JoinQueue}->{$context}->{$channel}//[] };
 
   return PLUGIN_EAT_NONE
 }
@@ -287,14 +290,17 @@ sub Bot_user_joined {
 sub Bot_user_left {
   my ($self, $core) = splice @_, 0, 2;
   my $part    = ${ $_[0] };
+
   my $context = $part->context;
   my $channel = $part->channel;
 
   return PLUGIN_EAT_NONE unless $self->get_relays($context, $channel);
 
   my $src_nick = $part->src_nick;
+
   push( @{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
-    unless $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
+    unless grep { $_ eq $src_nick }
+            @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
 
   return PLUGIN_EAT_NONE
 }
@@ -350,8 +356,8 @@ sub Bot_user_quit {
       my ($to_context, $to_channel) = @$relay;
 
       push(@{ $self->{LeftQueue}->{$context}->{$channel} }, $src_nick )
-        unless
-        $src_nick ~~ @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
+        unless grep { $_ eq $src_nick }
+                 @{ $self->{LeftQueue}->{$context}->{$channel}//[] };
     }
   }
 

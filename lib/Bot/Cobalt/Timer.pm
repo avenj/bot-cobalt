@@ -156,7 +156,7 @@ sub _process_type {
   ## If this is a special type, set up event and args.
   my $type = lc($self->type);
 
-  if ($type ~~ [qw/msg message privmsg action/]) {
+  if (grep { $_ eq $type } qw/msg message privmsg action/) {
     my $ev_name = $type eq 'action' ?
           'action' : 'message' ;
     $self->event( $ev_name );

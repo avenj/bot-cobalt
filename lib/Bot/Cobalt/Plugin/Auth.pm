@@ -1084,7 +1084,7 @@ sub _user_chmask {
   my $resp;
   if ($oper eq '+') {
     push(@{ $alist_ref->{Masks} }, $host)
-      unless $host ~~ @{ $alist_ref->{Masks} };
+      unless grep { $_ eq $host } @{ $alist_ref->{Masks} };
     $resp = core->rpl( q{AUTH_MASK_ADDED},
       nick => $nick,
       user => $target_usr,

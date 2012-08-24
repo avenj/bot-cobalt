@@ -114,12 +114,12 @@ sub ask_yesno {
 
   $print_and_grab->();
 
-  until ($input ~~ [qw/y n/]) {
+  until ($input && $input eq 'y' || $input eq 'n') {
     print "Invalid input; should be either Y or N\n";
     $print_and_grab->();
   }
 
-  return $input eq 'y'
+  return $input eq 'y' ? 1 : 0
 }
 
 1;
@@ -152,7 +152,9 @@ Bot::Cobalt::Frontend::Utils - Helper utils for Bot::Cobalt frontends
     prompt  => "Tastiest snack?"
     default => "cake",
     validate => sub {
-      $_[0] ~~ ['cake', 'pie', 'cheese'] ?
+      my ($value) = @_;
+      return "No value specified" unless defined $value;
+      (grep { $_ eq $value } qw/cake pie cheese/) ?
         undef : "Snack options are cake, pie, cheese"
     },
   );
@@ -190,8 +192,13 @@ optionally with a code reference to validate.
     prompt  => "Color of the sky?"
     default => "blue",
     validate => sub {
-      $_[0] ~~ [qw/blue pink orange red/] ?
-        undef : "Valid colors: blue, pink, orange, red"
+      my ($value) = @_;
+
+      return "No value specified" unless defined $value;
+
+      return undef if grep { $_ eq $value } qw/blue pink orange red/;
+
+      return "Valid colors: blue, pink, orange, red"
     },
     die_if_invalid => 0,
   );

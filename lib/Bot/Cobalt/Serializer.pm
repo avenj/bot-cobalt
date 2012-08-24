@@ -29,7 +29,7 @@ has 'Format' => (
     $format = uc($format);
 
     confess "Unknown format $format"
-      unless $format ~~ [ keys %{ $self->_types } ];
+      unless grep { $_ eq $format } keys %{ $self->_types };
 
     confess "Requested format $format but can't find a module for it"
       unless $self->_check_if_avail($format)

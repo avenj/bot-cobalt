@@ -451,9 +451,9 @@ sub irc_001 {
   ##
   ## the better fix is to smack your admins with a hammer.
   my @valid_casemaps = qw/ rfc1459 ascii strict-rfc1459 /;
-  unless ($casemap ~~ @valid_casemaps) {
+  unless (grep { $_ eq $casemap } @valid_casemaps) {
     my $charset = lc( $irc->isupport('CHARSET') || '' );
-    if ($charset && $charset ~~ @valid_casemaps) {
+    if ($charset && grep { $_ eq $charset } @valid_casemaps) {
       irc_context($context)->casemap( $charset );
     }
     ## we don't save CHARSET, it's deprecated per the spec

@@ -52,12 +52,13 @@ sub Bot_public_cmd_plugin {
 
   my $resp;
 
-  my $operation = lc($msg->message_array->[0]||'');
+  my $op = lc($msg->message_array->[0]||'');
 
   if ( core()->auth->level($context, $nick) < $required_lev ) {
     $resp = core->rpl( q{RPL_NO_ACCESS}, { nick => $nick } );
   } else {
-    unless ($operation && $operation ~~ [qw/load unload reload list/] ) {
+    unless ($op && grep { $_ eq $op } qw/load unload reload list/) {
+
       broadcast( 'message', $context, $chan,
         "Valid PluginMgr commands: list, load, unload, reload"
       );
@@ -65,7 +66,7 @@ sub Bot_public_cmd_plugin {
       return PLUGIN_EAT_ALL
     }
 
-    my $method = '_cmd_plug_'.lc($operation);
+    my $method = '_cmd_plug_'.lc($op);
 
     if ($self->can($method)) {
       $resp = $self->$method($msg);
@@ -224,7 +225,7 @@ sub _load {
     unless defined $alias;
 
   return "Plugin already loaded: $alias"
-    if $alias ~~ [ keys %{ core->plugin_list } ] ;
+    if grep { $_ eq $alias } keys %{ core()->plugin_list };
 
   return $self->_load_module($alias, $module)
     if defined $module;

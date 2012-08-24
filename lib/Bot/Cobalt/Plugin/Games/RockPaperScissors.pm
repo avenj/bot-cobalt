@@ -10,9 +10,10 @@ sub new { bless [], shift }
 sub execute {
   my ($self, $msg, $rps) = @_;
   my $nick = $msg->src_nick//'';
+
   if      (! $rps) {
     return "What did you want to throw, ${nick}?"
-  } elsif ( !(lc($rps) ~~ [ qw/rock paper scissors/ ]) ) {
+  } elsif ( ! grep { $_ eq lc($rps) } qw/rock paper scissors/ ) {
     return "${nick}: You gotta throw rock, paper, or scissors!"
   }
 

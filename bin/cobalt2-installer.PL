@@ -23,7 +23,7 @@ my @paths_to_add;
 find(
   sub {
     my ($ext) = $_ =~ /\.(\S+)$/;
-    return unless $ext ~~ @valid_exts;
+    return unless $ext and grep { $_ eq $ext } @valid_exts;
     push(@paths_to_add, $File::Find::name);
   },
   $etcdir
@@ -33,13 +33,13 @@ find(
 my $cfref = { };
 for my $addable_path (@paths_to_add) {
   my $relative_path = File::Spec->abs2rel($addable_path, $etcdir);
-  
+
   open my $c_fh, '<:encoding(UTF-8)', $addable_path
     or die "could not open $addable_path: $!";
   my $slurped;
   { local $/; $slurped = <$c_fh>; }
   close($c_fh);
-  
+
   $cfref->{$relative_path} = $slurped;
 }
 
