@@ -15,28 +15,28 @@ our @EXPORT_OK = qw/
 
 our %EXPORT_TAGS;
 
-{ 
+{
   my %seen;
   push @{$EXPORT_TAGS{all}}, grep {!$seen{$_}++} @EXPORT_OK
 }
 
 sub ask_question {
   my %args = @_;
-  
+
   my $question = delete $args{prompt} || croak "No prompt => specified";
   my $default  = delete $args{default};
-  
+
   my $validate_sub;
-  if (defined $args{validate}) { 
+  if (defined $args{validate}) {
     $validate_sub = ref $args{validate} eq 'CODE' ?
         delete $args{validate}
         : croak "validate => should be a coderef";
   }
-  
+
   select(STDOUT); $|++;
-  
+
   my $input;
-  
+
   my $print_and_grab = sub {
     print "$question ";
 
@@ -53,24 +53,24 @@ sub ask_question {
     $input = $default if defined $default and $input eq '';
     $input
   };
-  
+
   $print_and_grab->();
-  
+
   until ($input) {
     print "No input specified.\n";
     $print_and_grab->();
   }
-  
+
   VALID: {
     if ($validate_sub) {
       my $invalid = $validate_sub->($input);
-    
+
       last VALID unless defined $invalid;
-    
+
       if ( $args{die_if_invalid} || $args{die_unless_valid} ) {
         die "Invalid input; $invalid\n";
       }
-    
+
       until (not defined $invalid) {
         print "Invalid input; $invalid\n";
         $print_and_grab->();
@@ -78,13 +78,13 @@ sub ask_question {
       }
     }
   }
-    
+
   return $input
 }
 
 sub ask_yesno {
   my %args = @_;
-  
+
   my $question = $args{prompt} || croak "No prompt => specified";
 
   my $default  = lc(
@@ -113,7 +113,7 @@ sub ask_yesno {
   };
 
   $print_and_grab->();
-   
+
   until ($input ~~ [qw/y n/]) {
     print "Invalid input; should be either Y or N\n";
     $print_and_grab->();
@@ -134,12 +134,12 @@ Bot::Cobalt::Frontend::Utils - Helper utils for Bot::Cobalt frontends
 =head1 SYNOPSIS
 
   use Bot::Cobalt::Frontend::Utils qw/ :all /;
-  
+
   my $do_something = ask_yesno(
     prompt  => "Do some stuff?"
     default => 'y',
   );
-  
+
   if ($do_something) {
     ## Yes
   } else {
@@ -159,10 +159,10 @@ Bot::Cobalt::Frontend::Utils - Helper utils for Bot::Cobalt frontends
 
 =head1 DESCRIPTION
 
-This module exports simple helper functions for use by L<Bot::Cobalt> 
+This module exports simple helper functions for use by L<Bot::Cobalt>
 frontends.
 
-The exported functions are fairly simplistic; take a gander at 
+The exported functions are fairly simplistic; take a gander at
 L<Term::UI> if you're looking for a rather more solid terminal/user 
 interaction module.
 

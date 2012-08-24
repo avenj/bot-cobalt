@@ -31,22 +31,22 @@ sub Cobalt_register {
   $self->{Cache} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => 20,
   );
-  
+
   $self->{NegCache} = Bot::Cobalt::Plugin::RDB::SearchCache->new(
     MaxKeys => 8,
   );
 
   my $pcfg = plugin_cfg( $self );
   my $var = core->var;
-  
-  my $relative_to_var = $pcfg->{Opts}->{InfoDB} // 
+
+  my $relative_to_var = $pcfg->{Opts}->{InfoDB} //
     File::Spec->catfile( 'db', 'info3.db' );
-    
+
   my $dbpath = File::Spec->catfile(
     $var,
     File::Spec->splitpath( $relative_to_var )
   );
-  
+
   $self->{DB_PATH} = $dbpath;
   $self->{DB} = Bot::Cobalt::DB->new(
     File => $dbpath,
@@ -62,7 +62,7 @@ sub Cobalt_register {
   $self->{Globs} = { };
   ## reverse of above:
   $self->{Regexes} = { };
-  
+
   ## build our initial hashes (this is slow, ~1s on spork's huge db)
   $self->{DB}->dbopen(ro => 1) || croak 'DB open failure';
   while (my ($glob, $ref) = each %{ $self->{DB}->Tied }) {
@@ -75,7 +75,7 @@ sub Cobalt_register {
   $self->{DB}->dbclose;
 
   register($self, 'SERVER',
-    [ 
+    [
       'public_msg',
       'ctcp_action',
       'info3_relay_string',
@@ -84,17 +84,17 @@ sub Cobalt_register {
   );
 
   logger->info("Loaded, topics: ".($core->Provided->{info_topics}||=0));
-  
+
   PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  
+
   logger->info("Unregistering Info plugin");
-  
+
   delete $core->Provided->{info_topics};
-  
+
   PLUGIN_EAT_NONE
 }
 
@@ -114,7 +114,7 @@ sub Bot_ctcp_action {
   my $channel = $msg->target;
 
   ## is this a channel? ctcp_action doesn't differentiate on its own
-  return PLUGIN_EAT_NONE 
+  return PLUGIN_EAT_NONE
     unless substr($channel, 0, 1) ~~ [ '#', '&', '+' ] ;
 
   ## should we be sending info3 responses anyway?
@@ -147,10 +147,10 @@ sub Bot_ctcp_action {
   }
 
   logger->debug("issuing info3_relay_string in response to action");
-  broadcast( 'info3_relay_string', 
+  broadcast( 'info3_relay_string',
     $context, $channel, $nick, $match, join(' ', @message)
   );
-  
+
   PLUGIN_EAT_NONE
 }
 
@@ -158,12 +158,12 @@ sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${$_[0]};
   my $context = $msg->context;
-  
+
   my @message = @{ $msg->message_array };
   return PLUGIN_EAT_NONE unless @message;
 
   my $with_highlight;
-  if ($msg->highlight) { 
+  if ($msg->highlight) {
     ## we were highlighted -- might be an info3 cmd
     my %handlers = (
       'add' => '_info_add',
@@ -177,7 +177,7 @@ sub Bot_public_msg {
       'tell'    => '_info_tell',
       'infovars' => '_info_varhelp',
     );
-    
+
     if (lc($message[1]) ~~ [ keys %handlers ]) {
       ## this is apparently a valid command
       my @args = @message[2 .. $#message];
@@ -188,14 +188,14 @@ sub Bot_public_msg {
           ## (without highlight or command)
           ## ...which may be nothing, up to the handler to send syntax RPL
           my $resp = $self->$method($msg, @args);
-          broadcast( 'message', 
+          broadcast( 'message',
             $context, $msg->channel, $resp ) if $resp;
           return PLUGIN_EAT_NONE
       } else {
           logger->warn($message[1]." is a valid cmd but method missing");
           return PLUGIN_EAT_NONE
       }
-    
+
     } else {
       ## not an info3 cmd
       ## shift the highlight off and see if it's a match, below
@@ -203,7 +203,7 @@ sub Bot_public_msg {
       $with_highlight = join ' ', @message;
       shift @message;
     }
-  
+
   }
 
   ## rejoin message
@@ -246,8 +246,8 @@ sub Bot_public_msg {
   }
 
   logger->debug("issuing info3_relay_string");
-  
-  broadcast( 'info3_relay_string', 
+
+  broadcast( 'info3_relay_string',
     $context, $channel, $nick, $match, $str
   );
 
@@ -264,9 +264,9 @@ sub Bot_info3_relay_string {
 
   ## format and send info3 response
   ## also received from RDB when handing off ~rdb responses
-  
+
   logger->debug("info3_relay_string received; calling _info_format");
-  
+
   my $resp = $self->_info_format($context, $nick, $channel, $string, $orig);
 
   ## if $resp is a +action, send ctcp action
@@ -286,13 +286,13 @@ sub Bot_info3_expire_maxtriggered {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
   my $channel = ${ $_[1] };
-  
+
   unless ($context && $channel) {
     logger->debug(
       "missing context and channel pair in expire_maxtriggered"
     );
   }
-  delete $self->{LastTriggered}->{$context}->{$channel};  
+  delete $self->{LastTriggered}->{$context}->{$channel};
 
   logger->debug("cleared maxtriggered for $channel on $context");
 
@@ -357,12 +357,12 @@ sub _info_add {
     return core->rpl( q{RPL_NO_ACCESS},
       nick => $nick,
     );
-  }    
+  }
 
   unless ($glob && $string) {
     return core->rpl( q{INFO_BADSYNTAX_ADD} );
   }
-  
+
   ## lowercase
   $glob = decode_irc(lc $glob);
 
@@ -377,8 +377,8 @@ sub _info_add {
   ## set up a re
   my $re = glob_to_re_str($glob);
   ## anchored:
-  $re = '^'.$re.'$' ;  
-  
+  $re = '^'.$re.'$' ;
+
   ## add to db, keyed on glob:
   unless ($self->{DB}->dbopen) {
     logger->warn("DB open failure");
@@ -397,7 +397,7 @@ sub _info_add {
   ## invalidate info3 cache:
   $self->{Cache}->invalidate('info3');
   $self->{NegCache}->invalidate('info3_neg');
-  
+
   ## add to internal hashes:
   my $compiled_re = qr/$re/i;
   $self->{Regexes}->{$compiled_re} = $glob;
@@ -417,26 +417,26 @@ sub _info_add {
 sub _info_del {
   my ($self, $msg, @args) = @_;
   my ($glob) = @args;
-  
+
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
   my $auth_user  = core->auth->username($context, $nick);
   my $auth_level = core->auth->level($context, $nick);
-  
+
   my $pcfg = plugin_cfg( $self );
   my $required = $pcfg->{RequiredLevels}->{DelTopic} // 2;
   unless ($auth_level >= $required) {
     return core->rpl( q{RPL_NO_ACCESS},
       nick => $nick,
     )
-  }    
+  }
 
   unless ($glob) {
     return core->rpl( q{INFO_BADSYNTAX_DEL} )
   }
-  
-  
+
+
   unless (exists $self->{Globs}->{$glob}) {
     return core->rpl( q{INFO_ERR_NOSUCH},
       topic => $glob,
@@ -451,7 +451,7 @@ sub _info_del {
   }
   $self->{DB}->del($glob);
   $self->{DB}->dbclose;
-  
+
   $self->{Cache}->invalidate('info3');
   $self->{NegCache}->invalidate('info3_neg');
 
@@ -462,7 +462,7 @@ sub _info_del {
   core->Provided->{info_topics} -= 1;
 
   logger->debug("topic del: $glob ($regex)");
-  
+
   return core->rpl( q{INFO_DEL},
     topic => $glob,
     nick  => $nick,
@@ -480,7 +480,7 @@ sub _info_replace {
 
   my $auth_user  = core->auth->username($context, $nick);
   my $auth_level = core->auth->level($context, $nick);
-  
+
   my $pcfg = plugin_cfg( $self );
   my $req_del = $pcfg->{RequiredLevels}->{DelTopic} // 2;
   my $req_add = $pcfg->{RequiredLevels}->{AddTopic} // 2;
@@ -494,7 +494,7 @@ sub _info_replace {
   unless ($glob && $string) {
     return core->rpl( q{INFO_BADSYNTAX_REPL} );
   }
-  
+
   unless (exists $self->{Globs}->{$glob}) {
     return core->rpl( q{INFO_ERR_NOSUCH},
       topic => $glob,
@@ -503,7 +503,7 @@ sub _info_replace {
   }
 
   logger->debug("replace called for $glob by $nick ($auth_user)");
-  
+
   $self->{Cache}->invalidate('info3');
   $self->{NegCache}->invalidate('info3_neg');
 
@@ -516,19 +516,19 @@ sub _info_replace {
   core->Provided->{info_topics} -= 1;
 
   logger->debug("topic del (replace): $glob");
-  
+
   my $regex = delete $self->{Globs}->{$glob};
   delete $self->{Regexes}->{$regex};
 
   my $re = glob_to_re_str($glob);
-  $re = '^'.$re.'$' ;  
+  $re = '^'.$re.'$' ;
 
   unless ($self->{DB}->dbopen) {
     logger->warn("DB open failure");
     return 'DB open failure'
   }
   $self->{DB}->put( $glob,
-    { 
+    {
       AddedAt => time(),
       AddedBy => $auth_user,
       Regex => $re,
@@ -545,7 +545,7 @@ sub _info_replace {
   logger->debug("topic add (replace): $glob ($re)");
 
   return core->rpl( q{INFO_REPLACE},
-    topic => $glob, 
+    topic => $glob,
     nick  => $nick,
   )
 }
@@ -563,7 +563,7 @@ sub _info_tell {
 
   unless (@args) {
     return core->rpl( q{INFO_TELL_WHAT},
-      nick   => $msg->src_nick, 
+      nick   => $msg->src_nick,
       target => $target
     )
   }
@@ -604,12 +604,12 @@ sub _info_tell {
       return
     }
   }
-    
+
   my $channel = $msg->channel;
-  
+
   logger->debug("issuing info3_relay_string for tell");
 
-  broadcast( 'info3_relay_string', 
+  broadcast( 'info3_relay_string',
     $msg->context, $channel, $target, $match, $str_to_match
   );
 
@@ -627,7 +627,7 @@ sub _info_about {
 
   unless (exists $self->{Globs}->{$glob}) {
     return core->rpl( q{INFO_ERR_NOSUCH},
-      topic => $glob, 
+      topic => $glob,
       nick  => $msg->src_nick,
     )
   }
@@ -639,12 +639,12 @@ sub _info_about {
 
   my $addedby = $ref->{AddedBy} || '(undef)';
 
-  my $addedat = POSIX::strftime( 
+  my $addedat = POSIX::strftime(
     "%H:%M:%S (%Z) %Y-%m-%d", localtime( $ref->{AddedAt} )
   );
 
   my $str_len = length( $ref->{Response} );
-  
+
   return core->rpl( q{INFO_ABOUT},
     nick   => $msg->src_nick,
     topic  => $glob,
@@ -667,11 +667,11 @@ sub _info_display {
       nick  => $msg->src_nick,
     )
   }
-  
+
   ##  if so, show unparsed Response
-  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
+  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';
   my $ref = $self->{DB}->get($glob);
-  $self->{DB}->dbclose;    
+  $self->{DB}->dbclose;
   my $response = $ref->{Response};
 
   return $response
@@ -680,7 +680,7 @@ sub _info_display {
 sub _info_search {
   my ($self, $msg, @args) = @_;
   my ($str) = @args;
-  
+
   my @matches = $self->_info_exec_search($str);
   return 'No matches' unless @matches;
 
@@ -696,7 +696,7 @@ sub _info_exec_search {
   my ($self, $str) = @_;
   return 'Nothing to search' unless $str;
 
-  my @matches;  
+  my @matches;
 
   for my $glob (keys %{ $self->{Globs} }) {
     push(@matches, $glob) unless index($glob, $str) == -1;
@@ -737,8 +737,8 @@ sub _info_exec_dsearch {
   ## matches found in searchcache
   return @matches if @matches;
 
-  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';  
-  
+  $self->{DB}->dbopen(ro => 1) || return 'DB open failure';
+
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
 
@@ -781,17 +781,17 @@ sub _info_match {
         ## not an action topic
         next if $isaction;
       }
-  
+
       $self->{DB}->dbopen(ro => 1) || return 'DB open failure';
       my $ref = $self->{DB}->get($glob) || { };
       $self->{DB}->dbclose;
-  
+
       $str = $ref->{Response} // 'Error retrieving Response string';
-  
+
       last
     }
   }
-  
+
   return $str if $str;
 
   ## negative searchcache if there's no match
@@ -803,19 +803,19 @@ sub _info_match {
 
 sub _info_varhelp {
   my ($self, $msg) = @_;
-  
+
   my $help =
      ' !~ = CmdChar, B~ = BotNick, C = Channel, H = UserHost, N = Nick,'
     .' P~ = Port, Q~ = Question, R~ = RandomNick, S~ = Server'
     .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
   ;
-  
+
   broadcast( 'notice',
     $msg->context,
     $msg->src_nick,
     $help
   );
-  
+
   return ''
 }
 
@@ -827,7 +827,7 @@ sub _info_format {
   ## maintains oldschool darkbot6 variable format
 
   logger->debug("formatting text response ($context)");
-  
+
   my $irc_obj = irc_object($context);
   return $str unless ref $irc_obj;
 
@@ -890,7 +890,7 @@ Bot::Cobalt::Plugin::Info3 - Text-triggered responses for Bot::Cobalt
 
 =head1 DESCRIPTION
 
-B<darkbot6> came with built-in I<info2> functionality; text responses 
+B<darkbot6> came with built-in I<info2> functionality; text responses
 (possibly with variables) could be triggered by simple glob matches.
 
 This plugin follows largely the same pattern; users can add a topic:

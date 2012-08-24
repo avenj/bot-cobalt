@@ -44,7 +44,7 @@ sub Bot_public_cmd_plugin {
   my $context = $msg->context;
   my $chan = $msg->channel;
   my $nick = $msg->src_nick;
-  
+
   my $pcfg = core()->get_plugin_cfg( $self );
 
   ## default to superuser-only:
@@ -66,7 +66,7 @@ sub Bot_public_cmd_plugin {
     }
 
     my $method = '_cmd_plug_'.lc($operation);
-    
+
     if ($self->can($method)) {
       $resp = $self->$method($msg);
     } else {
@@ -86,9 +86,9 @@ sub _cmd_plug_load {
 
   ## !load Alias
   ## !load Alias Module
-  
+
   my ($alias, $module) = @{ $msg->message_array }[1,2];
-  
+
   return $self->_load($alias, $module)
 }
 
@@ -96,7 +96,7 @@ sub _cmd_plug_unload {
   my ($self, $msg) = @_;
 
   ## !unload Alias
-  
+
   my $alias = $msg->message_array->[1];
 
   return $self->_unload($alias) || "Bug; no reply from _unload"
@@ -104,9 +104,9 @@ sub _cmd_plug_unload {
 
 sub _cmd_plug_list {
   my ($self, $msg) = @_;
-  
+
   my $pluglist = core()->plugin_list;
-  
+
   my @loaded = sort keys %$pluglist;
 
   my $str = sprintf("Loaded (%d):", scalar @loaded);
@@ -134,7 +134,7 @@ sub _cmd_plug_reload {
     broadcast( 'message', $msg->context, $msg->channel,
       "Bad syntax; no plugin alias specified"
     );
-    
+
     return
 
   } elsif (!$plug_obj) {
@@ -142,10 +142,10 @@ sub _cmd_plug_reload {
     broadcast( 'message', $msg->context, $msg->channel,
       core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
         plugin => $alias,
-        err => 'No such plugin found, is it loaded?' 
+        err => 'No such plugin found, is it loaded?'
       )
     );
-    
+
     return
 
   } elsif (core()->State->{NonReloadable}->{$alias}) {
@@ -156,7 +156,7 @@ sub _cmd_plug_reload {
           err => "Plugin $alias is marked as non-reloadable",
       )
     );
-    
+
     return
   }
 
@@ -183,7 +183,7 @@ sub _unload {
 
   return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
       plugin => $alias,
-      err => 'No such plugin found, is it loaded?' 
+      err => 'No such plugin found, is it loaded?'
   ) unless $plug_obj;
 
   return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
@@ -200,13 +200,13 @@ sub _unload {
 
     ## and timers:
     core()->timer_del_alias($alias);
-      
-    return core->rpl( q{RPL_PLUGIN_UNLOAD}, 
+
+    return core->rpl( q{RPL_PLUGIN_UNLOAD},
         plugin => $alias
     )
   } else {
     return core->rpl( q{RPL_PLUGIN_UNLOAD_ERR},
-      plugin => $alias, 
+      plugin => $alias,
       err => 'Unknown core->plugin_del failure'
     )
   }
@@ -216,10 +216,10 @@ sub _unload {
 
 sub _load {
   my ($self, $alias, $module) = @_;
-  
+
   ## Called for !load / !reload
   ## Return string for IRC
-  
+
   return "Bad syntax; usage: load <alias> [module]"
     unless defined $alias;
 
@@ -237,7 +237,7 @@ sub _load {
       err => "Plugin '$alias' not found in plugins conf",
     )
   }
-  
+
   return $self->_load_module(
     $alias,
     $plugin_cfg->module
@@ -259,7 +259,7 @@ sub _load_module {
 
   if ($err) {
     logger->warn("Plugin load failure; $err");
-    
+
     Bot::Cobalt::Core::Loader->unload($module);
 
     return core->rpl( q{RPL_PLUGIN_ERR},
@@ -277,9 +277,9 @@ sub _load_module {
       core()->State->{NonReloadable}->{$alias} = 1;
       logger->debug("$alias flagged non-reloadable");
     }
-      
+
     my $modversion = $obj->can('VERSION') ? $obj->VERSION : 1 ;
-      
+
     return core->rpl( q{RPL_PLUGIN_LOAD},
       plugin  => $alias,
       module  => $module,
@@ -289,7 +289,7 @@ sub _load_module {
     ## Couldn't plugin_add
     logger->error("plugin_add failure for $alias");
 
-    ## run cleanup  
+    ## run cleanup
     Bot::Cobalt::Core::Loader->unload($module);
 
     delete core()->PluginObjects->{$obj};
@@ -324,8 +324,8 @@ Bot::Cobalt::Plugin::PluginMgr - IRC plugin manager
 
 This is a fairly simplistic online plugin manager.
 
-Required level defaults to 9999 (standard-auth superusers) unless 
-the LevelRequired option is specified in PluginMgr's plugins.conf 
+Required level defaults to 9999 (standard-auth superusers) unless
+the LevelRequired option is specified in PluginMgr's plugins.conf
 B<Opts> directive:
 
   PluginMgr:

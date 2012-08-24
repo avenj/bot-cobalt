@@ -21,47 +21,47 @@ use Bot::Cobalt::Common qw/:types/;
 has 'core'  => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => Object, 
-  
-  default => sub { 
+  is  => 'rw',
+  isa => Object,
+
+  default => sub {
     require Bot::Cobalt::Core;
 
     die "Cannot find active Bot::Cobalt::Core instance"
       unless Bot::Cobalt::Core->has_instance;
 
-    Bot::Cobalt::Core->instance 
+    Bot::Cobalt::Core->instance
   },
 );
 
-## May have a timer ID specified at construction for use by 
+## May have a timer ID specified at construction for use by
 ## timer pool managers; if not, creating IDs is up to them.
 ## (See ::Core::Role::Timers)
-has 'id' => ( 
-  lazy => 1, 
+has 'id' => (
+  lazy => 1,
 
   is  => 'rw',
   isa => Str,
 
-  predicate => 'has_id' 
+  predicate => 'has_id'
 );
 
 ## 'at' is set regardless of whether delay()/at() is used
 ## (or 0 if none is ever set)
-has 'at'    => ( 
-  lazy => 1, 
+has 'at'    => (
+  lazy => 1,
 
-  is  => 'rw', 
+  is  => 'rw',
   isa => Num,
 
   default => sub { 0 },
 );
 
-has 'delay' => ( 
+has 'delay' => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => Num, 
+  is  => 'rw',
+  isa => Num,
 
   predicate => 'has_delay',
   clearer   => 'clear_delay',
@@ -71,93 +71,93 @@ has 'delay' => (
   trigger   => sub {
     my ($self, $value) = @_;
     $self->at( time() + $value );
-  }, 
+  },
 );
 
-has 'event' => ( 
+has 'event' => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => Str, 
-  
+  is  => 'rw',
+  isa => Str,
+
   predicate => 'has_event',
 );
 
-has 'args'  => ( 
+has 'args'  => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => ArrayRef, 
-  
+  is  => 'rw',
+  isa => ArrayRef,
+
   default => sub { [] },
 );
 
-has 'alias' => ( 
-  is  => 'rw', 
+has 'alias' => (
+  is  => 'rw',
   isa => Str,
-  
-  default => sub { scalar caller }, 
+
+  default => sub { scalar caller },
 );
 
-has 'context' => ( 
+has 'context' => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
   predicate => 'has_context',
-  
-  default   => sub { 'Main' },  
+
+  default   => sub { 'Main' },
 );
 
 has 'text'    => (
-  lazy => 1, 
+  lazy => 1,
 
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
-  predicate => 'has_text' 
+  predicate => 'has_text'
 );
 
 has 'target'  => (
-  lazy => 1, 
-  is  => 'rw', 
-  isa => Str, 
+  lazy => 1,
+  is  => 'rw',
+  isa => Str,
 
-  predicate => 'has_target' 
+  predicate => 'has_target'
 );
 
-has 'type'  => ( 
+has 'type'  => (
   lazy => 1,
 
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
   default => sub {
     my ($self) = @_;
-    
+
     if ($self->has_context && $self->has_target) {
       ## Guessing we're a message.
-      return 'msg' 
+      return 'msg'
     } else {
       ## Guessing we're an event.
       return 'event'
     }
   },
-  
+
   coerce => sub {
     $_[0] =~ /message|privmsg/i ? 'msg' : lc($_[0]) ;
   },
-); 
+);
 
 
 sub _process_type {
   my ($self) = @_;
   ## If this is a special type, set up event and args.
   my $type = lc($self->type);
-  
+
   if ($type ~~ [qw/msg message privmsg action/]) {
-    my $ev_name = $type eq 'action' ? 
+    my $ev_name = $type eq 'action' ?
           'action' : 'message' ;
     $self->event( $ev_name );
 
@@ -177,17 +177,17 @@ sub is_ready {
 sub execute {
   my ($self) = @_;
   $self->_process_type;
-  
+
   unless ( $self->event ) {
     carp "timer execute called but no event specified";
     return
   }
-  
+
   unless ( $self->core->can('send_event') ) {
     carp "timer execute called but specified core can't send_event";
     return
   }
-  
+
   my $args = $self->args;
   $self->core->send_event( $self->event, @$args );
   return 1

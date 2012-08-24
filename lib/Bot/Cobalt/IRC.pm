@@ -34,7 +34,7 @@ use POE qw/
 ## Bot::Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
 
-has 'NON_RELOADABLE' => ( 
+has 'NON_RELOADABLE' => (
   isa => Bool,
   ## Well, really, it's sort-of unloadable.
   ##  ... but life usually sucks when you do.
@@ -44,24 +44,24 @@ has 'NON_RELOADABLE' => (
   default => sub { 1 },
 );
 
-## We keep references to our ircobjs; core tracks these also, 
+## We keep references to our ircobjs; core tracks these also,
 ## but there is no guarantee that we're the only IRC plugin loaded.
-has 'ircobjs' => ( 
+has 'ircobjs' => (
   lazy => 1,
-  is   => 'rw', 
-  isa  => HashRef, 
+  is   => 'rw',
+  isa  => HashRef,
 
   default => sub { {} },
 );
 
 has 'flood' => (
-  is   => 'ro', 
-  isa  => Object, 
+  is   => 'ro',
+  isa  => Object,
   lazy => 1,
-  
+
   predicate => 'has_flood',
-  
-  default => sub { 
+
+  default => sub {
     my ($self) = @_;
 
     my $ccfg  = core->get_core_cfg;
@@ -109,9 +109,9 @@ sub Cobalt_unregister {
   for my $context ( keys %{ $self->ircobjs } ) {
     $self->_clear_context($context);
   }
-  
+
   logger->debug("Clean unload");
-  
+
   return PLUGIN_EAT_NONE
 }
 
@@ -134,7 +134,7 @@ sub Bot_initialize_irc {
   for my $context (keys %{ $p_cfg->opts->{Networks} } ) {
     ## Counter is solely to provide an informative error if cfg is fubar:
     ++$active_contexts;
-    
+
     next if defined $p_cfg->opts->{Networks}->{$context}->{Enabled}
          and $p_cfg->opts->{Networks}->{$context}->{Enabled} == 0;
 
@@ -142,7 +142,7 @@ sub Bot_initialize_irc {
 
     broadcast( 'ircplug_connect', $context );
   }
-  
+
   unless ($active_contexts) {
     logger->error("No contexts configured/enabled!");
   }
@@ -159,7 +159,7 @@ sub Bot_ircplug_connect {
   ## Called for each configured context.
   ##
   ## The sessions call the same object with different contexts in HEAP;
-  ## the handlers do some processing and relay the event from the 
+  ## the handlers do some processing and relay the event from the
   ## PoCo::IRC syndicator to the Bot::Cobalt::Core pipeline.
 
   if ($core->Servers->{$context}) {
@@ -167,7 +167,7 @@ sub Bot_ircplug_connect {
       $core->Servers->{$context}->irc->call('shutdown',
         'Reconnecting'
       );
-      
+
       $core->Servers->{$context}->clear_irc;
     }
 
@@ -177,17 +177,17 @@ sub Bot_ircplug_connect {
   }
 
   logger->debug("ircplug_connect issued for $context");
-  
+
   my $pcfg    = core->cfg->plugins->plugin( plugin_alias($self) );
   my $thiscfg = $pcfg->opts->{Networks}->{$context};
-  
+
   unless (ref $thiscfg eq 'HASH' && keys %$thiscfg) {
     logger->error("Connect issued for context without valid cfg ($context)");
     return PLUGIN_EAT_ALL
   }
 
   my $server = $thiscfg->{ServerAddr};
-  
+
   unless (defined $server) {
     logger->error("Context $context has no defined ServerAddr");
     return PLUGIN_EAT_ALL
@@ -226,7 +226,7 @@ sub Bot_ircplug_connect {
   $spawn_opts{password} = $thiscfg->{ServerPass}
     if defined $thiscfg->{ServerPass};
 
-  my $irc = POE::Component::IRC::State->spawn(%spawn_opts) 
+  my $irc = POE::Component::IRC::State->spawn(%spawn_opts)
     or logger->error("IRC component spawn() for $context failed")
     and return PLUGIN_EAT_ALL;
 
@@ -243,7 +243,7 @@ sub Bot_ircplug_connect {
   if ( $self->_spawn_for_context($context) ) {
     logger->debug("Successful session creation for context $context");
   }
-  
+
   return PLUGIN_EAT_ALL
 }
 
@@ -289,11 +289,11 @@ sub _spawn_for_context {
 sub Bot_ircplug_disconnect {
   my ($self, $core) = splice @_, 0, 2;
   my $context = ${ $_[0] };
-  
+
   logger->debug("ircplug_disconnect event caught for $context");
 
   $self->_clear_context($context);
-  
+
   return PLUGIN_EAT_ALL
 }
 
@@ -319,7 +319,7 @@ sub _clear_context {
   $irc->call('shutdown', "IRC component shut down");
 
   logger->info("Called shutdown for context $context");
-  
+
   return $context
 }
 
@@ -350,7 +350,7 @@ sub _start {
   $irc->plugin_add('NickReclaim' =>
     POE::Component::IRC::Plugin::NickReclaim->new(
         poll => $ccfg->opts->{NickRegainDelay} // 30,
-      ), 
+      ),
     );
 
   if (defined $pcfg->opts->{Networks}->{$context}->{NickServPass}) {
@@ -416,7 +416,7 @@ sub irc_001 {
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
-  
+
   ## set up some stuff relevant to our server context:
   irc_context($context)->connected(1);
   irc_context($context)->connectedat( time );
@@ -429,14 +429,14 @@ sub irc_001 {
   ## this may vary by server
   ## (most servers are rfc1459, some are -strict, some are ascii)
   ##
-  ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by 
+  ## we can tell eq_irc/uc_irc/lc_irc to do the right thing by
   ## checking ISUPPORT and setting the casemapping if available
   my $casemap = lc( $irc->isupport('CASEMAPPING') || 'rfc1459' );
   irc_context($context)->casemap( $casemap );
-  
-  ## if the server returns a fubar value IRC::Utils automagically 
+
+  ## if the server returns a fubar value IRC::Utils automagically
   ## defaults to rfc1459 casemapping rules
-  ## 
+  ##
   ## this is unavoidable in some situations, however:
   ## misconfigured inspircd on paradoxirc gave a codepage for CASEMAPPING
   ## and a casemapping for CHARSET (which is supposed to be deprecated)
@@ -465,7 +465,7 @@ sub irc_001 {
   ## May have configured umodes to set:
   my $pcfg    = core->cfg->plugins->plugin( plugin_alias($self) );
   my $thiscfg = $pcfg->opts->{Networks}->{$context};
-  
+
   if (my $umode = $thiscfg->{Umodes}) {
     logger->debug("Setting umode $umode on $context");
     $irc->yield('mode', $irc->nick_name => $umode)
@@ -483,7 +483,7 @@ sub irc_disconnected {
   my $context = $_[HEAP]->{Context};
 
   logger->warn("Disconnected: $context ($server)");
-  
+
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
     broadcast( 'disconnected', $context, $server );
@@ -495,7 +495,7 @@ sub irc_socketerr {
   my $context = $_[HEAP]->{Context};
 
   logger->warn("Socket error: $context: $err");
-  
+
   if ( irc_context($context) ) {
     irc_context($context)->connected(0);
     broadcast( 'server_error', $context, $err );
@@ -536,7 +536,7 @@ sub irc_chan_sync {
   ## check if we have a specific setting for this channel (override):
   $notify = $chan_h->{$chan}->{notify_on_sync}
     if exists $chan_h->{$chan}
-    and ref $chan_h->{$chan} eq 'HASH' 
+    and ref $chan_h->{$chan} eq 'HASH'
     and exists $chan_h->{$chan}->{notify_on_sync};
 
   $irc->yield(privmsg => $chan => $resp) if $notify;
@@ -567,7 +567,7 @@ sub irc_ctcp_action {
 sub irc_invite {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $channel) = @_[ARG0, ARG1];
-  
+
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
@@ -576,7 +576,7 @@ sub irc_invite {
     src     => $src,
     channel => $channel,
   );
-  
+
   ## Bot_invited
   broadcast( 'invited', $invite );
 }
@@ -633,7 +633,7 @@ sub irc_kick {
 sub irc_mode {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($src, $changed_on, $modestr, @modeargs) = @_[ ARG0 .. $#_ ];
-  
+
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
@@ -644,7 +644,7 @@ sub irc_mode {
     mode    => $modestr,
     args    => [ @modeargs ],
   );
-  
+
   if ( $mode_obj->is_umode ) {
     ## our umode changed
     broadcast( 'umode_changed', $mode_obj );
@@ -684,7 +684,7 @@ sub irc_msg {
     targets => $target,
     message => $txt,
   );
-  
+
   broadcast( 'private_msg', $msg_obj );
 }
 
@@ -718,7 +718,7 @@ sub irc_notice {
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
-  
+
   my $casemap = core->get_irc_casemap($context);
   for my $mask ( core->ignore->list($context) ) {
     return if matches_mask( $mask, $src, $casemap );
@@ -730,7 +730,7 @@ sub irc_notice {
     targets => $target,
     message => $txt,
   );
-  
+
   broadcast( 'got_notice', $msg_obj );
 }
 
@@ -740,7 +740,7 @@ sub irc_part {
 
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
-  
+
   my $part = Bot::Cobalt::IRC::Event::Channel->new(
     context => $context,
     src     => $src,
@@ -764,7 +764,7 @@ sub irc_part {
 sub irc_public {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
   my ($src, $where, $txt) = @_[ ARG0 .. ARG2 ];
-  
+
   my $context = $heap->{Context};
   my $irc     = $self->ircobjs->{$context};
 
@@ -781,15 +781,15 @@ sub irc_public {
     targets => $where,
     message => $txt,
   );
-  
+
   my $floodchk = sub {
     if ( $self->flood->check(@_) ) {
       $self->flood_ignore($context, $src);
       return 1
     }
   };
-  
-  ## Bot_public_msg / Bot_public_cmd_$cmd  
+
+  ## Bot_public_msg / Bot_public_cmd_$cmd
   ## FloodChk cmds and highlights
   if (my $cmd = $msg_obj->cmd) {
 
@@ -804,9 +804,9 @@ sub irc_public {
       : broadcast( 'public_msg', $msg_obj);
 
   } else {
-    ## In the interests of keeping memory usage low on a 
-    ## large channel, we don't flood-check every incoming public 
-    ## message; plugins that respond to these may want to create 
+    ## In the interests of keeping memory usage low on a
+    ## large channel, we don't flood-check every incoming public
+    ## message; plugins that respond to these may want to create
     ## their own Bot::Cobalt::IRC::FloodChk
     broadcast( 'public_msg', $msg_obj );
   }
@@ -832,13 +832,13 @@ sub irc_quit {
 
 sub irc_snotice {
   my ($self, $heap, $kernel) = @_[OBJECT, HEAP, KERNEL];
-  
+
   my $context = $heap->{Context};
 
   ## These are weird.
   ## There should be at least a string.
   my ($string, $target, $sender) = @_[ARG0 .. ARG2];
-  
+
   ## FIXME test / POD
   broadcast( 'server_notice', $context, $string, $target, $sender );
 }
@@ -872,17 +872,17 @@ sub Bot_rehashed {
     logger->info("Rehash received ($type), resetting ajoins");
     $self->_reset_ajoins;
   }
-  
+
   ## FIXME nickservid rehash if needed
-  
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_ircplug_chk_floodkey_expire {
   my ($self, $core) = splice @_, 0, 2;
-  
+
   ## Lazy flood tracker cleanup.
-  ## These are just arrays of timestamps, but they gotta be cleaned up 
+  ## These are just arrays of timestamps, but they gotta be cleaned up
   ## when they're stale.
 
   $self->flood->expire if $self->has_flood;
@@ -891,7 +891,7 @@ sub Bot_ircplug_chk_floodkey_expire {
     { Event => 'ircplug_chk_floodkey_expire' },
     'IRCPLUG_CHK_FLOODKEY_EXPIRE'
   );
-  
+
   return PLUGIN_EAT_ALL
 }
 
@@ -902,11 +902,11 @@ sub Bot_ircplug_flood_rem_ignore {
   ## Internal timer-fired event to remove temp ignores.
 
   logger->info("Clearing temp ignore: $mask ($context)");
-  
-  $core->ignore->del( $context, $mask );  
+
+  $core->ignore->del( $context, $mask );
 
   broadcast( 'flood_ignore_deleted', $context, $mask );
-  
+
   return PLUGIN_EAT_ALL
 }
 
@@ -914,22 +914,22 @@ sub flood_ignore {
   ## Pass me a context and a mask
   ## Set a temporary ignore and a timer to remove it
   my ($self, $context, $mask) = @_;
-  
+
   my $corecf = core->get_core_cfg;
   my $ignore_time = $corecf->opts->{FloodIgnore} || 20;
-  
+
   $self->flood->clear($context, $mask);
-  
+
   logger->info(
     "Issuing temporary ignore due to flood: $mask ($context)"
   );
-  
+
   my $added = core->ignore->add(
     $context, $mask, "flood_ignore", __PACKAGE__
   );
 
   broadcast( 'flood_ignore_added', $context, $mask );
-  
+
   core->timer_set( $ignore_time,
     {
       Event => 'ircplug_flood_rem_ignore',
@@ -940,13 +940,13 @@ sub flood_ignore {
 
 sub _reset_ajoins {
   my ($self) = @_;
-  
+
   my $corecf  = core->get_core_cfg;
   my $servers = core->Servers;
-  
+
   CONTEXT: for my $context (keys %$servers) {
     my $chanscf = core->get_channels_cfg($context) // {};
-    
+
     my $irc = core->get_irc_obj($context) || next CONTEXT;
 
     my %ajoin;
@@ -958,7 +958,7 @@ sub _reset_ajoins {
 
     logger->debug("Removing AutoJoin plugin for $context");
     $irc->plugin_del('AutoJoin');
-    
+
     logger->debug("Loading new AutoJoin plugin for $context");
     $irc->plugin_add('AutoJoin' =>
       POE::Component::IRC::Plugin::AutoJoin->new(
@@ -969,9 +969,9 @@ sub _reset_ajoins {
         Retry_when_banned => $corecf->opts->{Chan_RetryAfterBan} // 60,
       ),
     );
- 
+
   }
-  
+
 }
 
 1;

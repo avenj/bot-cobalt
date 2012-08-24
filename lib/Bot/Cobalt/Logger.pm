@@ -18,10 +18,11 @@ has 'level' => (
 
   is => 'ro',
   writer => 'set_level',
-  
+
   isa => sub {
+    my $lev = $_[0];
     confess "Unknown log level, should be one of: error warn info debug"
-      unless $_[0] ~~ [qw/error warn info debug/];
+      unless grep { $_ eq $lev } qw/error warn info debug/;
   },
 );
 
@@ -32,11 +33,11 @@ has 'time_format' => (
   is  => 'rw',
   isa => Str,
 
-  predicate => 'has_time_format',  
-  
+  predicate => 'has_time_format',
+
   trigger => sub {
     my ($self, $val) = @_;
-    
+
     $self->output->time_format($val)
       if $self->has_output;
   },
@@ -44,15 +45,15 @@ has 'time_format' => (
 
 has 'log_format' => (
   lazy => 1,
-  
+
   is  => 'rw',
   isa => Str,
-  
+
   predicate => 'has_log_format',
-  
+
   trigger => sub {
     my ($self, $val) = @_;
-    
+
     $self->output->log_format($val)
       if $self->has_output;
   },
@@ -64,19 +65,19 @@ has 'output' => (
 
   is   => 'rwp',
   predicate => 'has_output',
-  
+
   isa => sub {
     confess "Not a Bot::Cobalt::Logger::Output subclass"
       unless blessed $_[0] and $_[0]->isa('Bot::Cobalt::Logger::Output')
   },
-  
+
   builder => '_build_output',
 );
 
 has '_levmap' => (
   is  => 'ro',
   isa => HashRef,
-  
+
   default => sub {
     {
       error => 1,
@@ -91,7 +92,7 @@ sub _build_output {
   my ($self) = @_;
 
   my %opts;
-  
+
   $opts{log_format} = $self->log_format
     if $self->has_log_format;
 
@@ -99,7 +100,7 @@ sub _build_output {
     if $self->has_time_format;
 
   Bot::Cobalt::Logger::Output->new(
-    %opts  
+    %opts
   );
 }
 

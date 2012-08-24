@@ -20,7 +20,7 @@ use Try::Tiny;
 
 use POSIX ();
 
-sub new { 
+sub new {
   bless {
 
     ## Errors from DB -> RPL values:
@@ -28,23 +28,23 @@ sub new {
       RDB_NOTPERMITTED => "RDB_ERR_NOTPERMITTED",
 
       RDB_INVALID_NAME => "RDB_ERR_INVALID_NAME",
-      
+
       RDB_EXISTS       => "RDB_ERR_RDB_EXISTS",
-      
+
       RDB_DBFAIL       => "RPL_DB_ERR",
-      
+
       RDB_FILEFAILURE  => "RDB_UNLINK_FAILED",
-      
+
       RDB_NOSUCH       => "RDB_ERR_NO_SUCH_RDB",
       RDB_NOSUCH_ITEM  => "RDB_ERR_NO_SUCH_ITEM",
     },
 
-  }, shift 
+  }, shift
 }
 
 sub DBmgr {
   my ($self) = @_;
-  
+
   unless ($self->{DBMGR}) {
     my $cfg = core->get_plugin_cfg($self);
     my $cachekeys = $cfg->{Opts}->{CacheItems} // 30;
@@ -59,7 +59,7 @@ sub DBmgr {
       RDBDir    => $rdbdir,
     );
   }
-  
+
   $self->{DBMGR}
 }
 
@@ -85,13 +85,13 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   register($self, 'SERVER',
-    [ 
+    [
       'public_msg',
       'rdb_broadcast',
       'rdb_triggered',
     ],
   );
-  
+
   ## if the rdbdir doesn't exist, ::Database will try to create it
   ## (it'll also handle creating 'main' for us)
   my $dbmgr = $self->DBmgr;
@@ -112,27 +112,27 @@ sub Cobalt_register {
   $self->rand_delay( $randdelay );
 
   if ($randdelay) {
-    core->timer_set( $randdelay, 
-      { 
-        Event => 'rdb_broadcast', 
-        Alias => core->get_plugin_alias($self) 
-      }, 
+    core->timer_set( $randdelay,
+      {
+        Event => 'rdb_broadcast',
+        Alias => core->get_plugin_alias($self)
+      },
       'RANDSTUFF'
     );
   }
 
   if ($cfg->{Opts}->{AsyncSearch}) {
     logger->debug("spawning Session to handle AsyncSearch");
-  
+
     POE::Session->create(
       object_states => [
         $self => [
           '_start',
-          
+
           'poe_post_search',
-          
+
           'poe_got_result',
-          
+
           'poe_got_error',
         ],
       ],
@@ -156,7 +156,7 @@ sub Cobalt_unregister {
   }
 
   delete core->Provided->{randstuff_items};
-  
+
   core->timer_del('RANDSTUFF');
 
   return PLUGIN_EAT_NONE
@@ -171,7 +171,7 @@ sub Bot_public_msg {
   my @handled = qw/
     randstuff
     randq
-    rdb    
+    rdb
   /;
 
   ## would be better in a public_cmd_, but eh, darkbot legacy syntax..
@@ -198,12 +198,12 @@ sub Bot_public_msg {
       $resp = $self->_cmd_randstuff(\@message, $msg);
       last CMD
     }
-    
+
     if ($cmd eq "randq") {
       $resp = $self->_cmd_randq(\@message, $msg, 'randq');
       last CMD
     }
-    
+
     if ($cmd eq "rdb") {
       $resp = $self->_cmd_rdb(\@message, $msg);
       last CMD
@@ -211,7 +211,7 @@ sub Bot_public_msg {
   }
 
   my $channel = $msg->channel;
-  
+
   if (defined $resp) {
     logger->debug("dispatching msg -> $channel");
     broadcast( 'message', $context, $channel, $resp );
@@ -242,9 +242,9 @@ sub _cmd_randstuff {
   unless ( core->auth->level($context, $src_nick) >= $required_level ) {
     return core->rpl( 'RPL_NO_ACCESS', $rplvars )
   }
-  
+
   ## randstuff is 'main', darkbot legacy:
-  my $rdb = 'main';      
+  my $rdb = 'main';
   $rplvars->{rdb} = $rdb;
 
   ## ...but this may be randstuff ~rdb ... syntax:
@@ -288,7 +288,7 @@ sub _cmd_randstuff {
   } else {
     return core->rpl( 'RDB_ITEM_ADDED', $rplvars )
   }
-  
+
 }
 
 sub _select_random {
@@ -329,7 +329,7 @@ sub _select_random {
   }
 
   $self->{LastRandom} = $content;
-  
+
   return $content // ''
 }
 
@@ -359,14 +359,14 @@ sub _cmd_randq {
 
   if ( $self->SessionID ) {
     ## if we have asyncsearch, post and return immediately
-    
+
     unless ( $dbmgr->dbexists($rdb) ) {
       return core->rpl( 'RDB_ERR_NO_SUCH_RDB',
-        nick => $msg->src_nick, 
+        nick => $msg->src_nick,
         rdb  => $rdb,
       );
     }
-        
+
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
       $rdb,
@@ -382,19 +382,19 @@ sub _cmd_randq {
     );
 
     logger->debug("_cmd_randq; search ($rdb) dispatched to AsyncSearch");
-    
+
     return
   }
 
   my($rpl, $match);
 
-  try { 
+  try {
     $match = $dbmgr->search($rdb, $str, 'WANTONE')
   } catch {
     logger->debug("_cmd_randq; Database->search() err: $_");
     $rpl = $self->{RPL_MAP}->{$_};
   };
-  
+
   return core->rpl( $rpl,
     nick => $msg->src_nick,
     rdb  => $rdb,
@@ -406,7 +406,7 @@ sub _cmd_randq {
     logger->debug("_cmd_randq; Database->get() err: $_");
     $rpl = $self->{RPL_MAP}->{$_};
   };
-  
+
   return core->rpl( $rpl,
         nick  => $msg->src_nick,
         rdb   => $rdb,
@@ -418,7 +418,7 @@ sub _cmd_randq {
 
   my $content = $self->_content_from_ref($item_ref)
             // '(undef - broken db?)';
-  
+
   return "[$match] $content"
 }
 
@@ -427,7 +427,7 @@ sub _cmd_rdb {
   ## Command dispatcher for:
   ##   rdb add
   ##   rdb del
-  ##   rdb get 
+  ##   rdb get
   ##   rdb dbadd
   ##   rdb dbdel
   ##   rdb info
@@ -464,7 +464,7 @@ sub _cmd_rdb {
            ."get <rdb> <idx> ; search(idx) <rdb> <str> ; count <rdb> <str> ; "
            ."dbadd <rdb> ; dbdel <rdb>";
   }
-    
+
   my $context  = $msg->context;
   my $nickname = $msg->src_nick;
 
@@ -476,22 +476,22 @@ sub _cmd_rdb {
   }
 
   my $method = '_cmd_rdb_'.$cmd;
-  
+
   if ( $self->can($method) ) {
     logger->debug("dispatching $method");
     return $self->$method($msg, \@message)
   }
-  
+
   return "No handler found for command $cmd"
 }
 
 sub _cmd_rdb_dbadd {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my $dbmgr = $self->DBmgr;
-  
+
   my ($rdb) = @$parsed_args;
-  
+
   return 'Syntax: rdb dbadd <RDB>' unless $rdb;
 
   return 'RDB name must be in the a-z0-9 set'
@@ -522,11 +522,11 @@ sub _cmd_rdb_dbadd {
 
 sub _cmd_rdb_dbdel {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my ($rdb) = @$parsed_args;
 
   return 'Syntax: rdb dbdel <RDB>' unless $rdb;
-  
+
   my $rplvars = {
     nick => $msg->src_nick,
     rdb  => $rdb,
@@ -534,7 +534,7 @@ sub _cmd_rdb_dbdel {
   };
 
   my ($retval, $err) = $self->_delete_rdb($rdb);
-  
+
   my $rpl;
   if ($retval) {
     $rpl = "RDB_DELETED";
@@ -544,7 +544,7 @@ sub _cmd_rdb_dbdel {
       $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
       $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
-      default { 
+      default {
         my $errstr = "BUG; Unknown err $err from _delete_rdb";
         logger->warn($errstr);
         return $errstr
@@ -552,13 +552,13 @@ sub _cmd_rdb_dbdel {
     }
 
   }
-  
+
   return core->rpl( $rpl, $rplvars )
 }
 
 sub _cmd_rdb_add {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my ($rdb, @pieces) = @$parsed_args;
   my $item = join ' ', @pieces;
 
@@ -568,10 +568,10 @@ sub _cmd_rdb_add {
     nick => $msg->src_nick,
     rdb  => $rdb,
   };
-  
+
   my $username = core->auth->username($msg->context, $msg->src_nick);
 
-  my ($retval, $err) = 
+  my ($retval, $err) =
     $self->_add_item($rdb, decode_irc($item), $username);
 
   my $rpl;
@@ -582,13 +582,13 @@ sub _cmd_rdb_add {
     given ($err) {
       $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-      default { 
+      default {
         my $errstr =  "BUG; Unknown err $err from _add_item";
         logger->warn($errstr);
         return $errstr
       }
     }
-    
+
   }
 
   return core->rpl( $rpl, $rplvars )
@@ -596,7 +596,7 @@ sub _cmd_rdb_add {
 
 sub _cmd_rdb_del {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my ($rdb, @item_indexes) = @$parsed_args;
 
   return 'Syntax: rdb del <RDB> <index number>'
@@ -606,11 +606,11 @@ sub _cmd_rdb_del {
     nick => $msg->src_nick,
     rdb  => $rdb,
   };
-  
+
   my $username = core->auth->username($msg->context, $msg->src_nick);
 
   INDEX: for my $item_idx (@item_indexes) {
-    my ($retval, $err) = 
+    my ($retval, $err) =
       $self->_delete_item($rdb, $item_idx, $username);
 
     $rplvars->{index} = $item_idx;
@@ -625,7 +625,7 @@ sub _cmd_rdb_del {
         $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
         $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
         $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-        default { 
+        default {
           my $errstr =  "BUG; Unknown err $err from _delete_item";
           logger->warn($errstr);
           return $errstr
@@ -648,7 +648,7 @@ sub _cmd_rdb_del {
 
 sub _cmd_rdb_get {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my $dbmgr = $self->DBmgr;
 
   my ($rdb, $idx) = @$parsed_args;
@@ -668,39 +668,39 @@ sub _cmd_rdb_get {
     ## Gives some flex without making flooding too easy
     index => substr($idx, 0, 16),
   };
-  
+
   unless ( $dbmgr->dbexists($rdb) ) {
     return core->rpl( 'RDB_ERR_NO_SUCH_RDB', $rplvars );
   }
-  
+
   my ($item_ref, $rpl);
-  
+
   try {
     $item_ref = $dbmgr->get($rdb, $idx)
   } catch {
     logger->debug("_cmd_rdb_get; Database->get error $_");
     $rpl = $self->{RPL_MAP}->{$_}
   };
-  
+
   return core->rpl( $rpl, $rplvars )
     if defined $rpl;
 
   my $content = $self->_content_from_ref($item_ref)
     // '(undef - broken db?)' ;
-  
+
   return "[$idx] $content"
 }
 
 sub _cmd_rdb_info {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my $dbmgr = $self->DBmgr;
 
   my ($rdb, $idx) = @$parsed_args;
 
   return 'Syntax: rdb info <RDB> <index key>'
     unless $rdb;
-  
+
   my $rplvars = {
     nick => $msg->src_nick,
     rdb  => $rdb,
@@ -724,43 +724,43 @@ sub _cmd_rdb_info {
 
     $idx = lc($idx);
   }
-  
+
   $rplvars->{index} = substr($idx, 0, 16);
 
   my ($item_ref, $rpl);
-  
+
   try {
     $item_ref = $dbmgr->get($rdb, $idx)
   } catch {
     logger->debug("_cmd_rdb_info; Database->get error $_");
     $rpl = $self->{RPL_MAP}->{$_}
   };
-  
+
   return core->rpl( $rpl, $rplvars )
     if defined $rpl;
-  
+
   my $addedat_ts = ref $item_ref eq 'HASH' ?
                    $item_ref->{AddedAt} : $item_ref->[1];
 
   my $added_by   = ref $item_ref eq 'HASH' ?
                    $item_ref->{AddedBy} : $item_ref->[2];
 
-  $rplvars->{date} = POSIX::strftime( 
+  $rplvars->{date} = POSIX::strftime(
     "%Y-%m-%d", localtime( $addedat_ts )
   );
-  
+
   $rplvars->{time} = POSIX::strftime(
     "%H:%M:%S (%Z)", localtime( $addedat_ts )
   );
 
-  $rplvars->{addedby} = $added_by // '(undef)' ;  
+  $rplvars->{addedby} = $added_by // '(undef)' ;
 
   return core->rpl( 'RDB_ITEM_INFO', $rplvars );
 }
 
 sub _cmd_rdb_count {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   my ($rdb, $str) = @$parsed_args;
 
   ## count <RDB> is the same as info <RDB>
@@ -771,7 +771,7 @@ sub _cmd_rdb_count {
     unless defined $rdb;
 
   my $indices = $self->_searchidx($msg, 'count', $rdb, $str);
-  
+
   ## Same deal as searchidx, return immediately if this is async.
   return unless ref $indices eq 'ARRAY';
 
@@ -781,11 +781,11 @@ sub _cmd_rdb_count {
 
 sub _cmd_rdb_search {
   my ($self, $msg, $parsed_args) = @_;
-  
+
   ## Pass-thru to _cmd_randq
 
   my ($rdb, $str) = @$parsed_args;
-  
+
   $str = '*' unless $str;
   return 'Syntax: rdb search <RDB> <string>' unless $rdb;
 
@@ -796,19 +796,19 @@ sub _cmd_rdb_searchidx {
   my ($self, $msg, $parsed_args) = @_;
 
   my ($rdb, $str) = @$parsed_args;
-  
-  return 'Syntax: rdb searchidx <RDB> <string>' 
+
+  return 'Syntax: rdb searchidx <RDB> <string>'
     unless $rdb and $str;
 
   my $indices = $self->_searchidx($msg, 'indexes', $rdb, $str);
-  
+
   ## if we posted out to asyncsearch, return immediately
   return unless ref $indices eq 'ARRAY';
 
   ## otherwise we should have indices
   $indices->[0] = 'No matches' unless @$indices;
   my $count = @$indices;
-  
+
   my (@returned, $prefix);
   if ($count > 30) {
     @returned = @$indices[0 .. 29];
@@ -834,18 +834,18 @@ sub Bot_rdb_triggered {
 
   ## event normally triggered by Info3 when a topic references a ~rdb
   ## grab a random response and throw it back at the pipeline
-  ## info3 plugin can pick it up and do variable replacement on it 
+  ## info3 plugin can pick it up and do variable replacement on it
 
   logger->debug("received rdb_triggered");
 
   my $dbmgr = $self->DBmgr;
-  
+
   ## if referenced rdb doesn't exist, send orig string
   my $send_orig;
   unless ( $dbmgr->dbexists($rdb) ) {
       ++$send_orig;
   }
-  
+
   ## construct fake msg obj for _select_random
   my $new_msg = Bot::Cobalt::IRC::Message::Public->new(
     context => $context,
@@ -853,8 +853,8 @@ sub Bot_rdb_triggered {
     targets => [ $channel ],
     message => '',
   );
-  
-  my $random = $send_orig ? $orig 
+
+  my $random = $send_orig ? $orig
                : $self->_select_random($new_msg, $rdb, 'quietfail') ;
 
   if (exists core()->Provided->{info_topics}) {
@@ -873,14 +873,14 @@ sub Bot_rdb_broadcast {
 
   ## reset timer unless randdelay is 0
   if ($self->rand_delay) {
-    $core->timer_set( $self->rand_delay, 
-      { 
-        Event => 'rdb_broadcast', 
-        Alias => $core->get_plugin_alias($self) 
-      }, 
+    $core->timer_set( $self->rand_delay,
+      {
+        Event => 'rdb_broadcast',
+        Alias => $core->get_plugin_alias($self)
+      },
       'RANDSTUFF'
     );
-    
+
     logger->debug("rdb_broadcast; timer reset; ".$self->rand_delay);
   }
 
@@ -893,7 +893,7 @@ sub Bot_rdb_broadcast {
 
   my $random = $self->_select_random($mock_msg, 'main', 'quietfail')
                // return PLUGIN_EAT_ALL;
-  
+
   ## iterate channels cfg
   ## throw randstuffs at configured channels unless told not to
   my $servers = $core->Servers;
@@ -920,15 +920,15 @@ sub Bot_rdb_broadcast {
     } else {
       $evtype = 'message';
     }
-    
+
     logger->debug("rdb_broadcast; type is $evtype");
-    
-    @channels = grep { 
-      $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs} // 1 
+
+    @channels = grep {
+      $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs} // 1
     } @channels;
 
     my $maxtargets = $c_obj->maxtargets;
-    
+
     while (my @targets = splice @channels, 0, $maxtargets) {
       my $tcount = @targets;
       my $targetstr = join ',', @targets;
@@ -940,7 +940,7 @@ sub Bot_rdb_broadcast {
 
       broadcast $evtype, $context, $targetstr, $random;
     }
-    
+
   } # SERVER
 
   return PLUGIN_EAT_ALL  ## theoretically no one else cares
@@ -968,13 +968,13 @@ sub _searchidx {
 
     unless ( $dbmgr->dbexists($rdb) ) {
       return core->rpl( 'RDB_ERR_NO_SUCH_RDB',
-        nick => $msg->src_nick, 
+        nick => $msg->src_nick,
         rdb  => $rdb,
       );
     }
-    
+
     logger->debug("_searchidx; dispatching to poe_post_search");
-    
+
     $poe_kernel->post( $self->SessionID,
       'poe_post_search',
       $rdb,
@@ -988,7 +988,7 @@ sub _searchidx {
         RDB      => $rdb,
       },
     );
-    
+
     return
   }
 
@@ -1006,13 +1006,13 @@ sub _add_item {
   return unless $rdb and defined $item;
 
   $username = '-undefined' unless $username;
-  
+
   my $dbmgr = $self->DBmgr;
   unless ( $dbmgr->dbexists($rdb) ) {
     logger->debug("cannot add item to nonexistant rdb: $rdb");
     return (0, 'RDB_NOSUCH')
   }
-  
+
   my $itemref = [ $item, time(), $username ];
 
   my ($status, $err);
@@ -1036,7 +1036,7 @@ sub _delete_item {
   return unless $rdb and defined $item_idx;
 
   my $dbmgr = $self->DBmgr;
-  
+
   unless ( $dbmgr->dbexists($rdb) ) {
     logger->debug("cannot delete from nonexistant rdb: $rdb");
     return(0, 'RDB_NOSUCH')
@@ -1048,7 +1048,7 @@ sub _delete_item {
   } catch {
     $err = $_
   };
-  
+
   return(0, $err) if defined $err;
 
   my $pref = core->Provided;
@@ -1088,7 +1088,7 @@ sub _delete_rdb {
         "attempted to delete main but AllowDelete Main = 0"
       );
       return (0, 'RDB_NOTPERMITTED')
-    }    
+    }
   }
 
   my ($status, $err);
@@ -1097,7 +1097,7 @@ sub _delete_rdb {
   } catch {
     $err = $_
   };
-  
+
   return(0, $err) if defined $err;
 
   return 1
@@ -1108,23 +1108,23 @@ sub _delete_rdb {
 
 sub _start {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-  
+
   $self->SessionID( $_[SESSION]->ID );
-  
+
   $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
-  
+
   my $maxworkers = core()->get_plugin_cfg($self)->{Opts}->{AsyncSearch};
   $maxworkers = 5 unless $maxworkers > 1;
-  
+
   ## spawn asyncsearch sess
   require Bot::Cobalt::Plugin::RDB::AsyncSearch;
-  
+
   my $asid = Bot::Cobalt::Plugin::RDB::AsyncSearch->spawn(
     MaxWorkers  => $maxworkers,
     ResultEvent => 'poe_got_result',
     ErrorEvent  => 'poe_got_error',
   );
-  
+
   $self->AsyncSessionID( $asid );
 }
 
@@ -1141,11 +1141,11 @@ sub poe_post_search {
     core()->var,
     $cfg->{Opts}->{RDBDir} ? $cfg->{Opts}->{RDBDir} : ('db', 'rdb')
   );
-  
+
   my $rdbpath = File::Spec->catfile( $rdbdir, "$rdbname.rdb" );
-  
+
   my $dbmgr = $self->DBmgr;
-  
+
   if (my @matches = $dbmgr->cache_check($rdbname, $globstr) ) {
     ## have cached results in ::Database's cache
     ## yield back to ourselves and return
@@ -1155,11 +1155,11 @@ sub poe_post_search {
     );
     return
   }
-  
+
   my $re = glob_to_re_str($globstr);
-  
+
   ## post a search w / hintshash
-  $kernel->post( $self->AsyncSessionID, 
+  $kernel->post( $self->AsyncSessionID,
     'search_rdb',
     $rdbpath,
     $re,
@@ -1170,22 +1170,22 @@ sub poe_post_search {
 sub poe_got_result {
   my ($self, $kernel, $heap)  = @_[OBJECT, KERNEL, HEAP];
   my ($resultarr, $hintshash) = @_[ARG0, ARG1];
-  
+
   my $context  = $hintshash->{Context};
   my $channel  = $hintshash->{Channel};
   my $nickname = $hintshash->{Nickname};
   ## type is: string, indexes, or count
   ##  (aka: randq / rdb search, rdb searchidx, rdb count)
-  my $type     = $hintshash->{GetType}; 
+  my $type     = $hintshash->{GetType};
   my $glob     = $hintshash->{Glob};
   my $rdb      = $hintshash->{RDB};
 
   logger->debug("Received async search response ($rdb)");
-  
+
   my $resp;
-  
+
   my $dbmgr = $self->DBmgr;
-  
+
   given ($type) {
 
     when ("string") {
@@ -1194,18 +1194,18 @@ sub poe_got_result {
       } else {
         ## cachable, we get a full set back
         $dbmgr->cache_push($rdb, $glob, $resultarr);
-      
+
         my $itemkey = $resultarr->[rand @$resultarr];
-        
+
         my ($item, $rpl);
-        
+
         try {
           $item = $dbmgr->get($rdb, $itemkey)
         } catch {
           logger->debug("poe_got_result; error from get(): $_");
           $rpl = $self->{RPL_MAP}->{$_}
         };
-        
+
         if (defined $rpl) {
           $resp = core->rpl( $rpl,
             nick  => $nickname,
@@ -1215,23 +1215,23 @@ sub poe_got_result {
         } else {
           my $content = $self->_content_from_ref($item)
             // '(undef - broken db?)';
-          
+
           $resp = "[$itemkey] $content"
         }
-        
+
       }
     }
-    
+
     when ("indexes") {
       unless (@$resultarr) {
         $resp = "$nickname: No matches found for $glob";
       } else {
         $dbmgr->cache_push($rdb, $glob, $resultarr);
-      
+
         my $count = @$resultarr;
-        
+
         my (@returned, $prefix);
-        
+
         if ($count > 30) {
           @returned = (shuffle @$resultarr)[0 .. 29];
           $prefix   = "$nickname: matches (30 / $count): ";
@@ -1239,11 +1239,11 @@ sub poe_got_result {
           @returned = @$resultarr;
           $prefix   = "$nickname: matches ($count): ";
         }
-        
+
         $resp = $prefix . join('  ', @returned);
       }
     }
-    
+
     when ("count") {
       $dbmgr->cache_push($rdb, $glob, $resultarr)
         if @$resultarr;
@@ -1251,26 +1251,26 @@ sub poe_got_result {
       my $count = @$resultarr;
       $resp = "$nickname: Found $count matches for $glob";
     }
-  
+
   }
-  
-  broadcast( 'message', $context, $channel, $resp ) 
+
+  broadcast( 'message', $context, $channel, $resp )
     if defined $resp;
-}  
+}
 
 sub poe_got_error {
   my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
   my ($error, $hints) = @_[ARG0, ARG1];
-  
+
   my $glob = $hints->{Glob};
   my $rdb  = $hints->{RDB};
-  
+
   logger->warn("Received error from AsyncSearch: $rdb ($glob): $error");
-  
+
   my $context  = $hints->{Context};
   my $channel  = $hints->{Channel};
   my $nickname = $hints->{Nickname};
-  
+
   broadcast( 'message', $context, $channel,
     "$nickname: asyncsearch error: $error ($rdb)"
   );
