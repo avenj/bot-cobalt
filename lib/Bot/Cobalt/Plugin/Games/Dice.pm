@@ -12,25 +12,24 @@ sub new { bless [], shift }
 sub execute {
   my ($self, $msg, $str) = @_;
   return "Syntax: roll XdY  [ +/- <modifier> ]" unless $str;
+
   my ($dice, $modifier, $modify_by) = split ' ', $str;
 
-  for ($dice) {
-  
-    when (/^(\d+)?d(\d+)?$/i) {  ## Xd / dY / XdY syntax
+  if ($dice =~ /^(\d+)?d(\d+)?$/i) {  ## Xd / dY / XdY syntax
       my $n_dice = $1 || 1;
       my $sides  = $2 || 6;
-      
+
       my @rolls;
-      
+
       $n_dice = 10    if $n_dice > 10;
       $sides  = 10000 if $sides > 10000;
-      
+
       for (my $i = $n_dice; $i >= 1; $i--) {
         push(@rolls, (int rand $sides) + 1 );
       }
       my $total;
       $total += $_ for @rolls;
-      
+
       $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
       if ($modifier) {
         if      ($modifier eq '+') {
@@ -39,9 +38,9 @@ sub execute {
           $total -= $modify_by;
         }
       }
-      
+
       my $potential = $n_dice * $sides;
-      
+
       my $resp = "Rolled "
                  .color('bold', $n_dice)
                  ." dice of "
@@ -53,9 +52,9 @@ sub execute {
       $resp .= " [total: ".color('bold', $total)." / $potential]";
 
       return $resp
-    }
-    
-    when (/^\d+$/) {
+  }
+
+  if ($dice =~ /^\d+$/) {
       my $rolled = (int rand $dice) + 1;
       $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
       if ($modifier) {
@@ -70,14 +69,9 @@ sub execute {
                   ." sides: "
                   .color('bold', $rolled) ;
       return $resp
-    }
-    
-    default {
-      return "Syntax: roll XdY  [ +/- <modifier> ]"
-    }
-  
   }
 
+  return "Syntax: roll XdY  [ +/- <modifier> ]"
 }
 
 1;
