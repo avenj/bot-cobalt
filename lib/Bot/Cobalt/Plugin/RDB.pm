@@ -539,7 +539,7 @@ sub _cmd_rdb_dbdel {
   if ($retval) {
     $rpl = "RDB_DELETED";
   } else {
-    given ($err) {
+    given ("$err") {
       $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
       $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
@@ -579,7 +579,7 @@ sub _cmd_rdb_add {
     $rplvars->{index} = $retval;
     $rpl = "RDB_ITEM_ADDED";
   } else {
-    given ($err) {
+    given ("$err") {
       $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
       $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
       default {
@@ -621,7 +621,7 @@ sub _cmd_rdb_del {
       $rpl = "RDB_ITEM_DELETED";
     } else {
 
-      given ($err) {
+      given ("$err") {
         $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
         $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
         $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
