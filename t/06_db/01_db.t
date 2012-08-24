@@ -67,10 +67,14 @@ is( $db->get('intkey'), 2,
 is( $db->dbkeys, 3, "DB has expected num. of keys");
 my @keys;
 ok( @keys = $db->dbkeys, 'list dbkeys()');
-ok( 
-  'testkey' ~~ @keys
-  && 'scalarkey' ~~ @keys
-  && 'intkey' ~~ @keys,
+ok(
+
+  (
+     (grep { $_ eq 'testkey' } @keys)
+  && (grep { $_ eq 'scalarkey' } @keys)
+  && (grep { $_ eq 'intkey' } @keys)
+  ),
+
   'DB has expected keys'
 );
 
