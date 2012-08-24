@@ -61,6 +61,8 @@ sub Bot_public_cmd_plugin {
       broadcast( 'message', $context, $chan,
         "Valid PluginMgr commands: list, load, unload, reload"
       );
+
+      return PLUGIN_EAT_ALL
     }
 
     my $method = '_cmd_plug_'.lc($operation);
