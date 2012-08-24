@@ -21,32 +21,32 @@ sub new { bless [undef], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-  
+
   register( $self, 'SERVER',
     'public_cmd_cpan',
     'public_cmd_corelist',
     'mcpan_plug_resp_recv',
   );
-  
+
   logger->info("Loaded: !cpan");
-  
+
   return PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-  
+
   logger->info("Bye!");
-  
+
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_corelist {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
-  
+
   my $dist = $msg->message_array->[0];
-  
+
   unless ($dist) {
     broadcast( 'message',
       $msg->context, $msg->channel,
@@ -54,11 +54,11 @@ sub Bot_public_cmd_corelist {
     );
     return PLUGIN_EAT_ALL
   }
-  
+
   my $resp;
-  
+
   my $vers = $msg->message_array->[1];
-  
+
   my $first = Module::CoreList->first_release($dist, $vers);
 
   if ($first) {
@@ -68,7 +68,7 @@ sub Bot_public_cmd_corelist {
   } else {
     $resp = "Module not found in core."
   }
-  
+
   broadcast( 'message',
     $msg->context, $msg->channel,
     join(', ', $msg->src_nick, $resp)
@@ -78,7 +78,7 @@ sub Bot_public_cmd_corelist {
 sub Bot_public_cmd_cpan {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
-  
+
   my ($cmd, $dist) = @{ $msg->message_array };
 
   unless ($cmd) {
@@ -88,7 +88,7 @@ sub Bot_public_cmd_cpan {
     );
     return PLUGIN_EAT_ALL
   }
-  
+
   unless ($dist) {
     ## assume 'abstract' if only one arg
     $dist = $cmd;
@@ -96,9 +96,9 @@ sub Bot_public_cmd_cpan {
   }
 
   $cmd = lc $cmd;
-  
+
   $dist =~ s/::/-/g unless $cmd eq "belongs";
-  
+
   my $url = "/release/$dist";
 
   my $hints = {
@@ -108,49 +108,62 @@ sub Bot_public_cmd_cpan {
     Dist    => $dist,
     Link    => 'http://www.metacpan.org'.$url,
   };
-  
-  for ($cmd) {
 
-    ## Get latest vers / date and link
-    $hints->{Type} = 'latest'   when [qw/latest release/];
-    ## Download URL
-    $hints->{Type} = 'dist'     when "dist";
-    $hints->{Type} = 'tests'    when /^tests?$/;
-    $hints->{Type} = 'abstract' when [qw/info abstract/];
-    $hints->{Type} = 'license'  when "license";
-    
-    when ("belongs") {
+  CMD: {
+    if ($cmd eq 'latest' || $cmd eq 'release') {
+      $hints->{Type} = 'latest';
+      last CMD
+    }
+
+    if ($cmd eq 'dist') {
+      $hints->{Type} = 'dist';
+      last CMD
+    }
+
+    if ($cmd eq 'test' || $cmd eq 'tests') {
+      $hints->{Type} = 'tests';
+      last CMD
+    }
+
+    if ($cmd eq 'info' || $cmd eq 'abstract') {
+      $hints->{Type} = 'abstract';
+      last CMD
+    }
+
+    if ($cmd eq 'license') {
+      $hints->{Type} = 'license';
+      last CMD
+    }
+
+    if ($cmd eq 'belongs') {
       $hints->{Type} = 'belongs';
       $url = "/module/$dist";
+      last CMD
     }
-    
-    default {
-      broadcast( 'message',
-        $msg->context, $msg->channel,
-        "Unknown query; try: dist, latest, tests, abstract, license",
-      );
-      ## Set no type, we'll return below.
-    }
+
+    broadcast( 'message', $msg->context, $msg->channel,
+      "Unknown query; try: dist, latest, tests, abstract, license, belongs"
+    );
   }
 
   $self->_request($url, $hints)
     if defined $hints->{Type};
-  
+
   return PLUGIN_EAT_ALL
 }
 
 sub _request {
   my ($self, $url, $hints) = @_;
-  
+
   my $base_url = 'http://api.metacpan.org';
   my $this_url = $base_url . $url;
-  
+
   logger->debug("metacpan request: $this_url");
 
   my $request = HTTP::Request->new(
     'GET', $this_url
   );
-  
+
   broadcast( 'www_request',
     $request,
     'mcpan_plug_resp_recv',
@@ -166,10 +179,10 @@ sub Bot_mcpan_plug_resp_recv {
   my $dist = $hints->{Dist};
   my $type = $hints->{Type};
   my $link = $hints->{Link};
-  
+
   unless ($response->is_success) {
     my $status = $response->code;
-    
+
     if ($status == 404) {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
@@ -186,7 +199,7 @@ sub Bot_mcpan_plug_resp_recv {
   }
 
   my $json = $response->content;
-  
+
   unless ($json) {
     broadcast('message',
       $hints->{Context}, $hints->{Channel},
@@ -196,11 +209,11 @@ sub Bot_mcpan_plug_resp_recv {
   }
 
   my $ser = Bot::Cobalt::Serializer->new('JSON');
-  
+
   my $d_hash;
   {
-    try { 
-      $d_hash = $ser->thaw($json) 
+    try {
+      $d_hash = $ser->thaw($json)
     } catch {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
@@ -209,7 +222,7 @@ sub Bot_mcpan_plug_resp_recv {
       return PLUGIN_EAT_ALL
     };
   }
-  
+
   unless ($d_hash && ref $d_hash eq 'HASH') {
     broadcast( 'message',
       $hints->{Context}, $hints->{Channel},
@@ -217,66 +230,70 @@ sub Bot_mcpan_plug_resp_recv {
     );
     return PLUGIN_EAT_ALL
   }
-  
+
   my $resp;
 
   my $prefix = color('bold', 'mCPAN');
-  
-  for ($type) {
-    
-    when ("abstract") {
+
+  TYPE: {
+
+    if ($type eq 'abstract') {
       my $abs  = $d_hash->{abstract} || 'No abstract available.';
       my $vers = $d_hash->{version};
       $resp = "$prefix: ($dist $vers) $abs ; $link";
+      last TYPE
     }
-    
-    when ("dist") {
+
+    if ($type eq 'dist') {
       my $dl = $d_hash->{download_url} || 'No download link available.';
       $resp = "$prefix: ($dist) $dl";
+      last TYPE
     }
-    
-    when ("latest") {
+
+    if ($type eq 'latest') {
       my $vers = $d_hash->{version};
       my $arc  = $d_hash->{archive};
       $resp = "$prefix: ($dist) Latest is $vers ($arc) ; $link";
+      last TYPE
     }
-    
-    when ("license") {
+
+    if ($type eq 'license') {
       my $name = $d_hash->{name};
       my $lic  = join ' ', @{ $d_hash->{license}||['undef'] };
       $resp = "$prefix: License terms for $name:  $lic";
+      last TYPE
     }
-    
-    when ("tests") {
-      my %tests = %{ 
-        keys %{$d_hash->{tests}||{}} ? 
+
+    if ($type eq 'tests') {
+      my %tests = %{
+        keys %{$d_hash->{tests}||{}} ?
           $d_hash->{tests}
           : { pass => 0, fail => 0, na => 0, unknown => 0 }
       };
-      
+
       my $vers = $d_hash->{version};
 
       $resp = sprintf("%s: (%s %s) %d PASS, %d FAIL, %d NA, %d UNKNOWN",
         $prefix, $dist, $vers,
         $tests{pass}, $tests{fail}, $tests{na}, $tests{unknown}
       );
+
+      last TYPE
     }
-    
-    when ("belongs") {
+
+    if ($type eq 'belongs') {
       my $release = $d_hash->{release};
       $resp = "$prefix: $dist belongs to release $release";
-    } 
-    
-    default {
-      logger->error("BUG; fell through in response handler");
+      last TYPE
     }
-  
+
+    logger->error("BUG; fell through in response handler");
   }
-  
+
   broadcast( 'message',
-    $hints->{Context}, $hints->{Channel}, 
+    $hints->{Context}, $hints->{Channel},
     $resp
-  );
+  ) if $resp;
 
   return PLUGIN_EAT_ALL
 }
@@ -295,16 +312,16 @@ Bot::Cobalt::Plugin::Extras::CPAN - Query MetaCPAN API from IRC
   ## Retrieve dist abstract:
   > !cpan Some::Dist
   > !cpan abstract Some::Dist
-  
+
   ## Retrieve latest version:
   > !cpan latest Some::Dist
-  
+
   ## Test summary:
   > !cpan tests Some::Dist
-  
+
   ## License info:
   > !cpan license Some::Dist
-  
+
   ## Download link:
   > !cpan dist Some::Dist
 
@@ -313,17 +330,17 @@ Bot::Cobalt::Plugin::Extras::CPAN - Query MetaCPAN API from IRC
 
 =head1 DESCRIPTION
 
-A L<Bot::Cobalt> plugin providing an IRC interface to the 
+A L<Bot::Cobalt> plugin providing an IRC interface to the
 L<http://www.metacpan.org> API.
 
-Retrieves CPAN distribution information; can also retrieve 
-L<Module::CoreList> data specifying when/if a distribution was included 
+Retrieves CPAN distribution information; can also retrieve
+L<Module::CoreList> data specifying when/if a distribution was included
 in Perl core.
 
 =head1 SEE ALSO
 
-As of this writing, the authoritative reference for the MetaCPAN API 
-appears to be available at 
+As of this writing, the authoritative reference for the MetaCPAN API
+appears to be available at
 L<https://github.com/CPAN-API/cpan-api/wiki/Beta-API-docs>
 
 =head1 TODO
