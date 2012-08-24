@@ -85,8 +85,8 @@ sub rplprintf {
   ##   'user' => $username,
   ##   'err'  => $error,
 
-  my %vars;  
-  
+  my %vars;
+
   if (@_ > 1) {
     my %args = @_;
     %vars = ( %default_fmt_vars, %args );
@@ -122,7 +122,7 @@ sub glob_grep ($;@) {
   my @array = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_ ;
 
   my $re = glob_to_re($glob);
-  
+
   grep { m/$re/ } @array
 }
 
@@ -132,7 +132,7 @@ sub glob_to_re ($) {
     unless defined $glob;
 
   my $re = glob_to_re_str($glob);
-  
+
   qr/$re/
 }
 
@@ -151,54 +151,59 @@ sub glob_to_re_str ($) {
   my($re, $in_esc);
   my ($first, $pos) = (1, 0);
   my @chars = split '', $glob;
-  for (@chars) {
+  for my $ch (@chars) {
     ++$pos;
     my $last = 1 if $pos == @chars;
 
     ## Leading ^ (start) is OK:
     if ($first) {
-      if ($_ eq '^') {
+      if ($ch eq '^') {
         $re .= '^' ;
         next
       }
       $first = 0;
     ## So is trailing $ (end):
     } elsif ($last) {
-      if ($_ eq '$') {
+      if ($ch eq '$') {
         $re .= '$' ;
         last
       }
     }
 
     ## Escape metas:
-    when ([qw! . ( ) . | ^ $ @ % { } !]) {
-      $re .= "\\$_" ;
+    if (grep { $_ eq $ch } qw/ . ( ) . | ^ $ @ % { } /) {
+      $re .= "\\$ch" ;
       $in_esc = 0;
+      next
     }
 
     ## Handle * ? + wildcards:
-    when ('*') {
+    if ($ch eq '*') {
       $re .= $in_esc ? '\*' : '.*' ;
       $in_esc = 0;
+      next
     }
-    when ('?') {
+    if ($ch eq '?') {
       $re .= $in_esc ? '\?' : '.' ;
       $in_esc = 0;
+      next
     }
-    when ('+') {
+    if ($ch eq '+') {
       $re .= $in_esc ? '\+' : '\s' ;
       $in_esc = 0;
+      next
     }
 
     ## Switch on/off escaping:
-    when ("\\") {
+    if ($ch eq "\\") {
       if ($in_esc) {
         $re .= "\\\\";
         $in_esc = 0;
       } else { $in_esc = 1; }
+      next
     }
 
-    $re .= $_;
+    $re .= $ch;
     $in_esc = 0;
   }
 
@@ -211,7 +216,7 @@ sub color ($;$) {
   ## color($format, $str)
   ## implements mirc formatting codes, against my better judgement
   ## if format is unspecified, returns NORMAL
-  
+
   ## interpolate bold, reset to NORMAL after:
   ## $str = color('bold') . "Text" . color;
   ##  -or-
@@ -222,7 +227,7 @@ sub color ($;$) {
   $format = uc($format||'normal');
 
   my $selected = $COLORS{$format};
-  
+
   carp "Invalid COLOR $format passed to color()"
     unless $selected;
 
@@ -235,12 +240,12 @@ sub color ($;$) {
 sub timestr_to_secs ($) {
   ## turn something like 2h3m30s into seconds
   my ($timestr) = @_;
-  
+
   unless ($timestr) {
     carp "timestr_to_secs() received a false value";
     return 0
   }
-  
+
   ## maybe just seconds:
   return $timestr if $timestr =~ /^[0-9]+$/;
 
@@ -253,17 +258,17 @@ sub timestr_to_secs ($) {
         $secs += $ti * 86400;
         last UNIT
       }
-      
+
       if ($unit eq 'h') {
         $secs += $ti * 3600;
         last UNIT
       }
-      
+
       if ($unit eq 'm') {
         $secs += $ti * 60;
         last UNIT
       }
-      
+
       $secs += $ti;
     }
   }
@@ -290,12 +295,12 @@ sub secs_to_timestr ($) {
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
 
   my $str;
-  $str .= $days  .'d' if $days;  
+  $str .= $days  .'d' if $days;
   $str .= $hours .'h' if $hours;
-  $str .= $mins  .'m' if $mins;  
+  $str .= $mins  .'m' if $mins;
   $str .= $sec   .'s' if $sec;
 
-  $str  
+  $str
 }
 
 sub secs_to_str ($) {
@@ -304,7 +309,7 @@ sub secs_to_str ($) {
   return unless defined $diff;
 
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
-  
+
   return sprintf("%d days, %2.2d:%2.2d:%2.2d",
     $days, $hours, $mins, $sec
   );
