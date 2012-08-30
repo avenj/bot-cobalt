@@ -8,7 +8,7 @@ use warnings;
 use File::Spec;
 
 ## Default rcfile location.
-my $rcfile = $ENV{HOME} ? 
+my $rcfile = $ENV{HOME} ?
   File::Spec->catfile( $ENV{HOME}, ".cobalt2rc" )
   : ".cobalt2rc" ;
 
@@ -40,7 +40,7 @@ GetOptions(
   ## Informational
   version => sub {
     require Bot::Cobalt;
-    print("cobalt $Bot::Cobalt::VERSION\n"); 
+    print("cobalt $Bot::Cobalt::VERSION\n");
     exit 0
   },
 
@@ -153,17 +153,17 @@ sub _start_cobalt {
 
   require Bot::Cobalt::Conf;
   require Bot::Cobalt::Core;
-  
+
   ## FIXME could take paths to specific confs now
   my $cfg = Bot::Cobalt::Conf->new(
     etc   => $etcdir,
     debug => $opt_debug,
   );
-  
+
   Bot::Cobalt::Core->instance(
     cfg => $cfg,
     var => $vardir,
-    loglevel => $loglevel, 
+    loglevel => $loglevel,
     debug    => $opt_debug,
     detached => $opt_detach,
   )->init;
@@ -229,7 +229,7 @@ cobalt2 - Bot::Cobalt IRC bot frontend
 
   # Start in the foreground in debug mode
   cobalt2 --debug --nodetach
-  
+
   # Higher debug verbosity modes:
   cobalt2 --debug=2
 
@@ -241,8 +241,8 @@ cobalt2 - Bot::Cobalt IRC bot frontend
 
 =head1 DESCRIPTION
 
-L<Bot::Cobalt> is a pluggable IRC bot framework coupled with a core set 
-of plugins vaguely replicating classic B<darkbot> and B<cobalt1> 
+L<Bot::Cobalt> is a pluggable IRC bot framework coupled with a core set
+of plugins vaguely replicating classic B<darkbot> and B<cobalt1>
 behavior (and a great deal more).
 
 This is the core frontend; it uses C<.cobalt2rc> files to find the 

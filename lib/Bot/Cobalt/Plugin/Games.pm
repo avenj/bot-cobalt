@@ -40,7 +40,7 @@ sub _handle_auto {
   ## Handler for autoviv'd methods. See _load_games
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
- 
+
   my $context = $msg->context;
 
   my $cmd = $msg->cmd;
@@ -50,10 +50,10 @@ sub _handle_auto {
 
   my $game = $self->{Dispatch}->{$cmd};
   my $obj  = $self->{Objects}->{$game};
-  
+
   my $msgarr = $msg->message_array;
   my $str = join ' ', @$msgarr;
-  
+
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
 
@@ -68,7 +68,7 @@ sub _handle_auto {
 
 sub _load_games {
   my ($self) = @_;
-  
+
   my $pcfg  = core->get_plugin_cfg( $self );
   my $games = $pcfg->{Games} // {};
 
@@ -106,11 +106,11 @@ sub _load_games {
             my $this_self = shift;
             $this_self->_handle_auto(@_)
       };
-      
+
       { no strict 'refs';
           *{__PACKAGE__.'::Bot_public_cmd_'.$cmd} = $handler;
       }
-      
+
       register( $self, 'SERVER',
         [ 'public_cmd_'.$cmd ],
       );
@@ -142,17 +142,17 @@ Bot::Cobalt::Plugin::Games - Some silly IRC games
 
 =head1 DESCRIPTION
 
-B<Games.pm> interfaces a handful of silly games, mapped to commands 
+B<Games.pm> interfaces a handful of silly games, mapped to commands
 in a configuration file (usually C<etc/plugins/games.conf>).
 
 =head1 WRITING GAMES
 
-On the backend, commands specified in our config are mapped to 
+On the backend, commands specified in our config are mapped to
 modules that are automatically loaded when this plugin is.
 
-When the specified command is handled, the game module's B<execute> 
-method is called and passed the original message hash (as specified 
-in L<Bot::Cobalt::IRC/Bot_public_msg>) and the stripped string without 
+When the specified command is handled, the game module's B<execute>
+method is called and passed the original message hash (as specified
+in L<Bot::Cobalt::IRC/Bot_public_msg>) and the stripped string without
 the command:
 
   use Bot::Cobalt;
@@ -160,12 +160,12 @@ the command:
     my ($self, $msg, $str) = @_;
 
     my $src_nick = $msg->src_nick;
-    
-    . . . 
+
+    . . .
 
     ## We can return a response to the channel:
     return $some_response;
-    
+
     ## ...or send a message and return nothing:
     broadcast( 'message',
       $msg->context,
