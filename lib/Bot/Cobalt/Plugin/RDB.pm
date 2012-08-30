@@ -927,18 +927,29 @@ sub Bot_rdb_broadcast {
       $chcfg->{ lc_irc($_, $casemap) }->{rdb_randstuffs} // 1
     } @channels;
 
-    my $maxtargets = $c_obj->maxtargets;
+    if ($evtype eq 'message') {
+      my $maxtargets = $c_obj->maxtargets;
+      while (my @targets = splice @channels, 0, $maxtargets) {
+        my $tcount = @targets;
+        my $targetstr = join ',', @targets;
 
-    while (my @targets = splice @channels, 0, $maxtargets) {
-      my $tcount = @targets;
-      my $targetstr = join ',', @targets;
+        logger->debug(
+          "rdb_broadcast (MSG) to $tcount targets (max $maxtargets)",
+          "($context -> $targetstr)"
+        );
 
-      logger->debug(
-        "rdb_broadcast ($evtype) to $tcount targets (max $maxtargets)",
-        "($context -> $targetstr)"
-      );
-
-      broadcast $evtype, $context, $targetstr, $random;
+        broadcast($evtype, $context, $targetstr, $random);
+      }
+    } else {
+      ## FIXME
+      ##  Seeing incorrect output when directing ACTION to multiple
+      ##  channels; TESTME
+      for my $targetstr (@channels) {
+        logger->debug(
+          "rdb_broadcast (ACTION) to $targetstr",
+        );
+        broadcast($evtype, $context, $targetstr, $random)
+      }
     }
 
   } # SERVER
