@@ -1,5 +1,5 @@
-use Test::More tests => 36;
-use strict; use warnings;
+use Test::More tests => 37;
+use strict; use warnings FATAL => 'all';
 
 use 5.10.1;
 use Fcntl qw/ :flock /;
@@ -19,8 +19,14 @@ can_ok( $db, 'dbopen', 'dbclose', 'put', 'get', 'dbkeys' );
 
 ok( $db->dbopen, 'Temp database open' );
 
-diag("This should produce a warning:");
-ok( !$db->dbopen, 'Cannot reopen' );
+#diag("This should produce a warning:");
+{
+  local *STDERR;
+  my $myerr;
+  open *STDERR, '+<', \$myerr;
+  ok( !$db->dbopen, 'Cannot reopen' );
+  ok( $myerr, "Got no-reopen warning" );
+}
 
 is( $db->File, $path, 'Temp database File');
 
