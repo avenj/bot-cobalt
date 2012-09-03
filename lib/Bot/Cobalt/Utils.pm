@@ -106,7 +106,8 @@ sub rplprintf {
 
   my $regex = qr/(%([^\s%]+)%?)/;
 
-  $string =~ s/$regex/$repl->($1, $2, \%vars)/ge;
+  my $ref = \%vars;
+  $string =~ s/$regex/$repl->($1, $2, $ref)/ge;
 
   $string
 }
