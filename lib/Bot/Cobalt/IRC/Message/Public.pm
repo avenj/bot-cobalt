@@ -12,7 +12,7 @@ use Scalar::Util qw/blessed/;
 
 extends 'Bot::Cobalt::IRC::Message';
 
-has 'cmd' => ( 
+has 'cmd' => (
   lazy => 1,
   is  => 'rw',
   isa => Any,
@@ -21,38 +21,38 @@ has 'cmd' => (
   builder   => '_build_cmd',
 );
 
-has 'highlight' => ( 
+has 'highlight' => (
   lazy => 1,
-  is  => 'rw', 
-  isa => Bool, 
+  is  => 'rw',
+  isa => Bool,
 
   predicate => 'has_highlight',
   builder   => '_build_highlight',
 );
 
-has 'myself' => ( 
+has 'myself' => (
   lazy => 1,
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
   default => sub {
     my ($self) = @_;
-    
+
     require Bot::Cobalt::Core;
     return '' unless Bot::Cobalt::Core->has_instance;
-    
-    my $irc = irc_object( $self->context ) || return '';  
+
+    my $irc = irc_object( $self->context ) || return '';
     blessed $irc ? $irc->nick_name : '';
   },
 );
 
 after 'message' => sub {
   my ($self, $value) = @_;
-  
+
   if ($self->has_highlight) {
     $self->highlight( $self->_build_highlight );
   }
-  
+
   if ($self->has_cmd) {
     $self->cmd( $self->_build_cmd );
   }
@@ -69,7 +69,7 @@ sub _build_cmd {
   my ($self) = @_;
 
   my $cmdchar;
-  
+
   require Bot::Cobalt::Core;
   if ( Bot::Cobalt::Core->has_instance ) {
     my $cf_core = core->get_core_cfg;
@@ -77,7 +77,7 @@ sub _build_cmd {
   } else {
     $cmdchar = '!';
   }
-  
+
   my $txt = $self->stripped;
 
   if ($txt =~ /^${cmdchar}([^\s]+)/) {
@@ -105,42 +105,42 @@ Bot::Cobalt::IRC::Message::Public - Public message subclass
   sub Bot_public_msg {
     my ($self, $core) = splice @_, 0, 2;
     my $msg = ${ $_[0] };
-    
+
     if ($msg->highlight) {
-      . . . 
+      . . .
     }
   }
 
 =head1 DESCRIPTION
 
-This is a subclass of L<Bot::Cobalt::IRC::Message> -- most methods are 
+This is a subclass of L<Bot::Cobalt::IRC::Message> -- most methods are
 documented there.
 
-When an incoming message is a public (channel) message, the provided 
+When an incoming message is a public (channel) message, the provided
 C<$msg> object has the following extra methods available:
 
 =head2 myself
 
-The 'myself' attribute can be tweaked to change how L</highlight> 
-behaves. By default it will query the L<Bot::Cobalt::Core> instance for 
+The 'myself' attribute can be tweaked to change how L</highlight>
+behaves. By default it will query the L<Bot::Cobalt::Core> instance for
 an IRC object that can return the bot's current nickname.
 
 =head2 highlight
 
-If the bot appears to have been highlighted (ie, the message is prefixed 
+If the bot appears to have been highlighted (ie, the message is prefixed
 with L</myself>), this method will return boolean true.
 
 Used to see if someone is "talking to" the bot.
 
 =head2 cmd
 
-If the message appears to actually be a command and some arguments, 
-B<cmd> will return the specified command and automatically shift 
-the B<message_array> leftwards to drop the command from 
-B<message_array>. 
+If the message appears to actually be a command and some arguments,
+B<cmd> will return the specified command and automatically shift
+the B<message_array> leftwards to drop the command from
+B<message_array>.
 
-Normally this isn't used directly by plugins other 
-than L<Cobalt::IRC>; a Message object handed off by a Bot_public_cmd_* 
+Normally this isn't used directly by plugins other
+than L<Cobalt::IRC>; a Message object handed off by a Bot_public_cmd_*
 event has this done for you already, for example.
 
 =head1 AUTHOR

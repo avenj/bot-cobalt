@@ -10,26 +10,26 @@ use IRC::Utils qw/eq_irc/;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'old_nick' => ( 
+has 'old_nick' => (
   lazy => 1,
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
   predicate => 'has_old_nick',
 
-  default   => sub { $_[0]->src_nick }, 
+  default   => sub { $_[0]->src_nick },
 );
 
-has 'new_nick' => ( 
+has 'new_nick' => (
   required => 1,
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 );
 
-has 'channels' => ( 
+has 'channels' => (
   required => 1,
-  is  => 'rw', 
-  isa => ArrayRef, 
+  is  => 'rw',
+  isa => ArrayRef,
 
   trigger  => sub {
     my ($self, $value) = @_;
@@ -37,7 +37,7 @@ has 'channels' => (
   },
 );
 ## ...just to remain compat with ::Quit:
-has 'common'   => ( 
+has 'common'   => (
   is => 'ro',
   lazy => 1,
 
@@ -58,7 +58,7 @@ after 'src' => sub {
 
 sub equal {
   my ($self) = @_;
-  
+
   my $casemap;
   require Bot::Cobalt::Core;
   if (Bot::Cobalt::Core->has_instance) {
@@ -83,11 +83,11 @@ Bot::Cobalt::IRC::Event::Nick - IRC Event subclass for nick changes
 
   my $old = $nchg_ev->old_nick;
   my $new = $nchg_ev->new_nick;
-  
+
   if ( $nchg_ev->equal ) {
     ## Case change only
   }
-  
+
   my $common_chans = $nchg_ev->channels;
 
 =head1 DESCRIPTION
@@ -104,13 +104,13 @@ Returns the previous nickname, prior to the nick change.
 
 =head2 channels
 
-Returns an arrayref containing the list of channels we share with the 
+Returns an arrayref containing the list of channels we share with the
 user that changed nicks (at the time of the nickname change).
 
 =head2 equal
 
-Returns a boolean value indicating whether or not this was simply a 
-case change (as determined via the server's announced casemapping and 
+Returns a boolean value indicating whether or not this was simply a
+case change (as determined via the server's announced casemapping and
 L<IRC::Utils/eq_irc>)
 
 =head1 AUTHOR

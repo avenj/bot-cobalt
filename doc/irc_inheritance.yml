@@ -164,7 +164,9 @@ classes:
     properties:
       - channel
 
-    subclasses: []
+    subclasses:
+      - Bot::Cobalt::IRC::Event::Kick
+      - Bot::Cobalt::IRC::Event::Topic
 
   -
     methods: []

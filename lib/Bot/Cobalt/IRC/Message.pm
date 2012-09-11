@@ -11,18 +11,18 @@ use Bot::Cobalt::Common;
 
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'message' => ( 
+has 'message' => (
   required => 1,
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 
   trigger => sub {
     my ($self, $value) = @_;
 
-    $self->_set_stripped( 
-      strip_color( strip_formatting($value) ) 
+    $self->_set_stripped(
+      strip_color( strip_formatting($value) )
     ) if $self->has_stripped;
-    
+
     if ($self->has_message_array) {
       $self->message_array([ split ' ', $self->stripped ]);
     }
@@ -31,21 +31,21 @@ has 'message' => (
 
 has 'targets' => (
   required => 1,
-  is  => 'rw', 
-  isa => ArrayRef, 
+  is  => 'rw',
+  isa => ArrayRef,
 
   trigger => sub {
     my ($self, $value) = @_;
 
     $self->_set_target($value->[0])
       if $self->has_target;
-  } 
+  }
 );
 
 has 'target'  => (
   lazy => 1,
   is  => 'rwp',
-  isa => Str, 
+  isa => Str,
 
   predicate => 'has_target',
 
@@ -55,7 +55,7 @@ has 'target'  => (
 ## May or may not have a channel.
 has 'channel' => (
   lazy => 1,
-  is  => 'rw', 
+  is  => 'rw',
   isa => Str,
 
   default => sub {
@@ -66,8 +66,8 @@ has 'channel' => (
 ## Message content.
 has 'stripped' => (
   lazy => 1,
-  is  => 'rwp', 
-  isa => Str, 
+  is  => 'rwp',
+  isa => Str,
 
   predicate => 'has_stripped',
 
@@ -77,8 +77,8 @@ has 'stripped' => (
 );
 
 has 'message_array' => (
-  lazy => 1, 
-  is  => 'rw', 
+  lazy => 1,
+  is  => 'rw',
   isa => ArrayRef,
 
   predicate => 'has_message_array',
@@ -95,9 +95,9 @@ has 'message_array' => (
   },
 );
 
-has 'message_array_sp' => ( 
-  lazy => 1, 
-  is  => 'rwp', 
+has 'message_array_sp' => (
+  lazy => 1,
+  is  => 'rwp',
   isa => ArrayRef,
 
   predicate => 'has_message_array_sp',
@@ -120,21 +120,21 @@ Bot::Cobalt::IRC::Message - An incoming IRC message
   sub Bot_private_msg {
     my ($self, $core) = splice @_, 0, 2;
     my $msg = ${ $_[0] };
-    
+
     my $context  = $msg->context;
     my $stripped = $msg->stripped;
     my $nickname = $msg->src_nick;
-    . . . 
+    . . .
   }
 
 =head1 DESCRIPTION
 
-Incoming IRC messages are broadcast to the plugin pipeline via 
-L<Bot::Cobalt::IRC>; this is the base class providing an easy object 
+Incoming IRC messages are broadcast to the plugin pipeline via
+L<Bot::Cobalt::IRC>; this is the base class providing an easy object
 interface to parsed messages.
 
-This is the most frequently used Event subclass; the methods 
-inherited from L<Bot::Cobalt::IRC::Event> are also documented 
+This is the most frequently used Event subclass; the methods
+inherited from L<Bot::Cobalt::IRC::Event> are also documented
 here for convenience.
 
 =head1 METHODS
@@ -175,7 +175,7 @@ Same as C<< $msg->targets->[0] >>
 
 =head2 channel
 
-Undefined if the destination for the message doesn't appear to be a 
+Undefined if the destination for the message doesn't appear to be a
 properly-prefixed channel; otherwise the same value as L</target>.
 
 =head2 message
@@ -192,12 +192,12 @@ An array reference containing the message string split on white space.
 
 "Extra" spaces are not preserved; see L</message_array_sp>.
 
-B<message_array> can be modified in the case of command-prefixed public 
+B<message_array> can be modified in the case of command-prefixed public
 messages; see L<Bot::Cobalt::IRC::Message::Public/cmd>.
 
 =head2 message_array_sp
 
-Similar to L</message_array>, except all spaces are preserved, including 
+Similar to L</message_array>, except all spaces are preserved, including
 leading spaces.
 
 =head1 SEE ALSO
