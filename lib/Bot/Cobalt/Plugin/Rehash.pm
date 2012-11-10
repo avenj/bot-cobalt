@@ -13,6 +13,8 @@ use Try::Tiny;
 
 use strictures 1;
 
+use namespace::clean -except => 'meta';
+
 sub new { bless [], shift }
 
 sub Cobalt_register {

@@ -23,6 +23,8 @@ use File::Spec;
 
 use POSIX ();
 
+use namespace::clean -except => 'meta';
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {

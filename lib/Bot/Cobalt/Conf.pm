@@ -17,18 +17,22 @@ use File::Spec;
 use Scalar::Util qw/blessed/;
 
 
+use namespace::clean -except => 'meta';
+
+
+
 has 'etc'   => (
   required => 1,
 
-  is  => 'rw', 
-  isa => Str, 
+  is  => 'rw',
+  isa => Str,
 );
 
 has 'debug' => (
-  is  => 'rw', 
-  isa => Bool, 
-  
-  default => sub { 0 } 
+  is  => 'rw',
+  isa => Bool,
+
+  default => sub { 0 }
 );
 
 has 'path_to_core_cf' => (
@@ -36,7 +40,7 @@ has 'path_to_core_cf' => (
 
   is  => 'rwp',
   isa => Str,
-  
+
   default => sub {
     my ($self) = @_;
 
@@ -52,10 +56,10 @@ has 'path_to_channels_cf' => (
 
   is  => 'rwp',
   isa => Str,
-  
+
   default => sub {
     my ($self) = @_;
-    
+
     File::Spec->catfile(
       $self->etc,
       'channels.conf'
@@ -68,10 +72,10 @@ has 'path_to_plugins_cf' => (
 
   is  => 'rwp',
   isa => Str,
-  
+
   default => sub {
     my ($self) = @_;
-    
+
     File::Spec->catfile(
       $self->etc,
       'plugins.conf'
@@ -82,7 +86,7 @@ has 'path_to_plugins_cf' => (
 
 has 'core' => (
   lazy => 1,
-  
+
   is  => 'ro',
 
   predicate => 'has_core',
@@ -92,7 +96,7 @@ has 'core' => (
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Core')
       or die "core() should be a Bot::Cobalt::Conf::File::Core"
   },
-  
+
   default => sub {
     my ($self) = @_;
 
@@ -105,7 +109,7 @@ has 'core' => (
 
 has 'channels' => (
   lazy => 1,
-  
+
   is  => 'ro',
 
   predicate => 'has_channels',
@@ -115,7 +119,7 @@ has 'channels' => (
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Channels')
       or die "channels() should be a Bot::Cobalt::Conf::File:Channels"
   },
-  
+
   default => sub {
     my ($self) = @_;
 
@@ -128,7 +132,7 @@ has 'channels' => (
 
 has 'plugins' => (
   lazy => 1,
-  
+
   is  => 'ro',
 
   predicate => 'has_plugins',
@@ -138,7 +142,7 @@ has 'plugins' => (
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Plugins')
       or die "plugins() should be a Bot::Cobalt::Conf::File::Plugins"
   },
-  
+
   default => sub {
     my ($self) = @_;
 
@@ -180,13 +184,13 @@ Bot::Cobalt::Conf - Bot::Cobalt configuration manager
 
   ## Bot::Cobalt::Conf::File::Channels
   $cfg->channels;
-  
+
   ## Bot::Cobalt::Conf::File::Plugins
   $cfg->plugins;
 
 =head1 DESCRIPTION
 
-A configuration manager class for L<Bot::Cobalt> -- L<Bot::Cobalt::Core> 
+A configuration manager class for L<Bot::Cobalt> -- L<Bot::Cobalt::Core>
 loads and accesses configuration objects via instances of this class.
 
 =head1 SEE ALSO

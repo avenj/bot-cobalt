@@ -30,10 +30,12 @@ use Try::Tiny;
 
 use File::Spec;
 
+use namespace::clean -except => 'meta';
+
 has 'cfg' => (
   required => 1,
 
-  is  => 'rw', 
+  is  => 'rw',
   isa => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf')
       or die "cfg() attrib should be a Bot::Cobalt::Conf"
@@ -43,7 +45,7 @@ has 'cfg' => (
 has 'var' => (
   ## path to our var/
   required => 1,
-  is  => 'ro', 
+  is  => 'ro',
   isa => Str,
 );
 
@@ -52,7 +54,7 @@ has 'etc' => (
   lazy => 1,
 
   is  => 'ro',
-  isa => Str, 
+  isa => Str,
 
   default => sub {
     my ($self) = @_;
@@ -60,10 +62,10 @@ has 'etc' => (
   },
 );
 
-has 'log'      => ( 
+has 'log'      => (
   lazy => 1,
 
-  is => 'rw', 
+  is => 'rw',
 
   isa => sub {
     unless (blessed $_[0]) {
@@ -75,18 +77,18 @@ has 'log'      => (
         unless $_[0]->can($meth);
     }
   },
-  
+
   default => sub {
     my ($self) = @_;
 
     my %opts = (
       level => $self->loglevel,
     );
-    
+
     if (my $log_format = $self->cfg->core->opts->{LogFormat}) {
       $opts{log_format} = $log_format
     }
-    
+
     if (my $log_time_fmt = $self->cfg->core->opts->{LogTimeFormat}) {
       $opts{time_format} = $log_time_fmt
     }
@@ -95,17 +97,17 @@ has 'log'      => (
   },
 );
 
-has 'loglevel' => ( 
-  is  => 'rw', 
-  isa => Str, 
+has 'loglevel' => (
+  is  => 'rw',
+  isa => Str,
 
   default => sub { 'info' },
 );
 
-has 'detached' => ( 
+has 'detached' => (
   lazy => 1,
-  is   => 'ro', 
-  isa  => Int, 
+  is   => 'ro',
+  isa  => Int,
 
   default => sub { 0 },
 );
@@ -113,23 +115,23 @@ has 'detached' => (
 has 'debug'    => (
   lazy => 1,
 
-  isa => Int, 
-  is  => 'rw', 
+  isa => Int,
+  is  => 'rw',
 
   default => sub { 0 },
 );
 
 ## version/url used for var replacement:
-has 'version' => ( 
+has 'version' => (
   lazy => 1,
 
-  is   => 'rwp', 
+  is   => 'rwp',
   isa  => Str,
 
   default => sub { $Bot::Cobalt::Core::VERSION }
 );
 
-has 'url' => ( 
+has 'url' => (
   lazy => 1,
 
   is  => 'rwp',
@@ -140,7 +142,7 @@ has 'url' => (
 
 has 'langset' => (
   lazy => 1,
-  
+
   is  => 'ro',
   isa => sub {
     die "langset() needs a Bot::Cobalt::Lang"
@@ -148,35 +150,35 @@ has 'langset' => (
   },
 
   writer  => 'set_langset',
-  
+
   default => sub {
     my ($self) = @_;
 
     my $language = $self->cfg->core->language;
-    
+
     my $lang_dir = File::Spec->catdir( $self->etc, 'langs' );
-    
+
     Bot::Cobalt::Lang->new(
       use_core => 1,
-      
+
       lang_dir => $lang_dir,
       lang     => $language,
     )
   },
 );
 
-has 'lang' => ( 
+has 'lang' => (
   lazy => 1,
 
   is  => 'ro',
   isa => HashRef,
-  
+
   writer  => 'set_lang',
-  
+
   default => sub {
     my ($self) = @_;
     $self->langset->rpls
-  }, 
+  },
 );
 
 has 'State' => (
@@ -193,10 +195,10 @@ has 'State' => (
       Counters  => {
         Sent => 0,
       },
-      
+
       # nonreloadable plugin list keyed on alias for plugin mgrs:
       NonReloadable => { },
-    } 
+    }
   },
 );
 
@@ -204,9 +206,9 @@ has 'PluginObjects' => (
   lazy => 1,
 
   ## alias -> object mapping
-  is  => 'rw',  
+  is  => 'rw',
   isa => HashRef,
-  
+
   default => sub { {} },
 );
 
@@ -221,23 +223,23 @@ has 'Provided' => (
   default => sub { {} },
 );
 
-has 'auth' => ( 
+has 'auth' => (
   lazy => 1,
 
-  is  => 'rw', 
+  is  => 'rw',
   isa => Object,
-  
+
   default => sub {
     Bot::Cobalt::Core::ContextMeta::Auth->new
   },
 );
 
-has 'ignore' => ( 
+has 'ignore' => (
   lazy => 1,
 
-  is  => 'rw', 
+  is  => 'rw',
   isa => Object,
-  
+
   default => sub {
     Bot::Cobalt::Core::ContextMeta::Ignore->new
   },
@@ -246,10 +248,10 @@ has 'ignore' => (
 ## FIXME not documented
 has 'resolver' => (
   lazy => 1,
-  
+
   is  => 'rwp',
   isa => Object,
-  
+
   default => sub {
     POE::Component::Client::DNS->spawn(
       Alias => 'core_resolver',
@@ -270,10 +272,10 @@ sub rpl  {
 
   confess "rpl() method requires a RPL tag"
     unless defined $rpl;
-  
+
   my $string = $self->lang->{$rpl}
     // return "Unknown RPL $rpl, vars: ".join(' ', @_);
-  
+
   rplprintf( $string, @_ )
 }
 
@@ -330,7 +332,7 @@ sub syndicator_started {
   $kernel->sig('HUP'  => 'sighup');
 
   $self->log->info(__PACKAGE__.' '.$self->version);
- 
+
   $self->log->info("--> Initializing plugins . . .");
 
   my $i;
@@ -348,14 +350,14 @@ sub syndicator_started {
 
     unless ( $this_plug_cf->autoload ) {
       $self->log->debug("Skipping $plugin - NoAutoLoad is true");
-    
+
       next PLUGIN
     }
-    
+
     my $obj;
     try {
       $obj = Bot::Cobalt::Core::Loader->load($module);
-      
+
       unless ( Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
         $self->State->{NonReloadable}->{$plugin} = 1;
         $self->log->debug("$plugin marked non-reloadable");
@@ -373,7 +375,7 @@ sub syndicator_started {
       $self->log->error("plugin_add failure for $plugin");
 
       delete $self->PluginObjects->{$obj};
-            
+
       Bot::Cobalt::Core::Loader->unload($module);
 
       next PLUGIN
@@ -395,7 +397,7 @@ sub syndicator_started {
 sub sighup {
   my $self = $_[OBJECT];
   $self->log->warn("SIGHUP received");
-  
+
   if ($self->detached) {
     ## Caught by Plugin::Rehash if present
     ## Not documented because you should be using the IRC interface
@@ -436,9 +438,9 @@ sub syndicator_stopped {
 
 sub ev_plugin_error {
   my ($kernel, $self, $err) = @_[KERNEL, OBJECT, ARG0];
-  
+
   ## Receives the same error as 'debug => 1' (in Syndicator init)
-  
+
   $self->log->error("Plugin err: $err");
 
   ## Bot_plugin_error
@@ -453,7 +455,7 @@ sub core_timer_check_pool {
   ## Timers are provided by Core::Role::Timers
 
   my $timerpool = $self->TimerPool;
-  
+
   TIMER: for my $id (keys %$timerpool) {
     my $timer = $timerpool->{$id};
 
@@ -463,7 +465,7 @@ sub core_timer_check_pool {
       delete $timerpool->{$id};
       next TIMER
     }
-    
+
     if ( $timer->execute_if_ready ) {
       my $event = $timer->event;
 
@@ -473,9 +475,9 @@ sub core_timer_check_pool {
       $self->send_event( 'executed_timer', $id );
       $self->timer_del($id);
     }
-  
+
   } ## TIMER
-  
+
   ## most definitely not a high-precision timer.
   ## checked every second or so
   $kernel->alarm('core_timer_check_pool' => time + 1);
@@ -492,11 +494,11 @@ Bot::Cobalt::Core - Bot::Cobalt core and event syndicator
 
 =head1 DESCRIPTION
 
-This module is the core of L<Bot::Cobalt>, tying an event syndicator 
-(via L<POE::Component::Syndicator> and L<Object::Pluggable>) into a 
+This module is the core of L<Bot::Cobalt>, tying an event syndicator
+(via L<POE::Component::Syndicator> and L<Object::Pluggable>) into a
 logger instance, configuration manager, and other useful tools.
 
-Core is a singleton; within a running Cobalt instance, you can always 
+Core is a singleton; within a running Cobalt instance, you can always
 retrieve the Core via the B<instance> method:
 
   require Bot::Cobalt::Core;
@@ -505,10 +507,10 @@ retrieve the Core via the B<instance> method:
 You can also query to find out if Core has been properly instanced:
 
   if ( Bot::Cobalt::Core->has_instance ) {
-  
+
   }
 
-If you 'use Bot::Cobalt;' you can also access the Core singleton 
+If you 'use Bot::Cobalt;' you can also access the Core singleton
 instance via the C<core()> exported sugar:
 
   use Bot::Cobalt;
@@ -516,7 +518,7 @@ instance via the C<core()> exported sugar:
 
 See L<Bot::Cobalt::Core::Sugar> for details.
 
-Public methods are documented in L<Bot::Cobalt::Manual::Plugins/"Core 
+Public methods are documented in L<Bot::Cobalt::Manual::Plugins/"Core
 methods"> and the classes & roles listed below.
 
 See also:
@@ -547,8 +549,8 @@ L<Bot::Cobalt::Core::Role::Timers>
 
 =head1 Custom frontends
 
-It's trivially possible to write custom frontends to spawn a Cobalt 
-instance; Bot::Cobalt::Core just needs to be initialized with a valid 
+It's trivially possible to write custom frontends to spawn a Cobalt
+instance; Bot::Cobalt::Core just needs to be initialized with a valid
 configuration object and spawned via L<POE::Kernel>'s run() method.
 
 A configuration object is an instanced L<Bot::Cobalt::Conf>:
@@ -564,13 +566,13 @@ A configuration object is an instanced L<Bot::Cobalt::Conf>:
   Bot::Cobalt::Core->instance(
     cfg => $conf_obj,
     var => $path_to_var_dir,
-    
+
     ## See perldoc Bot::Cobalt::Logger regarding log levels:
     loglevel => $loglevel,
-    
+
     ## Debug levels:
     debug => $debug,
-    
+
     ## Indicate whether or not we're a daemon
     ## (Changes behavior of logging and signals)
     detached => $detached,

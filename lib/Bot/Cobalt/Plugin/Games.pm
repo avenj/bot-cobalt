@@ -10,6 +10,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Bot::Cobalt::Core::Loader;
 
+use namespace::clean -except => 'meta';
+
 sub new { bless {}, shift }
 
 sub Cobalt_register {

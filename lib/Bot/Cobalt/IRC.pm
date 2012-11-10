@@ -34,6 +34,10 @@ use POE qw/
 ## Bot::Cobalt::Common pulls the rest of these:
 use IRC::Utils qw/ parse_mode_line /;
 
+
+use namespace::clean -except => 'meta';
+
+
 has 'NON_RELOADABLE' => (
   isa => Bool,
   ## Well, really, it's sort-of unloadable.

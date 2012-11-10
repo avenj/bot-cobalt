@@ -20,6 +20,8 @@ use Try::Tiny;
 
 use POSIX ();
 
+use namespace::clean -except => 'meta';
+
 sub new {
   bless {
 
@@ -904,7 +906,7 @@ sub Bot_rdb_broadcast {
     next SERVER unless $c_obj->connected;
 
     my $irc   = $core->get_irc_obj($context) || next SERVER;
-    my $chcfg = $core->get_channels_cfg($context);
+    my $chcfg = $core->get_channels_cfg($context) || next SERVER;
 
     logger->debug("rdb_broadcast to $context");
 

@@ -17,10 +17,10 @@ use Carp;
 
 use Bot::Cobalt::Utils qw/ :ALL /;
 
-use IRC::Utils qw/ 
+use IRC::Utils qw/
   decode_irc
 
-  lc_irc eq_irc uc_irc 
+  lc_irc eq_irc uc_irc
 
   normalize_mask matches_mask
 
@@ -31,9 +31,9 @@ use IRC::Utils qw/
   is_valid_nick_name is_valid_chan_name
 /;
 
-use Object::Pluggable::Constants qw/ 
-  PLUGIN_EAT_NONE 
-  PLUGIN_EAT_ALL 
+use Object::Pluggable::Constants qw/
+  PLUGIN_EAT_NONE
+  PLUGIN_EAT_ALL
 /;
 
 use MooX::Types::MooseLike::Base qw/:all/;
@@ -41,17 +41,17 @@ use MooX::Types::MooseLike::Base qw/:all/;
 our %EXPORT_TAGS = (
 
   string => [ qw/
-  
+
     rplprintf color
 
     glob_to_re glob_to_re_str glob_grep
-    
+
     lc_irc eq_irc uc_irc
     decode_irc
-    
+
     strip_color
     strip_formatting
-    
+
   / ],
 
   errors => [ qw/
@@ -61,44 +61,44 @@ our %EXPORT_TAGS = (
     croak
 
   / ],
-  
+
   passwd => [ qw/
 
     mkpasswd passwdcmp
 
   / ],
-  
+
   time   => [ qw/
-    
+
     timestr_to_secs
-    secs_to_timestr 
+    secs_to_timestr
     secs_to_str
 
   / ],
 
   validate => [ qw/
-    
+
     is_valid_nick_name
     is_valid_chan_name
 
   / ],
 
   host   => [ qw/
-    
+
     parse_user
     normalize_mask matches_mask
-  
+
   / ],
 
   constant => [ qw/
-    
+
     PLUGIN_EAT_NONE PLUGIN_EAT_ALL
-    
+
   / ],
-  
+
   types => [
     qw/
-    
+
     Any Defined Undef Bool
     Value Ref Str Num Int
     ArrayRef HashRef CodeRef RegexpRef GlobRef
@@ -114,13 +114,13 @@ our @EXPORT;
 {
   my %seen;
   push @EXPORT,
-    grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} for keys %EXPORT_TAGS; 
+    grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} for keys %EXPORT_TAGS;
 }
 
 sub import {
   strictures->import;
   feature->import( ':5.10' );
-  __PACKAGE__->export_to_level(1, @_);  
+  __PACKAGE__->export_to_level(1, @_);
 }
 
 1;
@@ -142,10 +142,10 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
 
 =head1 DESCRIPTION
 
-This is a small exporter module providing easy inclusion of commonly 
+This is a small exporter module providing easy inclusion of commonly
 used tools and constants to make life easier on plugin authors.
 
-L<strictures> is also enabled. This will turn on 'strict' and make all 
+L<strictures> is also enabled. This will turn on 'strict' and make all
 warnings fatal.
 
 =head2 Exported
@@ -183,7 +183,7 @@ See L<IRC::Utils> for details.
 =head4 Hostmasks
 
   parse_user
-  normalize_mask 
+  normalize_mask
   matches_mask
 
 =head4 Nicknames and channels
@@ -203,7 +203,7 @@ See L<Bot::Cobalt::Utils> for details.
 =head4 Globs and matching
 
   glob_to_re
-  glob_to_re_str 
+  glob_to_re_str
   glob_grep
 
 =head4 Passwords
@@ -237,7 +237,7 @@ You can load groups of commands by importing named tags:
 
 =head3 constant
 
-Exports PLUGIN_EAT_NONE, PLUGIN_EAT_ALL constants from 
+Exports PLUGIN_EAT_NONE, PLUGIN_EAT_ALL constants from
 L<Object::Pluggable>.
 
 =head3 errors
@@ -254,15 +254,15 @@ Exports mkpasswd and passwdcmp from L<App::bmkpasswd>.
 
 =head3 string
 
-Exports from L<Bot::Cobalt::Utils>: color, rplprintf, glob_to_re, 
+Exports from L<Bot::Cobalt::Utils>: color, rplprintf, glob_to_re,
 glob_to_re_str, glob_grep
 
-Exports from L<IRC::Utils>: lc_irc, eq_irc, uc_irc, decode_irc, 
+Exports from L<IRC::Utils>: lc_irc, eq_irc, uc_irc, decode_irc,
 strip_color, strip_formatting
 
 =head3 time
 
-Exports timestr_to_secs, secs_to_timestr, and secs_to_str from 
+Exports timestr_to_secs, secs_to_timestr, and secs_to_str from
 L<Bot::Cobalt::Utils>.
 
 =head3 types
@@ -271,7 +271,7 @@ Exports the L<Moo> types from L<MooX::Types::MooseLike::Base>.
 
 =head3 validate
 
-Exports is_valid_nick_name and is_valid_chan_name from L<IRC::Utils>. 
+Exports is_valid_nick_name and is_valid_chan_name from L<IRC::Utils>.
 
 =head1 AUTHOR
 

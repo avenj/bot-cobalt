@@ -13,6 +13,10 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Bot::Cobalt::Logger::Output;
 
+
+use namespace::clean -except => 'meta';
+
+
 has 'level' => (
   required => 1,
 

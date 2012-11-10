@@ -4,12 +4,17 @@ our $VERSION = '0.014';
 use 5.12.1;
 use strictures 1;
 
+use Devel::StackTrace;
+
+use namespace::clean -except => 'meta';
+
+## Always 'use overload' *after* a namespace::clean
+
 use overload
   bool     => sub { 1 },
-  '""'     => sub { shift->string },
+  '""'     => 'string',
   fallback => 1 ;
 
-use Devel::StackTrace;
 
 sub TRACE () { 0 }
 sub ARRAY () { 1 }

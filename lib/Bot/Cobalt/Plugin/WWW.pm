@@ -12,6 +12,8 @@ use POE qw/
   Component::Client::Keepalive
 /;
 
+use namespace::clean -except => 'meta';
+
 sub opts {
   my $opts = core->get_plugin_cfg($_[0])->{Opts};
   return {} unless $opts and ref $opts eq 'HASH';

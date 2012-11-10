@@ -17,6 +17,10 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Time::HiRes qw/sleep/;
 
+
+use namespace::clean -except => 'meta';
+
+
 has 'Format' => (
   is  => 'rw',
   isa => Str,

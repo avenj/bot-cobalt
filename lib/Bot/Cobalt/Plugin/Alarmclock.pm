@@ -11,6 +11,8 @@ use Bot::Cobalt::Utils qw/ timestr_to_secs /;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 
+use namespace::clean -except => 'meta';
+
 ## Commands:
 ##  !alarmclock
 
@@ -22,7 +24,7 @@ sub Cobalt_register {
   ## {Active}->{$timerid} = [ $context, $username ]
   $self->{Active} = {};
 
-  register($self, 'SERVER', 
+  register($self, 'SERVER',
     'public_cmd_alarmclock',
     'public_cmd_alarmdelete',
     'public_cmd_alarmdel',
@@ -52,9 +54,9 @@ sub Bot_executed_timer {
 
   return PLUGIN_EAT_NONE
     unless exists $self->{Active}->{$timerid};
-  
+
   logger->debug("clearing timer state for $timerid")
-    if core()->debug > 1;  
+    if core()->debug > 1;
 
   delete $self->{Active}->{$timerid};
 
@@ -69,30 +71,30 @@ sub Bot_public_cmd_alarmdel {
 
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
-  
+
   my $auth_usr = core()->auth->username($context, $nick);
   return PLUGIN_EAT_NONE unless $auth_usr;
 
   my $timerid = $msg->message_array->[0];
   return PLUGIN_EAT_ALL unless $timerid;
-  
+
   my $channel = $msg->channel;
-  
+
   unless (exists $self->{Active}->{$timerid}) {
     broadcast( 'message', $context, $channel,
       core->rpl( q{ALARMCLOCK_NOSUCH},
-        nick    => $nick, 
+        nick    => $nick,
         timerid => $timerid,
       )
     );
 
     return PLUGIN_EAT_ALL
   }
-  
+
   my $thistimer = $self->{Active}->{$timerid};
 
   my ($ctxt_set, $ctxt_by) = @$thistimer;
-  
+
   ## ... did this user set this timer?
   unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
     my $auth_lev = core()->auth->level($context, $nick);
@@ -101,7 +103,7 @@ sub Bot_public_cmd_alarmdel {
     unless ($auth_lev == 9999) {
       broadcast( 'message', $context, $channel,
         core->rpl( q{ALARMCLOCK_NOTYOURS},
-          nick    => $nick, 
+          nick    => $nick,
           timerid => $timerid,
         )
       );
@@ -109,13 +111,13 @@ sub Bot_public_cmd_alarmdel {
       return PLUGIN_EAT_ALL
     }
   }
-  
+
   core()->timer_del($timerid);
   delete $self->{Active}->{$timerid};
-  
+
   broadcast( 'message', $context, $channel,
     core->rpl( q{ALARMCLOCK_DELETED},
-      nick    => $nick, 
+      nick    => $nick,
       timerid => $timerid,
     )
   );
@@ -127,7 +129,7 @@ sub Bot_public_cmd_alarmdel {
 sub Bot_public_cmd_alarmclock {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
-  
+
   my $context = $msg->context;
   my $setter  = $msg->src_nick;
 
@@ -136,7 +138,7 @@ sub Bot_public_cmd_alarmclock {
   my $minlevel = $cfg->{LevelRequired} // 1;
 
   ## quietly do nothing for unauthorized users
-  return PLUGIN_EAT_NONE 
+  return PLUGIN_EAT_NONE
     unless core()->auth->level($context, $setter) >= $minlevel;
 
   my $auth_usr = core()->auth->username($context, $setter);
@@ -147,7 +149,7 @@ sub Bot_public_cmd_alarmclock {
   my $timestr = shift @$args;
   ## the rest of this string is the alarm text:
   my $txtstr  = join ' ', @$args;
-  
+
   $txtstr = "$setter: ALARMCLOCK: ".$txtstr ;
 
   ## set a timer
@@ -200,10 +202,10 @@ Bot::Cobalt::Plugin::Alarmclock - Timed IRC highlights
 
 =head1 DESCRIPTION
 
-This plugin allows authorized users to set a time via either a time string 
+This plugin allows authorized users to set a time via either a time string
 (see L<Bot::Cobalt::Utils/"timestr_to_secs">) or a specified number of seconds.
 
-When the timer expires, the bot will highlight the user's nickname and 
+When the timer expires, the bot will highlight the user's nickname and
 display the specified string in the channel in which the alarmclock was set.
 
 For example:

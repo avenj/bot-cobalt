@@ -20,37 +20,41 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Time::HiRes qw/sleep/;
 
-has 'File'  => ( 
-  is  => 'rw', 
-  isa => Str, 
-  
-  required => 1 
+
+use namespace::clean -except => 'meta';
+
+
+has 'File'  => (
+  is  => 'rw',
+  isa => Str,
+
+  required => 1
 );
 
-has 'Perms' => ( 
-  is => 'rw', 
-  
+has 'Perms' => (
+  is => 'rw',
+
   default => sub { 0644 },
 );
 
-has 'Raw'     => ( 
-  is  => 'rw', 
-  isa => Bool, 
-  
+has 'Raw'     => (
+  is  => 'rw',
+  isa => Bool,
+
   default => sub { 0 },
 );
 
-has 'Timeout' => ( 
-  is  => 'rw', 
-  isa => Num, 
-  
+has 'Timeout' => (
+  is  => 'rw',
+  isa => Num,
+
   default => sub { 5 },
 );
 
-has 'Serializer' => ( 
+has 'Serializer' => (
   lazy => 1,
-  is   => 'rw', 
-  isa  => Object, 
+  is   => 'rw',
+  isa  => Object,
 
   default => sub {
     Bot::Cobalt::Serializer->new(Format => 'JSON')
@@ -58,60 +62,60 @@ has 'Serializer' => (
 );
 
 ## _orig is the original tie().
-has '_orig' => ( 
-  is  => 'rw', 
-  isa => HashRef, 
+has '_orig' => (
+  is  => 'rw',
+  isa => HashRef,
 
   default => sub { {} },
 );
 
 ## Tied is the re-tied DB hash.
-has 'Tied'  => ( 
-  is  => 'rw', 
-  isa => HashRef, 
+has 'Tied'  => (
+  is  => 'rw',
+  isa => HashRef,
 
   default   => sub { {} },
 );
 
-has '_lockFH' => ( 
+has '_lockFH' => (
   lazy => 1,
   is   => 'rw',
-  isa  => FileHandle, 
+  isa  => FileHandle,
 
   predicate => 'has_LockFH',
-  clearer   => 'clear_LockFH', 
+  clearer   => 'clear_LockFH',
 );
 
 ## LOCK_EX or LOCK_SH for current open
-has '_lockmode' => ( 
+has '_lockmode' => (
   lazy => 1,
-  is  => 'rw', 
+  is  => 'rw',
 
   predicate => 'has_LockMode',
   clearer   => 'clear_LockMode',
 );
 
 ## DB object.
-has 'DB'     => ( 
+has 'DB'     => (
   lazy => 1,
-  is   => 'rw', 
-  isa  => Object, 
+  is   => 'rw',
+  isa  => Object,
 
   predicate => 'has_DB',
   clearer   => 'clear_DB',
 );
 
-has 'is_open' => ( 
-  is => 'rw', 
+has 'is_open' => (
+  is => 'rw',
   isa => Bool,
-  
+
   default => sub { 0 },
 );
 
 sub BUILDARGS {
   my ($class, @args) = @_;
 
-  @args == 1 ? 
+  @args == 1 ?
     { File => $args[0] }
     : { @args }
 }
@@ -128,12 +132,12 @@ sub dbopen {
   ## per-open timeout was specified:
   $self->Timeout( $args{timeout} )
     if $args{timeout};
-  
+
   if ( $self->is_open ) {
     carp "Attempted dbopen() on already-open DB";
     return
   }
-  
+
   my ($lflags, $fflags);
   if ($args{ro} || $args{readonly}) {
     $lflags = LOCK_SH | LOCK_NB  ;
@@ -144,7 +148,7 @@ sub dbopen {
     $fflags = O_CREAT | O_RDWR ;
     $self->_lockmode(LOCK_EX);
   }
-  
+
   my $path = $self->File;
 
  ## proper DB_File locking:
@@ -155,8 +159,8 @@ sub dbopen {
       $fflags, $self->Perms, $DB_HASH
       or confess "failed db open: $path: $!" ;
   $orig_db->sync();
-  
-  ## dup a FH to $db->fd for _lockFH  
+
+  ## dup a FH to $db->fd for _lockFH
   my $fd = $orig_db->fd;
   my $fh = IO::File->new("<&=$fd")
     or confess "failed dup in dbopen: $!";
@@ -180,7 +184,7 @@ sub dbopen {
   ## reopen DB to Tied
   my $db = tie %{ $self->Tied }, "DB_File", $path,
       $fflags, $self->Perms, $DB_HASH
-      or confess "failed db reopen: $path: $!"; 
+      or confess "failed db reopen: $path: $!";
 
   ## preserve db obj and lock fh
   $self->is_open(1);
@@ -201,13 +205,13 @@ sub dbopen {
   $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
-      $_ = $self->Serializer->ref_from_json($_) 
+      $_ = $self->Serializer->ref_from_json($_)
         unless $self->Raw;
     }
   );
   $self->DB->filter_store_value(
     sub {
-      $_ = $self->Serializer->json_from_ref($_) 
+      $_ = $self->Serializer->json_from_ref($_)
         unless $self->Raw;
       $_ .= "\0";
     }
@@ -223,7 +227,7 @@ sub dbclose {
     carp "attempted dbclose on unopened db";
     return
   }
-  
+
   if ($self->_lockmode == LOCK_EX) {
     $self->DB->sync();
   }
@@ -233,14 +237,14 @@ sub dbclose {
     or carp "dbclose: untie Tied: $!";
 
   flock( $self->_lockFH, LOCK_UN )
-    or carp "dbclose: unlock: $!";  
+    or carp "dbclose: unlock: $!";
 
   untie %{ $self->_orig }
     or carp "dbclose: untie _orig: $!";
 
   $self->clear_LockFH;
   $self->clear_LockMode;
-  
+
   $self->is_open(0);
 
   return 1
@@ -306,10 +310,10 @@ sub dbdump {
   confess "attempted dbdump on unopened db"
     unless $self->is_open;
   $format = 'YAMLXS' unless $format;
-  
+
   ## shallow copy to drop tied()
   my %copy = %{ $self->Tied };
-  
+
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
 
   $dumper->freeze(\%copy)
@@ -327,55 +331,55 @@ Bot::Cobalt::DB - Locking Berkeley DBs with serialization
 =head1 SYNOPSIS
 
   use Bot::Cobalt::DB;
-  
+
   ## ... perhaps in a Cobalt_register ...
   my $db_path = $core->var ."/MyDatabase.db";
   my $db = Bot::Cobalt::DB->new(
     File => $db_path,
   );
-  
+
   ## Open (and lock):
   $db->dbopen;
-  
+
   ## Do some work:
   $db->put("SomeKey", $some_deep_structure);
-  
+
   for my $key ($db->dbkeys) {
     my $this_hash = $db->get($key);
   }
-  
+
   ## Close and unlock:
   $db->dbclose;
 
 
 =head1 DESCRIPTION
 
-B<Bot::Cobalt::DB> provides a simple object-oriented interface to basic 
+B<Bot::Cobalt::DB> provides a simple object-oriented interface to basic
 L<DB_File> (Berkeley DB 1.x) usage.
 
-BerkDB is a fast and simple key/value store. This module uses JSON to 
-store nested Perl data structures, providing easy database-backed 
+BerkDB is a fast and simple key/value store. This module uses JSON to
+store nested Perl data structures, providing easy database-backed
 storage for L<Bot::Cobalt> plugins.
 
 =head2 Constructor
 
-B<new()> is used to create a new Bot::Cobalt::DB object representing your 
+B<new()> is used to create a new Bot::Cobalt::DB object representing your
 Berkeley DB:
 
   my $db = Bot::Cobalt::DB->new(
     File => $path_to_db,
 
    ## Optional arguments:
-   
+
     # Database file mode
     Perms => $octal_mode,
 
     ## Locking timeout in seconds
     ## Defaults to 5s:
     Timeout => 10,
-    
+
     ## Normally, references are serialized transparently.
-    ## If Raw is enabled, no serialization filter is used and you're 
+    ## If Raw is enabled, no serialization filter is used and you're
     ## on your own.
     Raw => 0,
   );
@@ -388,7 +392,7 @@ Database operations should be contained within a dbopen/dbclose:
   $db->dbopen || croak "dbopen failure";
   $db->put($key, $data);
   $db->dbclose;
-  
+
   ## open for read-only, read, close:
   $db->dbopen(ro => 1) || croak "dbopen failure";
   my $data = $db->get($key);
@@ -396,21 +400,21 @@ Database operations should be contained within a dbopen/dbclose:
 
 Methods will fail if the DB is not open.
 
-If the DB for this object is open when the object is DESTROY'd, Bot::Cobalt::DB 
+If the DB for this object is open when the object is DESTROY'd, Bot::Cobalt::DB
 will attempt to close it safely.
 
 =head2 Locking
 
-Proper locking is done -- that means the DB is 're-tied' after a lock is 
+Proper locking is done -- that means the DB is 're-tied' after a lock is
 granted and state cannot change between database open and lock time.
 
-The attempt to gain a lock will time out after five seconds (and 
+The attempt to gain a lock will time out after five seconds (and
 L</dbopen> will return boolean false).
 
 The lock is cleared on L</dbclose>.
 
-If the Bot::Cobalt::DB object is destroyed, it will attempt to dbclose 
-for you, but it is good practice to keep track of your open/close 
+If the Bot::Cobalt::DB object is destroyed, it will attempt to dbclose
+for you, but it is good practice to keep track of your open/close
 calls and attempt to close as quickly as possible.
 
 
@@ -418,19 +422,19 @@ calls and attempt to close as quickly as possible.
 
 =head3 dbopen
 
-B<dbopen> opens and locks the database. If 'ro => 1' is specified, 
-this is a LOCK_SH shared (read) lock; otherwise it is a LOCK_EX 
+B<dbopen> opens and locks the database. If 'ro => 1' is specified,
+this is a LOCK_SH shared (read) lock; otherwise it is a LOCK_EX
 exclusive (write) lock.
 
-Try to call a B<dbclose> as quickly as possible to reduce locking 
+Try to call a B<dbclose> as quickly as possible to reduce locking
 contention.
 
-dbopen() will return false (and possibly warn) if the database could 
+dbopen() will return false (and possibly warn) if the database could
 not be opened (probably due to lock timeout).
 
 =head3 is_open
 
-Returns a boolean value representing whether or not the DB is currently 
+Returns a boolean value representing whether or not the DB is currently
 open and locked.
 
 =head3 dbclose
@@ -443,7 +447,7 @@ The B<put> method adds an entry to the database:
 
   $db->put($key, $value);
 
-The value can be any data structure serializable by JSON::XS; that is to 
+The value can be any data structure serializable by JSON::XS; that is to
 say, any shallow or deep data structure NOT including blessed references.
 
 Note that keys should be properly encoded:
@@ -466,9 +470,9 @@ The B<del> method removes a key from the database.
 
   $db->del($key);
 
-=head3 dbkeys 
+=head3 dbkeys
 
-B<dbkeys> will return a list of keys in list context, or the number 
+B<dbkeys> will return a list of keys in list context, or the number
 of keys in the database in scalar context.
 
 =head3 dbdump
@@ -484,13 +488,13 @@ You can serialize/export the entirety of the DB via B<dbdump>.
 
 See L<Bot::Cobalt::Serializer> for more on C<freeze()> and valid formats.
 
-A tool called B<cobalt2-dbdump> is available as a 
+A tool called B<cobalt2-dbdump> is available as a
 simple frontend to this functionality. See C<cobalt2-dbdump --help>
 
 =head1 FORMAT
 
-B<Bot::Cobalt::DB> databases are Berkeley DB 1.x, with NULL-terminated records 
-and values stored as JSON. They're intended to be easily portable to 
+B<Bot::Cobalt::DB> databases are Berkeley DB 1.x, with NULL-terminated records
+and values stored as JSON. They're intended to be easily portable to
 other non-Perl applications.
 
 =head1 AUTHOR

@@ -9,6 +9,10 @@ use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
+
+use namespace::clean -except => 'meta';
+
+
 ## my $timer = Bot::Cobalt::Core::Item::Timer->new(
 ##   delay => $secs,
 ##   event => $event,

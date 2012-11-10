@@ -21,7 +21,7 @@ sub is_reloadable {
 
   return if $obj->can('NON_RELOADABLE') and $obj->NON_RELOADABLE;
 
-  return 1
+  1
 }
 
 sub module_path {
@@ -29,7 +29,7 @@ sub module_path {
 
   confess "module_path() needs a module name" unless defined $module;
 
-  return join('/', split /::/, $module).".pm";
+  join('/', split /::/, $module).".pm";
 }
 
 sub load {
@@ -42,7 +42,12 @@ sub load {
   my $orig_err;
   unless (try { require $modpath;1 } catch { $orig_err = $_;0 }) {
     ## die informatively
-    croak "Could not load $module: $orig_err"
+    croak "Could not load $module: $orig_err";
+    ## Okay, so we require 5.12.1+ and this only happens on <=5.8 ...
+    ## ... but it's worth noting in case this code is ported to older 
+    ## perls. $INC{$modpath} is set even if we died, so long as the file
+    ## exists in our INC path.
+    delete $INC{$modpath};
   }
 
   my $obj;
@@ -52,7 +57,7 @@ sub load {
     croak "new() failed for $module: $_"
   };
 
-  $obj if blessed $obj
+  $obj // ()
 }
 
 sub unload {

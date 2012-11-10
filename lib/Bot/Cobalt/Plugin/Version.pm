@@ -11,6 +11,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 
 use Bot::Cobalt::Utils qw/ secs_to_str /;
 
+use namespace::clean -except => 'meta';
+
 sub new { bless [], shift  }
 
 sub Cobalt_register {

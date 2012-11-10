@@ -15,6 +15,8 @@ use Scalar::Util qw/blessed/;
 
 use Try::Tiny;
 
+use namespace::clean -except => 'meta';
+
 sub new { bless [], shift }
 
 sub Cobalt_register {

@@ -9,6 +9,8 @@ use Bot::Cobalt::DB;
 
 use File::Spec;
 
+use namespace::clean -except => 'meta';
+
 sub new { bless {}, shift }
 
 sub parse_nick {
