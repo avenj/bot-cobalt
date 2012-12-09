@@ -143,7 +143,7 @@ sub _write {
 
   ## FIXME if flock fails, buffer and try next _write up to X items ?
   ## FIXME maybe we should just fail silently (and document same)?
-  flock($self->[HANDLE], LOCK_EX)
+  flock($self->[HANDLE], LOCK_EX | LOCK_NB)
     or warn "flock failure for ".$self->file
     and return;
 
