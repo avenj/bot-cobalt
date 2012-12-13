@@ -17,6 +17,8 @@ sub execute {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
+  $self->expire;
+
   if ( $str && index(lc($str), 'spin') == 0 ) {
     ## clear loaded
     delete $self->{Cylinder}->{$context}->{$nick};
@@ -25,6 +27,7 @@ sub execute {
 
   my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
                //= int rand($cyls);
+  $self->{Cylinder}->{$context}->{$nick}->{TS} //= time;
 
   if ($loaded == 0) {
     delete $self->{Cylinder}->{$context}->{$nick};
@@ -35,18 +38,27 @@ sub execute {
 
     if ( $irc->is_channel_operator($chan, $bot)
          || $irc->is_channel_admin($chan, $bot)
-         || $irc->is_channel_owner($chan, $bot) )
-    {
-      broadcast( 'kick', $context, $chan, $nick,
-        "BANG!"
-      );
+         || $irc->is_channel_owner($chan, $bot) ) {
+      broadcast( 'kick', $context, $chan, $nick, "BANG!" );
       return color('bold', "$nick did themselves in!")
-    } else {
-      return color('bold', 'BANG!')." -- seeya $nick!"
     }
+
+    return color('bold', 'BANG!')." -- seeya $nick!"
   }
+
+
   --$self->{Cylinder}->{$context}->{$nick}->{Loaded};
   return 'Click . . .'
+}
+
+sub expire {
+  my ($self) = @_;
+  for my $context (keys %{ $self->{Cylinder} }) {
+    for my $nick (keys %{ $self->{Cylinder}->{$context} }) {
+      delete $self->{Cylinder}->{$context}->{$nick}
+        if (time - $self->{Cylinder}->{$context}->{$nick}->{TS}) >= 900;
+    }
+  }
 }
 
 1;
