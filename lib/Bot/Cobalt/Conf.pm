@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf;
-our $VERSION = '0.014';
+our $VERSION = '0.015';
 
 use Carp;
 use Moo;

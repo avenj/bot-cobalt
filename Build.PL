@@ -10,6 +10,7 @@ my $class = Module::Build->subclass(
     sub ACTION_release {
       my $self = shift;
       $self->dispatch('versionify');
+      $self->dispatch('test');
       $self->dispatch('wikidocs');
       $self->dispatch('dist');
     }
