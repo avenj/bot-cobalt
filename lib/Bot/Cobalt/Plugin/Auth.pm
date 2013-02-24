@@ -164,7 +164,7 @@ sub _init_superusers {
       ## Usernames on accesslist automatically get lowercased
       ## per rfc1459 rules, aka CASEMAPPING=rfc1459
       ## (we probably don't even know the server's CASEMAPPING= yet)
-      $user = lc_irc $user;
+      my $lc_user = lc_irc($user);
 
       my $flags = ref $su{$context}->{$user}->{Flags} eq 'HASH' ?
         $su{$context}->{$user}->{Flags}
@@ -172,7 +172,7 @@ sub _init_superusers {
 
       $flags->{SUPERUSER} = 1;
 
-      $self->AccessList->{$context}->{$user} = {
+      $self->AccessList->{$context}->{$lc_user} = {
         Password => $su{$context}->{$user}->{Password}
                      // $self->_mkpasswd(rand 10),
         Level => 9999,
@@ -189,13 +189,13 @@ sub _init_superusers {
 
       ## the Mask specification in cfg may be an array or a string:
       if (ref $su{$context}->{$user}->{Mask} eq 'ARRAY') {
-          $self->AccessList->{$context}->{$user}->{Masks} = [
+          $self->AccessList->{$context}->{$lc_user}->{Masks} = [
             ## normalize masks into full, matchable masks:
-            map { normalize_mask($_) }
+            map {; normalize_mask($_) }
               @{ $su{$context}->{$user}->{Mask} }
           ];
       } else {
-          $self->AccessList->{$context}->{$user}->{Masks} = [
+          $self->AccessList->{$context}->{$lc_user}->{Masks} = [
             normalize_mask( $su{$context}->{$user}->{Mask} )
           ];
       }
@@ -352,7 +352,7 @@ sub _cmd_login {
   }
 
   ## NOTE: usernames in accesslist are stored lowercase per rfc1459 rules:
-  $l_user = lc_irc $l_user;
+  $l_user = lc_irc($l_user);
 
   ## IMPORTANT:
   ## nicknames (for auth hash) remain unmolested
