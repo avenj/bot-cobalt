@@ -6,6 +6,7 @@ bin/cobalt2-installer.PL
 bin/cobalt2-plugin-installcf
 Build.PL
 Changes
+doc/irc_inheritance.yml
 etc/auth.conf
 etc/channels.conf
 etc/cobalt.conf

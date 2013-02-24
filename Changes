@@ -1,5 +1,25 @@
 # Bot::Cobalt Changes
 
+* 0.015  (24 Feb 2012)
+
+  Plugin::Auth; fix mixed-case superuser usernames (miniCruzer)
+
+  Serializer; 
+    utf8 handling fixes
+    Drop XML serialization support
+
+  IRC; Support 'Umodes:' directive in IRC context confs
+
+  POD fixes and example config cleanups (miniCruzer)
+
+  Plugin::WWW; MaxPerHost configuration directive
+
+  Plugin::Extras::Money; fix output formatting
+
+  Plugin::Games::Roulette; expire old entries
+
+  Purge almost all use of smart-match / when()
+
 * 0.014  (21 Jul 2012)
 
   Add logging-related opts LogFormat and LogTimeFormat (cobalt.conf)
