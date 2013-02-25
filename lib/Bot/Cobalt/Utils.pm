@@ -1,5 +1,5 @@
 package Bot::Cobalt::Utils;
-our $VERSION = '0.015';
+our $VERSION = '0.016000';
 
 use 5.10.1;
 use strict;
@@ -171,7 +171,7 @@ sub glob_to_re_str ($) {
     }
 
     ## Escape metas:
-    if (grep { $_ eq $ch } qw/ . ( ) . | ^ $ @ % { } /) {
+    if (grep { $_ eq $ch } qw/ ( ) . | ^ $ @ % { } /) {
       $re .= "\\$ch" ;
       $in_esc = 0;
       next

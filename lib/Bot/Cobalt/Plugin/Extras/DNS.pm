@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::DNS;
-our $VERSION = '0.015';
+our $VERSION = '0.016000';
 
 use 5.10.1;
 

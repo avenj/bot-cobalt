@@ -1,5 +1,5 @@
 package Bot::Cobalt::DB;
-our $VERSION = '0.015';
+our $VERSION = '0.016000';
 
 ## Simple interface to a DB_File
 ## Uses proper retie-after-lock technique for locking

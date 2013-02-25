@@ -121,7 +121,7 @@ my $build = $class->new(
 
   requires => {
    ### Core set ###
-      'perl' => '5.12.1',
+      'perl' => 5.12.1,
 
       'Carp' => 0,
       'Cwd'  => 0,
@@ -134,7 +134,7 @@ my $build = $class->new(
       'Fcntl'            => 0,
       'File::Find'       => 0,
       'File::Spec'       => 0,
-      'File::Path'       => '2.00',
+      'File::Path'       => 2.00,
 
       'Getopt::Long'     => 0,
 
@@ -157,7 +157,7 @@ my $build = $class->new(
 
    ### Cobalt set ###
      # Crypt
-      'App::bmkpasswd' => '1.06',
+      'App::bmkpasswd' => 1.06,
 
      # HTTP
       'HTTP::Request'  => 0,
@@ -165,40 +165,42 @@ my $build = $class->new(
       'URI::Escape'    => 0,
 
      # Logging
-      'Devel::StackTrace' => '1.27',
+      'Devel::StackTrace' => 1.27,
 
      # Moo + related
-      'Moo'                    => '0.091009',
-      'MooX::Types::MooseLike' => '0.08',
+      'Moo'                    => 0.091009,
+      'MooX::Types::MooseLike' => 0.08,
       'namespace::clean'       => 0,
 
      # Network
-      'Net::IP::Minimal' => '0.04',
+      'Net::IP::Minimal' => 0.04,
 
      # POE::
-      'POE'              => '1.311',
+      'POE'              => 1.311,
 
        ## ::Resolver that doesn't fail w/ newer Socket::GetAddrInfo
        ## (Socket::GetAddrInfo is a bit unnecessary these days, it seems)
-      'POE::Component::Resolver'     => '0.920',
+      'POE::Component::Resolver'     => 0.920,
        ## Above also applies to Client::HTTP:
-      'POE::Component::Client::HTTP' => '0.947',
-      'POE::Component::Client::Keepalive' => '0',
-      'POE::Component::Client::DNS'  => 0,
-      'POE::Component::IRC::State'  => '6.78',
-      'POE::Component::Syndicator'  => '0.06',
-      'Object::Pluggable'           => '1.27',
+      'POE::Component::Client::HTTP' => 0.947,
+      'POE::Component::Client::Keepalive' => 0,
+      'POE::Component::Client::DNS' => 0,
+      'POE::Component::IRC::State'  => 6.78,
+      'POE::Component::Syndicator'  => 0.06,
+      'Object::Pluggable'           => 1.27,
 
      # Process
-      'Proc::PID::File' => '1.26',
+      'Proc::PID::File' => 1.26,
 
      # Serialization
-      'JSON::XS'       => '2.00',
-      'YAML::XS'       => '0.34',
+      'JSON::XS'        => 2.00,
+      'YAML::XS'        => 0.34,
 
      # Utils
-      'IRC::Utils'     => '0.12',
-      'Term::ReadKey'  => 0,
+      'Data::Perl'      => 0.002,
+      'IRC::Utils'      => 0.12,
+      'Perl6::Junction' => 1,
+      'Term::ReadKey'   => 0,
   },
 
   recommends => {

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Logger::Output::Term;
-our $VERSION = '0.015';
+our $VERSION = '0.016000';
 
 use strictures 1;
 

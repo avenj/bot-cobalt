@@ -1,6 +1,10 @@
 # Bot::Cobalt Changes
 
-* 0.015  (24 Feb 2012)
+0.016000  (25 Feb 2012)
+
+  POD fixes, switch to long-form vers
+
+0.015  (24 Feb 2012)
 
   Plugin::Auth; fix mixed-case superuser usernames (miniCruzer)
 
@@ -21,7 +25,7 @@
   Purge almost all use of smart-match / when()    (avenj)
 
 
-* 0.014  (21 Jul 2012)
+0.014  (21 Jul 2012)
 
   Add logging-related opts LogFormat and LogTimeFormat (cobalt.conf)
   Also some example etc/ cleanups.
@@ -31,7 +35,7 @@
   POD updates; documentation for Logger::Output:: classes was old/wrong.
 
 
-* 0.013  (20 Jul 2012)
+0.013  (20 Jul 2012)
 
   Fully reworked configuration file handling.
   See docs for Bot::Cobalt::Conf for details.
@@ -71,7 +75,7 @@
   Optimized Bot::Cobalt::Utils::rplprintf()
 
 
-* 0.012  (05 Jul 2012)
+0.012  (05 Jul 2012)
 
   Add Bot::Cobalt::Error exception objects.
   Adds Devel::StackTrace as a dependency.
@@ -98,7 +102,7 @@
   available casemap() value.
 
 
-* 0.011  (30 Jun 2012)
+0.011  (30 Jun 2012)
 
   Fix conflated incoming/outgoing notice events:
    - Outgoing notices still go to 'send_notice' or 'notice'
@@ -118,7 +122,7 @@
   Various smaller bugfixes, test expansions, POD cleanups.
 
 
-* 0.010  (21 Jun 2012)
+0.010  (21 Jun 2012)
 
   Add Bot::Cobalt::Core::Loader, a lightweight module load/unload class,
   and update Bot::Cobalt::Core + Bot::Cobalt::Plugins::PluginMgr to make 
@@ -136,7 +140,7 @@
   Wide-ranging cleanups, minor optimizations and expanded tests.
 
 
-* 0.009  (15 Jun 2012)
+0.009  (15 Jun 2012)
 
   Fix RDB.pm bug that would cause log noise on certain command 
   dispatches.
@@ -146,7 +150,7 @@
   The beginnings of some core / PluginMgr plug load/unload cleanup.
 
 
-* 0.008  (13 Jun 2012)
+0.008  (13 Jun 2012)
 
   Core configuration accessors no longer return cloned copies of config 
   hashes. This behavior was intended to make it harder for plugins to 
@@ -168,7 +172,7 @@
 
   Bot::Cobalt::Utils:
     - support list-style arguments in rplprintf()
-    - build %C_* vars for rplprintf at load-time rather than when called 
+    - build %C_vars for rplprintf at load-time rather than when called 
   
   Plugin::Master; required access levels should've come from PluginOpts
   (rather than Opts, as this plugin doesn't normally have an external cfg)
@@ -178,7 +182,7 @@
   Various syntax / POD / test cleanups.
 
 
-* 0.007  (06 Jun 2012)
+0.007  (06 Jun 2012)
   
   Fix usage help message in Plugin::Extras::CPAN.
 
@@ -188,7 +192,7 @@
   Add missing test for Frontend::RC.
 
 
-* 0.006  (05 Jun 2012)
+0.006  (05 Jun 2012)
 
   Fix instance rc files:
     - Kill old-style rcfiles, use YAML like other confs
@@ -231,22 +235,22 @@
      read_cfg failures.
    - IRC.pm; more consistent error messages
    - IRC::Event::Nick; fix common() when channels() has changed
-   - Explicitly 'use strictures' in IRC::* subclasses
+   - Explicitly 'use strictures' in IRC::subclasses
    - Plugin::Auth; log to error() not emerg()
 
 
-* 0.005  (29 May 2012)
+0.005  (29 May 2012)
 
   Fix an IRC.pm bug that would cause failures if an error event was 
   received for a context that never completed a connection.
 
-  Fix Utils.pm bug in glob_* functions that would cause failures when
+  Fix Utils.pm bug in glob_functions that would cause failures when
   operating on an untrue value. Should've been defined() checks.
 
   POD and test improvements and clean-ups.
 
 
-* 0.004  (27 May 2012)
+0.004  (27 May 2012)
 
   Fix IRC.pm bug that kept sessions hanging about when the bot was 
   terminated via an online command. (This fixes the busted '!die' 
@@ -259,7 +263,7 @@
    - Significant POD cleanups
 
 
-* 0.003  (22 May 2012)
+0.003  (22 May 2012)
 
   Require perl-5.12.1; given/when changed sometime in there, it seems,
    and I'm tired of playing with EOL Perls anyway.
@@ -267,7 +271,7 @@
   Some Plugin::RDB cleanups.
 
 
-* 0.002
+0.002
 
   Fix a couple oversights resulting in test failures:
    - Fix Utils.pm test failures on <perl-5.14
@@ -279,6 +283,6 @@
   POD tweaks.
 
 
-* 0.001
+0.001
 
   Initial release of Bot::Cobalt
