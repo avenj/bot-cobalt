@@ -5,20 +5,20 @@
   Plugin::Auth; fix mixed-case superuser usernames (miniCruzer)
 
   Serializer; 
-    utf8 handling fixes
-    Drop XML serialization support
+    utf8 handling fixes             (avenj)
+    Drop XML serialization support  (avenj)
 
-  IRC; Support 'Umodes:' directive in IRC context confs
+  IRC; Support 'Umodes:' directive in IRC context confs (avenj)
 
   POD fixes and example config cleanups (miniCruzer)
 
-  Plugin::WWW; MaxPerHost configuration directive
+  Plugin::WWW; MaxPerHost configuration directive (avenj)
 
-  Plugin::Extras::Money; fix output formatting
+  Plugin::Extras::Money; fix output formatting    (avenj)
 
-  Plugin::Games::Roulette; expire old entries
+  Plugin::Games::Roulette; expire old entries     (avenj)
 
-  Purge almost all use of smart-match / when()
+  Purge almost all use of smart-match / when()    (avenj)
 
 
 * 0.014  (21 Jul 2012)

@@ -958,6 +958,12 @@ In order to send a response as an action, prefix the response with B<+> :
 
 Variable replacement works as-normal.
 
+=head4 Responding to an action
+
+A topic prefixed with C<~action> is a response to an action:
+
+  bot: add ~action+waves +waves back to N~
+
 =head3 del
 
 Deletes the specified topic.
