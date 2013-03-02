@@ -171,7 +171,7 @@ sub glob_to_re_str ($) {
     }
 
     ## Escape metas:
-    if (grep { $_ eq $ch } qw/ ( ) . | ^ $ @ % { } /) {
+    if (grep { $_ eq $ch } qw/ . ( ) | ^ $ @ % { } /) {
       $re .= "\\$ch" ;
       $in_esc = 0;
       next
@@ -190,6 +190,11 @@ sub glob_to_re_str ($) {
     }
     if ($ch eq '+') {
       $re .= $in_esc ? '\+' : '\s' ;
+      $in_esc = 0;
+      next
+    }
+    if ( $ch eq '[' || $ch eq ']' ) {
+      $re .= $in_esc ? "\\$ch" : $ch ;
       $in_esc = 0;
       next
     }

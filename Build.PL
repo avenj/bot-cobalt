@@ -121,7 +121,7 @@ my $build = $class->new(
 
   requires => {
    ### Core set ###
-      'perl' => 5.12.1,
+      'perl' => '5.12.1',
 
       'Carp' => 0,
       'Cwd'  => 0,
@@ -205,7 +205,7 @@ my $build = $class->new(
 
   recommends => {
     ### POE::
-      'POE::Component::SSLify' => '1.006',
+      'POE::Component::SSLify' => 1.006,
 
     ### Utils / misc
       # terminal interaction
