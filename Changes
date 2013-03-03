@@ -1,5 +1,9 @@
 # Bot::Cobalt Changes
 
+0.016001  (02 Mar 2012)
+
+  Utils; Fix escaped [] in globs
+
 0.016000  (25 Feb 2012)
 
   POD fixes, switch to long-form vers

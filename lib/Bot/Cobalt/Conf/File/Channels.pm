@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf::File::Channels;
-our $VERSION = '0.016000';
+our $VERSION = '0.016001';
 
 use 5.12.1;
 use strictures 1;

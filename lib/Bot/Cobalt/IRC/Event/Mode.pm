@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event::Mode;
-our $VERSION = '0.016000';
+our $VERSION = '0.016001';
 
 use Moo;
 use strictures 1;
