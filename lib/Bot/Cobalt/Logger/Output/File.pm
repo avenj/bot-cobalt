@@ -44,7 +44,7 @@ sub new {
     if defined $args{perms};
 
   if ($^O eq 'MSWin32' or $^O eq 'VMS') {
-    ++$self->[RUNNING_IN_HELL]
+    $self->[RUNNING_IN_HELL] = 1
   }
 
   ## Try to open/create file when object is constructed
@@ -87,11 +87,13 @@ sub perms {
 sub _open {
   my ($self) = @_;
 
-  sysopen(my $fh, $self->file, $self->mode, $self->perms)
-    or warn(
+  unless (sysopen(my $fh, $self->file, $self->mode, $self->perms) ) {
+    warn(
       "Log file could not be opened: ", 
       join ' ', $self->file, $!
-    ) and return;
+    );
+    return
+  }
 
   binmode $fh, ':utf8';
   $fh->autoflush;
@@ -143,9 +145,10 @@ sub _write {
 
   ## FIXME if flock fails, buffer and try next _write up to X items ?
   ## FIXME maybe we should just fail silently (and document same)?
-  flock($self->[HANDLE], LOCK_EX | LOCK_NB)
-    or warn "flock failure for ".$self->file
-    and return;
+  unless ( flock($self->[HANDLE], LOCK_EX | LOCK_NB) ) {
+    warn "flock failure for ".$self->file;
+    return
+  }
 
   print { $self->[HANDLE] } $str;
 

@@ -3,22 +3,12 @@ our $VERSION = '0.016001';
 
 use strictures 1;
 
-sub new {
-  my $class = shift;
-  my $self = [];
-  bless $self, $class;
-  
-  $self
-}
+sub new { bless [], shift }
 
 sub _write {
-  my ($self, $str) = @_;
-  
   local $|=1;
-  
   binmode STDOUT, ":utf8";
-  
-  print STDOUT $str
+  print STDOUT $_[1]
 }
 
 1;
