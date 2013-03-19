@@ -21,7 +21,7 @@ sub ARRAY () { 1 }
 
 sub __new_trace {
   Devel::StackTrace->new(
-    ignore_class => 'Bot::Cobalt::Error',
+    ignore_class => __PACKAGE__,
     no_refs      => 1,
   )
 }
@@ -29,7 +29,7 @@ sub __new_trace {
 sub new {
   my $class = shift;
 
-  my $trace = __new_trace();
+  my $trace = $class->__new_trace;
 
   bless [
     $trace,    ## TRACE
@@ -50,7 +50,7 @@ sub _set_trace {
 
 sub throw {
   my ($self) = @_;
-  $self->_set_trace( __new_trace );
+  $self->_set_trace( $self->__new_trace );
   die $self
 }
 
