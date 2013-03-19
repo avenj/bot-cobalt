@@ -12,8 +12,8 @@ my $this_class = 'Bot::Cobalt::Logger::Output::File';
 my $basedir = try {
   Module::Build->current->base_dir
 } catch {
-  die "\nFailed to retrieve base_dir() from Module::Build\n",
-    "are you trying to run the test suite outside of `./Build`?\n"
+  BAIL_OUT("Failed to retrieve base_dir() from Module::Build; ".
+    "are you trying to run the test suite outside of `./Build`?")
 };
 
 my $vardir = File::Spec->catdir( $basedir, 'var' );
