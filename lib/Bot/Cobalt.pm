@@ -29,7 +29,7 @@ sub instance {
     return
   }
 
-  return Bot::Cobalt::Core->instance 
+  Bot::Cobalt::Core->instance 
 }
 
 sub new {

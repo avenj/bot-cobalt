@@ -2,11 +2,6 @@ package Bot::Cobalt::Common;
 our $VERSION = '0.016001';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
-##
-## Does some Evil; the importing package will also have 'strictures 1'
-## and the '5.10' featureset ('say', 'given/when', ..)
-##  -> under 5.15.9, feature->import no longer seems to work as it did
-##     no longer documented.
 
 use 5.10.1;
 use strictures 1;

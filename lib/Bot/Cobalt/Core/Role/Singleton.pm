@@ -1,44 +1,35 @@
 package Bot::Cobalt::Core::Role::Singleton;
 our $VERSION = '0.016001';
-
-use strictures 1;
-
+use Carp 'confess';
 use Moo::Role;
+use strict; no strict 'refs';
+use warnings FATAL => 'all';
+
+use namespace::clean;
 
 sub instance {
-  my $class = shift;
-  
-  no strict 'refs';
+  my $class = $_[0];
 
   my $this_obj = \${$class.'::_singleton'};
   
-  defined $$this_obj ?
-    $$this_obj
-    : ( $$this_obj = $class->new(@_) )
+  defined $$this_obj ? $$this_obj
+    : ( $$this_obj = $class->new(@_[1 .. $#_]) )
 }
 
 sub has_instance {
   my $class = ref $_[0] || $_[0];
-
-  no strict 'refs';
-
   return unless ${$class.'::_singleton'};
   1
 }
 
 sub clear_instance {
   my $class = ref $_[0] || $_[0];
-  
-  no strict 'refs';
-  
   ${$class.'::_singleton'} = undef;
-  
   1
 }
 
 sub is_instanced {
-  require Carp;
-  Carp::confess("is_instanced is deprecated; use has_instance")
+  confess("is_instanced is deprecated; use has_instance")
 }
 
 1;
