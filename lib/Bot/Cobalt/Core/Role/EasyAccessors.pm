@@ -82,11 +82,11 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Core::Role::EasyAccessors - Easy configuration accessors
+Bot::Cobalt::Core::Role::EasyAccessors
 
 =head1 SYNOPSIS
 
-  ## Inside a Cobalt plugin:
+  ## Inside a Bot::Cobalt plugin:
   
   # Current plugin alias:
   my $current_alias = $core->get_plugin_alias($self);
@@ -102,10 +102,9 @@ Bot::Cobalt::Core::Role::EasyAccessors - Easy configuration accessors
   
 =head1 DESCRIPTION
 
-Simple methods for accessing some of the configuration state tracked by 
+L<Bot::Cobalt> core interface role providing 
+simple methods for accessing some of the configuration state tracked by 
 L<Bot::Cobalt::Core>.
-
-You might prefer L<Bot::Cobalt::Core::Sugar> when writing plugins.
 
 =head2 get_channels_cfg
 
