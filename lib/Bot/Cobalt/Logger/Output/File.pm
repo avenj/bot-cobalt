@@ -87,7 +87,8 @@ sub perms {
 sub _open {
   my ($self) = @_;
 
-  unless (sysopen(my $fh, $self->file, $self->mode, $self->perms) ) {
+  my $fh;
+  unless (sysopen($fh, $self->file, $self->mode, $self->perms) ) {
     warn(
       "Log file could not be opened: ", 
       join ' ', $self->file, $!
