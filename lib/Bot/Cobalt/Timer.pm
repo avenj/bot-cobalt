@@ -12,14 +12,6 @@ use Bot::Cobalt::Common qw/:types/;
 
 use namespace::clean -except => 'meta';
 
-
-## my $timer = Bot::Cobalt::Core::Item::Timer->new(
-##   delay => $secs,
-##   event => $event,
-##   args  => $args,
-##   alias => $alias
-## );
-
 ## It's possible to pass in a different core.
 ## (Allows timers to fire against different syndicators if needed)
 has 'core'  => (
@@ -31,10 +23,8 @@ has 'core'  => (
   default => sub {
     require Bot::Cobalt::Core;
 
-    die "Cannot find active Bot::Cobalt::Core instance"
-      unless Bot::Cobalt::Core->has_instance;
-
-    Bot::Cobalt::Core->instance
+    Bot::Cobalt::Core->instance 
+      || die "Cannot find active Bot::Cobalt::Core instance"
   },
 );
 

@@ -104,6 +104,7 @@ MANIFEST			This list of files
 META.json
 META.yml
 README
+t/00-usebuild.t
 t/01_utils/01_mkpasswd.t
 t/01_utils/02_rplprintf.t
 t/01_utils/03_timestr.t

@@ -297,7 +297,7 @@ __END__
 
 =head1 NAME
 
-Bot::Cobalt::Serializer - Simple serialization wrapper
+Bot::Cobalt::Serializer - Bot::Cobalt serialization wrapper
 
 =head1 SYNOPSIS
 
@@ -336,9 +336,8 @@ Bot::Cobalt::Serializer - Simple serialization wrapper
 
 =head1 DESCRIPTION
 
-Various pieces of L<Bot::Cobalt> need to read and write serialized data
+Various pieces of L<Bot::Cobalt> need to read and write serialized perl data
 from/to disk.
-
 This simple OO frontend makes it trivially easy to work with a selection of
 serialization formats, automatically enabling Unicode encode/decode and 
 optionally providing the ability to read/write files directly.
