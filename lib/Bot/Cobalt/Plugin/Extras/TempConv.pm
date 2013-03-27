@@ -52,10 +52,15 @@ sub Bot_public_cmd_temp {
   $type = 'F' unless $type and grep { $_ eq uc($type) } qw/F C K/;
 
   my ($f, $k, $c);
-  for (uc $type) {
-    ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) when 'F';
-    ($f, $k, $c) = ( _c2f($temp), _c2k($temp), $temp ) when 'C';
-    ($f, $k, $c) = ( _k2f($temp), $temp, _k2c($temp) ) when 'K';
+  for my $upper (uc $type) {
+    ( ($f, $k, $c) = ( $temp, _f2k($temp), _f2c($temp) ) and last )
+      if $upper eq 'F';
+
+    ( ($f, $k, $c) = ( _c2f($temp), _c2k($temp), $temp ) and last )
+      if $upper eq 'C';
+
+    ( ($f, $k, $c) = ( _k2f($temp), $temp, _k2c($temp) ) and last )
+      if $upper eq 'K';
   }
 
   $_ = sprintf("%.2f", $_) for ($f, $k, $c);

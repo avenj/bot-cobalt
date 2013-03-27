@@ -45,10 +45,10 @@ sub Bot_public_msg {
 
   my $resp;
 
-  my $cmd = $msg->message_array->[1] || return PLUGIN_EAT_NONE;
+  my $cmd = lc($msg->message_array->[1] || return PLUGIN_EAT_NONE);
 
-  for ( lc($cmd) ) {
-    when ("info") {
+  CMD: {
+    if ($cmd eq 'info') {
       my $startedts = $core->State->{StartedTS} // 0;
       my $delta = time() - $startedts;
 
@@ -63,22 +63,27 @@ sub Bot_public_msg {
         topics  => $infoglobs,
         randstuffs => $randstuffs,
       );
+
+      last CMD
     }
 
-    when ("version") {
+    if ($cmd eq 'version') {
       $resp = core->rpl( q{RPL_VERSION},
         version => 'Bot::Cobalt '.$core->version,
         perl_v  => sprintf("%vd", $^V),
         poe_v   => $POE::VERSION,
         pocoirc_v => $POE::Component::IRC::VERSION,
       );
+
+      last CMD
     }
 
-    when ("os") {
+    if ($cmd eq 'os') {
       $resp = core->rpl( q{RPL_OS}, { os => $^O } );
+      last CMD
     }
-    
-    default { return PLUGIN_EAT_NONE }
+
+    return PLUGIN_EAT_NONE
   }
 
   broadcast('message', $context, $msg->channel, $resp)

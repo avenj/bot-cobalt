@@ -987,29 +987,17 @@ sub _user_chflags {
       return "Cannot set SUPERUSER flag manually"
     }
 
-    for ($first) {
-      when ("+") {
-        logger->debug(
-          "$nick ($auth_usr) flag add $target_usr $this_flag"
-        );
-
-        $alist_ref->{Flags}->{$this_flag} = 1;
-      }
-
-      when ("-") {
-        logger->debug(
-          "$nick ($auth_usr) flag drop $target_usr $this_flag"
-        );
-
-        delete $alist_ref->{Flags}->{$this_flag};
-      }
-
-      default {
-        return "Bad syntax; flags should be prefixed by + or -"
-      }
-
+    if ($first eq '+') {
+      logger->debug("$nick ($auth_usr) flag add $target_usr $this_flag");
+      $alist_ref->{Flags}->{$this_flag} = 1;
+      next FLAG
+    } elsif ($first eq '-') {
+      logger->debug("$nick ($auth_usr) flag drop $target_usr $this_flag");
+      delete $alist_ref->{Flags}->{$this_flag};
+      next FLAG
     }
 
+    return "Bad syntax; flags should be prefixed by + or -"
   }  ## FLAG
 
   if ( $self->_write_access_list ) {

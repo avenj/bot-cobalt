@@ -338,28 +338,32 @@ sub Bot_public_cmd_seen {
   my $ts_str   = secs_to_str($ts_delta);
 
   my $resp;
-  for ($last_act) {
-    when ("quit") {
+  ACTION: {
+    if ($last_act eq 'quit') {
       $resp = 
         "$targetnick was last seen quitting IRC $ts_str ago";
+      last ACTION
     }
     
-    when ("join") {
+    if ($last_act eq 'join') {
       $resp =
         "$targetnick was last seen joining $last_chan $ts_str ago";
+      last ACTION
     }
     
-    when ("part") {
+    if ($last_act eq 'part') {
       $resp =
         "$targetnick was last seen leaving $last_chan $ts_str ago";
+      last ACTION
     }
     
-    when ("present") {
+    if ($last_act eq 'present') {
       $resp =
         "$targetnick was last seen when I joined $last_chan $ts_str ago";
+      last ACTION
     }
     
-    when ("nchange") {
+    if ($last_act eq 'nchange') {
       if ($meta->{From}) {
         $resp = "$targetnick was last seen changing nicknames from "
           . $meta->{From} .
@@ -370,8 +374,12 @@ sub Bot_public_cmd_seen {
           . $meta->{To} .
           " $ts_str ago";
       }
+
+      last ACTION
     }
 
+    logger->warn("BUG; Fell thru in ACTION handler");
+    $resp = 'Something weird happened; file a bug report.';
   }  
 
   broadcast( 'message', 
