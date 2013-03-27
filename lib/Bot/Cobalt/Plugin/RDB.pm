@@ -539,20 +539,29 @@ sub _cmd_rdb_dbdel {
 
   my $rpl;
   if ($retval) {
-    $rpl = "RDB_DELETED";
+    $rpl = 'RDB_DELETED';
   } else {
-    given ("$err") {
-      $rpl = "RDB_ERR_NOTPERMITTED" when "RDB_NOTPERMITTED";
-      $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-      $rpl = "RDB_UNLINK_FAILED"    when "RDB_FILEFAILURE";
-      default {
-        my $errstr = "BUG; Unknown err $err from _delete_rdb";
-        logger->warn($errstr);
-        return $errstr
+    DBDELERR: {
+      if ($err eq 'RDB_NOTPERMITTED') {
+        $rpl = 'RDB_ERR_NOTPERMITTED';  last DBDELERR
       }
-    }
 
+      if ($err eq 'RDB_NOSUCH') {
+        $rpl = 'RDB_ERR_NO_SUCH_RDB';   last DBDELERR
+      }
+      
+      if ($err eq 'RDB_DBFAIL') {
+        $rpl = 'RPL_DB_ERR';            last DBDELERR
+      }
+
+      if ($err eq 'RDB_FILEFAILURE') {
+        $rpl = 'RDB_UNLINK_FAILED';     last DBDELERR
+      }
+
+      my $errstr = "BUG; Unknown err $err from _delete_rdb";
+      logger->warn($errstr);
+      return $errstr
+    }
   }
 
   return core->rpl( $rpl, $rplvars )
@@ -579,18 +588,21 @@ sub _cmd_rdb_add {
   my $rpl;
   if ($retval) {
     $rplvars->{index} = $retval;
-    $rpl = "RDB_ITEM_ADDED";
+    $rpl = 'RDB_ITEM_ADDED';
   } else {
-    given ("$err") {
-      $rpl = "RDB_ERR_NO_SUCH_RDB" when "RDB_NOSUCH";
-      $rpl = "RPL_DB_ERR"          when "RDB_DBFAIL";
-      default {
-        my $errstr =  "BUG; Unknown err $err from _add_item";
-        logger->warn($errstr);
-        return $errstr
+    RDBADDERR: {
+      if ($err eq 'RDB_NOSUCH') {
+        $rpl = 'RDB_ERR_NO_SUCH_RDB';  last RDBADDERR
       }
-    }
 
+      if ($err eq 'RDB_DBFAIL') {
+        $rpl = 'RPL_DB_ERR';           last RDBADDERR
+      }
+
+      my $errstr = "BUG; Unknown err $err from _add_item";
+      logger->warn($errstr);
+      return $errstr
+    }
   }
 
   return core->rpl( $rpl, $rplvars )
@@ -622,17 +634,19 @@ sub _cmd_rdb_del {
     if ($retval) {
       $rpl = "RDB_ITEM_DELETED";
     } else {
-
-      given ("$err") {
-        $rpl = "RDB_ERR_NO_SUCH_RDB"  when "RDB_NOSUCH";
-        $rpl = "RPL_DB_ERR"           when "RDB_DBFAIL";
-        $rpl = "RDB_ERR_NO_SUCH_ITEM" when "RDB_NOSUCH_ITEM";
-        default {
-          my $errstr =  "BUG; Unknown err $err from _delete_item";
-          logger->warn($errstr);
-          return $errstr
+      ITEMDELERR: {
+        if ($err eq 'RDB_NOSUCH') {
+          $rpl = 'RDB_ERR_NO_SUCH_RDB';   last ITEMDELERR
         }
-
+        if ($err eq 'RDB_DBFAIL') {
+          $rpl = 'RPL_DB_ERR';            last ITEMDELERR
+        }
+        if ($err eq 'RDB_NOSUCH_ITEM') {
+          $rpl = 'RDB_ERR_NO_SUCH_ITEM';  last ITEMDELERR
+        }
+        my $errstr = "BUG; Unknown err $err from _delete_item";
+        logger->warn($errstr);
+        return $errstr
       }
 
     }
@@ -1199,9 +1213,8 @@ sub poe_got_result {
 
   my $dbmgr = $self->DBmgr;
 
-  given ($type) {
-
-    when ("string") {
+  RESPTYPE: for ($type) {
+    if ($type eq 'string') {
       unless (@$resultarr) {
         $resp = "$nickname: No matches found for $glob";
       } else {
@@ -1231,11 +1244,11 @@ sub poe_got_result {
 
           $resp = "[$itemkey] $content"
         }
-
       }
+      last RESPTYPE
     }
 
-    when ("indexes") {
+    if ($type eq 'indexes') {
       unless (@$resultarr) {
         $resp = "$nickname: No matches found for $glob";
       } else {
@@ -1255,14 +1268,16 @@ sub poe_got_result {
 
         $resp = $prefix . join('  ', @returned);
       }
+      last RESPTYPE
     }
 
-    when ("count") {
+    if ($type eq 'count') {
       $dbmgr->cache_push($rdb, $glob, $resultarr)
         if @$resultarr;
 
       my $count = @$resultarr;
       $resp = "$nickname: Found $count matches for $glob";
+      last RESPTYPE
     }
 
   }
