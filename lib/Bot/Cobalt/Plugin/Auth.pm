@@ -340,8 +340,7 @@ sub _cmd_login {
   ## this is stupid, but I'm too lazy to fix
   my ($self, $context, $msg) = @_;
 
-  my $l_user = $msg->message_array->[1] // undef;
-  my $l_pass = $msg->message_array->[2] // undef;
+  my ($l_user, $l_pass) = @{ $msg->message_array };
 
   my $origin = $msg->src;
   my $nick   = $msg->src_nick;
@@ -513,7 +512,7 @@ sub _do_login {
 
   my $user_rec;
   unless ($user_rec = $self->_get_user_rec($context, $username) ) {
-    logger->debug(
+    logger->info(
       "[$context] authfail; no such user: $username ($host)"
     );
 
@@ -530,7 +529,7 @@ sub _do_login {
   ## fail if we don't share channels with this user
   my $irc = core->get_irc_obj($context);
   unless ($irc->nick_channels($nick)) {
-    logger->debug(
+    logger->info(
       "[$context] authfail; no shared chans: $username ($host)"
     );
 
