@@ -340,7 +340,7 @@ sub _cmd_login {
   ## this is stupid, but I'm too lazy to fix
   my ($self, $context, $msg) = @_;
 
-  my ($l_user, $l_pass) = @{ $msg->message_array };
+  my (undef, $l_user, $l_pass) = @{ $msg->message_array };
 
   my $origin = $msg->src;
   my $nick   = $msg->src_nick;
