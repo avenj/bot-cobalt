@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Rehash;
-our $VERSION = '0.016001';
+our $VERSION = '0.016002';
 
 use 5.12.1;
 

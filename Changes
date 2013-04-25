@@ -1,14 +1,18 @@
 # Bot::Cobalt Changes
 
-0.016001  (02 Mar 2012)
+0.016002  (25 Apr 2013)
+
+  Kill smart-matching and when() in preparation for perl-5.18
+
+0.016001  (02 Mar 2013)
 
   Utils; Fix escaped [] in globs
 
-0.016000  (25 Feb 2012)
+0.016000  (25 Feb 2013)
 
   POD fixes, switch to long-form vers
 
-0.015  (24 Feb 2012)
+0.015  (24 Feb 2013)
 
   Plugin::Auth; fix mixed-case superuser usernames (miniCruzer)
 

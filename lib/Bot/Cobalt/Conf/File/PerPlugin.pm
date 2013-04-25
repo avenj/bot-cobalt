@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf::File::PerPlugin;
-our $VERSION = '0.016001';
+our $VERSION = '0.016002';
 
 ## This is in File:: but NOT a subclass of File.pm
 ##   possible it should move ...
