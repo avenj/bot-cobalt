@@ -125,8 +125,8 @@ sub dns_resp_recv {
   }
   
   my @send;
-  for my $ans ( $nsresp->answer() ) {
-    if ($type eq 'SOA') {
+  for my $ans ($nsresp->answer) {
+    if ($ans->type eq 'SOA') {
       push @send, 'SOA=' . join ':', 
              $ans->mname, $ans->rname, $ans->serial, $ans->refresh,
              $ans->retry, $ans->expire, $ans->minimum
