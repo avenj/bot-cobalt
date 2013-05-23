@@ -7,14 +7,14 @@ use strictures 1;
 use Carp;
 use Moo;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
 use Bot::Cobalt::Logger::Output;
 
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 
 has 'level' => (
@@ -105,7 +105,7 @@ sub _build_output {
 
   Bot::Cobalt::Logger::Output->new(
     %opts
-  );
+  )
 }
 
 sub _should_log {

@@ -3,7 +3,7 @@ our $VERSION = '0.016002';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 
-use 5.10.1;
+use feature ':5.10';
 use strictures 1;
 
 use base 'Exporter';

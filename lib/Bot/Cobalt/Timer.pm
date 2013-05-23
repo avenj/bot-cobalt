@@ -9,8 +9,7 @@ use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
-
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 ## It's possible to pass in a different core.
 ## (Allows timers to fire against different syndicators if needed)

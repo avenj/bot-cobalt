@@ -7,7 +7,7 @@ use strictures 1;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new { bless {}, shift }
 

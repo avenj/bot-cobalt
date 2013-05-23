@@ -21,7 +21,7 @@ use Bot::Cobalt::Common qw/:types/;
 use Time::HiRes qw/sleep/;
 
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 
 has 'File'  => (
