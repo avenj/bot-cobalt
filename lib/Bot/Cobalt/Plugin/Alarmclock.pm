@@ -41,7 +41,7 @@ sub Cobalt_unregister {
 
   logger->info("Unregistering core IRC plugin");
 
-  core()->timer_del_alias( core()->get_plugin_alias($self) );
+  core->timer_del_alias( core->get_plugin_alias($self) );
 
   return PLUGIN_EAT_NONE
 }
@@ -56,7 +56,7 @@ sub Bot_executed_timer {
     unless exists $self->{Active}->{$timerid};
 
   logger->debug("clearing timer state for $timerid")
-    if core()->debug > 1;
+    if core->debug > 1;
 
   delete $self->{Active}->{$timerid};
 
@@ -72,7 +72,7 @@ sub Bot_public_cmd_alarmdel {
   my $context = $msg->context;
   my $nick    = $msg->src_nick;
 
-  my $auth_usr = core()->auth->username($context, $nick);
+  my $auth_usr = core->auth->username($context, $nick);
   return PLUGIN_EAT_NONE unless $auth_usr;
 
   my $timerid = $msg->message_array->[0];
@@ -97,7 +97,7 @@ sub Bot_public_cmd_alarmdel {
 
   ## ... did this user set this timer?
   unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
-    my $auth_lev = core()->auth->level($context, $nick);
+    my $auth_lev = core->auth->level($context, $nick);
 
     ## superusers can override:
     unless ($auth_lev == 9999) {
@@ -112,7 +112,7 @@ sub Bot_public_cmd_alarmdel {
     }
   }
 
-  core()->timer_del($timerid);
+  core->timer_del($timerid);
   delete $self->{Active}->{$timerid};
 
   broadcast( 'message', $context, $channel,
@@ -139,9 +139,9 @@ sub Bot_public_cmd_alarmclock {
 
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE
-    unless core()->auth->level($context, $setter) >= $minlevel;
+    unless core->auth->level($context, $setter) >= $minlevel;
 
-  my $auth_usr = core()->auth->username($context, $setter);
+  my $auth_usr = core->auth->username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
   my $args = $msg->message_array;
@@ -156,7 +156,7 @@ sub Bot_public_cmd_alarmclock {
   my $secs = timestr_to_secs($timestr) || 1;
   my $channel = $msg->channel;
 
-  my $id = core()->timer_set( $secs,
+  my $id = core->timer_set( $secs,
     {
       Type => 'msg',
       Context => $context,
