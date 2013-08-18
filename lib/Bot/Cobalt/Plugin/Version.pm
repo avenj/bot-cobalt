@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Version;
-our $VERSION = '0.016002';
+our $VERSION = '0.016002_1';
 
 use 5.10.1;
 use strict;

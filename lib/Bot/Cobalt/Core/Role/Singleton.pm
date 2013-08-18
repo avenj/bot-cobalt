@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core::Role::Singleton;
-our $VERSION = '0.016002';
+our $VERSION = '0.016002_1';
 use Carp 'confess';
 use Moo::Role;
 use strict; no strict 'refs';

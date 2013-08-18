@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC;
-our $VERSION = '0.016002';
+our $VERSION = '0.016002_1';
 
 use 5.10.1;
 use strictures 1;
@@ -210,6 +210,8 @@ sub Bot_ircplug_connect {
     "Context $context; SSL $usessl ; V6 $use_v6"
   );
 
+  # FIXME at least optionally disable outgoing flood queue,
+  #   probably better to reimplement on top of IRC::FloodChk
   my %spawn_opts = (
       resolver => core->resolver,
 
