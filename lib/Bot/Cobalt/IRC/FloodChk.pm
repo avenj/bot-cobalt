@@ -2,27 +2,29 @@ package Bot::Cobalt::IRC::FloodChk;
 our $VERSION = '0.016002_1';
 
 use Carp;
-use Moo;
-
-use Bot::Cobalt::Common qw/:types/;
-
 use strictures;
+
+use Bot::Cobalt::Common ':types';
 
 use Time::HiRes;
 
-## fqueue->{$context}->{$key} = []
-has 'fqueue' => ( is => 'rw', isa => HashRef,
+use Moo;
+
+## _fqueue->{$context}->{$key} = []
+has _fqueue => ( 
+  is      => 'rw', 
+  isa     => HashRef,
   default => sub { {} },
 );
 
-has 'count' => ( is => 'rw', isa => Num, required => 1 );
-has 'in'    => ( is => 'rw', isa => Num, required => 1 );
+has count => ( is => 'rw', isa => Num, required => 1 );
+has in    => ( is => 'rw', isa => Num, required => 1 );
 
 sub check {
   my ($self, $context, $key) = @_;
   return unless defined $context and defined $key; 
   
-  my $this_ref = ($self->fqueue->{$context}->{$key}//=[]);
+  my $this_ref = ($self->_fqueue->{$context}->{$key}//=[]);
   
   if (@$this_ref >= $self->count) {
     my $oldest_ts = $this_ref->[0];
@@ -30,9 +32,9 @@ sub check {
     my $ev_c      = $self->count;
     my $ev_sec    = $self->in;
 
-    my $delayed = int(
-      ($oldest_ts + ($pending * $ev_sec / $ev_c) ) - Time::HiRes::time()
-    );
+    my $delayed =
+      ($oldest_ts + ($pending * $ev_sec / $ev_c) ) 
+      - Time::HiRes::time();
     
     ## Too many events in this time window:
     return $delayed if $delayed > 0;
@@ -52,20 +54,20 @@ sub clear {
   confess "clear() needs a context specified" 
     unless defined $context;
   
-  return unless exists $self->fqueue->{$context};
+  return unless exists $self->_fqueue->{$context};
   
-  return delete $self->fqueue->{$context}->{$key}
+  return delete $self->_fqueue->{$context}->{$key}
     if defined $key;
   
-  delete $self->fqueue->{$context}
+  delete $self->_fqueue->{$context}
 }
 
 sub expire {
   ## Clear keys when recent_event_time - time > $self->in
   my ($self) = @_;
-  CONTEXT: for my $context (keys %{ $self->fqueue } ) {
-    KEY: for my $key (keys %{ $self->fqueue->{$context} } ) {
-      my @events = @{ $self->fqueue->{$context}->{$key} };
+  CONTEXT: for my $context (keys %{ $self->_fqueue } ) {
+    KEY: for my $key (keys %{ $self->_fqueue->{$context} } ) {
+      my @events = @{ $self->_fqueue->{$context}->{$key} };
       my $latest_time = $events[-1] // next KEY;
       
       if (Time::HiRes::time() - $latest_time > $self->in) {
@@ -75,7 +77,7 @@ sub expire {
       }
     } ## KEY
     
-    unless (keys %{ $self->fqueue->{$context} }) {
+    unless (keys %{ $self->_fqueue->{$context} }) {
       ## Nothing left for this context.
       $self->clear($context);
     }
