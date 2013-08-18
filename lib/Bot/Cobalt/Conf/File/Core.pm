@@ -12,22 +12,21 @@ use Bot::Cobalt::Common qw/:types/;
 extends 'Bot::Cobalt::Conf::File';
 
 has 'language' => (
-  lazy => 1,
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
   
-  is  => 'rwp',
-  isa => Str,
-  
-  default => sub {
+  default   => sub {
     my ($self) = @_;
     $self->cfg_as_hash->{Language} // 'english' ;
   },
 );
 
 has 'paths' => (
-  lazy => 1,
-  
-  is  => 'rwp',
-  isa => HashRef,
+  lazy      => 1,
+  weak_ref  => 1,
+  is        => 'rwp',
+  isa       => HashRef,
   
   default => sub {
     my ($self) = @_;
@@ -38,22 +37,22 @@ has 'paths' => (
 );
 
 has 'irc' => (
-  lazy => 1,
+  lazy      => 1,
+  weak_ref  => 1,
+  is        => 'rwp',
+  isa       => HashRef,
   
-  is  => 'rwp',
-  isa => HashRef,
-  
-  default => sub {
+  default   => sub {
     my ($self) = @_;
     $self->cfg_as_hash->{IRC}
   },
 );
 
 has 'opts' => (
-  lazy => 1,
-  
-  is  => 'rwp',
-  isa => HashRef,
+  lazy      => 1,
+  weak_ref  => 1,
+  is        => 'rwp',
+  isa       => HashRef,
   
   default => sub {
     my ($self) = @_;
