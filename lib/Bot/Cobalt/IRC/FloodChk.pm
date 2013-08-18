@@ -2,19 +2,22 @@ package Bot::Cobalt::IRC::FloodChk;
 our $VERSION = '0.016002_1';
 
 use Carp;
-use strictures;
+use strictures 1;
 
 use Bot::Cobalt::Common ':types';
 
-use Time::HiRes;
+use Time::HiRes ();
+
+use List::Objects::WithUtils;
 
 use Moo;
 
-## _fqueue->{$context}->{$key} = []
+## _fqueue->{$context}->{$key} = array()
+## FIXME Should probably be an obj ...
 has _fqueue => ( 
-  is      => 'rw', 
-  isa     => HashRef,
-  default => sub { {} },
+  is      => 'rw',
+  lazy    => 1,
+  default => sub { +{} },
 );
 
 has count => ( is => 'rw', isa => Num, required => 1 );
@@ -24,11 +27,11 @@ sub check {
   my ($self, $context, $key) = @_;
   return unless defined $context and defined $key; 
   
-  my $this_ref = ($self->_fqueue->{$context}->{$key}//=[]);
+  my $thisq = $self->_fqueue->{$context}->{$key} //= array;
   
-  if (@$this_ref >= $self->count) {
-    my $oldest_ts = $this_ref->[0];
-    my $pending   = @$this_ref;
+  if ((my $pending = $thisq->count) >= $self->count) {
+
+    my $oldest_ts = $thisq->head;
     my $ev_c      = $self->count;
     my $ev_sec    = $self->in;
 
@@ -38,14 +41,13 @@ sub check {
     
     ## Too many events in this time window:
     return $delayed if $delayed > 0;
-    
-    ## ...otherwise shift and push:
-    shift @$this_ref;
-  }
-  
-  ## Safe to push this ev.
-  push @$this_ref, Time::HiRes::time();
 
+    ## ...otherwise shift and continue:
+    $thisq->shift;
+  }
+
+  ## Safe to push this ev, no delay:
+  $thisq->push( Time::HiRes::time() );
   return 0
 }
 
@@ -65,17 +67,20 @@ sub clear {
 sub expire {
   ## Clear keys when recent_event_time - time > $self->in
   my ($self) = @_;
+
   CONTEXT: for my $context (keys %{ $self->_fqueue } ) {
+
     KEY: for my $key (keys %{ $self->_fqueue->{$context} } ) {
-      my @events = @{ $self->_fqueue->{$context}->{$key} };
-      my $latest_time = $events[-1] // next KEY;
+
+      my $events = $self->_fqueue->{$context}->{$key};
+      my $latest_time = $events->get(-1) // next KEY;
       
       if (Time::HiRes::time() - $latest_time > $self->in) {
         ## It's been more than ->in seconds since latest event was
         ## noted. We can clear() this entry.
         $self->clear($context, $key);
       }
-    } ## KEY
+    } # KEY
     
     unless (keys %{ $self->_fqueue->{$context} }) {
       ## Nothing left for this context.

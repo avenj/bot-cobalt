@@ -197,7 +197,7 @@ my $build = $class->new(
       'YAML::XS'        => 0.34,
 
      # Utils
-      'List::Objects::WithUtils' => 0.002,
+      'List::Objects::WithUtils' => 1.009,
       'IRC::Utils'      => 0.12,
       'Term::ReadKey'   => 0,
   },
