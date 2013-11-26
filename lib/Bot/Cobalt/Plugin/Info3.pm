@@ -901,7 +901,7 @@ This plugin follows largely the same pattern; users can add a topic:
 
   <JoeUser> cobaltbot: add hello*everyone Howdy N~! Welcome to C~!
 
-Whenever a user says something matching the glob, the response is 
+When a user says something matching the glob, the response is 
 triggered:
 
   <Somebody> hello there, everyone
@@ -972,7 +972,7 @@ Deletes the specified topic.
 
 =head3 replace
 
-Same as doing a 'del' then 'add' for a preexisting topic:
+Same as 'del' then 'add' for an existing topic:
 
   bot: replace this+topic Some new string
 
@@ -1048,11 +1048,11 @@ available variables; useful for a quick refresher when adding topics.
 
 =head2 RDB integration
 
-Topics can also triggered randomized responses, as long as the 
+Topics can also trigger randomized responses if the
 L<Bot::Cobalt::Plugin::RDB> plugin is loaded.
 
-In order to pull a randomized response from a B<RDB>, a topic should 
-trigger a response starting with '~<rdbname>' -- for example:
+To pull a randomized response from a B<RDB>, a topic should trigger a response
+starting with '~<rdbname>' -- for example:
 
   bot: add hello ~hi
   bot: rdb dbadd hi
