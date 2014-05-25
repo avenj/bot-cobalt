@@ -5,7 +5,7 @@ our $VERSION = '0.016002_2';
 
 use strictures 1;
 
-use 5.10;
+use v5.10;
 use Carp;
 
 use POE;
@@ -39,14 +39,12 @@ has 'cfg' => (
 );
 
 has 'var' => (
-  ## path to our var/
   required => 1,
   is  => 'ro',
   isa => Str,
 );
 
 has 'etc' => (
-  ## Convenience method for getting our etc/ path:
   lazy => 1,
 
   is  => 'ro',
