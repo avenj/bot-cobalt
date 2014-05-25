@@ -43,7 +43,7 @@ sub execute {
 
       my $resp = "Rolled "
                  .color('bold', $n_dice)
-                 ." dice of "
+                 .($sides > 1 ? ' dice of ' : ' die of ')
                  .color('bold', $sides)
                  ." sides: " ;
 
