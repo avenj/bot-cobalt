@@ -1,16 +1,15 @@
 package Bot::Cobalt::Plugin::Games;
 our $VERSION = '0.016002_2';
 
+use strictures 1;
 use 5.10.1;
-use strict;
-use warnings;
 
 use Bot::Cobalt;
 use Object::Pluggable::Constants qw/ :ALL /;
 
 use Bot::Cobalt::Core::Loader;
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new { bless {}, shift }
 

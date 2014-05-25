@@ -1,9 +1,9 @@
 package Bot::Cobalt::IRC;
 our $VERSION = '0.016002_2';
 
-use 5.10.1;
 use strictures 1;
-use Moo;
+
+use v5.10;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -35,7 +35,8 @@ use POE qw/
 use IRC::Utils qw/ parse_mode_line /;
 
 
-use namespace::clean -except => 'meta';
+use Moo;
+use namespace::clean;
 
 
 has 'NON_RELOADABLE' => (

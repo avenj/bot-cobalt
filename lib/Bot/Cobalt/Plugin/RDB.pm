@@ -1,10 +1,8 @@
 package Bot::Cobalt::Plugin::RDB;
 our $VERSION = '0.016002_2';
 
-## 'Random' DBs, often used for quotebots or random chatter
-
 use strictures 1;
-use 5.12.1;
+use v5.10;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -20,7 +18,7 @@ use Try::Tiny;
 
 use POSIX ();
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new {
   bless {

@@ -3,34 +3,30 @@ our $VERSION = '0.016002_2';
 
 ## This is the core Syndicator singleton.
 
-use 5.12.1;
 use strictures 1;
 
+use 5.10;
 use Carp;
-use Moo;
 
 use POE;
 
 use Bot::Cobalt::Common;
-
 use Bot::Cobalt::IRC;
-
 use Bot::Cobalt::Lang;
-
 use Bot::Cobalt::Logger;
 
 use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
-
 use Bot::Cobalt::Core::Loader;
 
 use Scalar::Util qw/blessed/;
-
 use Try::Tiny;
-
 use File::Spec;
 
-use namespace::clean -except => 'meta';
+
+use Moo;
+use namespace::clean;
+
 
 has 'cfg' => (
   required => 1,

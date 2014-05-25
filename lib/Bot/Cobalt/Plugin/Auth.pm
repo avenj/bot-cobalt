@@ -59,7 +59,7 @@ use File::Spec;
 sub ACCESS_LIST() { 0 }
 sub DB_PATH()     { 1 }
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new {
   bless [

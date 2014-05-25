@@ -3,8 +3,8 @@ our $VERSION = '0.016002_2';
 
 ## handles and eats: !plugin
 
-use 5.12.1;
 use strictures 1;
+use v5.10;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -15,7 +15,7 @@ use Scalar::Util qw/blessed/;
 
 use Try::Tiny;
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new { bless [], shift }
 

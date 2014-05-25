@@ -1,10 +1,8 @@
 package Bot::Cobalt::Conf;
 our $VERSION = '0.016002_2';
 
-use Carp;
-use Moo;
-
 use strictures 1;
+use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
 
@@ -17,7 +15,8 @@ use File::Spec;
 use Scalar::Util qw/blessed/;
 
 
-use namespace::clean -except => 'meta';
+use Moo;
+use namespace::clean;
 
 
 

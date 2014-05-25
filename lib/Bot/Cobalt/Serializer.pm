@@ -1,10 +1,10 @@
 package Bot::Cobalt::Serializer;
 our $VERSION = '0.016002_2';
 
-use 5.10.1;
 use strictures 1;
 
-use Moo;
+use v5.10;
+
 use Carp;
 
 ## These two must be present anyway:
@@ -18,7 +18,8 @@ use Bot::Cobalt::Common qw/:types/;
 use Time::HiRes qw/sleep/;
 
 
-use namespace::clean -except => 'meta';
+use Moo;
+use namespace::clean;
 
 
 has 'Format' => (

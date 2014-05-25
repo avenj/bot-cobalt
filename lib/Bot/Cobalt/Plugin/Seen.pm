@@ -9,7 +9,7 @@ use Bot::Cobalt::DB;
 
 use File::Spec;
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new { bless {}, shift }
 

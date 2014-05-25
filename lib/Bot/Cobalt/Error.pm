@@ -1,14 +1,12 @@
 package Bot::Cobalt::Error;
 our $VERSION = '0.016002_2';
 
-use 5.12.1;
+use v5.10;
 use strictures 1;
 
 use Devel::StackTrace;
 
-use namespace::clean -except => 'meta';
-
-## Always 'use overload' *after* a namespace::clean
+use namespace::clean;
 
 use overload
   bool     => sub { 1 },

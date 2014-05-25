@@ -1,7 +1,8 @@
 package Bot::Cobalt::Plugin::Info3;
 our $VERSION = '0.016002_2';
 
-use 5.12.1;
+use strictures 1;
+use v5.10;
 
 ## Handles glob-style "info" response topics
 ## Modelled on darkbot/cobalt1 behavior
@@ -23,7 +24,7 @@ use File::Spec;
 
 use POSIX ();
 
-use namespace::clean -except => 'meta';
+use namespace::clean;
 
 sub new { bless {}, shift }
 
