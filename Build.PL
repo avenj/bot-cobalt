@@ -41,7 +41,7 @@ my $class = Module::Build->subclass(
 
       ++$|;
 
-      print "Versionifying ";
+      print "Versionifying $vers ";
       require File::Find;
       File::Find->import('find');
 

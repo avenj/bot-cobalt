@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::WWW;
-our $VERSION = '0.016002_1';
+our $VERSION = '0.016002_2';
 
 use 5.10.1;
 use strictures 1;

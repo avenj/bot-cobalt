@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event;
-our $VERSION = '0.016002_1';
+our $VERSION = '0.016002_2';
 
 ## Base class for IRC events.
 
