@@ -62,14 +62,11 @@ Bot::Cobalt - IRC darkbot-alike plus plugin authoring sugar
 
 =head1 DESCRIPTION
 
-B<Bot::Cobalt> is the second generation of the (previously not released 
-on CPAN) B<cobalt> IRC bot.
+B<Bot::Cobalt> is the second generation of the C<cobalt> IRC bot, which was
+originally a Perl remiplementation of Jason Hamilton's 90s-era C<darkbot>.
 
-Cobalt was originally a Perl reimplementation of Jason Hamilton's 
-B<darkbot> (darkbot's last release was in 2001).
-Bot::Cobalt is a much-improved (and CPAN-able!) revision, providing a 
-pluggable IRC bot framework coupled with a core set of plugins 
-replicating classic darkbot and Cobalt behavior.
+Bot::Cobalt provides a pluggable IRC bot framework coupled with a core set of plugins 
+replicating classic C<darkbot> and C<cobalt> behavior.
 
 The included plugin set provides a wide range of functionality; see 
 L</"Included plugins"> below.
@@ -91,7 +88,7 @@ L<Bot::Cobalt::Manual::Plugins> for more about plugin authoring.
 
 =head2 Initializing a new instance
 
-A Cobalt instance needs its own I<etc/> and I<var/> directories. With 
+A Bot::Cobalt instance needs its own I<etc/> and I<var/> directories. With 
 the default frontend (C<cobalt2>), these are specified in a simple 
 'rcfile' for each particular instance.
 
