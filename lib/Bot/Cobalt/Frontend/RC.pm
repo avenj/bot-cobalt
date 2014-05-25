@@ -11,7 +11,7 @@ use Cwd ();
 
 use Bot::Cobalt::Serializer;
 
-use base 'Exporter';
+use parent 'Exporter';
 
 our @EXPORT_OK = qw/
   rc_read

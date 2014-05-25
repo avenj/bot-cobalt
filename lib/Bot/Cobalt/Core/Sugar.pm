@@ -1,11 +1,12 @@
 package Bot::Cobalt::Core::Sugar;
 our $VERSION = '0.016002_2';
 
-use 5.10.1;
 use strictures 1;
+
+use v5.10;
 use Carp;
 
-use base 'Exporter';
+use parent 'Exporter';
 our @EXPORT = qw/
   core
   broadcast

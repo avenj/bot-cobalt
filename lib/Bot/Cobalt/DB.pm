@@ -24,34 +24,34 @@ use Time::HiRes qw/sleep/;
 use namespace::clean;
 
 
-has 'File'  => (
+has File  => (
   is  => 'rw',
   isa => Str,
 
   required => 1
 );
 
-has 'Perms' => (
+has Perms => (
   is => 'rw',
 
   default => sub { 0644 },
 );
 
-has 'Raw'     => (
+has Raw     => (
   is  => 'rw',
   isa => Bool,
 
   default => sub { 0 },
 );
 
-has 'Timeout' => (
+has Timeout => (
   is  => 'rw',
   isa => Num,
 
   default => sub { 5 },
 );
 
-has 'Serializer' => (
+has Serializer => (
   lazy => 1,
   is   => 'rw',
   isa  => Object,
@@ -62,7 +62,7 @@ has 'Serializer' => (
 );
 
 ## _orig is the original tie().
-has '_orig' => (
+has _orig => (
   is  => 'rw',
   isa => HashRef,
 
@@ -70,14 +70,14 @@ has '_orig' => (
 );
 
 ## Tied is the re-tied DB hash.
-has 'Tied'  => (
+has Tied  => (
   is  => 'rw',
   isa => HashRef,
 
   default   => sub { {} },
 );
 
-has '_lockFH' => (
+has _lockFH => (
   lazy => 1,
   is   => 'rw',
   isa  => FileHandle,
@@ -87,7 +87,7 @@ has '_lockFH' => (
 );
 
 ## LOCK_EX or LOCK_SH for current open
-has '_lockmode' => (
+has _lockmode => (
   lazy => 1,
   is  => 'rw',
 
@@ -96,7 +96,7 @@ has '_lockmode' => (
 );
 
 ## DB object.
-has 'DB'     => (
+has DB     => (
   lazy => 1,
   is   => 'rw',
   isa  => Object,
@@ -105,7 +105,7 @@ has 'DB'     => (
   clearer   => 'clear_DB',
 );
 
-has 'is_open' => (
+has is_open => (
   is => 'rw',
   isa => Bool,
 

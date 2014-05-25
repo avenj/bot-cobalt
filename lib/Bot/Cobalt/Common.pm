@@ -3,12 +3,12 @@ our $VERSION = '0.016002_2';
 
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 
-use feature ':5.10';
 use strictures 1;
 
-use base 'Exporter';
-
+use v5.10;
 use Carp;
+
+use parent 'Exporter';
 
 use Bot::Cobalt::Utils qw/ :ALL /;
 
@@ -104,8 +104,6 @@ our %EXPORT_TAGS = (
 );
 
 our @EXPORT;
-
-## see perldoc Exporter:
 {
   my %seen;
   push @EXPORT,

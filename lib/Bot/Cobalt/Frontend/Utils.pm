@@ -1,12 +1,12 @@
 package Bot::Cobalt::Frontend::Utils;
 our $VERSION = '0.016002_2';
 
-use 5.10.1;
 use strictures 1;
 
+use 5.10.1;
 use Carp;
 
-use base 'Exporter';
+use parent 'Exporter';
 
 our @EXPORT_OK = qw/
   ask_yesno

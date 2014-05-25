@@ -129,7 +129,7 @@ my $build = $class->new(
       'Data::Dumper'     => 0,
       'DB_File'          => 0,
 
-      'Exporter'         => 0,
+      'Exporter::Tiny'   => 0,
 
       'Fcntl'            => 0,
       'File::Find'       => 0,
@@ -154,6 +154,7 @@ my $build = $class->new(
       'Try::Tiny'        => 0,
 
       'overload'         => 0,
+      'parent'           => 0,
 
    ### Cobalt set ###
      # Crypt

@@ -28,7 +28,7 @@ use Moo;
 use namespace::clean;
 
 
-has 'cfg' => (
+has cfg => (
   required => 1,
 
   is  => 'rw',
@@ -38,13 +38,13 @@ has 'cfg' => (
   },
 );
 
-has 'var' => (
+has var => (
   required => 1,
   is  => 'ro',
   isa => Str,
 );
 
-has 'etc' => (
+has etc => (
   lazy => 1,
 
   is  => 'ro',
@@ -56,7 +56,7 @@ has 'etc' => (
   },
 );
 
-has 'log'      => (
+has log      => (
   lazy => 1,
 
   is => 'rw',
@@ -91,14 +91,14 @@ has 'log'      => (
   },
 );
 
-has 'loglevel' => (
+has loglevel => (
   is  => 'rw',
   isa => Str,
 
   default => sub { 'info' },
 );
 
-has 'detached' => (
+has detached => (
   lazy => 1,
   is   => 'ro',
   isa  => Int,
@@ -106,7 +106,7 @@ has 'detached' => (
   default => sub { 0 },
 );
 
-has 'debug'    => (
+has debug    => (
   lazy => 1,
 
   isa => Int,
@@ -116,7 +116,7 @@ has 'debug'    => (
 );
 
 ## version/url used for var replacement:
-has 'version' => (
+has version => (
   lazy => 1,
 
   is   => 'rwp',
@@ -125,7 +125,7 @@ has 'version' => (
   default => sub { $Bot::Cobalt::Core::VERSION }
 );
 
-has 'url' => (
+has url => (
   lazy => 1,
 
   is  => 'rwp',
@@ -134,7 +134,7 @@ has 'url' => (
   default => sub { "http://www.metacpan.org/dist/Bot-Cobalt" },
 );
 
-has 'langset' => (
+has langset => (
   lazy => 1,
 
   is  => 'ro',
@@ -161,7 +161,7 @@ has 'langset' => (
   },
 );
 
-has 'lang' => (
+has lang => (
   lazy => 1,
 
   is  => 'ro',
@@ -175,7 +175,7 @@ has 'lang' => (
   },
 );
 
-has 'State' => (
+has State => (
   lazy => 1,
 
   ## global 'heap' of sorts
@@ -196,7 +196,7 @@ has 'State' => (
   },
 );
 
-has 'PluginObjects' => (
+has PluginObjects => (
   lazy => 1,
 
   ## alias -> object mapping
@@ -206,7 +206,7 @@ has 'PluginObjects' => (
   default => sub { {} },
 );
 
-has 'Provided' => (
+has Provided => (
   lazy => 1,
 
   ## Some plugins provide optional functionality.
@@ -217,7 +217,7 @@ has 'Provided' => (
   default => sub { {} },
 );
 
-has 'auth' => (
+has auth => (
   lazy => 1,
 
   is  => 'rw',
@@ -228,7 +228,7 @@ has 'auth' => (
   },
 );
 
-has 'ignore' => (
+has ignore => (
   lazy => 1,
 
   is  => 'rw',
@@ -240,7 +240,7 @@ has 'ignore' => (
 );
 
 ## FIXME not documented
-has 'resolver' => (
+has resolver => (
   lazy => 1,
 
   is  => 'rwp',

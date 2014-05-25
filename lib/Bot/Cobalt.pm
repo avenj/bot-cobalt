@@ -7,7 +7,7 @@ use Carp;
 
 use Bot::Cobalt::Core::Sugar;
 
-use base 'Exporter';
+use parent 'Exporter';
 our @EXPORT = @Bot::Cobalt::Core::Sugar::EXPORT;
 
 sub import {

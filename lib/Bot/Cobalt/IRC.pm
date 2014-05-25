@@ -39,7 +39,7 @@ use Moo;
 use namespace::clean;
 
 
-has 'NON_RELOADABLE' => (
+has NON_RELOADABLE => (
   isa => Bool,
   ## Well, really, it's sort-of unloadable.
   ##  ... but life usually sucks when you do.
@@ -51,7 +51,7 @@ has 'NON_RELOADABLE' => (
 
 ## We keep references to our ircobjs; core tracks these also,
 ## but there is no guarantee that we're the only IRC plugin loaded.
-has 'ircobjs' => (
+has ircobjs => (
   lazy => 1,
   is   => 'rw',
   isa  => HashRef,
@@ -59,7 +59,7 @@ has 'ircobjs' => (
   default => sub { {} },
 );
 
-has 'flood' => (
+has flood => (
   is   => 'ro',
   isa  => Object,
   lazy => 1,
