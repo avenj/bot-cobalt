@@ -4,6 +4,8 @@ our $VERSION = '0.016002_1';
 use 5.12.1;
 use strictures 1;
 
+use IO::File ();
+
 use Carp;
 
 use Fcntl qw/:DEFAULT :flock/;
