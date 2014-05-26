@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Alarmclock;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 use v5.10;
@@ -9,8 +9,6 @@ use Bot::Cobalt;
 use Bot::Cobalt::Utils qw/ timestr_to_secs /;
 
 use Object::Pluggable::Constants qw/ :ALL /;
-
-use namespace::clean;
 
 ## Commands:
 ##  !alarmclock

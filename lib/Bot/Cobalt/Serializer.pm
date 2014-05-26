@@ -1,5 +1,5 @@
 package Bot::Cobalt::Serializer;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 
@@ -19,7 +19,6 @@ use Time::HiRes qw/sleep/;
 
 
 use Moo;
-use namespace::clean;
 
 
 has 'Format' => (

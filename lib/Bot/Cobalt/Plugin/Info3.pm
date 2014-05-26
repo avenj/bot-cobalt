@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Info3;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 use v5.10;
@@ -24,7 +24,6 @@ use File::Spec;
 
 use POSIX ();
 
-use namespace::clean;
 
 sub new { bless {}, shift }
 

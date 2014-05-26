@@ -129,7 +129,7 @@ my $build = $class->new(
       'Data::Dumper'     => 0,
       'DB_File'          => 0,
 
-      'Exporter::Tiny'   => 0,
+      'Exporter'         => 0,
 
       'Fcntl'            => 0,
       'File::Find'       => 0,
@@ -171,7 +171,6 @@ my $build = $class->new(
      # Moo + related
       'Moo'                    => 0.091009,
       'MooX::Types::MooseLike' => 0.08,
-      'namespace::clean'       => 0,
 
      # Network
       'Net::IP::Minimal' => 0.04,

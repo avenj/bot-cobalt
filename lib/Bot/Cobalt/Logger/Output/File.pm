@@ -1,5 +1,5 @@
 package Bot::Cobalt::Logger::Output::File;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use 5.12.1;
 use strictures 1;

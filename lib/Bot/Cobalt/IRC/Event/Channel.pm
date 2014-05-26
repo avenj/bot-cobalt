@@ -1,5 +1,5 @@
 package Bot::Cobalt::IRC::Event::Channel;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 ## Generic channel events.
 

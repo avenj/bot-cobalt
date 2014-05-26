@@ -1,12 +1,10 @@
 package Bot::Cobalt::Error;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use v5.10;
 use strictures 1;
 
 use Devel::StackTrace;
-
-use namespace::clean;
 
 use overload
   bool     => sub { 1 },

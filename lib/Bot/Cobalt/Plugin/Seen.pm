@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Seen;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use 5.10.1;
 
@@ -8,8 +8,6 @@ use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
 
 use File::Spec;
-
-use namespace::clean;
 
 sub new { bless {}, shift }
 

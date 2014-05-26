@@ -1,5 +1,19 @@
 # Bot::Cobalt Changes
 
+0.016003  (25 May 2014)
+
+  Fix hi-res time support in ::IRC::FloodChk
+
+  Fix possible memory leak in Conf objects
+
+  Fix perl-5.12.5 test failures (missing explicit IO::File require)
+
+  Drop base.pm in favor of parent.pm
+
+  POD fixes
+
+  Various cleanups (including leftover Moose-y namespace::clean imports)
+
 0.016002  (25 Apr 2013)
 
   Kill smart-matching and when() in preparation for perl-5.18

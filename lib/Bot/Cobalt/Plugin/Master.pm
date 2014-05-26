@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Master;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use 5.10.1;
 use strictures 1;
@@ -7,7 +7,6 @@ use strictures 1;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
-use namespace::clean;
 
 sub new { bless {}, shift }
 

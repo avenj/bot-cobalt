@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::WWW;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 use 5.10.1;
@@ -12,7 +12,6 @@ use POE qw/
   Component::Client::Keepalive
 /;
 
-use namespace::clean;
 
 sub opts {
   my $opts = core->get_plugin_cfg($_[0])->{Opts};

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::PluginMgr;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 ## handles and eats: !plugin
 
@@ -15,7 +15,6 @@ use Scalar::Util qw/blessed/;
 
 use Try::Tiny;
 
-use namespace::clean;
 
 sub new { bless [], shift }
 

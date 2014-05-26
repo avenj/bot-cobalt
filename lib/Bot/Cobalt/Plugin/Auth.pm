@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::Auth;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 ## "Standard" Auth module
 ##
@@ -59,7 +59,6 @@ use File::Spec;
 sub ACCESS_LIST() { 0 }
 sub DB_PATH()     { 1 }
 
-use namespace::clean;
 
 sub new {
   bless [

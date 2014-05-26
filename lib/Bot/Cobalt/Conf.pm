@@ -1,5 +1,5 @@
 package Bot::Cobalt::Conf;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 use Carp;
@@ -16,7 +16,6 @@ use Scalar::Util qw/blessed/;
 
 
 use Moo;
-use namespace::clean;
 
 
 

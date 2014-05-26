@@ -1,5 +1,5 @@
 package Bot::Cobalt::DB;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 ## Simple interface to a DB_File
 ## Uses proper retie-after-lock technique for locking
@@ -20,8 +20,6 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Time::HiRes qw/sleep/;
 
-
-use namespace::clean;
 
 
 has File  => (

@@ -1,5 +1,5 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 ## This is the core Syndicator singleton.
 
@@ -25,8 +25,6 @@ use File::Spec;
 
 
 use Moo;
-use namespace::clean;
-
 
 has cfg => (
   required => 1,
@@ -131,7 +129,7 @@ has url => (
   is  => 'rwp',
   isa => Str,
 
-  default => sub { "http://www.metacpan.org/dist/Bot-Cobalt" },
+  default => sub { "http://www.metacpan.org/release/Bot-Cobalt" },
 );
 
 has langset => (

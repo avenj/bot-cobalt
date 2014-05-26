@@ -1,5 +1,5 @@
 package Bot::Cobalt::Timer;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 
 use strictures 1;
 use 5.10.1;
@@ -9,7 +9,6 @@ use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
-use namespace::clean;
 
 ## It's possible to pass in a different core.
 ## (Allows timers to fire against different syndicators if needed)

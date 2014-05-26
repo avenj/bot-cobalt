@@ -1,11 +1,10 @@
 package Bot::Cobalt::Core::Role::Singleton;
-our $VERSION = '0.016002_2';
+our $VERSION = '0.016002_04';
 use Carp 'confess';
 use Moo::Role;
 use strict; no strict 'refs';
 use warnings FATAL => 'all';
 
-use namespace::clean;
 
 sub instance {
   my $class = $_[0];
