@@ -4,11 +4,10 @@ our $VERSION = '0.016002_04';
 ## Simple interface to a DB_File
 ## Uses proper retie-after-lock technique for locking
 
-use 5.12.1;
+use v5.10;
 use strictures 1;
 use Carp;
 
-use Moo;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock/;
@@ -21,67 +20,67 @@ use Bot::Cobalt::Common qw/:types/;
 use Time::HiRes qw/sleep/;
 
 
+use Moo; use MooX::Aliases;
 
-has File  => (
-  is  => 'rw',
-  isa => Str,
-
-  required => 1
+has file => (
+  required  => 1,
+  alias     => 'File',
+  is        => 'rw',
+  isa       => Str,
 );
 
-has Perms => (
-  is => 'rw',
-
-  default => sub { 0644 },
+has perms => (
+  is        => 'rw',
+  alias     => 'Perms',
+  builder   => sub { 0644 },
 );
 
-has Raw     => (
-  is  => 'rw',
-  isa => Bool,
-
-  default => sub { 0 },
+has raw => (
+  is        => 'rw',
+  alias     => 'Raw',
+  isa       => Bool,
+  builder   => sub { 0 },
 );
 
-has Timeout => (
-  is  => 'rw',
-  isa => Num,
-
-  default => sub { 5 },
+has timeout => (
+  is        => 'rw',
+  alias     => 'Timeout',
+  isa       => Num,
+  builder   => sub { 5 },
 );
 
-has Serializer => (
-  lazy => 1,
-  is   => 'rw',
-  isa  => Object,
-
-  default => sub {
+has serializer => (
+  lazy      => 1,
+  is        => 'rw',
+  alias     => 'Serializer',
+  isa       => Object,
+  builder   => sub {
     Bot::Cobalt::Serializer->new(Format => 'JSON')
   },
 );
 
 ## _orig is the original tie().
 has _orig => (
-  is  => 'rw',
-  isa => HashRef,
-
-  default => sub { {} },
+  is      => 'rw',
+  isa     => HashRef,
+  builder => sub { {} },
 );
 
-## Tied is the re-tied DB hash.
-has Tied  => (
-  is  => 'rw',
-  isa => HashRef,
-
-  default   => sub { {} },
+## tied is the re-tied DB hash.
+has tied  => (
+  is        => 'rw',
+  alias     => 'Tied',
+  isa       => HashRef,
+  builder   => sub { {} },
 );
 
-has _lockFH => (
-  lazy => 1,
-  is   => 'rw',
-  isa  => FileHandle,
+has _lockfh => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => FileHandle,
 
-  predicate => 'has_LockFH',
-  clearer   => 'clear_LockFH',
+  predicate => '_has_lockfh',
+  clearer   => '_clear_lockfh',
 );
 
 ## LOCK_EX or LOCK_SH for current open
@@ -89,8 +88,8 @@ has _lockmode => (
   lazy => 1,
   is  => 'rw',
 
-  predicate => 'has_LockMode',
-  clearer   => 'clear_LockMode',
+  predicate => '_has_lockmode',
+  clearer   => '_clear_lockmode',
 );
 
 ## DB object.
@@ -128,10 +127,9 @@ sub dbopen {
   $args{lc $_} = delete $args{$_} for keys %args;
 
   ## per-open timeout was specified:
-  $self->Timeout( $args{timeout} )
-    if $args{timeout};
+  $self->timeout( $args{timeout} ) if $args{timeout};
 
-  if ( $self->is_open ) {
+  if ($self->is_open) {
     carp "Attempted dbopen() on already-open DB";
     return
   }
@@ -147,26 +145,26 @@ sub dbopen {
     $self->_lockmode(LOCK_EX);
   }
 
-  my $path = $self->File;
+  my $path = $self->file;
 
  ## proper DB_File locking:
   ## open and tie the DB to _orig
   ## set up object
   ## call a sync() to create if needed
   my $orig_db = tie %{ $self->_orig }, "DB_File", $path,
-      $fflags, $self->Perms, $DB_HASH
+      $fflags, $self->perms, $DB_HASH
       or confess "failed db open: $path: $!" ;
   $orig_db->sync();
 
-  ## dup a FH to $db->fd for _lockFH
+  ## dup a FH to $db->fd for _lockfh
   my $fd = $orig_db->fd;
   my $fh = IO::File->new("<&=$fd")
     or confess "failed dup in dbopen: $!";
 
   my $timer = 0;
-  my $timeout = $self->Timeout;
+  my $timeout = $self->timeout;
 
-  ## flock _lockFH
+  ## flock _lockfh
   until ( flock $fh, $lflags ) {
     if ($timer > $timeout) {
       warn "failed lock for db $path, timeout (${timeout}s)\n";
@@ -180,13 +178,13 @@ sub dbopen {
   }
 
   ## reopen DB to Tied
-  my $db = tie %{ $self->Tied }, "DB_File", $path,
-      $fflags, $self->Perms, $DB_HASH
+  my $db = tie %{ $self->tied }, "DB_File", $path,
+      $fflags, $self->perms, $DB_HASH
       or confess "failed db reopen: $path: $!";
 
   ## preserve db obj and lock fh
   $self->is_open(1);
-  $self->_lockFH( $fh );
+  $self->_lockfh($fh);
   $self->DB($db);
   undef $orig_db;
 
@@ -203,19 +201,19 @@ sub dbopen {
   $self->DB->filter_fetch_value(
     sub {
       s/\0$//;
-      $_ = $self->Serializer->ref_from_json($_)
-        unless $self->Raw;
+      $_ = $self->serializer->ref_from_json($_)
+        unless $self->raw;
     }
   );
   $self->DB->filter_store_value(
     sub {
-      $_ = $self->Serializer->json_from_ref($_)
-        unless $self->Raw;
+      $_ = $self->serializer->json_from_ref($_)
+        unless $self->raw;
       $_ .= "\0";
     }
   );
 
-  return 1
+  1
 }
 
 sub dbclose {
@@ -231,17 +229,17 @@ sub dbclose {
   }
 
   $self->clear_DB;
-  untie %{ $self->Tied }
-    or carp "dbclose: untie Tied: $!";
+  untie %{ $self->tied }
+    or carp "dbclose: untie tied: $!";
 
-  flock( $self->_lockFH, LOCK_UN )
+  flock( $self->_lockfh, LOCK_UN )
     or carp "dbclose: unlock: $!";
 
   untie %{ $self->_orig }
     or carp "dbclose: untie _orig: $!";
 
-  $self->clear_LockFH;
-  $self->clear_LockMode;
+  $self->_clear_lockfh;
+  $self->_clear_lockmode;
 
   $self->is_open(0);
 
@@ -253,7 +251,7 @@ sub get_tied {
   confess "attempted to get_tied on unopened db"
     unless $self->is_open;
 
-  return $self->Tied
+  $self->tied
 }
 
 sub get_db {
@@ -261,7 +259,7 @@ sub get_db {
   confess "attempted to get_db on unopened db"
     unless $self->is_open;
 
-  return $self->DB
+  $self->DB
 }
 
 sub dbkeys {
@@ -269,8 +267,9 @@ sub dbkeys {
   confess "attempted 'dbkeys' on unopened db"
     unless $self->is_open;
 
-  return wantarray ? (keys %{ $self->Tied })
-                   : scalar keys %{ $self->Tied };
+  wantarray ? 
+    (keys %{ $self->tied })
+    : scalar keys %{ $self->tied }
 }
 
 sub get {
@@ -280,7 +279,7 @@ sub get {
 
   return unless exists $self->Tied->{$key};
 
-  return $self->Tied->{$key}
+  $self->tied->{$key}
 }
 
 sub put {
@@ -288,7 +287,7 @@ sub put {
   confess "attempted 'put' on unopened db"
     unless $self->is_open;
 
-  return $self->Tied->{$key} = $value;
+  $self->tied->{$key} = $value
 }
 
 sub del {
@@ -296,11 +295,11 @@ sub del {
   confess "attempted 'del' on unopened db"
     unless $self->is_open;
 
-  return unless exists $self->Tied->{$key};
+  return unless exists $self->tied->{$key};
 
-  delete $self->Tied->{$key};
+  delete $self->tied->{$key};
 
-  return 1
+  1
 }
 
 sub dbdump {
@@ -310,7 +309,7 @@ sub dbdump {
   $format = 'YAMLXS' unless $format;
 
   ## shallow copy to drop tied()
-  my %copy = %{ $self->Tied };
+  my %copy = %{ $self->tied };
 
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
 
@@ -333,14 +332,14 @@ Bot::Cobalt::DB - Locking Berkeley DBs with serialization
   ## ... perhaps in a Cobalt_register ...
   my $db_path = $core->var ."/MyDatabase.db";
   my $db = Bot::Cobalt::DB->new(
-    File => $db_path,
+    file => $db_path,
   );
 
   ## Open (and lock):
   $db->dbopen;
 
   ## Do some work:
-  $db->put("SomeKey", $some_deep_structure);
+  $db->put( SomeKey => $some_deep_structure );
 
   for my $key ($db->dbkeys) {
     my $this_hash = $db->get($key);
@@ -365,21 +364,21 @@ B<new()> is used to create a new Bot::Cobalt::DB object representing your
 Berkeley DB:
 
   my $db = Bot::Cobalt::DB->new(
-    File => $path_to_db,
+    file => $path_to_db,
 
    ## Optional arguments:
 
     # Database file mode
-    Perms => $octal_mode,
+    perms => $octal_mode,
 
     ## Locking timeout in seconds
     ## Defaults to 5s:
-    Timeout => 10,
+    timeout => 10,
 
     ## Normally, references are serialized transparently.
-    ## If Raw is enabled, no serialization filter is used and you're
+    ## If raw is enabled, no serialization filter is used and you're
     ## on your own.
-    Raw => 0,
+    raw => 0,
   );
 
 =head2 Opening and closing
