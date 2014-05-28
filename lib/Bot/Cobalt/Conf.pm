@@ -19,85 +19,57 @@ use Moo;
 
 
 
-has 'etc'   => (
-  required => 1,
-
-  is  => 'rw',
-  isa => Str,
+has etc => (
+  required  => 1,
+  is        => 'rw',
+  isa       => Str,
 );
 
-has 'debug' => (
-  is  => 'rw',
-  isa => Bool,
-
-  default => sub { 0 }
+has debug => (
+  is        => 'rw',
+  isa       => Bool,
+  builder   => sub { 0 }
 );
 
-has 'path_to_core_cf' => (
-  lazy => 1,
-
-  is  => 'rwp',
-  isa => Str,
-
-  default => sub {
-    my ($self) = @_;
-
-    File::Spec->catfile(
-      $self->etc,
-      'cobalt.conf'
-    )
+has path_to_core_cf => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
+  builder   => sub {
+    File::Spec->catfile( shift->etc, 'cobalt.conf' )
   },
 );
 
-has 'path_to_channels_cf' => (
-  lazy => 1,
-
-  is  => 'rwp',
-  isa => Str,
-
-  default => sub {
-    my ($self) = @_;
-
-    File::Spec->catfile(
-      $self->etc,
-      'channels.conf'
-    )
+has path_to_channels_cf => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
+  builder   => sub {
+    File::Spec->catfile( shift->etc, 'channels.conf' )
   },
 );
 
-has 'path_to_plugins_cf' => (
-  lazy => 1,
-
-  is  => 'rwp',
-  isa => Str,
-
-  default => sub {
-    my ($self) = @_;
-
-    File::Spec->catfile(
-      $self->etc,
-      'plugins.conf'
-    )
+has path_to_plugins_cf => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
+  builder   => sub {
+    File::Spec->catfile( shift->etc, 'plugins.conf' )
   },
 );
 
 
-has 'core' => (
-  lazy => 1,
-
-  is  => 'ro',
-
+has core => (
+  lazy      => 1,
+  is        => 'ro',
   predicate => 'has_core',
   writer    => 'set_core',
-
-  isa => sub {
+  isa       => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Core')
       or die "core() should be a Bot::Cobalt::Conf::File::Core"
   },
-
-  default => sub {
+  builder => sub {
     my ($self) = @_;
-
     Bot::Cobalt::Conf::File::Core->new(
       debug => $self->debug,
       path  => $self->path_to_core_cf,
@@ -105,22 +77,18 @@ has 'core' => (
   },
 );
 
-has 'channels' => (
-  lazy => 1,
-
-  is  => 'ro',
-
+has channels => (
+  lazy      => 1,
+  is        => 'ro',
   predicate => 'has_channels',
   writer    => 'set_channels',
-
-  isa => sub {
-    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Channels')
+  isa       => sub {
+    my ($obj) = @_;
+    blessed $obj and $obj->isa('Bot::Cobalt::Conf::File::Channels')
       or die "channels() should be a Bot::Cobalt::Conf::File:Channels"
   },
-
-  default => sub {
+  builder   => sub {
     my ($self) = @_;
-
     Bot::Cobalt::Conf::File::Channels->new(
       debug => $self->debug,
       path  => $self->path_to_channels_cf,
@@ -128,22 +96,17 @@ has 'channels' => (
   },
 );
 
-has 'plugins' => (
-  lazy => 1,
-
-  is  => 'ro',
-
+has plugins => (
+  lazy      => 1,
+  is        => 'ro',
   predicate => 'has_plugins',
   writer    => 'set_plugins',
-
-  isa => sub {
+  isa       => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Plugins')
       or die "plugins() should be a Bot::Cobalt::Conf::File::Plugins"
   },
-
-  default => sub {
+  builder   => sub {
     my ($self) = @_;
-
     Bot::Cobalt::Conf::File::Plugins->new(
       debug  => $self->debug,
       path   => $self->path_to_plugins_cf,
@@ -172,6 +135,8 @@ Bot::Cobalt::Conf - Bot::Cobalt configuration manager
   ## (Still need an etcdir)
   my $cfg = Bot::Cobalt::Conf->new(
     etc => $path_to_etc_dir,
+
+    # Default paths are probably fine (based on etc, above):
     path_to_core_cf     => $core_cf_path,
     path_to_channels_cf => $chan_cf_path,
     path_to_plugins_cf  => $plugins_cf_path,
