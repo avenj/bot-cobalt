@@ -6,7 +6,8 @@ use strictures 1;
 use v5.10;
 use Carp;
 
-use parent 'Exporter';
+use Exporter 'import';
+
 our @EXPORT = qw/
   core
   broadcast

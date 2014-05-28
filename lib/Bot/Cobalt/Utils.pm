@@ -7,7 +7,7 @@ use Carp;
 
 use App::bmkpasswd ();
 
-use parent 'Exporter';
+use Exporter 'import';
 
 our @EXPORT_OK = qw/
   secs_to_str

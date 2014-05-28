@@ -6,7 +6,7 @@ use strictures 1;
 use 5.10.1;
 use Carp;
 
-use parent 'Exporter';
+use Exporter 'import';
 
 our @EXPORT_OK = qw/
   ask_yesno

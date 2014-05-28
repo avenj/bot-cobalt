@@ -111,7 +111,7 @@ our @EXPORT;
 }
 
 sub import {
-  strictures->import;
+  strictures->import(1);
   feature->import( ':5.10' );
   __PACKAGE__->export_to_level(1, @_);
 }
