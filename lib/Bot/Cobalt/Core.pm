@@ -19,7 +19,7 @@ use Bot::Cobalt::Core::ContextMeta::Auth;
 use Bot::Cobalt::Core::ContextMeta::Ignore;
 use Bot::Cobalt::Core::Loader;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 use Try::Tiny;
 use File::Spec;
 
@@ -27,132 +27,106 @@ use File::Spec;
 use Moo;
 
 has cfg => (
-  required => 1,
-
-  is  => 'rw',
-  isa => sub {
+  required  => 1,
+  is        => 'rw',
+  isa       => sub {
     blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf')
       or die "cfg() attrib should be a Bot::Cobalt::Conf"
   },
 );
 
 has var => (
-  required => 1,
-  is  => 'ro',
-  isa => Str,
+  required  => 1,
+  is        => 'ro',
+  isa       => Str,
 );
 
 has etc => (
-  lazy => 1,
-
-  is  => 'ro',
-  isa => Str,
-
-  default => sub {
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Str,
+  builder   => sub {
     my ($self) = @_;
     $self->cfg->etc
   },
 );
 
-has log      => (
-  lazy => 1,
-
-  is => 'rw',
-
-  isa => sub {
+has log => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => sub {
     unless (blessed $_[0]) {
       die "log() not passed a blessed object"
     }
-
     for my $meth (qw/debug info warn error/) {
       die "log() object missing required method $meth"
         unless $_[0]->can($meth);
     }
   },
-
-  default => sub {
+  builder   => sub {
     my ($self) = @_;
-
     my %opts = (
       level => $self->loglevel,
     );
-
     if (my $log_format = $self->cfg->core->opts->{LogFormat}) {
       $opts{log_format} = $log_format
     }
-
     if (my $log_time_fmt = $self->cfg->core->opts->{LogTimeFormat}) {
       $opts{time_format} = $log_time_fmt
     }
-
     Bot::Cobalt::Logger->new( %opts )
   },
 );
 
 has loglevel => (
-  is  => 'rw',
-  isa => Str,
-
-  default => sub { 'info' },
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub { 'info' },
 );
 
 has detached => (
-  lazy => 1,
-  is   => 'ro',
-  isa  => Int,
-
-  default => sub { 0 },
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Int,
+  builder   => sub { 0 },
 );
 
-has debug    => (
-  lazy => 1,
-
-  isa => Int,
-  is  => 'rw',
-
-  default => sub { 0 },
+has debug => (
+  lazy      => 1,
+  isa       => Int,
+  is        => 'rw',
+  builder   => sub { 0 },
 );
 
 ## version/url used for var replacement:
 has version => (
-  lazy => 1,
-
-  is   => 'rwp',
-  isa  => Str,
-
-  default => sub { $Bot::Cobalt::Core::VERSION }
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
+  builder   => sub { $Bot::Cobalt::Core::VERSION }
 );
 
 has url => (
-  lazy => 1,
-
-  is  => 'rwp',
-  isa => Str,
-
-  default => sub { "http://www.metacpan.org/release/Bot-Cobalt" },
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
+  builder   => sub { "http://www.metacpan.org/release/Bot-Cobalt" },
 );
 
 has langset => (
-  lazy => 1,
-
-  is  => 'ro',
-  isa => sub {
+  lazy      => 1,
+  is        => 'ro',
+  isa       => sub {
     die "langset() needs a Bot::Cobalt::Lang"
       unless blessed $_[0] && $_[0]->isa('Bot::Cobalt::Lang');
   },
-
-  writer  => 'set_langset',
-
-  default => sub {
+  writer    => 'set_langset',
+  builder   => sub {
     my ($self) = @_;
-
     my $language = $self->cfg->core->language;
-
     my $lang_dir = File::Spec->catdir( $self->etc, 'langs' );
-
     Bot::Cobalt::Lang->new(
       use_core => 1,
-
       lang_dir => $lang_dir,
       lang     => $language,
     )
@@ -160,27 +134,22 @@ has langset => (
 );
 
 has lang => (
-  lazy => 1,
-
-  is  => 'ro',
-  isa => HashRef,
-
-  writer  => 'set_lang',
-
-  default => sub {
+  lazy      => 1,
+  is        => 'ro',
+  isa       => HashRef,
+  writer    => 'set_lang',
+  builder   => sub {
     my ($self) = @_;
     $self->langset->rpls
   },
 );
 
 has State => (
-  lazy => 1,
-
+  lazy      => 1,
   ## global 'heap' of sorts
-  is => 'ro',
-  isa => HashRef,
-
-  default => sub {
+  is        => 'ro',
+  isa       => HashRef,
+  builder   => sub {
     {
       HEAP => { },
       StartedTS => time(),
@@ -195,68 +164,59 @@ has State => (
 );
 
 has PluginObjects => (
-  lazy => 1,
-
+  lazy      => 1,
   ## alias -> object mapping
-  is  => 'rw',
-  isa => HashRef,
-
-  default => sub { {} },
+  is        => 'rw',
+  isa       => HashRef,
+  builder   => sub { {} },
 );
 
 has Provided => (
-  lazy => 1,
-
+  lazy      => 1,
   ## Some plugins provide optional functionality.
   ## This hash lets other plugins see if an event is available.
-  is  => 'ro',
-  isa => HashRef,
-
-  default => sub { {} },
+  is        => 'ro',
+  isa       => HashRef,
+  builder   => sub { {} },
 );
 
 has auth => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Object,
-
-  default => sub {
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Object,
+  builder   => sub {
     Bot::Cobalt::Core::ContextMeta::Auth->new
   },
 );
 
 has ignore => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Object,
-
-  default => sub {
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Object,
+  builder   => sub {
     Bot::Cobalt::Core::ContextMeta::Ignore->new
   },
 );
 
 ## FIXME not documented
 has resolver => (
-  lazy => 1,
-
-  is  => 'rwp',
-  isa => Object,
-
-  default => sub {
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Object,
+  builder   => sub {
     POE::Component::Client::DNS->spawn(
       Alias => 'core_resolver',
     )
   },
 );
 
-extends 'POE::Component::Syndicator';
 
+extends 'POE::Component::Syndicator';
 with 'Bot::Cobalt::Core::Role::Singleton';
 with 'Bot::Cobalt::Core::Role::EasyAccessors';
 with 'Bot::Cobalt::Core::Role::Timers';
 with 'Bot::Cobalt::Core::Role::IRC';
+
 
 ## FIXME test needed:
 sub rpl  {

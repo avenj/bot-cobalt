@@ -1,15 +1,16 @@
 package Bot::Cobalt::Core::ContextMeta::Ignore;
 our $VERSION = '0.016002_04';
 
-use 5.10.1;
+use v5.10;
 use strictures 1;
 
 use Carp;
-use Moo;
 
 use IRC::Utils qw/normalize_mask/;
 use Bot::Cobalt::Common qw/:types/;
 
+
+use Moo;
 extends 'Bot::Cobalt::Core::ContextMeta';
 
 around 'add' => sub {
@@ -25,7 +26,7 @@ around 'add' => sub {
   $addedby = $pkg unless defined $addedby;
   $reason  = "Added by $pkg" unless defined $reason;
 
-  my $meta = {
+  my $meta = +{
     AddedBy => $addedby,
     Reason  => $reason,
   };
@@ -39,7 +40,7 @@ sub reason {
   return unless exists $self->_list->{$context}
             and exists $self->_list->{$context}->{$mask};
 
-  return $self->_list->{$context}->{$mask}->{Reason}
+  $self->_list->{$context}->{$mask}->{Reason}
 }
 
 sub addedby {
@@ -47,7 +48,7 @@ sub addedby {
   return unless exists $self->_list->{$context}
             and exists $self->_list->{$context}->{$mask};
   
-  return $self->_list->{$context}->{$mask}->{AddedBy}
+  $self->_list->{$context}->{$mask}->{AddedBy}
 }
 
 1;

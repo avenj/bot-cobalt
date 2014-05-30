@@ -7,33 +7,38 @@ our $VERSION = '0.016002_04';
 use 5.10.1;
 use strictures 1;
 
-use Moo;
 use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
 
-has '_list' => ( is => 'rw', isa => HashRef,
-  default => sub { {} },
+use Scalar::Util 'reftype';
+
+
+use Moo;
+
+
+has _list => (
+  is        => 'rw', 
+  isa       => HashRef,
+  builder   => sub { +{} },
 );
+
 
 sub add {
   my ($self, $context, $key, $meta) = @_;
-
   confess "add() needs at least a context and key"
     unless defined $context and defined $key;
 
-  my $ref = {
-    AddedAt => time(),
-  };
+  my $ref = +{ AddedAt => time };
 
   ## Allow AddedAt to be adjusted:
-  if (ref $meta eq 'HASH') {
+  if (ref $meta  && reftype $meta eq 'HASH') {
     $ref->{$_} = $meta->{$_} for keys %$meta;
   }
   
   $self->_list->{$context}->{$key} = $ref;
 
-  return $key
+  $key
 }
 
 sub clear {
@@ -52,7 +57,7 @@ sub del {
   
   my $list = $self->_list->{$context} // return;
 
-  return delete $list->{$key}   
+  delete $list->{$key}   
 }
 
 sub fetch {
@@ -63,7 +68,7 @@ sub fetch {
 
   return unless exists $self->_list->{$context};
 
-  return $self->_list->{$context}->{$key}  
+  $self->_list->{$context}->{$key}  
 }
 
 sub list {

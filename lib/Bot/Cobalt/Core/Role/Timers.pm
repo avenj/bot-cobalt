@@ -2,14 +2,13 @@ package Bot::Cobalt::Core::Role::Timers;
 our $VERSION = '0.016002_04';
 
 use 5.10.1;
-use strict;
-use warnings;
-
-use Moo::Role;
+use strictures 1;
 
 use Bot::Cobalt::Timer;
 
 use Scalar::Util qw/blessed/;
+
+use Moo::Role;
 
 requires qw/
   log

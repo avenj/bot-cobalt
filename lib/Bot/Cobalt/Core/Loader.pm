@@ -1,15 +1,15 @@
 package Bot::Cobalt::Core::Loader;
 our $VERSION = '0.016002_04';
 
-use 5.12.1;
-use strict;
-use warnings FATAL => 'all';
+use v5.10;
+use strictures 1;
 
 use Carp;
 
 use Scalar::Util qw/blessed/;
 
 use Try::Tiny;
+
 
 sub new { bless [], shift }
 
@@ -51,11 +51,12 @@ sub load {
   }
 
   my $obj;
-  try {
+  my $err; try {
     $obj = $module->new(@newargs)
   } catch {
-    croak "new() failed for $module: $_"
-  };
+    $err = "new() failed for $module: $_";
+    undef
+  } or confess $err;
 
   $obj // ()
 }
@@ -82,7 +83,7 @@ sub unload {
 
   ## Pretty much always returns success, on the theory that
   ## we did all we could from here.
-  return 1
+  1
 }
 
 1;

@@ -6,7 +6,6 @@ our $VERSION = '0.016002_04';
 
 use strictures 1;
 
-use Moo;
 use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
@@ -14,17 +13,18 @@ use Bot::Cobalt::Common qw/:types/;
 use Scalar::Util qw/blessed/;
 
 
+use Moo;
 with 'Bot::Cobalt::Conf::Role::Reader';
 
 
-has 'module' => (
+has module => (
   required => 1,
   
   is  => 'rwp',
   isa => Str,
 );
 
-has 'extra_opts' => (
+has extra_opts => (
   ## Overrides the plugin-specific cfg.
   lazy => 1,
   
@@ -35,7 +35,7 @@ has 'extra_opts' => (
   writer    => 'set_extra_opts',
 );
 
-has 'priority' => (
+has priority => (
   lazy => 1,
   
   is  => 'ro',
@@ -47,7 +47,7 @@ has 'priority' => (
   default => sub { 1 },
 );
 
-has 'config_file' => (
+has config_file => (
   lazy => 1,
   
   is  => 'ro',
@@ -57,7 +57,7 @@ has 'config_file' => (
   predicate => 'has_config_file',
 );
 
-has 'autoload' => (
+has autoload => (
   lazy => 1,
   
   is  => 'ro',
@@ -66,7 +66,7 @@ has 'autoload' => (
   default => sub { 1 },
 );
 
-has 'opts' => (
+has opts => (
   lazy => 1,
   
   is  => 'rwp',

@@ -1,14 +1,15 @@
 package Bot::Cobalt::Core::ContextMeta::Auth;
 our $VERSION = '0.016002_04';
 
-use 5.10.1;
+use v5.10;
 use strictures 1;
 
-use Moo;
 use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
 
+
+use Moo;
 extends 'Bot::Cobalt::Core::ContextMeta';
 
 around 'add' => sub {
@@ -56,7 +57,7 @@ sub level {
   return 0 unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname};
   
-  return $self->_list->{$context}->{$nickname}->{Level} // 0
+  $self->_list->{$context}->{$nickname}->{Level} // 0
 }
 
 sub set_flag {
@@ -66,7 +67,7 @@ sub set_flag {
   return unless exists $self->_list->{$context} 
          and exists $self->_list->{$context}->{$nickname};
   
-  $self->_list->{$context}->{$nickname}->{Flags}->{$flag} = 1;
+  $self->_list->{$context}->{$nickname}->{Flags}->{$flag} = 1
 }
 
 sub drop_flag {
@@ -86,17 +87,17 @@ sub has_flag {
   return unless exists $self->_list->{$context} 
          and exists $self->_list->{$context}->{$nickname};
 
-  return $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
+  $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
 }
 
 sub flags {
   my ($self, $context, $nickname) = @_;
 
-  return {} unless exists $self->_list->{$context}
+  return +{} unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname}
          and ref $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
 
-  return $self->_list->{$context}->{$nickname}->{Flags}
+  $self->_list->{$context}->{$nickname}->{Flags}
 }
 
 sub user { goto &username }
@@ -108,7 +109,7 @@ sub username {
   return unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname};
 
-  return $self->_list->{$context}->{$nickname}->{Username}
+  $self->_list->{$context}->{$nickname}->{Username}
 }
 
 sub host {
@@ -119,7 +120,7 @@ sub host {
   return unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname};
 
-  return $self->_list->{$context}->{$nickname}->{Host}
+  $self->_list->{$context}->{$nickname}->{Host}
 }
 
 sub alias {
@@ -129,7 +130,7 @@ sub alias {
   return unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname};
 
-  return $self->_list->{$context}->{$nickname}->{Alias}
+  $self->_list->{$context}->{$nickname}->{Alias}
 }
 
 sub move {
@@ -139,7 +140,7 @@ sub move {
   return unless exists $self->_list->{$context}->{$old};
   
   $self->_list->{$context}->{$new} =  
-    delete $self->_list->{$context}->{$old};
+    delete $self->_list->{$context}->{$old}
 }
 
 

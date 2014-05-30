@@ -4,10 +4,11 @@ our $VERSION = '0.016002_04';
 use 5.10.1;
 use strictures 1;
 
-use Moo::Role;
 use Bot::Cobalt::Common qw/:types/;
 
 use Scalar::Util qw/blessed/;
+
+use Moo::Role;
 
 requires qw/
   log

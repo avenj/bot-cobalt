@@ -2,11 +2,11 @@ package Bot::Cobalt::Core::Role::EasyAccessors;
 our $VERSION = '0.016002_04';
 
 use strictures 1;
-use Moo::Role;
 
 use Scalar::Util qw/blessed/;
 use Carp;
 
+use Moo::Role;
 
 requires qw/
   cfg

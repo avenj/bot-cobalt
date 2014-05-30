@@ -5,7 +5,6 @@ use 5.12.1;
 use strictures 1;
 
 use Carp;
-use Moo;
 
 use Scalar::Util qw/blessed/;
 
@@ -16,6 +15,7 @@ use Bot::Cobalt::Conf::File::PerPlugin;
 use File::Spec;
 
 
+use Moo;
 extends 'Bot::Cobalt::Conf::File';
 
 

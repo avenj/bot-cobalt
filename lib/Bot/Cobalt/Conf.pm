@@ -65,7 +65,8 @@ has core => (
   predicate => 'has_core',
   writer    => 'set_core',
   isa       => sub {
-    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Core')
+    my ($obj) = @_;
+    blessed $obj and $obj->isa('Bot::Cobalt::Conf::File::Core')
       or die "core() should be a Bot::Cobalt::Conf::File::Core"
   },
   builder => sub {

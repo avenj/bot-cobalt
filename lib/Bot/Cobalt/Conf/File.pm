@@ -5,7 +5,6 @@ use 5.12.1;
 use strictures 1;
 
 use Carp;
-use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
@@ -13,31 +12,27 @@ use Bot::Cobalt::Serializer;
 
 use Try::Tiny;
 
-
+use Moo;
 with 'Bot::Cobalt::Conf::Role::Reader';
 
 
-has 'path' => (
-  required => 1,
-
-  is  => 'rwp',
-  isa => Str,
+has path => (
+  required  => 1,
+  is        => 'rwp',
+  isa       => Str,
 );
 
-has 'cfg_as_hash' => (
-  lazy => 1,
-  
-  is  => 'rwp',
-  isa => HashRef, 
-  
-  builder => '_build_cfg_hash',
+has cfg_as_hash => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => HashRef, 
+  builder   => '_build_cfg_hash',
 );
 
-has 'debug' => (
-  is  => 'rw',
-  isa => Bool,
-  
-  default => sub { 0 },
+has debug => (
+  is        => 'rw',
+  isa       => Bool,
+  builder   => sub { 0 },
 );
 
 sub BUILD {
@@ -55,12 +50,13 @@ sub _build_cfg_hash {
   
   my $cfg = $self->readfile( $self->path );
 
-  try {
+  my $err; try {
     $self->validate($cfg)
   } catch {
-    croak "Conf validation failed for ". $self->path .": $_"
-  };
-  
+    $err = $_;
+    undef
+  } or croak "Conf validation failed for ". $self->path .": $err";
+
   $cfg
 }
 
@@ -93,7 +89,7 @@ Bot::Cobalt::Conf::File - Base class for Bot::Cobalt cfg files
   extends 'Bot::Cobalt::Conf::File';
 
   # An attribute filled from loaded YAML cfg_as_hash:
-  has 'opts' => (
+  has opts => (
     lazy => 1,
     
     is  => 'rwp',
