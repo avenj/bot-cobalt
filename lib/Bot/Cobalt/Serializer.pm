@@ -1,10 +1,8 @@
 package Bot::Cobalt::Serializer;
 our $VERSION = '0.016002_04';
 
-use strictures 1;
-
 use v5.10;
-
+use strictures 1;
 use Carp;
 
 ## These two must be present anyway:
@@ -21,33 +19,26 @@ use Time::HiRes qw/sleep/;
 use Moo;
 
 
-has 'Format' => (
-  is  => 'rw',
-  isa => Str,
-
-  default => sub { 'YAMLXS' },
-
-  trigger => sub {
+has Format => (
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub { 'YAMLXS' },
+  trigger   => sub {
     my ($self, $format) = @_;
-
     $format = uc($format);
-
     confess "Unknown format $format"
       unless grep { $_ eq $format } keys %{ $self->_types };
-
     confess "Requested format $format but can't find a module for it"
       unless $self->_check_if_avail($format)
   },
 );
 
-has '_types' => (
-  lazy => 1,
-
-  is  => 'ro',
-  isa => HashRef,
-
-  default => sub {
-    {
+has _types => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => HashRef,
+  builder   => sub {
+    +{
       YAML   => 'YAML::Syck',
       YAMLXS => 'YAML::XS',
       JSON   => 'JSON::XS',
@@ -55,58 +46,42 @@ has '_types' => (
   },
 );
 
-has 'yamlxs_from_ref' => (
-  is   => 'rw',
-  lazy => 1,
-
-  coerce => sub {
-    YAML::XS::Dump($_[0])
-  },
+has yamlxs_from_ref => (
+  is        => 'rw',
+  lazy      => 1,
+  coerce    => sub { YAML::XS::Dump($_[0]) },
 );
 
-has 'ref_from_yamlxs' => (
-  is   => 'rw',
-  lazy => 1,
-
-  coerce => sub {
-    YAML::XS::Load($_[0])
-  },
+has ref_from_yamlxs => (
+  is        => 'rw',
+  lazy      => 1,
+  coerce    => sub { YAML::XS::Load($_[0]) },
 );
 
-has 'yaml_from_ref' => (
-  is   => 'rw',
-  lazy => 1,
-
-  coerce => sub {
-    require YAML::Syck;
-    YAML::Syck::Dump($_[0])
-  },
+has yaml_from_ref => (
+  is        => 'rw',
+  lazy      => 1,
+  coerce    => sub { require YAML::Syck; YAML::Syck::Dump($_[0]) },
 );
 
-has 'ref_from_yaml' => (
-  is   => 'rw',
-  lazy => 1,
-
-  coerce => sub {
-    require YAML::Syck;
-    YAML::Syck::Load($_[0])
-  },
+has ref_from_yaml => (
+  is        => 'rw',
+  lazy      => 1,
+  coerce    => sub { require YAML::Syck; YAML::Syck::Load($_[0]) },
 );
 
-has 'json_from_ref' => (
-  is   => 'rw',
-  lazy => 1,
-
-  coerce => sub {
+has json_from_ref => (
+  is        => 'rw',
+  lazy      => 1,
+  coerce    => sub {
     my $jsify = JSON::XS->new->allow_nonref;
     $jsify->utf8->encode($_[0]);
   },
 );
 
-has 'ref_from_json' => (
-  is   => 'rw',
-  lazy => 1,
-
+has ref_from_json => (
+  is        => 'rw',
+  lazy      => 1,
   coerce => sub {
     my $jsify = JSON::XS->new->allow_nonref;
     $jsify->utf8->decode($_[0])
@@ -126,13 +101,11 @@ sub BUILDARGS {
   ## ->new( Format => 'JSON' )   ## --> to JSON
   ## - or -
   ## ->new( Format => 'YAML' ) ## --> to YAML1.0
-
   @args == 1 ? { Format => $args[0] } : { @args }
 }
 
 sub freeze {
   ## ->freeze($ref)
-  ## serialize arbitrary data structure
   my ($self, $ref) = @_;
   unless (defined $ref) {
     carp "freeze() received no data";
@@ -147,7 +120,6 @@ sub freeze {
 
 sub thaw {
   ## ->thaw($data)
-  ## deserialize data in specified Format
   my ($self, $data) = @_;
   unless (defined $data) {
     carp "thaw() received no data";
@@ -163,7 +135,6 @@ sub thaw {
 sub writefile {
   my ($self, $path, $ref, $opts) = @_;
   ## $serializer->writefile($path, $ref [, { Opts });
-  ## serialize arbitrary data and write it to disk
 
   if (!$path) {
     confess "writefile called without path argument"
@@ -179,7 +150,6 @@ sub writefile {
 sub readfile {
   my ($self, $path, $opts) = @_;
   ## my $ref = $serializer->readfile($path)
-  ## thaw a file into data structure
 
   if (!$path) {
     confess "readfile called without path argument";
@@ -200,12 +170,10 @@ sub version {
   return($module, $module->VERSION);
 }
 
-## Internals
 
 
 sub _check_if_avail {
   my ($self, $type) = @_;
-  ## see if we have this serialization method available to us
 
   my $module;
   return unless $module = $self->_types->{$type};
