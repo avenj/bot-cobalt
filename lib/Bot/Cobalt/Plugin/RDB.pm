@@ -1,5 +1,5 @@
 package Bot::Cobalt::Plugin::RDB;
-our $VERSION = '0.016002_04';
+our $VERSION = '0.016002_05';
 
 use strictures 1;
 use v5.10;

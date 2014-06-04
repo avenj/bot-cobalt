@@ -1,5 +1,17 @@
 ## TODO
 
+Core:
+
+  - Drop File::Spec, use Path::Tiny
+
+  - ::Common refactor, see notes in branch type-tiny
+
+  - Stylistic cleanups:
+    * has 'foo' -> has foo
+    * attrib option indentation consistency
+    * lowercase-only attribs (w/ backwards-compat MooX::Aliases)
+
+
   - Try to make sure coreset plugins are rehash-safe
 
 Needs testing:

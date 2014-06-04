@@ -170,6 +170,8 @@ my $build = $class->new(
 
      # Moo + related
       'Moo'                    => 0.091009,
+      'MooX::Aliases'          => 0,
+      'MooX::late'             => 0.014,
       'MooX::Types::MooseLike' => 0.08,
 
      # Network
