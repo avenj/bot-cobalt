@@ -8,6 +8,8 @@ use Bot::Cobalt::Timer;
 
 use Scalar::Util qw/blessed/;
 
+use List::Objects::WithUtils;
+
 use Moo::Role;
 
 requires qw/
@@ -17,15 +19,20 @@ requires qw/
 /;
 
 
-has TimerPool => ( is => 'rw', default => sub { {} });
+## FIXME tests are nonexistant
+
+has TimerPool => ( 
+  is        => 'rw', 
+  builder   => sub { hash },
+);
 
 
 sub timer_gen_unique_id {
   my ($self) = @_;
   my @p = ( 'a'..'f', 1..9 );
   my $id = join '', map { $p[rand@p] } 1 .. 4;
-  $id .= $p[rand@p] while exists $self->TimerPool->{$id};
-  return $id
+  $id .= $p[rand@p] while $self->TimerPool->exists($id);
+  $id
 }
 
 sub timer_set {
@@ -44,18 +51,15 @@ sub timer_set {
     $timer->id( $self->timer_gen_unique_id );
   }
   
-  my $id = $timer->id;
-
   ## Add to our TimerPool.
-  $self->TimerPool->{$id} = $timer;
-  
-  $self->send_event( 'new_timer', $id );
+  $self->TimerPool->set($timer->id => $timer);
+  $self->send_event( new_timer => $timer->id );
 
   $self->log->debug(
     "timer_set; ".join ' ', $timer->id, $timer->delay, $timer->event
   ) if $self->debug > 1;
 
-  return $id
+  $timer->id
 }
 
 sub timer_set_hashref {
@@ -135,17 +139,17 @@ sub timer_set_hashref {
   ## Start ticking.
   $timer->delay( $delay );
 
-  return $timer
+  $timer
 }
 
 sub timer_get {
   my ($self, $id) = @_;
-  return unless $id;
+  return unless $id and $self->TimerPool->exists($id);
 
   $self->log->debug("timer retrieved; $id")
     if $self->debug > 1;
 
-  return $self->TimerPool->{$id}
+  $self->TimerPool->get($id)
 }
 
 sub timer_get_alias {
@@ -153,15 +157,13 @@ sub timer_get_alias {
   my ($self, $alias) = @_;
   return unless $alias;
 
-  my $timerpool = $self->TimerPool;
   my @timers;
+  $self->TimerPool->kv->visit(sub {
+    my ($id, $entry) = @$_;
+    push @timers, $id if $entry->alias eq $alias
+  });
 
-  for my $timerID (keys %$timerpool) {
-    my $entry = $timerpool->{$timerID};
-    push(@timers, $timerID) if $entry->alias eq $alias;
-  }
-
-  return wantarray ? @timers : \@timers
+  wantarray ? @timers : \@timers
 }
 
 sub timer_del {
@@ -173,34 +175,29 @@ sub timer_del {
   $self->log->debug("timer del; $id")
     if $self->debug > 1;
 
-  return unless exists $self->TimerPool->{$id};
+  return unless $self->TimerPool->exists($id);
 
-  my $deleted = delete $self->TimerPool->{$id};
-  $self->send_event( 'deleted_timer', $id, $deleted );
+  my $deleted = $self->TimerPool->delete($id);
+  $self->send_event( 'deleted_timer', $id, $deleted->all );
   
-  return $deleted
+  $deleted->all
 }
 
 sub timer_del_alias {
   my ($self, $alias) = @_;
   return unless $alias;
-  
-  my $timerpool = $self->TimerPool;
 
   my @deleted;
-
-  for my $id (keys %$timerpool) {
-    my $entry = $timerpool->{$id};
-
+  $self->TimerPool->kv->visit(sub {
+    my ($id, $entry) = @$_;
     if ($entry->alias eq $alias) {
-      my $deleted = delete $timerpool->{$id};
-      push(@deleted, $id);
-      $self->send_event( 'deleted_timer', $id, $deleted );
+      push @deleted, $id;
+      my $removed = $self->TimerPool->delete($id);
+      $self->send_event( deleted_timer => $id, $removed );
     }
+  });
 
-  }
-
-  return wantarray ? @deleted : scalar @deleted 
+  wantarray ? @deleted : scalar @deleted 
 }
 
 

@@ -1,26 +1,24 @@
 package Bot::Cobalt::Timer;
-our $VERSION = '0.016002_04';
+our $VERSION = '0.016002_05';
 
 use strictures 1;
 use 5.10.1;
 
 use Carp;
-use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
 
+use Moo;
+
 ## It's possible to pass in a different core.
 ## (Allows timers to fire against different syndicators if needed)
-has 'core'  => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Object,
-
-  default => sub {
+has core  => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Object,
+  builder   => sub {
     require Bot::Cobalt::Core;
-
     Bot::Cobalt::Core->instance 
       || die "Cannot find active Bot::Cobalt::Core instance"
   },
@@ -29,80 +27,64 @@ has 'core'  => (
 ## May have a timer ID specified at construction for use by
 ## timer pool managers; if not, creating IDs is up to them.
 ## (See ::Core::Role::Timers)
-has 'id' => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Str,
-
+has id => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_id'
 );
 
 ## 'at' is set regardless of whether delay()/at() is used
 ## (or 0 if none is ever set)
-has 'at'    => (
+has at => (
   lazy => 1,
-
   is  => 'rw',
   isa => Num,
-
-  default => sub { 0 },
+  builder => sub { 0 },
 );
 
-has 'delay' => (
+has delay => (
   lazy => 1,
-
   is  => 'rw',
   isa => Num,
-
   predicate => 'has_delay',
   clearer   => 'clear_delay',
-
-  default   => sub { 0 },
-
+  builder   => sub { 0 },
   trigger   => sub {
     my ($self, $value) = @_;
     $self->at( time() + $value );
   },
 );
 
-has 'event' => (
+has event => (
   lazy => 1,
-
   is  => 'rw',
   isa => Str,
-
   predicate => 'has_event',
 );
 
-has 'args'  => (
+has args  => (
   lazy => 1,
-
   is  => 'rw',
   isa => ArrayRef,
-
-  default => sub { [] },
+  builder => sub { [] },
 );
 
-has 'alias' => (
+has alias => (
   is  => 'rw',
   isa => Str,
-
-  default => sub { scalar caller },
+  builder => sub { scalar caller },
 );
 
-has 'context' => (
+has context => (
   lazy => 1,
-
   is  => 'rw',
   isa => Str,
-
   predicate => 'has_context',
-
-  default   => sub { 'Main' },
+  builder   => sub { 'Main' },
 );
 
-has 'text'    => (
+has text    => (
   lazy => 1,
 
   is  => 'rw',
@@ -111,7 +93,7 @@ has 'text'    => (
   predicate => 'has_text'
 );
 
-has 'target'  => (
+has target  => (
   lazy => 1,
   is  => 'rw',
   isa => Str,
@@ -119,13 +101,13 @@ has 'target'  => (
   predicate => 'has_target'
 );
 
-has 'type'  => (
+has type  => (
   lazy => 1,
 
   is  => 'rw',
   isa => Str,
 
-  default => sub {
+  builder => sub {
     my ($self) = @_;
 
     if ($self->has_context && $self->has_target) {
