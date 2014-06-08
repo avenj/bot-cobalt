@@ -15,7 +15,7 @@ use Bot::Cobalt::Logger::Output;
 
 
 
-has 'level' => (
+has level => (
   required => 1,
 
   is => 'ro',
@@ -29,7 +29,7 @@ has 'level' => (
 );
 
 ## time_format / log_format are passed to ::Output
-has 'time_format' => (
+has time_format => (
   lazy => 1,
 
   is  => 'rw',
@@ -45,7 +45,7 @@ has 'time_format' => (
   },
 );
 
-has 'log_format' => (
+has log_format => (
   lazy => 1,
 
   is  => 'rw',
@@ -62,7 +62,7 @@ has 'log_format' => (
 );
 
 
-has 'output' => (
+has output => (
   lazy => 1,
 
   is   => 'rwp',
@@ -76,7 +76,7 @@ has 'output' => (
   builder => '_build_output',
 );
 
-has '_levmap' => (
+has _levmap => (
   is  => 'ro',
   isa => HashRef,
 
