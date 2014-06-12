@@ -90,15 +90,7 @@ use Module::Build;
 use Try::Tiny;
 use File::Spec;
 
-my $basedir;
-try {
-  $basedir = Module::Build->current->base_dir
-} catch {
-  die "\n! Failed to retrieve base_dir() from Module::Build\n"
-     ."...are you trying to run the test suite outside of `./Build`?\n"
-};
-
-my $langdir = File::Spec->catdir( $basedir, 'etc', 'langs' );
+my $langdir = File::Spec->catdir( 'share', 'etc', 'langs' );
 
 ## Should die:
 try {

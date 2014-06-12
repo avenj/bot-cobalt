@@ -1,7 +1,1 @@
-Build
-MYMETA.*
-META.*
-README
-_build/
-blib/
 tools/release/docs/wikidoc
