@@ -1,0 +1,78 @@
+#!perl
+
+my $VERSION = 2;
+
+use v5.10;
+use strictures 1;
+
+use Path::Tiny
+  'path';
+
+use File::ShareDir
+  'dist_dir';
+
+use Bot::Cobalt::Utils
+  'rplprintf', 'mkpasswd';
+
+use Bot::Cobalt::Frontend::Utils
+  ':all';
+
+use Bot::Cobalt::Frontend::RC
+  'rc_read', 'rc_write';
+
+
+my $rcfile = path(
+  $ENV{HOME} ? $ENV{HOME} . '/.cobalt2rc' : '.cobalt2rc'
+);
+
+use Getopt::Long;
+GetOptions(
+  'config|rcfile=s' => \$rcfile,
+
+  version => sub {
+    say "Bot::Cobalt installer (version $VERSION)";
+    exit 0
+  },
+
+  help    => sub {
+    print map "$_\n",
+      "  --config / --rcfile=PATH",
+      "    [default: $rcfile]"
+    ;
+    exit 0
+  },
+);
+
+## FIXME
+##   should be able to install non-interactively (template replacement
+##   defaults)
+##
+##   interactive mode needs to cover:
+##    - rcfile placement
+##      * default to $rcfile
+##      * prompt if overwriting
+##    - cobalt basedir
+##      * default to $HOME/cobalt2
+##      * prompt if exists and populated
+##    - cobalt.conf
+##      * CFG_BOT_NICK, CFG_BOT_USERNAME, CFG_BOT_REALNAME
+##      * CFG_CMD_CHAR
+##      * CFG_SERVER_ADDR
+##      * CFG_USE_SSL
+##      * CFG_SERVER_PORT
+##    - channels.conf
+##      * CHAN
+##      * ??
+##    - auth.conf
+##      * AUTH_USER
+##      * AUTH_PASS  (Termios turn off echo)
+##      * AUTH_MASK
+##      * ability to add more users?
+##
+##   installation should populate:
+##    - $rcfile
+##    - $basedir/etc/ by copying from ShareDir
+##    - template replacement for:
+##       cobalt.conf, channels.conf, auth.conf
+##    - $basedir/var/db [empty]
+
