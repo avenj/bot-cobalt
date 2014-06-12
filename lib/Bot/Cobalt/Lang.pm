@@ -8,7 +8,7 @@ use Carp;
 use Bot::Cobalt::Common qw/:types/;
 use Bot::Cobalt::Serializer;
 
-use File::ShareDir;
+use File::ShareDir 'dist_dir';
 
 use File::Spec;  # FIXME Path::Tiny
 
@@ -22,7 +22,7 @@ has lang_dir => (
   # BUILD dies without me or absolute_path (unless use_core_only => 1)
   lazy        => 1,
   is          => 'ro',
-  isa         => Str,
+  isa         => Str,  # FIXME coercible Path
   predicate   => 'has_lang_dir',
   writer      => '_set_lang_dir',
 );
@@ -37,7 +37,7 @@ has absolute_path => (
   # BUILD dies without me or lang_dir (unless use_core_only => 1)
   lazy      => 1,
   is        => 'ro',  
-  isa       => Str,
+  isa       => Str,  # FIXME coercible Path
   predicate => 'has_absolute_path',
   writer    => '_set_absolute_path',
 );
@@ -77,12 +77,9 @@ has rpls => (
       return $rpl_hash
     }
 
-    my $serializer = Bot::Cobalt::Serializer->new;
-    
     my $croakable;
-    
     my $loaded_set = try {
-      $serializer->readfile( $self->_full_lang_path )
+      Bot::Cobalt::Serializer->new->readfile( $self->_full_lang_path )
     } catch {
       ## croak() by default.
       ## If this is a core set load, return empty hash.
@@ -90,10 +87,10 @@ has rpls => (
         $croakable = "readfile() failure for ". $self->lang().
           "(". $self->_full_lang_path(). "): ".
           $_ ;
-        0
+        undef
       } else {
         carp "Language load failure for ".$self->lang.": $_\n";
-        { RPL => {} }
+        +{ RPL => +{} }
       }
     } or croak $croakable;
 
@@ -102,11 +99,11 @@ has rpls => (
       my $rev_for_builtin = $self->_core_set->{SPEC} // 0;
 
       if ($rev_for_builtin > $rev_for_loaded) {
-        warn("Appear to be loading a core language set, but the internal",
+        warn
+          "Appear to be loading a core language set, but the internal",
           " set has a higher SPEC number than the loaded set",
           " ($rev_for_builtin > $rev_for_loaded).\n",
-          " You may want to update language sets.\n",
-        );
+          " You may want to update language sets.\n" ;
       }
 
     }
@@ -154,10 +151,9 @@ has _core_set => (
   isa       => HashRef,
   builder   => sub {
     my ($self) = @_;
-    ## FIXME File::ShareDir
-    my $core_set_yaml =
-      $Bot::Cobalt::Lang::BUILTIN_SET 
-       //= do { local $/; <DATA> } ;
+    my $core_set_yaml = path(
+      dist_dir( 'Bot-Cobalt', 'etc', 'langs', 'english.yml' )
+    )->slurp_utf8;
     Bot::Cobalt::Serializer->new->thaw($core_set_yaml)
   },
 );
@@ -165,12 +161,10 @@ has _core_set => (
 
 sub BUILD {
   my ($self) = @_;
-
   unless ( $self->use_core_only ) {
     die "Need either a lang_dir or an absolute path"
       unless $self->has_absolute_path or $self->has_lang_dir;
   }
-
   ## Load/validate rpls() at construction time.
   $self->rpls;
 }
