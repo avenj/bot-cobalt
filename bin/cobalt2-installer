@@ -5,20 +5,12 @@ my $VERSION = 2;
 use v5.10;
 use strictures 1;
 
-use Path::Tiny
-  'path';
-
-use File::ShareDir
-  'dist_dir';
-
-use Bot::Cobalt::Utils
-  'rplprintf', 'mkpasswd';
-
-use Bot::Cobalt::Frontend::Utils
-  ':all';
-
-use Bot::Cobalt::Frontend::RC
-  'rc_read', 'rc_write';
+use Scalar::Util       'blessed', 'reftype';
+use Path::Tiny         'path';
+use File::ShareDir     'dist_dir';
+use Bot::Cobalt::Utils 'rplprintf', 'mkpasswd';
+use Bot::Cobalt::Frontend::Utils ':all';
+use Bot::Cobalt::Frontend::RC    'rc_read', 'rc_write';
 
 
 my $rcfile = path(
@@ -42,6 +34,51 @@ GetOptions(
     exit 0
   },
 );
+
+
+sub read_format_write {
+  my ($path, $vars) = @_;
+  die "Expected Path::Tiny but got $path"
+    unless blessed $path && $path->isa('Path::Tiny');
+  die "Expected HASH of template var replacements but got $vars"
+    unless reftype $vars eq 'HASH';
+
+  my $in = $path->slurp_utf8;
+  my $out = rplprintf($in, $vars);
+  $path->spew_utf8($out);
+  $path
+}
+
+
+
+sub build_dir_skeleton {
+  my ($base, $etc, $var) = @_;
+  die "Expected a base Path object but got $path"
+    unless blessed $path && $path->isa('Path::Tiny');
+
+  $etc = path( $base . '/etc' ) unless $etc;
+  $var = path( $base . '/var' ) unless $var;
+  my $dbpath = path( $var . '/db' );
+  $_->mkpath for $etc, $var, $dbpath;
+
+  wantarray ? ($base, $etc, $var) : $base
+}
+
+
+sub copy_base_confs {
+  # FIXME copy from sharedir
+}
+
+
+sub non_interactive {
+  # FIXME set up some default var replacements
+}
+
+
+sub interactive {
+  # FIXME prompt for var replacements
+}
+
 
 ## FIXME
 ##   should be able to install non-interactively (template replacement
@@ -73,6 +110,9 @@ GetOptions(
 ##    - $rcfile
 ##    - $basedir/etc/ by copying from ShareDir
 ##    - template replacement for:
-##       cobalt.conf, channels.conf, auth.conf
+##      * cobalt.conf
+##      * channels.conf
+##      * auth.conf
+##      * write as we go?
 ##    - $basedir/var/db [empty]
 
