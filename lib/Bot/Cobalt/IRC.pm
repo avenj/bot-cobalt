@@ -35,7 +35,7 @@ use POE qw/
 use IRC::Utils qw/ parse_mode_line /;
 
 
-use Moo;
+use Moo; use MooX::late;
 
 
 has NON_RELOADABLE => (
