@@ -1,5 +1,6 @@
 package Bot::Cobalt::Serializer;
-our $VERSION = '0.016002_05';
+
+
 
 use v5.10;
 use strictures 1;

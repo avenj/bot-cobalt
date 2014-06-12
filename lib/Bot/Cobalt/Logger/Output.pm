@@ -1,5 +1,6 @@
 package Bot::Cobalt::Logger::Output;
-our $VERSION = '0.016002_05';
+
+
 
 use Carp;
 use Moo;

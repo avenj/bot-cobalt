@@ -21,7 +21,8 @@ object constructor.
 Declare our package:
 
   package My::Bot::Cobalt::Plugin;
-  our $VERSION = '0.01';
+  
+
 
 We might need L<Bot::Cobalt::Common> utilities.
 It's good practice to use strict and warnings explicitly, although 
@@ -153,7 +154,8 @@ our retrieved B<DATA> -- this is nice and simple:
 =head2 Finished product
 
   package My::Bot::Cobalt::Plugin;
-  our $VERSION = '0.01';
+  
+
 
   use strictures 1;
   use Bot::Cobalt::Common;

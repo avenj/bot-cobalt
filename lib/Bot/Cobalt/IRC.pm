@@ -1,5 +1,6 @@
 package Bot::Cobalt::IRC;
-our $VERSION = '0.016002_05';
+
+
 
 use strictures 1;
 
@@ -391,7 +392,7 @@ sub _start {
     POE::Component::IRC::Plugin::CTCP->new(
       version  => "Bot::Cobalt ".core->version." (perl $^V) ".core->url,
       userinfo   => "I'm a teapot",
-      clientinfo => __PACKAGE__.'-'.$VERSION,
+      clientinfo => __PACKAGE__.'-'.($VERSION//'vcs'),
       source     => core->url,
     ),
   );

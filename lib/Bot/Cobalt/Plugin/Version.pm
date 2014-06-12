@@ -1,5 +1,6 @@
 package Bot::Cobalt::Plugin::Version;
-our $VERSION = '0.016002_05';
+
+
 
 use strictures 1;
 

@@ -40,7 +40,8 @@ GetOptions(
   ## Informational
   version => sub {
     require Bot::Cobalt;
-    print("cobalt $Bot::Cobalt::VERSION\n");
+    my $vers = $Bot::Cobalt::VERSION // 'vcs';
+    print "cobalt $vers\n";
     exit 0
   },
 

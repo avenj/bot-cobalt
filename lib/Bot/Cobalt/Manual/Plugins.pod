@@ -21,7 +21,8 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
 =head2 A basic plugin outline
 
   package Bot::Cobalt::Plugin::User::MyPlugin;
-  our $VERSION = '0.001';
+  
+
 
   use strict;
   use warnings;

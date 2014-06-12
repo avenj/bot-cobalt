@@ -1,5 +1,6 @@
 package Bot::Cobalt::Plugin::RDB::Database;
-our $VERSION = '0.016002_05';
+
+
 
 ## Frontend to managing RDB-style Bot::Cobalt::DB instances
 ## I regret writing this.

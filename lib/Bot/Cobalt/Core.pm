@@ -1,5 +1,6 @@
 package Bot::Cobalt::Core;
-our $VERSION = '0.016002_05';
+
+
 
 ## This is the core Syndicator singleton.
 
@@ -103,7 +104,7 @@ has version => (
   lazy      => 1,
   is        => 'rwp',
   isa       => Str,
-  builder   => sub { $Bot::Cobalt::Core::VERSION }
+  builder   => sub { $VERSION // 'vcs' }
 );
 
 has url => (

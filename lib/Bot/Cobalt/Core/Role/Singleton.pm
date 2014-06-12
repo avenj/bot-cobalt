@@ -1,5 +1,6 @@
 package Bot::Cobalt::Core::Role::Singleton;
-our $VERSION = '0.016002_05';
+
+
 
 use Carp 'confess';
 use strictures 1;

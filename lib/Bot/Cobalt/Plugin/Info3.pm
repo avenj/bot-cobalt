@@ -1,5 +1,6 @@
 package Bot::Cobalt::Plugin::Info3;
-our $VERSION = '0.016002_05';
+
+
 
 use strictures 1;
 use v5.10;

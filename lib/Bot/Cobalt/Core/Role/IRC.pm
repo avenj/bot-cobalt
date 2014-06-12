@@ -1,5 +1,6 @@
 package Bot::Cobalt::Core::Role::IRC;
-our $VERSION = '0.016002_05';
+
+
 
 use 5.10.1;
 use strictures 1;

@@ -1,5 +1,6 @@
 package Bot::Cobalt::Plugin::Extras::CPAN;
-our $VERSION = '0.016002_05';
+
+
 
 use 5.10.1;
 use strictures 1;
