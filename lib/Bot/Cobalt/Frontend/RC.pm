@@ -24,21 +24,21 @@ sub rc_read {
   croak "rc_read needs a rcfile path" unless $rcfile;
 
   my $generic_crappy_err = sub {
-    warn(
+    warn
       "Errors reported during rcfile parse\n",
       "You may have an old, incompatible, or broken rcfile.\n",
       "Path: $rcfile\n",
-      "Try running cobalt2-installer\n"
-    );
+      "Try running cobalt2-installer\n" ;
   };
 
-  my $rc_h;
-  try {
-    $rc_h = Bot::Cobalt::Serializer->new->readfile($rcfile);
+  my $rc_err;
+  my $rc_h = try {
+    Bot::Cobalt::Serializer->new->readfile($rcfile)
   } catch {
     $generic_crappy_err->();
-    croak "Could not rc_read(); readfile said $_"
-  };
+    $rc_err = $_;
+    undef
+  } or croak "Could not rc_read(); readfile said $_";
   
   unless ($rc_h && ref $rc_h eq 'HASH') {
     $generic_crappy_err->();
@@ -61,6 +61,9 @@ sub rc_write {
   croak "rc_write needs rc file path and base directory path"
     unless $rcfile and $basepath;
 
+  # FIXME Path::Tiny, and this logic is stupid
+  #  new cobalt2-installer doesn't care
+  #  don't think anything else calls an rc_write
   unless ( File::Spec->file_name_is_absolute($basepath) ) {
     my $homedir = $ENV{HOME} || Cwd::cwd();
     $basepath = File::Spec->catdir( $homedir, $basepath );
@@ -72,15 +75,11 @@ sub rc_write {
     VAR  => File::Spec->catdir( $basepath, 'var' ),
   };
 
-  ## Return $basepath on success, otherwise croak out.
-  try {
-    Bot::Cobalt::Serializer->new->writefile(
-      $rcfile, $rc_h
-    );
-    $basepath
-  } catch {
-    croak "rc_write() failure in call to Serializer; $rcfile $_"
-  }
+  Bot::Cobalt::Serializer->new->writefile(
+    $rcfile, $rc_h
+  );
+
+  $basepath
 }
 
 1;
