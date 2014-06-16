@@ -5,6 +5,8 @@ my $VERSION = 2;
 use v5.10;
 use strictures 1;
 
+use List::Objects::WithUtils;
+
 use Scalar::Util       'blessed', 'reftype';
 use Path::Tiny         'path';
 use File::ShareDir     'dist_dir';
@@ -13,13 +15,13 @@ use Bot::Cobalt::Frontend::Utils ':all';
 use Bot::Cobalt::Frontend::RC    'rc_read', 'rc_write';
 
 
-my $rcfile = path(
+my $Rcfile = path(
   $ENV{HOME} ? $ENV{HOME} . '/.cobalt2rc' : '.cobalt2rc'
 );
 
 use Getopt::Long;
 GetOptions(
-  'config|rcfile=s' => \$rcfile,
+  'config|rcfile=s' => \$Rcfile,
 
   version => sub {
     say "Bot::Cobalt installer (version $VERSION)";
@@ -29,7 +31,7 @@ GetOptions(
   help    => sub {
     print map "$_\n",
       "  --config / --rcfile=PATH",
-      "    [default: $rcfile]"
+      "    [default: $Rcfile]"
     ;
     exit 0
   },
@@ -61,12 +63,19 @@ sub build_dir_skeleton {
   my $dbpath = path( $var . '/db' );
   $_->mkpath for $etc, $var, $dbpath;
 
-  wantarray ? ($base, $etc, $var) : $base
+  hash( base => $base, etc => $etc, var => $var )->inflate
 }
 
 
 sub copy_base_confs {
-  # FIXME copy from sharedir
+  my $shared_etc = path(
+    dist_dir('Bot-Cobalt') . '/etc'
+  );
+
+  die "Could not locate ShareDir at $shared_etc"
+    unless $shared_etc->exists;
+
+  # FIXME verify & copy from sharedir
 }
 
 
@@ -75,9 +84,82 @@ sub non_interactive {
 }
 
 
-sub interactive {
-  # FIXME prompt for var replacements
+sub interactive_intro {
+  say $_ for
+    "This is the Bot::Cobalt install helper.",
+    "This script will create a cobalt2rc file specifying the bot's paths.",
+    "It will also help initialize some starter configuration files.",
+    "",
+    "Press ENTER to continue, Ctrl+C to quit." ;
+
+  readline STDIN;
 }
+
+sub interactive_rcfile {
+  say $_ for 
+    "The default rcfile location is:",
+    " $Rcfile" ;
+  $Rcfile = ask_question( prompt => 'Path to rcfile' ) if ask_yesno(
+    prompt  => 'Enter a different rcfile location?',
+    default => 'n',
+  );
+
+  say "Installing rcfile to $Rcfile";
+
+  say $_ for
+    "Bot::Cobalt needs a place to store config and variable data.",
+    "This can be any path writable by the user running the bot.",
+    "(If it doesn't exist, we will attempt to create it.)" ;
+  my $default_basedir = $ENV{HOME} ? $ENV{HOME} . '/cobalt2' : './cobalt2' ;
+  my $basedir_ans = ask_question(
+    prompt  => 'Base directory',
+    default => $default_basedir,
+  );
+  my $basedir = path($basedir_ans);
+
+
+
+  # FIXME call rc write
+  # FIXME do skeleton dir prep, copy_base_confs
+}
+
+sub interactive_cobaltcf {
+  my ($conf_replacements) = @_;
+}
+
+sub interactive_channelscf {
+  my ($conf_replacements) = @_;
+}
+
+sub interactive_authcf {
+  my ($conf_replacements) = @_;
+}
+
+
+sub interactive {
+  my @refs = (
+    &interactive_intro,
+    &interactive_rcfile,
+    &interactive_cobaltcf,
+    &interactive_channelscf,
+    &interactive_authcf,
+  );
+
+  my $conf_replacements = hash(
+    cobalt    => hash,
+    channels  => hash,
+    auth      => hash,
+  );
+  $_->($conf_replacements) for @refs;
+
+  for my $kv ($conf_replacements->kv->all) {
+    my ($path_prefix, $repl_hash) = @$kv;
+    # FIXME iterate $conf_replacements, call read_format_write
+  }
+}
+
+
+
 
 
 ## FIXME
@@ -86,7 +168,7 @@ sub interactive {
 ##
 ##   interactive mode needs to cover:
 ##    - rcfile placement
-##      * default to $rcfile
+##      * default to $Rcfile
 ##      * prompt if overwriting
 ##    - cobalt basedir
 ##      * default to $HOME/cobalt2
@@ -107,7 +189,7 @@ sub interactive {
 ##      * ability to add more users?
 ##
 ##   installation should populate:
-##    - $rcfile
+##    - $Rcfile
 ##    - $basedir/etc/ by copying from ShareDir
 ##    - template replacement for:
 ##      * cobalt.conf
