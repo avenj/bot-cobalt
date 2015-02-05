@@ -12,7 +12,7 @@ use Cwd ();
 
 use Bot::Cobalt::Serializer;
 
-use Exporter 'import';
+use parent 'Exporter::Tiny';
 
 our @EXPORT_OK = qw/
   rc_read
