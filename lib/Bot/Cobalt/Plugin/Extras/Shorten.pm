@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Shorten;
 
-
-
 use 5.10.1;
 use strict;
 use warnings;

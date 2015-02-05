@@ -1,7 +1,5 @@
 package Bot::Cobalt::Frontend::RC;
 
-
-
 use strictures 1;
 
 use Carp;
