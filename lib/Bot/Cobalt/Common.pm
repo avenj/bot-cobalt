@@ -1,18 +1,19 @@
 package Bot::Cobalt::Common;
 
-
-
 ## Import a bunch of stuff very commonly useful to Cobalt plugins
 
-use strictures 1;
-
 use v5.10;
+use strictures 1;
 use Carp;
 
+use Import::Into;
+
+# FIXME Exporter::Tiny + smarter re-exports?
 use parent 'Exporter';
 
 use Bot::Cobalt::Utils qw/ :ALL /;
 
+# FIXME IRC::Toolkit
 use IRC::Utils qw/
   decode_irc
 
@@ -32,6 +33,7 @@ use Object::Pluggable::Constants qw/
   PLUGIN_EAT_ALL
 /;
 
+# FIXME Type::Tiny
 use MooX::Types::MooseLike::Base qw/:all/;
 
 our %EXPORT_TAGS = (
@@ -112,9 +114,10 @@ our @EXPORT;
 }
 
 sub import {
-  strictures->import(1);
+  my $target = caller;
   feature->import( ':5.10' );
-  __PACKAGE__->export_to_level(1, @_);
+  strictures->import::into($target);
+  __PACKAGE__->export_to_level(1, @_);  # FIXME Exporter::Tiny ?
 }
 
 1;
