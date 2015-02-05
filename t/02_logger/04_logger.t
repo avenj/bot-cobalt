@@ -1,34 +1,20 @@
-use Test::More tests => 20;
-use Test::Exception;
-
+use Test::More;
 use strict; use warnings;
 
-use File::Spec;
+use Path::Tiny;
 use Try::Tiny;
-use Module::Build;
 
 my $this_class = 'Bot::Cobalt::Logger';
 
-my $basedir = try {
-  Module::Build->current->base_dir
-} catch {
-  die "\nFailed to retrieve base_dir() from Module::Build\n",
-    "are you trying to run the test suite outside of `./Build`?\n"
-};
-my $test_log_path = File::Spec->catfile(
-  $basedir,
-  'var',
-  'testing.log'
-);
+my $test_log_path = Path::Tiny->tempfile(CLEANUP => 1);
 
 use_ok( $this_class );
 
-dies_ok(sub { $this_class->new }, 'new() with no args dies' );
+eval {; $this_class->new };
+ok $@, 'new() with no args dies';
 
-dies_ok(
-  sub { $this_class->new(level => 'abcd') },
-  'new() with invalid level arg dies'
-);
+eval {;  $this_class->new(level => 'abcd') };
+ok $@, 'new() with invalid level arg dies';
 
 my $logobj = new_ok( $this_class => [
     level => 'info',
@@ -84,3 +70,5 @@ unlink $test_log_path;
 ##  test caller details
 ##  test log_format / time_format triggers and constructor opts
 ##   (output obj's settings should change also)
+
+done_testing

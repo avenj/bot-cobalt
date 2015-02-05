@@ -1,23 +1,12 @@
-use Test::More tests => 13;
-use Test::Exception;
+use Test::More;
+use strict; use warnings FATAL => 'all';
 
-use strict; use warnings;
-
-use File::Spec;
+use Path::Tiny;
 use Try::Tiny;
-use Module::Build;
 
 my $this_class = 'Bot::Cobalt::Logger::Output';
 
-my $basedir = try {
-  Module::Build->current->base_dir
-} catch {
-  die "\nFailed to retrieve base_dir() from Module::Build\n",
-    "are you trying to run the test suite outside of `./Build`?\n"
-};
-
-my $vardir = File::Spec->catdir( $basedir, 'var' );
-my $test_log_path = File::Spec->catfile( $vardir, 'testing.log' );
+my $test_log_path = Path::Tiny->tempfile(CLEANUP => 1);
 
 use_ok( $this_class );
 
@@ -26,8 +15,10 @@ my $output = new_ok( $this_class );
 ok( $output->time_format, 'has time_format' );
 ok( $output->log_format,  'has log_format' );
 
-dies_ok( sub { $output->add }, "add() dies with no args" );
-dies_ok( sub { $output->add(1) }, "add() dies with odd args" );
+eval {; $output->add };
+ok $@, "add() dies with no args";
+eval {; $output->add(1) };
+ok $@, "add() dies with odd args";
 
 ok( 
   $output->add(
@@ -66,10 +57,10 @@ ok(
 
 ## FIXME test with modified time_format / log_format ?
 
-unlink $test_log_path;
-
 my $tobj;
 ok( $tobj = $output->get('myterm'), 'get()' );
 isa_ok( $tobj, 'Bot::Cobalt::Logger::Output::Term' );
 
 cmp_ok( $output->del('myterm', 'myfile'), '==', 2, 'del() 2 objects' );
+
+done_testing

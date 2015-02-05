@@ -3,8 +3,6 @@ use strict; use warnings;
 
 use Try::Tiny;
 use Fcntl qw/:flock/;
-use File::Spec;
-use File::Temp qw/ tempdir /;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Conf' );
@@ -12,20 +10,9 @@ BEGIN {
   use_ok( 'Bot::Cobalt::Plugin::RDB::Database' );
 }
 
-my $workdir = File::Spec->tmpdir;
-my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
+my $tempdir = Path::Tiny->tempdir(CLEANUP => 1);
+my $etcdir  = path( 'share/etc' );
 
-my $basedir;
-use Module::Build;
-try {
-  $basedir = Module::Build->current->base_dir;
-} catch {
-  die 
-    "\nFailed to retrieve base_dir() from Module::Build\n",
-    " ... are you trying to run the test suite outside of `./Build`?\n",
-};
-
-my $etcdir = File::Spec->catdir( $basedir, 'etc' );
 my $cfg = new_ok( 'Bot::Cobalt::Conf' => [
     etc => $etcdir,
   ],

@@ -1,5 +1,5 @@
-use Test::More tests => 29;
-use strict; use warnings;
+use Test::More;
+use strict; use warnings FATAL => 'all';
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Common' );
@@ -18,24 +18,13 @@ can_ok( 'Bot::Cobalt::Core::Loader',
   /
 );
 
-use Module::Build;
 use File::Spec;
 use File::Temp qw/tempdir/;
 
 my $workdir = File::Spec->tmpdir;
 my $tempdir = tempdir( CLEANUP => 1, DIR => $workdir );
 
-my $basedir;
-
-use Try::Tiny;
-try { 
-  $basedir = Module::Build->current->base_dir
-} catch {
-  die "\n! Failed to retrieve base_dir() from Module::Build\n"
-     ."...are you trying to run the test suite outside of `./Build`?\n"
-};
-
-my $etcdir  = File::Spec->catdir( $basedir, 'etc' );
+my $etcdir  = File::Spec->catdir( 'share', 'etc' );
 my $cfg = new_ok( 'Bot::Cobalt::Conf' => [
     etc => $etcdir,
   ],
