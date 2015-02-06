@@ -1,7 +1,5 @@
 package Bot::Cobalt::Core;
 
-
-
 ## This is the core Syndicator singleton.
 
 use strictures 1;
@@ -22,7 +20,6 @@ use Bot::Cobalt::Core::Loader;
 
 use Scalar::Util 'blessed';
 use Try::Tiny;
-use File::Spec;
 
 use Path::Tiny;
 use Types::Path::Tiny -types;
@@ -128,12 +125,10 @@ has langset => (
   writer    => 'set_langset',
   builder   => sub {
     my ($self) = @_;
-    my $language = $self->cfg->core->language;
-    my $lang_dir = File::Spec->catdir( $self->etc, 'langs' );
     Bot::Cobalt::Lang->new(
       use_core => 1,
-      lang_dir => $lang_dir,
-      lang     => $language,
+      lang_dir => path( $self->etc .'/langs' ),
+      lang     => $self->cfg->core->language,
     )
   },
 );
@@ -240,7 +235,7 @@ sub init {
   my ($self) = @_;
 
   my $logfile  = $self->cfg->core->paths->{Logfile}
-                // File::Spec->catfile( $self->var, 'cobalt.log' );
+                // path( $self->var .'/cobalt.log' );
   $self->log->output->add(
     'logfile' => {
        type => 'File',
