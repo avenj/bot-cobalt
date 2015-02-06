@@ -1,12 +1,15 @@
-use Test::More tests => 2;
-use Test::Cmd;
-
+use Test::More;
 use strict; use warnings;
 
-my $cmd = new_ok( 'Test::Cmd' => [
-    workdir => '',
-    prog    => 'blib/script/cobalt2-dbdump',
- ],
-);
+use Capture::Tiny 'capture';
 
-is( $cmd->run(args => '-h'), 0, 'cobalt2 exit 0' );
+my ($out, $err, $exit) = capture {
+  system($^X, 'bin/cobalt2-dbdump', '--help')
+};
+
+ok $out, '--help produced output';
+ok !$err, '--help produced no stderr';
+ok !$exit, '--help exited 0';
+
+
+done_testing
