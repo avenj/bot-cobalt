@@ -71,7 +71,7 @@ A L<Bot::Cobalt::Core::ContextMeta> subclass for managing an ignore
 list.
 
 This is used by L<Bot::Cobalt::Core> to 
-provide a global ignore list for use by L<Cobalt::IRC> and the core 
+provide a global ignore list for use by L<Bot::Cobalt::IRC> and the core 
 plugin set.
 
 =head2 add

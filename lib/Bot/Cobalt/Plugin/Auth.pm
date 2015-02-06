@@ -1565,7 +1565,7 @@ Alter a user's password manually. Only usable by superusers.
 Add or remove authorized masks for a particular user.
 
 You can add or remove masks for yourself at any time, so long as you 
-have at least L</DeletingUsers> level (see L</RequiredPrivs>). Altering 
+have at least B<DeletingUsers> level (see L</RequiredPrivs>). Altering 
 masks for other users requires a higher access level than theirs.
 
 Only one mask can be added or deleted at a time.

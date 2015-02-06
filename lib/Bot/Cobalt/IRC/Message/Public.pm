@@ -141,7 +141,7 @@ the B<message_array> leftwards to drop the command from
 B<message_array>.
 
 Normally this isn't used directly by plugins other
-than L<Cobalt::IRC>; a Message object handed off by a Bot_public_cmd_*
+than L<Bot::Cobalt::IRC>; a Message object handed off by a Bot_public_cmd_*
 event has this done for you already, for example.
 
 =head1 AUTHOR

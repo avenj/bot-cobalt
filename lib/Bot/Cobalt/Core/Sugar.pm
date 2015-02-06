@@ -124,7 +124,7 @@ L<Bot::Cobalt::Core::Role::IRC>
   my $irc_obj = irc_object($context);
 
 Retrieves the IRC object assigned to a context, which is a 
-L<POE::Component::IRC::State> instance unless L<Cobalt::IRC> has been 
+L<POE::Component::IRC::State> instance unless L<Bot::Cobalt::IRC> has been 
 subclassed or replaced.
 
 Wrapper for core->get_irc_object() -- see 
