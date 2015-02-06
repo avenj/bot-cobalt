@@ -24,6 +24,8 @@ use Scalar::Util 'blessed';
 use Try::Tiny;
 use File::Spec;
 
+use Path::Tiny;
+use Types::Path::Tiny -types;
 
 use Moo;
 
@@ -39,13 +41,15 @@ has cfg => (
 has var => (
   required  => 1,
   is        => 'ro',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
 );
 
 has etc => (
   lazy      => 1,
   is        => 'ro',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
   builder   => sub {
     my ($self) = @_;
     $self->cfg->etc
@@ -104,7 +108,7 @@ has version => (
   lazy      => 1,
   is        => 'rwp',
   isa       => Str,
-  builder   => sub { $VERSION // 'vcs' }
+  builder   => sub { __PACKAGE__->VERSION // 'vcs' }
 );
 
 has url => (
