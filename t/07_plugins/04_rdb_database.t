@@ -1,8 +1,9 @@
 use Test::More tests => 22;
 use strict; use warnings;
 
+use Fcntl ':flock';
 use Try::Tiny;
-use Fcntl qw/:flock/;
+use Path::Tiny;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Conf' );

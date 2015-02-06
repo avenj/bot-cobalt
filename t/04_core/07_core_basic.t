@@ -1,6 +1,11 @@
 use Test::More;
 use strict; use warnings FATAL => 'all';
 
+use Test::File::ShareDir
+  -share => +{
+    -dist => +{ 'Bot-Cobalt' => 'share' },
+  };
+
 BEGIN {
   use_ok( 'Bot::Cobalt::Common' );
   use_ok( 'Bot::Cobalt::Conf' );
@@ -103,3 +108,5 @@ ok( !$core->get_irc_casemap('Main'), 'get_irc_casemap(Main)' );
 
 ok( $core->clear_instance, 'clear_instance()' );
 ok( ! $core->has_instance, 'has_instance() false after clear' );
+
+done_testing
