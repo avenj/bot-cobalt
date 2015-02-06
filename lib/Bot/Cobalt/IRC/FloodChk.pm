@@ -1,15 +1,12 @@
 package Bot::Cobalt::IRC::FloodChk;
 
-
-
 use Carp;
 use strictures 1;
 
 use Bot::Cobalt::Common ':types';
 
-use Time::HiRes ();
-
 use List::Objects::WithUtils;
+use Time::HiRes ();
 
 use Moo;
 

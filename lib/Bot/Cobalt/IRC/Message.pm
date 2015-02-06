@@ -1,23 +1,20 @@
 package Bot::Cobalt::IRC::Message;
 
-
-
 ## Message class. Inherits from Event
 
-use 5.10.1;
-use Moo;
+use v5.10;
 use strictures 1;
 
 use Bot::Cobalt::Common;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'message' => (
-  required => 1,
-  is  => 'rw',
-  isa => Str,
-
-  trigger => sub {
+has message => (
+  required  => 1,
+  is        => 'rw',
+  isa       => Str,
+  trigger   => sub {
     my ($self, $value) = @_;
 
     $self->_set_stripped(
@@ -30,63 +27,52 @@ has 'message' => (
   },
 );
 
-has 'targets' => (
-  required => 1,
-  is  => 'rw',
-  isa => ArrayRef,
-
-  trigger => sub {
+has targets => (
+  required  => 1,
+  is        => 'rw',
+  isa       => ArrayRef,
+  trigger   => sub {
     my ($self, $value) = @_;
-
-    $self->_set_target($value->[0])
-      if $self->has_target;
+    $self->_set_target($value->[0]) if $self->has_target;
   }
 );
 
-has 'target'  => (
-  lazy => 1,
-  is  => 'rwp',
-  isa => Str,
-
+has target  => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
   predicate => 'has_target',
-
   default   => sub { $_[0]->targets->[0] },
 );
 
 ## May or may not have a channel.
-has 'channel' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
-
-  default => sub {
+has channel => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
+  default   => sub {
     $_[0]->target =~ /^[#&+!]/ ? $_[0]->target : ''
   },
 );
 
 ## Message content.
-has 'stripped' => (
-  lazy => 1,
-  is  => 'rwp',
-  isa => Str,
-
+has stripped => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => Str,
   predicate => 'has_stripped',
-
   default   => sub {
     strip_color( strip_formatting($_[0]->message) )
   },
 );
 
-has 'message_array' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => ArrayRef,
-
+has message_array => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => ArrayRef,
   predicate => 'has_message_array',
-
-  default => sub { [ split ' ', $_[0]->stripped ] },
-
-  trigger => sub {
+  default   => sub { [ split ' ', $_[0]->stripped ] },
+  trigger   => sub {
     ## Generally shouldn't be modified except internally ..
     ## .. but hey, enough rope to hang yourself never hurt anyone
     my ($self) = @_;
@@ -96,14 +82,12 @@ has 'message_array' => (
   },
 );
 
-has 'message_array_sp' => (
-  lazy => 1,
-  is  => 'rwp',
-  isa => ArrayRef,
-
+has message_array_sp => (
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => ArrayRef,
   predicate => 'has_message_array_sp',
-
-  default => sub { [ split / /, $_[0]->stripped ] },
+  default   => sub { [ split / /, $_[0]->stripped ] },
 );
 
 

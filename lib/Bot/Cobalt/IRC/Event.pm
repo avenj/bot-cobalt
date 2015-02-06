@@ -1,27 +1,23 @@
 package Bot::Cobalt::IRC::Event;
 
-
-
 ## Base class for IRC events.
 
-use 5.10.1;
+use v5.10;
 use Bot::Cobalt::Common;
+
 use Moo;
 
-has 'context' => ( 
-  required => 1,
-
-  is  => 'rw', 
-  isa => Str,
+has context => ( 
+  required  => 1,
+  is        => 'rw', 
+  isa       => Str,
 );
 
-has 'src'     => (
-  required => 1, 
-
-  is  => 'rw', 
-  isa => Str, 
-
-  trigger => sub {
+has src     => (
+  required  => 1, 
+  is        => 'rw', 
+  isa       => Str, 
+  trigger   => sub {
     ## If 'src' changes, reset nick/user/host as-needed.
     my ($self, $value) = @_;
     
@@ -37,33 +33,24 @@ has 'src'     => (
   }
 );
 
-has 'src_nick' => (  
-  lazy => 1,
-
-  is  => 'rwp',
-  
+has src_nick => (  
+  lazy      => 1,
+  is        => 'rwp',
   predicate => 'has_src_nick',
-
   default   => sub { (parse_user($_[0]->src))[0] },
 );
 
-has 'src_user' => (  
-  lazy => 1,
-
-  is  => 'rwp',
-
+has src_user => (  
+  lazy      => 1,
+  is        => 'rwp',
   predicate => 'has_src_user',
-
   default   => sub { (parse_user($_[0]->src))[1] },
 );
 
-has 'src_host' => (
-  lazy => 1,
-
-  is  => 'rwp',
-
+has src_host => (
+  lazy      => 1,
+  is        => 'rwp',
   predicate => 'has_src_host',
-
   default   => sub { (parse_user($_[0]->src))[2] },
 );
 

@@ -1,84 +1,68 @@
 package Bot::Cobalt::IRC::Server;
 
-
-
 ## A server context.
 
+use v5.10;
 use strictures 1;
-use 5.10.1;
 
-use Moo;
 use Bot::Cobalt::Common qw/:types/;
-
 use IRC::Utils qw/lc_irc uc_irc/;
 
-has 'name' => ( 
-  required => 1,
+use Moo;
 
-  is  => 'rw', 
-  isa => Str, 
+has name => ( 
+  required  => 1,
+  is        => 'rw', 
+  isa       => Str, 
 );
 
-has 'prefer_nick' => (
-  required => 1, 
-
-  is  => 'rw', 
-  isa => Str, 
+has prefer_nick => (
+  required  => 1, 
+  is        => 'rw', 
+  isa       => Str, 
 );
 
-has 'irc' => (
-  is  => 'rw', 
-  isa => Object,
-
+has irc => (
+  is        => 'rw', 
+  isa       => Object,
   predicate => 'has_irc',
   clearer   => 'clear_irc',
 );
 
-has 'connected' => (
-  lazy => 1,
-
-  is  => 'rw', 
-  isa => Bool, 
-
-  clearer => 'clear_connected',
-
-  default => sub { 0 },
+has connected => (
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => Bool, 
+  clearer   => 'clear_connected',
+  default   => sub { 0 },
 );
 
-has 'connectedat' => (
-  lazy => 1,
-
-  is  => 'rw', 
-  isa => Num, 
-
-  default => sub { 0 },
+has connectedat => (
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => Num, 
+  default   => sub { 0 },
 );
 
-has 'casemap' => (
-  lazy => 1,
-
-  is  => 'rw', 
-  isa => Str,
-
-  default => sub { 'rfc1459' },
+has casemap => (
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => Str,
+  default   => sub { 'rfc1459' },
 ); 
 
-has 'maxmodes' => (
-  lazy => 1,
-
-  is => 'rw', 
-  isa => Int, 
-
-  default => sub { 3 },
+has maxmodes => (
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => Int, 
+  default   => sub { 3 },
 );
 
-has 'maxtargets' => (
-  lazy => 1,
-  
-  is  => 'rw', 
-  isa => Int, 
-  
-  default => sub { 4 },
+has maxtargets => (
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => Int, 
+  default   => sub { 4 },
 );
 
 sub lowercase {
