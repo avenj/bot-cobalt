@@ -1,7 +1,5 @@
 package Bot::Cobalt::Serializer;
 
-
-
 use v5.10;
 use strictures 1;
 use Carp;
@@ -16,6 +14,7 @@ use Bot::Cobalt::Common qw/:types/;
 
 use Time::HiRes qw/sleep/;
 
+use Scalar::Util 'blessed';
 
 use Moo;
 
@@ -198,22 +197,26 @@ sub _read_serialized {
     $lock = $opts->{Locking} if defined $opts->{Locking};
   }
 
-  open(my $in_fh, '<:encoding(UTF-8)', $path)
-    or confess "open failed for $path: $!";
+  if (blessed $path && $path->can('slurp_utf8')) {
+    return $path->slurp_utf8
+  } else {
+    open(my $in_fh, '<:encoding(UTF-8)', $path)
+      or confess "open failed for $path: $!";
 
-  if ($lock) {
-    flock($in_fh, LOCK_SH)
-      or confess "LOCK_SH failed for $path: $!";
-   }
+    if ($lock) {
+      flock($in_fh, LOCK_SH)
+        or confess "LOCK_SH failed for $path: $!";
+     }
 
-  my $data = join '', <$in_fh>;
+    my $data = join '', <$in_fh>;
 
-  flock($in_fh, LOCK_UN) if $lock;
+    flock($in_fh, LOCK_UN) if $lock;
 
-  close($in_fh)
-    or carp "close failed for $path: $!";
+    close($in_fh)
+      or carp "close failed for $path: $!";
 
-  return $data
+    return $data
+  }
 }
 
 sub _write_serialized {
