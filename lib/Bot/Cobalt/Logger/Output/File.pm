@@ -1,14 +1,10 @@
 package Bot::Cobalt::Logger::Output::File;
 
-
-
-use 5.12.1;
+use v5.10;
 use strictures 1;
-
-use IO::File ();
-
 use Carp;
 
+use IO::File ();
 use Fcntl qw/:DEFAULT :flock/;
 
 sub PATH   () { 0 }
@@ -63,7 +59,8 @@ sub file {
   if (defined $file) {
     $self->_close if $self->_is_open;
     
-    $self->[PATH] = $file;
+    # stringify a Path::Tiny ->
+    $self->[PATH] = $file . '';
     
     $self->_open unless $self->[RUNNING_IN_HELL];
   }
