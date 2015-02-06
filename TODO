@@ -1,20 +1,22 @@
 @@ == complete
 *  == in-progress
 -  == pending
-
+!! == checkup
 
 lang-sharedir:
   @@ move etc to share/
   @@ drop empty 'var' dir
-  * use ShareDir + Path::Tiny
-  * unwind Lang.pm.{in,PL}
-    - fetch defaults from ShareDir as-needed
+  @@ use ShareDir + Path::Tiny
+  @@ unwind Lang.pm.{in,PL}
+    @@ fetch defaults from ShareDir as-needed
       (override available via local etc/langs/)
-    - test audit
-  - unwind cobalt2-installer
+    !! test audit
+  * unwind cobalt2-installer
     - should create var/db/ itself
     - should fetch templates from ShareDir
-  - swap to dzil
+  * swap to dzil
+    - should use cpanfile
+    - should pass author tests
 
 ## TODO
 

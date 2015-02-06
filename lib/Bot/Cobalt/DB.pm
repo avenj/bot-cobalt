@@ -445,8 +445,7 @@ The B<put> method adds an entry to the database:
 
   $db->put($key, $value);
 
-The value can be any data structure serializable by JSON::XS; that is to
-say, any shallow or deep data structure NOT including blessed references.
+The value can be any data structure serializable by L<JSON::MaybeXS>.
 
 Note that keys should be properly encoded:
 
@@ -481,7 +480,7 @@ You can serialize/export the entirety of the DB via B<dbdump>.
   my $yamlified = $db->dbdump('YAML');
   ## YAML::XS
   my $yamlified = $db->dbdump('YAMLXS');
-  ## JSON::XS
+  ## JSON::MaybeXS
   my $jsonified = $db->dbdump('JSON');
 
 See L<Bot::Cobalt::Serializer> for more on C<freeze()> and valid formats.

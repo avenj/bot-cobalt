@@ -6,7 +6,7 @@ use Carp;
 
 ## These two must be present anyway:
 use YAML::XS ();
-use JSON::XS ();
+use JSON::MaybeXS ();
 
 use Fcntl qw/:flock/;
 
@@ -41,7 +41,7 @@ has _types => (
     +{
       YAML   => 'YAML::Syck',
       YAMLXS => 'YAML::XS',
-      JSON   => 'JSON::XS',
+      JSON   => 'JSON::MaybeXS',
     }
   },
 );
@@ -74,7 +74,9 @@ has json_from_ref => (
   is        => 'rw',
   lazy      => 1,
   coerce    => sub {
-    my $jsify = JSON::XS->new->allow_nonref;
+    my $jsify = JSON::MaybeXS->new(
+      utf8 => 1, allow_nonref => 1, convert_blessed => 1
+    );
     $jsify->utf8->encode($_[0]);
   },
 );
@@ -83,7 +85,9 @@ has ref_from_json => (
   is        => 'rw',
   lazy      => 1,
   coerce => sub {
-    my $jsify = JSON::XS->new->allow_nonref;
+    my $jsify = JSON::MaybeXS->new(
+      utf8 => 1, allow_nonref => 1
+    );
     $jsify->utf8->decode($_[0])
   },
 );
@@ -360,7 +364,7 @@ B<YAMLXS> - YAML1.1 via L<YAML::XS>  I<(default)>
 
 =item *
 
-B<JSON> - JSON via L<JSON::XS>
+B<JSON> - JSON via L<JSON::MaybeXS>
 
 =back
 
@@ -458,7 +462,7 @@ L<YAML::XS> -- YAML1.1: L<http://yaml.org/spec/1.1/>
 
 =item *
 
-L<JSON>, L<JSON::XS> -- JSON: L<http://www.json.org/>
+L<JSON>, L<JSON::MaybeXS> -- JSON: L<http://www.json.org/>
 
 =back
 
