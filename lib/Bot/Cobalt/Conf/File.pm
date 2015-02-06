@@ -4,7 +4,7 @@ use v5.10;
 use strictures 1;
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 use Bot::Cobalt::Serializer;
 
 use Try::Tiny;

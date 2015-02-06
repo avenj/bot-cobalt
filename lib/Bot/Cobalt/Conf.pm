@@ -1,10 +1,9 @@
 package Bot::Cobalt::Conf;
 
-
 use strictures 1;
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
 use Bot::Cobalt::Conf::File::Core;
 use Bot::Cobalt::Conf::File::Channels;
@@ -13,12 +12,10 @@ use Bot::Cobalt::Conf::File::Plugins;
 use Path::Tiny;
 use Types::Path::Tiny -types;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 
 
 use Moo;
-
-
 
 has etc => (
   required  => 1,

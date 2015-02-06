@@ -1,22 +1,17 @@
 package Bot::Cobalt::Conf::File::Channels;
 
-
-
-use 5.12.1;
 use strictures 1;
-
 use Carp;
+
+use Bot::Cobalt::Common ':types';
+
+
 use Moo;
-
-use Bot::Cobalt::Common qw/:types/;
-
-
 extends 'Bot::Cobalt::Conf::File';
 
 
 sub context {
   my ($self, $context) = @_;
-  
   croak "context() requires a server context identifier"
     unless defined $context;
 
@@ -27,11 +22,10 @@ sub context {
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
 
-  my @contexts;
-  die "There are no contexts defined.\n"
-    unless @contexts = keys %$cfg;
+  my @contexts = keys %$cfg;
+  die "There are no contexts defined.\n" unless @contexts;
   
-  for my $context (keys %$cfg) {  
+  for my $context (@contexts) {  
     die "Context directive $context is not a hash"
       unless ref $cfg->{$context} eq 'HASH';
   }
@@ -52,7 +46,7 @@ Bot::Cobalt::Conf::File::Channels - Bot::Cobalt channels conf
 =head1 SYNOPSIS
 
   my $chan_cfg = Bot::Cobalt::Conf::File::Channels->new(
-    path => $path_to_channels_cf,
+    cfg_path => $path_to_channels_cf,
   );
   
   my $hash_for_context = $chan_cfg->context($context_name);

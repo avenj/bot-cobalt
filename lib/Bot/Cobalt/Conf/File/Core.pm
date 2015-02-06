@@ -5,7 +5,7 @@ use strictures 1;
 
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
 use Moo;
 extends 'Bot::Cobalt::Conf::File';
@@ -14,7 +14,6 @@ has language => (
   lazy      => 1,
   is        => 'rwp',
   isa       => Str,
-  
   default   => sub {
     my ($self) = @_;
     $self->cfg_as_hash->{Language} // 'english' ;
@@ -26,8 +25,7 @@ has paths => (
   weak_ref  => 1,
   is        => 'rwp',
   isa       => HashRef,
-  
-  default => sub {
+  default   => sub {
     my ($self) = @_;
     ref $self->cfg_as_hash->{Paths} eq 'HASH' ?
       $self->cfg_as_hash->{Paths}
@@ -40,7 +38,6 @@ has irc => (
   weak_ref  => 1,
   is        => 'rwp',
   isa       => HashRef,
-  
   default   => sub {
     my ($self) = @_;
     $self->cfg_as_hash->{IRC}
@@ -52,8 +49,7 @@ has opts => (
   weak_ref  => 1,
   is        => 'rwp',
   isa       => HashRef,
-  
-  default => sub {
+  default   => sub {
     my ($self) = @_;
     $self->cfg_as_hash->{Opts}
   },

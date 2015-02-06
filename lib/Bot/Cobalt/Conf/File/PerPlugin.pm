@@ -1,14 +1,13 @@
 package Bot::Cobalt::Conf::File::PerPlugin;
 
 ## This is in File:: but NOT a subclass of File.pm
-##   possible it should move ...
 
 use strictures 1;
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 
 use Types::Path::Tiny -types;
 
@@ -17,62 +16,50 @@ with 'Bot::Cobalt::Conf::Role::Reader';
 
 
 has module => (
-  required => 1,
-  
-  is  => 'rwp',
-  isa => Str,
+  required  => 1,  
+  is        => 'rwp',
+  isa       => Str,
 );
 
 has extra_opts => (
   ## Overrides the plugin-specific cfg.
-  lazy => 1,
-  
-  is  => 'ro',
-  isa => HashRef,
-
+  lazy      => 1,
+  is        => 'ro',
+  isa       => HashRef,
   predicate => 'has_extra_opts',
   writer    => 'set_extra_opts',
 );
 
 has priority => (
-  lazy => 1,
-  
-  is  => 'ro',
-  isa => Num,
-  
+  lazy      => 1,  
+  is        => 'ro',
+  isa       => Num,
   writer    => 'set_priority',
-  predicate => 'has_priority',
-  
-  default => sub { 1 },
+  predicate => 'has_priority',  
+  default   => sub { 1 },
 );
 
 has config_file => (
-  lazy    => 1,
-  
-  is      => 'ro',
-  isa     => Path,
-  coerce  => 1,
-  
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Path,
+  coerce    => 1,
   writer    => 'set_config_file',
   predicate => 'has_config_file',
 );
 
 has autoload => (
-  lazy => 1,
-  
-  is  => 'ro',
-  isa => Bool,
-
-  default => sub { 1 },
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Bool,
+  default   => sub { 1 },
 );
 
 has opts => (
-  lazy => 1,
-  
-  is  => 'rwp',
-  isa => HashRef,
-  
-  builder => '_build_opts',
+  lazy      => 1,
+  is        => 'rwp',
+  isa       => HashRef,
+  builder   => '_build_opts',
 );
 
 sub _build_opts {
