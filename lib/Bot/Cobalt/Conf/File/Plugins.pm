@@ -1,59 +1,55 @@
 package Bot::Cobalt::Conf::File::Plugins;
 
-
-
-use 5.12.1;
+use v5.10;
 use strictures 1;
-
 use Carp;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 
-use Bot::Cobalt::Common qw/:types/;
-
+use Bot::Cobalt::Common ':types';
 use Bot::Cobalt::Conf::File::PerPlugin;
 
-use File::Spec;
+use Path::Tiny;
+use Types::Path::Tiny -types;
 
+use List::Objects::WithUtils;
+use List::Objects::Types -types;
 
 use Moo;
 extends 'Bot::Cobalt::Conf::File';
 
 
-has 'etcdir' => (
-  required => 1,
-  
-  is  => 'rwp',
-  isa => Str,
+has etcdir => (
+  required  => 1,
+  is        => 'rwp',
+  isa       => Path,
+  coerce    => 1,
 );
 
 
-has '_per_plug_objs' => (
-  lazy => 1,
-  
-  is  => 'ro',
-  isa => HashRef,
-
-  builder => '_build_per_plugin_objs',  
+has _per_plug_objs => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => HashObj,
+  coerce    => 1,
+  builder   => '_build_per_plugin_objs',  
 );
-
 
 sub _build_per_plugin_objs {
   my ($self) = @_;
   
   ##  Create PerPlugin cf objs for each plugin
-  my $plugin_objs = {};
-  for my $alias (keys %{ $self->cfg_as_hash }) {
-    $plugin_objs->{$alias} = $self->_create_perplugin_obj($alias);
-  }
-
-  $plugin_objs
+  hash(
+    $self->cfg_as_hash->keys->map(sub {
+      ( $_ => $self->_create_perplugin_obj($_) )
+    })->all
+  )
 }
 
 sub _create_perplugin_obj {
   my ($self, $alias) = @_;
   
-  my $this_cfg = $self->cfg_as_hash->{$alias}
+  my $this_cfg = $self->cfg_as_hash->get($alias)
     || confess "_create_perplugin_obj passed unknown alias $alias";
 
   my %new_opts;
@@ -64,10 +60,7 @@ sub _create_perplugin_obj {
   if (defined $this_cfg->{Config}) {
     my $this_cf_path = $this_cfg->{Config};
     unless ( File::Spec->file_name_is_absolute( $this_cf_path ) ) {
-      $this_cf_path = File::Spec->catfile( 
-        $self->etcdir,
-        $this_cf_path 
-      )
+      $this_cf_path = path( $self->etcdir .'/'. $this_cf_path );
     }
 
     $new_opts{config_file} = $this_cf_path  
@@ -165,7 +158,7 @@ Bot::Cobalt::Conf::File::Plugins - Bot::Cobalt plugins config
   my $plugins_cfg = Bot::Cobalt::Conf::File::Plugins->new(
     etcdir => $path_to_etcdir,
 
-    path => $path_to_plugins_cf,    
+    cfg_path => $path_to_plugins_cf,    
   );
 
   ## Retrieve array reference of plugin aliases seen:

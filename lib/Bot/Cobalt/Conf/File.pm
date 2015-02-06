@@ -1,32 +1,35 @@
 package Bot::Cobalt::Conf::File;
 
-
-
-use 5.12.1;
+use v5.10;
 use strictures 1;
-
 use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
-
 use Bot::Cobalt::Serializer;
 
 use Try::Tiny;
+
+use Types::Path::Tiny -types;
+
+use List::Objects::WithUtils;
+use List::Objects::Types -types;
 
 use Moo;
 with 'Bot::Cobalt::Conf::Role::Reader';
 
 
-has path => (
+has cfg_path => (
   required  => 1,
   is        => 'rwp',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
 );
 
 has cfg_as_hash => (
   lazy      => 1,
   is        => 'rwp',
-  isa       => HashRef, 
+  isa       => HashObj,
+  coerce    => 1,
   builder   => '_build_cfg_hash',
 );
 
@@ -46,17 +49,17 @@ sub _build_cfg_hash {
 
   if ($self->debug) {
     warn 
-      ref $self, " (debug) reading cfg_as_hash from ", $self->path, "\n"
+      ref $self, " (debug) reading cfg_as_hash from ", $self->cfg_path, "\n"
   }
   
-  my $cfg = $self->readfile( $self->path );
+  my $cfg = $self->readfile( $self->cfg_path );
 
   my $err; try {
     $self->validate($cfg)
   } catch {
     $err = $_;
     undef
-  } or croak "Conf validation failed for ". $self->path .": $err";
+  } or croak "Conf validation failed for ". $self->cfg_path .": $err";
 
   $cfg
 }
@@ -116,7 +119,7 @@ Bot::Cobalt::Conf::File - Base class for Bot::Cobalt cfg files
   package MyPackage;
   
   my $cfg = MyPackage::Conf->new(
-    path => $path_to_yaml_cfg,
+    cfg_path => $path_to_yaml_cfg,
   );
 
   my $opts = $cfg->opts;
@@ -125,7 +128,7 @@ Bot::Cobalt::Conf::File - Base class for Bot::Cobalt cfg files
 
 This is the base class for L<Bot::Cobalt> configuration files.
 It consumes the Bot::Cobalt::Conf::Role::Reader role and loads a 
-configuration hash from a YAML file specified by the required B<path> 
+configuration hash from a YAML file specified by the required B<cfg_path> 
 attribute.
 
 The B<validate> method is called at load-time and passed the 
@@ -133,9 +136,9 @@ configuration hash before it is loaded to the B<cfg_as_hash> attribute;
 this method can be overriden by subclasses to do some load-time checking 
 on a configuration file.
 
-=head2 path
+=head2 cfg_path
 
-The B<path> attribute is required at construction-time; this is the 
+The B<cfg_path> attribute is required at construction-time; this is the 
 actual path to the YAML configuration file.
 
 =head2 cfg_as_hash
@@ -147,7 +150,7 @@ directly.
 =head2 rehash
 
 The B<rehash> method attempts to reload the current
-B<cfg_as_hash> from B<path>.
+B<cfg_as_hash> from B<cfg_path>.
 
 =head1 AUTHOR
 

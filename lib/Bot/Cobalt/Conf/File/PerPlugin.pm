@@ -1,18 +1,16 @@
 package Bot::Cobalt::Conf::File::PerPlugin;
 
-
-
 ## This is in File:: but NOT a subclass of File.pm
 ##   possible it should move ...
 
 use strictures 1;
-
 use Carp;
 
 use Bot::Cobalt::Common qw/:types/;
 
 use Scalar::Util qw/blessed/;
 
+use Types::Path::Tiny -types;
 
 use Moo;
 with 'Bot::Cobalt::Conf::Role::Reader';
@@ -49,10 +47,11 @@ has priority => (
 );
 
 has config_file => (
-  lazy => 1,
+  lazy    => 1,
   
-  is  => 'ro',
-  isa => Str,
+  is      => 'ro',
+  isa     => Path,
+  coerce  => 1,
   
   writer    => 'set_config_file',
   predicate => 'has_config_file',

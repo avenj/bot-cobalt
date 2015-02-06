@@ -1,15 +1,13 @@
 package Bot::Cobalt::Conf::File::Core;
 
-
-
-use 5.12.1;
+use v5.10;
 use strictures 1;
 
 use Carp;
-use Moo;
 
 use Bot::Cobalt::Common qw/:types/;
 
+use Moo;
 extends 'Bot::Cobalt::Conf::File';
 
 has language => (
@@ -64,7 +62,7 @@ has opts => (
 around 'validate' => sub {
   my ($orig, $self, $cfg) = @_;
 
-  my $path = $self->path;
+  my $path = $self->cfg_path;
 
   for my $expected_hash (qw/ IRC Opts /) {
     unless (defined $cfg->{$expected_hash}) {
@@ -96,7 +94,7 @@ Bot::Cobalt::Conf::File::Core - Bot::Cobalt core config
 =head1 SYNOPSIS
 
   my $core_cfg = Bot::Cobalt::Conf::File::Core->new(
-    path => $path_to_cobalt_cf,
+    cfg_path => $path_to_cobalt_cf,
   );
   
   my $paths_hash = $core_cfg->paths;

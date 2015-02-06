@@ -13,8 +13,9 @@ my $etcdir = File::Spec->catdir( 'share', 'etc' );
 my $plug_cf_path = File::Spec->catfile( $etcdir, 'plugins.conf' );
 
 my $plugcf = new_ok( 'Bot::Cobalt::Conf::File::Plugins' => [
-    path   => $plug_cf_path,
+    cfg_path   => $plug_cf_path,
     etcdir => $etcdir,    
+    debug  => 1,
   ],
 );
 

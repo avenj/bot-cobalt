@@ -1,10 +1,6 @@
 package Bot::Cobalt::Conf::Role::Reader;
 
-
-
-use Moo::Role;
 use Carp;
-
 use strictures 1;
 
 use Try::Tiny;
@@ -12,6 +8,8 @@ use Try::Tiny;
 use Scalar::Util qw/blessed/;
 
 use Bot::Cobalt::Serializer;
+
+use Moo::Role;
 
 has '_serializer' => (
   is  => 'ro',
@@ -31,13 +29,15 @@ sub readfile {
   confess "readfile() needs a path to read"
     unless defined $path;
 
-  my $thawed_cf;
-
-  try {
-    $thawed_cf = $self->_serializer->readfile( $path );
+  my $err;
+  my $thawed_cf = try {
+    $self->_serializer->readfile( $path )
   } catch {
-    croak "Serializer readfile() failed for $path; $_"
+    $err = $_;
+    ()
   };
+  confess "Serializer readfile() failed for $path; $err"
+    if defined $err;
 
   $thawed_cf
 }

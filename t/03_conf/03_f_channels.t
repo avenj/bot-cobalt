@@ -11,7 +11,7 @@ use File::Spec;
 my $chan_cf_path = File::Spec->catfile( 'share', 'etc', 'channels.conf' );
 
 my $chancf = new_ok( 'Bot::Cobalt::Conf::File::Channels' => [
-    path => $chan_cf_path,
+    cfg_path => $chan_cf_path,
   ],
 );
 

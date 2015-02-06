@@ -9,14 +9,14 @@ BEGIN {
 use File::Spec;
 
 my $cfg_obj = new_ok( 'Bot::Cobalt::Conf::File' => [
-    path => File::Spec->catfile( 'share', 'etc', 'cobalt.conf' )
+    cfg_path => File::Spec->catfile( 'share', 'etc', 'cobalt.conf' )
   ],
 );
 
 my $this_hash;
 ok( $this_hash = $cfg_obj->cfg_as_hash, 'cfg_as_hash()' );
 
-ok( ref $this_hash eq 'HASH', 'cfg_as_hash isa HASH' );
+ok( $this_hash->does('List::Objects::WithUtils::Role::Hash'), 'cfg_as_hash isa HASH' );
 
 ok( $cfg_obj->rehash, 'rehash()' );
 

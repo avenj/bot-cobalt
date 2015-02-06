@@ -12,7 +12,7 @@ use File::Spec;
 my $core_cf_path = File::Spec->catfile( 'share', 'etc', 'cobalt.conf' );
 
 my $corecf = new_ok( 'Bot::Cobalt::Conf::File::Core' => [
-    path => $core_cf_path,
+    cfg_path => $core_cf_path,
   ],
 );
 

@@ -1,7 +1,6 @@
 package Bot::Cobalt::Conf;
 
 
-
 use strictures 1;
 use Carp;
 
@@ -11,7 +10,8 @@ use Bot::Cobalt::Conf::File::Core;
 use Bot::Cobalt::Conf::File::Channels;
 use Bot::Cobalt::Conf::File::Plugins;
 
-use File::Spec;
+use Path::Tiny;
+use Types::Path::Tiny -types;
 
 use Scalar::Util qw/blessed/;
 
@@ -23,7 +23,8 @@ use Moo;
 has etc => (
   required  => 1,
   is        => 'rw',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
 );
 
 has debug => (
@@ -35,27 +36,30 @@ has debug => (
 has path_to_core_cf => (
   lazy      => 1,
   is        => 'rwp',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
   builder   => sub {
-    File::Spec->catfile( shift->etc, 'cobalt.conf' )
+    path( shift->etc .'/cobalt.conf' )
   },
 );
 
 has path_to_channels_cf => (
   lazy      => 1,
   is        => 'rwp',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
   builder   => sub {
-    File::Spec->catfile( shift->etc, 'channels.conf' )
+    path( shift->etc .'/channels.conf' )
   },
 );
 
 has path_to_plugins_cf => (
   lazy      => 1,
   is        => 'rwp',
-  isa       => Str,
+  isa       => Path,
+  coerce    => 1,
   builder   => sub {
-    File::Spec->catfile( shift->etc, 'plugins.conf' )
+    path( shift->etc .'/plugins.conf' )
   },
 );
 
@@ -73,8 +77,8 @@ has core => (
   builder => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Core->new(
-      debug => $self->debug,
-      path  => $self->path_to_core_cf,
+      debug     => $self->debug,
+      cfg_path  => $self->path_to_core_cf,
     )
   },
 );
@@ -92,8 +96,8 @@ has channels => (
   builder   => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Channels->new(
-      debug => $self->debug,
-      path  => $self->path_to_channels_cf,
+      debug     => $self->debug,
+      cfg_path  => $self->path_to_channels_cf,
     )
   },
 );
@@ -110,9 +114,9 @@ has plugins => (
   builder   => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Plugins->new(
-      debug  => $self->debug,
-      path   => $self->path_to_plugins_cf,
-      etcdir => $self->etc,
+      debug     => $self->debug,
+      cfg_path  => $self->path_to_plugins_cf,
+      etcdir    => $self->etc,
     )
   },
 );
