@@ -392,7 +392,7 @@ sub _start {
     POE::Component::IRC::Plugin::CTCP->new(
       version  => "Bot::Cobalt ".core->version." (perl $^V) ".core->url,
       userinfo   => "I'm a teapot",
-      clientinfo => __PACKAGE__.'-'.($VERSION//'vcs'),
+      clientinfo => __PACKAGE__.'-'.(__PACKAGE__->VERSION // 'vcs'),
       source     => core->url,
     ),
   );
