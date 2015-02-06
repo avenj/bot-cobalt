@@ -86,7 +86,6 @@ BEGIN {
   use_ok( 'Bot::Cobalt::Lang' );
 }
 
-use Module::Build;
 use Try::Tiny;
 use File::Spec;
 
