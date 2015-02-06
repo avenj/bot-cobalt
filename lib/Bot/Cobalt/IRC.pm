@@ -33,7 +33,7 @@ use POE qw/
 use IRC::Utils qw/ parse_mode_line /;
 
 
-use Moo; use MooX::late;
+use Moo;
 
 has NON_RELOADABLE => (
   ## Well, really, it's sort-of unloadable.

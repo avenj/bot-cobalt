@@ -15,8 +15,7 @@ use Path::Tiny;
 use Try::Tiny;
 
 
-use Moo; use MooX::late;
-
+use Moo;
 
 ## Configurable:
 has lang_dir => (
