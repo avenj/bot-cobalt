@@ -1,8 +1,6 @@
 package Bot::Cobalt::Lang;
 
-
-
-use v5.10.0;
+use v5.10;
 use strictures 1;
 use Carp;
 
@@ -11,9 +9,11 @@ use Bot::Cobalt::Serializer;
 
 use File::ShareDir 'dist_dir';
 
-use File::Spec;  # FIXME Path::Tiny
+use Types::Path::Tiny -types;
+use Path::Tiny;
 
 use Try::Tiny;
+
 
 use Moo; use MooX::late;
 
@@ -23,7 +23,8 @@ has lang_dir => (
   # BUILD dies without me or absolute_path (unless use_core_only => 1)
   lazy        => 1,
   is          => 'ro',
-  isa         => Str,  # FIXME coercible Path
+  isa         => Path,
+  coerce      => 1,
   predicate   => 'has_lang_dir',
   writer      => '_set_lang_dir',
 );
@@ -38,9 +39,22 @@ has absolute_path => (
   # BUILD dies without me or lang_dir (unless use_core_only => 1)
   lazy      => 1,
   is        => 'ro',  
-  isa       => Str,  # FIXME coercible Path
+  isa       => AbsPath,
+  coerce    => 1,
   predicate => 'has_absolute_path',
   writer    => '_set_absolute_path',
+);
+
+has _full_lang_path => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Path,
+  coerce    => 1,
+  builder   => sub {
+    my ($self) = @_;
+    return $self->absolute_path if $self->has_absolute_path;
+    path( $self->lang_dir .'/'. $self->lang .'.yml' )
+  },
 );
 
 has use_core => (
@@ -59,7 +73,20 @@ has use_core_only => (
   },
 );
 
-## Public:
+has _core_set => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => HashRef,
+  builder   => sub {
+    my ($self) = @_;
+    my $cset_path = dist_dir('Bot-Cobalt') .'/etc/langs/english.yml';
+    my $core_set_yaml = path($cset_path)->slurp_utf8;
+    confess "Failed to read core set at $cset_path"
+      unless $core_set_yaml;
+    Bot::Cobalt::Serializer->new->thaw($core_set_yaml)
+  },
+);
+
 has rpls => (
   lazy      => 1,  
   is        => 'rwp',
@@ -127,36 +154,6 @@ has spec => (
   is        => 'rwp',
   isa       => Int,
   builder   => sub { 0 },
-);
-
-## Private:
-has _full_lang_path => (
-  lazy      => 1,
-  is        => 'ro',
-  isa       => Str,
-  builder   => sub {
-    my ($self) = @_;
-    ## FIXME Path::Tiny
-    return $self->absolute_path if $self->has_absolute_path;
-    my $file_path = $self->lang . ".yml" ;
-    File::Spec->catfile(
-      File::Spec->splitdir($self->lang_dir),
-      $file_path
-    )
-  },
-);
-
-has _core_set => (
-  lazy      => 1,
-  is        => 'ro',
-  isa       => HashRef,
-  builder   => sub {
-    my ($self) = @_;
-    my $core_set_yaml = path(
-      dist_dir( 'Bot-Cobalt', 'etc', 'langs', 'english.yml' )
-    )->slurp_utf8;
-    Bot::Cobalt::Serializer->new->thaw($core_set_yaml)
-  },
 );
 
 

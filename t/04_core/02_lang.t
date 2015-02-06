@@ -1,6 +1,11 @@
 use Test::More tests => 15;
 use strict; use warnings;
 
+use Test::File::ShareDir
+  -share => +{
+    -dist => +{ 'Bot-Cobalt' => 'share' },
+  };
+
 my %sets = (
   ## Last updated for SPEC: 7
   CORE => [ qw/  
