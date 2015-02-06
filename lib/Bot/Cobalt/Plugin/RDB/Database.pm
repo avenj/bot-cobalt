@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::RDB::Database;
 
-
-
 ## Frontend to managing RDB-style Bot::Cobalt::DB instances
 ## I regret writing this.
 ##
@@ -24,7 +22,7 @@ package Bot::Cobalt::Plugin::RDB::Database;
 ## for RDBs because access is almost always a single operation and we 
 ## can afford to open / lock / access / unlock / close every call.
 
-use 5.10.1;
+use v5.10;
 use strictures 1;
 
 use Carp;
@@ -35,14 +33,9 @@ use Bot::Cobalt::Utils qw/ glob_to_re_str /;
 
 use Bot::Cobalt::Plugin::RDB::SearchCache;
 
-use File::Path qw/mkpath/;
-
-use File::Spec;
-
+use Path::Tiny;
 use List::Util qw/shuffle/;
-
 use Time::HiRes;
-
 use Try::Tiny;
 
 sub new {
@@ -63,7 +56,9 @@ sub new {
 
   $self->{core} = $core;
 
-  my $rdbdir = delete $opts{RDBDir} || croak "new() needs a RDBDir";
+  my $rdbdir = path(
+    delete $opts{RDBDir} || croak "new() needs a RDBDir"
+  );
 
   $self->{RDBDir} = $rdbdir;
   
@@ -72,14 +67,16 @@ sub new {
   );
   
   $core->log->debug("Using RDBDir $rdbdir");
+
   
-  unless (-e $rdbdir) {
+  unless ($rdbdir->exists) {
     $core->log->debug("Did not find RDBDir $rdbdir, attempting mkpath");
-    mkpath($rdbdir);
+    $rdbdir->mkpath;
   }
-  
-  confess "$rdbdir is not a directory"
-    unless -d $rdbdir;
+
+  unless ($rdbdir->is_dir) {
+    confess "Found RDBDir $rdbdir but it is not a directory!";
+  }
   
   unless ( $self->dbexists('main') ) {
     $core->log->debug("No main RDB found, creating one");
@@ -96,18 +93,12 @@ sub new {
 
 sub dbexists {
   my ($self, $rdb) = @_;
-  my $path = $self->path_from_name($rdb);
-  return 1 if -e $path;
-  return
+  $self->path_from_name($rdb)->exists
 }
 
 sub path_from_name {
   my ($self, $rdb) = @_;
-  
-  return File::Spec->catfile(
-    $self->{RDBDir},
-    $rdb .".rdb"
-  );
+  path( $self->{RDBDir} .'/'. $rdb .'.rdb' )
 }
 
 sub error {
@@ -185,7 +176,7 @@ sub deldb {
   $cache->invalidate($rdb);
 
   my $path = $self->path_from_name($rdb);
-  unless ( unlink($path) ) {
+  unless ( unlink $path ) {
     $core->log->error("Cannot unlink RDB $rdb at $path: $!");
     die $self->error("RDB_FILEFAILURE")
   }

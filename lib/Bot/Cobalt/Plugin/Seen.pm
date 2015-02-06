@@ -1,14 +1,12 @@
 package Bot::Cobalt::Plugin::Seen;
 
-
-
 use 5.10.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
 
-use File::Spec;
+use Path::Tiny;
 
 sub new { bless {}, shift }
 
@@ -52,9 +50,9 @@ sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
     
   my $pcfg = $core->get_plugin_cfg($self);
-  my $seendb_path = $pcfg->{SeenDB} || "seen.db" ;
-  
-  $seendb_path = File::Spec->catfile( $core->var, $seendb_path );
+  my $seendb_path = path(
+    $core->var .'/'. $pcfg->{SeenDB} || "seen.db"
+  );
   
   logger->debug("Opening SeenDB at $seendb_path");
 
