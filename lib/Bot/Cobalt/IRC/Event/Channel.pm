@@ -1,13 +1,11 @@
 package Bot::Cobalt::IRC::Event::Channel;
 
-
-
 ## Generic channel events.
 
-use Moo;
 use strictures 1;
 use Bot::Cobalt::Common qw/:types/;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
 has 'channel' => ( is => 'rw', isa => Str, required => 1 );

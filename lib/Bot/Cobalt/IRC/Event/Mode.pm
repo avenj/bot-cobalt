@@ -1,23 +1,20 @@
 package Bot::Cobalt::IRC::Event::Mode;
 
-
-
-use Moo;
 use strictures 1;
 
 use Bot::Cobalt;
-
 use Bot::Cobalt::Common qw/:types/;
 
 use IRC::Utils qw/parse_mode_line eq_irc/;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'mode'   => ( is => 'rw', isa => Str, required => 1 );
+has mode   => ( is => 'rw', isa => Str, required => 1 );
 
-has 'target' => ( is => 'rw', isa => Str, required => 1 );
+has target => ( is => 'rw', isa => Str, required => 1 );
 
-has 'is_umode' => ( 
+has is_umode => ( 
   lazy => 1,
 
   is  => 'ro', 
@@ -32,7 +29,7 @@ has 'is_umode' => (
   },
 );
 
-has 'channel' => ( 
+has channel => ( 
   lazy => 1,
   is  => 'rw',
 
@@ -42,7 +39,7 @@ has 'channel' => (
   },
 );
 
-has 'args' => ( 
+has args => ( 
   lazy => 1,
   is  => 'rw', 
   isa => ArrayRef, 
@@ -50,7 +47,7 @@ has 'args' => (
   default   => sub {[]},
 );
 
-has 'hash' => (
+has hash => (
   lazy => 1,
   is  => 'ro', 
   isa => HashRef, 

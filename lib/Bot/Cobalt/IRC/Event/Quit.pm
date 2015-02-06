@@ -1,14 +1,13 @@
 package Bot::Cobalt::IRC::Event::Quit;
 
-
-
-use Moo;
 use strictures 1;
+
 use Bot::Cobalt::Common qw/:types/;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'reason' => ( 
+has reason => ( 
   lazy => 1, 
 
   is  => 'rw', 
@@ -17,7 +16,7 @@ has 'reason' => (
   default => sub {''},
 );
 
-has 'common' => ( 
+has common => ( 
   lazy => 1,
 
   is  => 'rw', 

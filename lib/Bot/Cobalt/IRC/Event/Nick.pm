@@ -1,50 +1,44 @@
 package Bot::Cobalt::IRC::Event::Nick;
 
-
-
-use Moo;
 use strictures 1;
 
 use Bot::Cobalt::Common qw/:types/;
 
 use IRC::Utils qw/eq_irc/;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
-has 'old_nick' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
-
+has old_nick => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_old_nick',
-
   default   => sub { $_[0]->src_nick },
 );
 
-has 'new_nick' => (
-  required => 1,
-  is  => 'rw',
-  isa => Str,
+has new_nick => (
+  required  => 1,
+  is        => 'rw',
+  isa       => Str,
 );
 
-has 'channels' => (
-  required => 1,
-  is  => 'rw',
-  isa => ArrayRef,
-
-  trigger  => sub {
+has channels => (
+  required  => 1,
+  is        => 'rw',
+  isa       => ArrayRef,
+  trigger   => sub {
     my ($self, $value) = @_;
     $self->_set_common($value) if $self->has_common;
   },
 );
-## ...just to remain compat with ::Quit:
-has 'common'   => (
-  is => 'ro',
-  lazy => 1,
 
+## ...just to remain compat with ::Quit:
+has common   => (
+  is        => 'ro',
+  lazy      => 1,
   predicate => 'has_common',
   writer    => '_set_common',
-
   default   => sub { $_[0]->channels },
 );
 
@@ -52,9 +46,7 @@ has 'common'   => (
 ## ...but you can do it!
 after 'src' => sub {
   my ($self) = @_;
-
-  $self->old_nick( $self->src_nick )
-    if $self->has_old_nick;
+  $self->old_nick( $self->src_nick ) if $self->has_old_nick;
 };
 
 sub equal {

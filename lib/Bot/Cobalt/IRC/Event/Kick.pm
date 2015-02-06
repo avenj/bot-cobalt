@@ -1,15 +1,13 @@
 package Bot::Cobalt::IRC::Event::Kick;
 
-
-
-use Moo;
 use strictures 1;
 use Bot::Cobalt::Common qw/:types/;
 
+use Moo;
 extends 'Bot::Cobalt::IRC::Event::Channel';
 
-has 'kicked' => ( is => 'rw', isa => Str, required => 1 );
-has 'reason' => ( is => 'rw', isa => Str, required => 1 );
+has kicked => ( is => 'rw', isa => Str, required => 1 );
+has reason => ( is => 'rw', isa => Str, required => 1 );
 
 1;
 __END__
