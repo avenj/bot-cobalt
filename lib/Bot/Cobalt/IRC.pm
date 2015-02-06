@@ -1,10 +1,7 @@
 package Bot::Cobalt::IRC;
 
-
-
-use strictures 1;
-
 use v5.10;
+use strictures 1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -38,41 +35,33 @@ use IRC::Utils qw/ parse_mode_line /;
 
 use Moo; use MooX::late;
 
-
 has NON_RELOADABLE => (
-  isa => Bool,
   ## Well, really, it's sort-of unloadable.
   ##  ... but life usually sucks when you do.
   ## Call _set_NON_RELOADABLE if you really need to
-  is => 'rwp',
-
-  default => sub { 1 },
+  isa       => Bool,
+  is        => 'rwp',
+  default   => sub { 1 },
 );
 
 ## We keep references to our ircobjs; core tracks these also,
 ## but there is no guarantee that we're the only IRC plugin loaded.
 has ircobjs => (
-  lazy => 1,
-  is   => 'rw',
-  isa  => HashRef,
-
-  default => sub { {} },
+  lazy      => 1,
+  is        => 'rw',
+  isa       => HashRef,
+  default   => sub { {} },
 );
 
 has flood => (
-  is   => 'ro',
-  isa  => Object,
-  lazy => 1,
-
+  is        => 'ro',
+  isa       => Object,
+  lazy      => 1,
   predicate => 'has_flood',
-
-  default => sub {
-    my ($self) = @_;
-
+  default   => sub {
     my $ccfg  = core->get_core_cfg;
     my $count = $ccfg->opts->{FloodCount} || 5;
     my $secs  = $ccfg->opts->{FloodTime}  || 6;
-
     Bot::Cobalt::IRC::FloodChk->new(
       count => $count,
       in    => $secs,
@@ -89,21 +78,18 @@ with 'Bot::Cobalt::IRC::Role::AdminCmds';
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  register($self, 'SERVER',
-    'all',
-  );
-
+  register($self, SERVER => 'all' );
   broadcast( 'initialize_irc' );
 
   ## Start a lazy cleanup timer for flood->expire
   $core->timer_set( 180,
-    { Event => 'ircplug_chk_floodkey_expire' },
+    +{ Event => 'ircplug_chk_floodkey_expire' },
     'IRCPLUG_CHK_FLOODKEY_EXPIRE'
   );
 
   logger->info("Loaded");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
@@ -117,7 +103,7 @@ sub Cobalt_unregister {
 
   logger->debug("Clean unload");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_initialize_irc {
