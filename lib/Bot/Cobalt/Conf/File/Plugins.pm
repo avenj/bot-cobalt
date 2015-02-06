@@ -58,8 +58,8 @@ sub _create_perplugin_obj {
     || confess "No Module defined for plugin $alias";
 
   if (defined $this_cfg->{Config}) {
-    my $this_cf_path = $this_cfg->{Config};
-    unless ( File::Spec->file_name_is_absolute( $this_cf_path ) ) {
+    my $this_cf_path = path($this_cfg->{Config});
+    unless ( $this_cf_path->is_absolute ) {
       $this_cf_path = path( $self->etcdir .'/'. $this_cf_path );
     }
 
