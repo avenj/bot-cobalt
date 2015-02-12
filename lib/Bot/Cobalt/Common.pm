@@ -42,7 +42,7 @@ our $ImportMap = hash(
   ),
 
   errors    => hash(
-    'Carp' => array(),
+    'Carp' => array(qw/carp croak confess/),
   ),
 
   passwd    => hash(
@@ -119,8 +119,9 @@ sub import {
   }
 
   # empty import implies all:
-  @tags = $ImportMap->keys->all if !@tags or !@funcs
-    or grep {; $_ eq 'all' } @tags;
+  @tags = $ImportMap->keys->all 
+    if grep {; $_ eq 'all' } @tags
+    or !@tags and !@funcs;
 
   for my $tag (@tags) {
     my $groups = $ImportMap->get($tag)
