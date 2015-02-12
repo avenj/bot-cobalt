@@ -1,123 +1,165 @@
 package Bot::Cobalt::Common;
 
-## Import a bunch of stuff very commonly useful to Cobalt plugins
-
 use v5.10;
 use strictures 1;
 use Carp;
 
+use List::Objects::WithUtils;
+
 use Import::Into;
 
-# FIXME Exporter::Tiny + smarter re-exports?
-use parent 'Exporter';
+use Bot::Cobalt::Utils ();
+use IRC::Utils ();
+use Object::Pluggable::Constants ();
 
-use Bot::Cobalt::Utils qw/ :ALL /;
+use Types::Standard ();
+use List::Objects::Types ();
 
-# FIXME IRC::Toolkit
-use IRC::Utils qw/
-  decode_irc
 
-  lc_irc eq_irc uc_irc
+# FIXME reverse to also map functions to packages,
+#  export specific funcs??
+#    this won't work without some munging,
+#    maybe better to audit docs & plugins & only export by category or all
+#  needs to handle -all / :all
+our $ImportMap = hash(
+  string    => hash(
+    'Bot::Cobalt::Utils' => array( qw/
+      rplprintf
+      color
+      glob_to_re
+      glob_to_re_str
+      glob_grep
+    / ),
 
-  normalize_mask matches_mask
+    'IRC::Utils' => array( qw/
+      lc_irc
+      eq_irc
+      uc_irc
+      decode_irc
+      strip_color
+      strip_formatting
+    / ),
+  ),
 
-  strip_color strip_formatting
+  errors    => hash(
+    'Carp' => array(),
+  ),
 
-  parse_user
+  passwd    => hash(
+   'Bot::Cobalt::Utils' => array( qw/ mkpasswd passwdcmp / ),
+  ),
 
-  is_valid_nick_name is_valid_chan_name
-/;
+  time      => hash(
+    'Bot::Cobalt::Utils' => array( qw/
+      timestr_to_secs
+      secs_to_timestr
+      secs_to_str
+    / ),
+  ),
 
-use Object::Pluggable::Constants qw/
-  PLUGIN_EAT_NONE
-  PLUGIN_EAT_ALL
-/;
+  validate  => hash(
+    'IRC::Utils' => array( qw/
+      is_valid_nick_name
+      is_valid_chan_name
+    / ),
+  ),
 
-# FIXME Type::Tiny
-use MooX::Types::MooseLike::Base qw/:all/;
+  host      => hash(
+    'IRC::Utils' => array( qw/
+      parse_user
+      normalize_mask
+      matches_mask
+    / ),
+  ),
 
-our %EXPORT_TAGS = (
+  constant  => hash(
+    'Object::Pluggable::Constants' => array( ':ALL' ),
+  ),
 
-  string => [ qw/
-
-    rplprintf color
-
-    glob_to_re glob_to_re_str glob_grep
-
-    lc_irc eq_irc uc_irc
-    decode_irc
-
-    strip_color
-    strip_formatting
-
-  / ],
-
-  errors => [ qw/
-
-    carp
-    confess
-    croak
-
-  / ],
-
-  passwd => [ qw/
-
-    mkpasswd passwdcmp
-
-  / ],
-
-  time   => [ qw/
-
-    timestr_to_secs
-    secs_to_timestr
-    secs_to_str
-
-  / ],
-
-  validate => [ qw/
-
-    is_valid_nick_name
-    is_valid_chan_name
-
-  / ],
-
-  host   => [ qw/
-
-    parse_user
-    normalize_mask matches_mask
-
-  / ],
-
-  constant => [ qw/
-
-    PLUGIN_EAT_NONE PLUGIN_EAT_ALL
-
-  / ],
-
-  types => [
-    qw/
-
-    Any Defined Undef Bool
-    Value Ref Str Num Int
-    ArrayRef HashRef CodeRef RegexpRef GlobRef
-    FileHandle Object
-    AHRef
-
-  / ],
+  types     => hash(
+    'Types::Standard'      => array( -types ),
+    'List::Objects::Types' => array( -types ),
+  ),
 );
 
-our @EXPORT;
-{
-  my %seen;
-  push @EXPORT,
-    grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} for keys %EXPORT_TAGS;
-}
+my $FuncMap = 
+  $ImportMap
+  ->values
+  ->map(sub {
+      my @func_pkg_pairs;
+      my $iter = $_->iter;
+      while (my ($pkg, $opts) = $iter->()) {
+        $opts->visit(sub {
+          my $maybe_prefix = substr $_, 0, 1;
+          push @func_pkg_pairs, ($_ => $pkg)
+            unless $maybe_prefix eq ':'
+            or     $maybe_prefix eq '-'
+        })
+      }
+      @func_pkg_pairs
+    })
+  ->inflate;
 
 sub import {
+  my (undef, @items) = @_;
   my $target = caller;
+
   feature->import( ':5.10' );
   strictures->import::into($target);
-  __PACKAGE__->export_to_level(1, @_);  # FIXME Exporter::Tiny ?
+
+  my $toimport = hash;
+  my (@tags, @funcs);
+  for my $item (@items) {
+    my $maybe_prefix = substr $item, 0, 1;
+    if ($maybe_prefix eq ':' || $maybe_prefix eq '-') {
+      push @tags, lc substr $item, 1;
+    } else {
+      push @funcs, $item;
+    }
+  }
+
+  # empty import implies all:
+  @tags = $ImportMap->keys->all if !@tags or !@funcs
+    or grep {; $_ eq 'all' } @tags;
+
+  for my $tag (@tags) {
+    my $groups = $ImportMap->get($tag)
+      || confess "Import failed; tag '$tag' not exported";
+    for my $pkg ($groups->keys->all) {
+      if ($toimport->exists($pkg)) {
+        $toimport->get($pkg)->push( $groups->get($pkg)->all )
+      } else {
+        $toimport->set( $pkg => $groups->get($pkg) )
+      }
+    }
+  }
+
+  for my $func (@funcs) {
+    my $pkg = $FuncMap->get($func)
+      || confess "Import failed; function '$func' not exported";
+    if ($toimport->exists($pkg)) {
+      $toimport->get($pkg)->push($func)
+    } else {
+      $toimport->set( $pkg => array($func) )
+    }
+  }
+
+  my $iter = $toimport->iter;
+  my @failed;
+  while (my ($pkg, $optlist) = $iter->()) {
+    my $importstr = $optlist->has_any ?
+      "use $pkg qw/" . $optlist->uniq->join(' ') . "/;"
+      : "use $pkg;";
+    my $c = "package $target; $importstr; 1";
+    local $@;
+    eval $c and not $@ or carp $@ and push @failed, $pkg;
+  }
+
+  if (@failed) {
+    croak 'Failed to import '. join ', ', @failed
+  }
+
+  1
 }
 
 1;
@@ -133,8 +175,6 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
 
   package Bot::Cobalt::Plugin::User::MyPlugin;
   
-
-
   ## Import useful stuff:
   use Bot::Cobalt::Common;
 
