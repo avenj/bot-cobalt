@@ -59,9 +59,9 @@ has serializer => (
 
 ## _orig is the original tie().
 has _orig => (
-  is      => 'rw',
-  isa     => HashRef,
-  builder => sub { {} },
+  is        => 'rw',
+  isa       => HashRef,
+  builder   => sub { {} },
 );
 
 ## tied is the re-tied DB hash.
@@ -76,35 +76,31 @@ has _lockfh => (
   lazy      => 1,
   is        => 'rw',
   isa       => FileHandle,
-
   predicate => '_has_lockfh',
   clearer   => '_clear_lockfh',
 );
 
 ## LOCK_EX or LOCK_SH for current open
 has _lockmode => (
-  lazy => 1,
-  is  => 'rw',
-
+  lazy      => 1,
+  is        => 'rw',
   predicate => '_has_lockmode',
   clearer   => '_clear_lockmode',
 );
 
 ## DB object.
 has DB     => (
-  lazy => 1,
-  is   => 'rw',
-  isa  => Object,
-
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Object,
   predicate => 'has_DB',
   clearer   => 'clear_DB',
 );
 
 has is_open => (
-  is => 'rw',
-  isa => Bool,
-
-  default => sub { 0 },
+  is        => 'rw',
+  isa       => Bool,
+  default   => sub { 0 },
 );
 
 sub BUILDARGS {
