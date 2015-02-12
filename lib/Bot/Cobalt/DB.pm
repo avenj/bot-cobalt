@@ -1,64 +1,61 @@
 package Bot::Cobalt::DB;
 
-
-
-## Simple interface to a DB_File
 ## Uses proper retie-after-lock technique for locking
 
 use v5.10;
 use strictures 1;
 use Carp;
 
+use List::Objects::WithUtils;
 
 use DB_File;
 use Fcntl qw/:DEFAULT :flock/;
-
 use IO::File;
 
 use Bot::Cobalt::Serializer;
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
-use Time::HiRes qw/sleep/;
+use Time::HiRes 'sleep';
 
 
-use Moo; use MooX::Aliases;
+use Moo;
 
 has file => (
   required  => 1,
-  alias     => 'File',
   is        => 'rw',
-  isa       => Str,
+  isa       => (Str | Object),
 );
+{ no warnings 'once'; *File = *file; }
 
 has perms => (
   is        => 'rw',
-  alias     => 'Perms',
   builder   => sub { 0644 },
 );
+{ no warnings 'once'; *Perms = *perms; }
 
 has raw => (
   is        => 'rw',
-  alias     => 'Raw',
   isa       => Bool,
   builder   => sub { 0 },
 );
+{ no warnings 'once'; *Raw = *raw; }
 
 has timeout => (
   is        => 'rw',
-  alias     => 'Timeout',
   isa       => Num,
   builder   => sub { 5 },
 );
+{ no warnings 'once'; *Timeout = *timeout; }
 
 has serializer => (
   lazy      => 1,
   is        => 'rw',
-  alias     => 'Serializer',
   isa       => Object,
   builder   => sub {
     Bot::Cobalt::Serializer->new(Format => 'JSON')
   },
 );
+{ no warnings 'once'; *Serializer = *serializer; }
 
 ## _orig is the original tie().
 has _orig => (
@@ -70,10 +67,10 @@ has _orig => (
 ## tied is the re-tied DB hash.
 has tied  => (
   is        => 'rw',
-  alias     => 'Tied',
   isa       => HashRef,
   builder   => sub { {} },
 );
+{ no warnings 'once'; *Tied = *tied; }
 
 has _lockfh => (
   lazy      => 1,
@@ -112,10 +109,24 @@ has is_open => (
 
 sub BUILDARGS {
   my ($class, @args) = @_;
-
-  @args == 1 ?
-    { File => $args[0] }
-    : { @args }
+  return +{ file => $args[0] } if @args == 1;
+  # Back-compat and I hate myself
+  my %opt = @args;
+  my $lower = array( qw/
+    File
+    Perms
+    Raw
+    Timeout
+    Serializer
+    Tied
+  / );
+  for my $key (%opt) {
+    if ( $lower->has_any(sub { $_ eq $key }) ) {
+      my $val = delete $opt{$key};
+      $opt{lc $key} = $val
+    }
+  }
+  \%opt
 }
 
 sub DESTROY {
