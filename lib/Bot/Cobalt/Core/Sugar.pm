@@ -1,13 +1,9 @@
 package Bot::Cobalt::Core::Sugar;
 
-
-
 use strictures 1;
-
-use v5.10;
 use Carp;
 
-use Exporter 'import';
+use parent 'Exporter::Tiny';
 
 our @EXPORT = qw/
   core

@@ -1,13 +1,11 @@
 package Bot::Cobalt::Frontend::Utils;
 
-
-
 use strictures 1;
 
 use 5.10.1;
 use Carp;
 
-use Exporter 'import';
+use parent 'Exporter::Tiny';
 
 our @EXPORT_OK = qw/
   ask_yesno

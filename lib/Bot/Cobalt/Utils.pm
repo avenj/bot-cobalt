@@ -1,14 +1,12 @@
 package Bot::Cobalt::Utils;
 
-
-
+use v5.10;
 use strictures 1;
-use 5.10.1;
 use Carp;
 
 use App::bmkpasswd ();
 
-use Exporter 'import';
+use parent 'Exporter::Tiny';
 
 our @EXPORT_OK = qw/
   secs_to_str

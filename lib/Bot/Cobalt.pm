@@ -1,27 +1,26 @@
 package Bot::Cobalt;
 
-
-
-use 5.10.1;
 use strictures 1;
 use Carp;
 
-use Bot::Cobalt::Core::Sugar;
+use Import::Into;
 
-use parent 'Exporter';
-our @EXPORT = @Bot::Cobalt::Core::Sugar::EXPORT;
+use Bot::Cobalt::Core::Sugar ();
 
 sub import {
-  __PACKAGE__->export_to_level(1, @_);
+  shift;
+  my $target = caller;
+  Bot::Cobalt::Core::Sugar->import::into(scalar caller, @_)
 }
 
 sub instance {
   require Bot::Cobalt::Core;
+  shift;
   if (@_) {
     ## Someone tried to create a new instance, but they really 
     ## wanted a Bot::Cobalt::Core.
     ## Behavior may change.
-    return Bot::Cobalt::Core->instance(@_[1 .. $#_])
+    return Bot::Cobalt::Core->instance(@_)
   }
 
   ## Be polite and offer up our Bot::Cobalt::Core if we have one
