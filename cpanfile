@@ -23,7 +23,6 @@ requires "List::Objects::Types" => "1.002";
 
 requires "Module::Runtime" => "0";
 requires "Moo" => "1.006";
-requires "MooX::Aliases" => "0";
 requires "Net::IP::Minimal" => "0.04";
 
 requires "Path::Tiny" => "0.05";
