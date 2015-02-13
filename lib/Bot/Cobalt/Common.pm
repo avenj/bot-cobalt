@@ -15,7 +15,6 @@ use Object::Pluggable::Constants ();
 use Types::Standard ();
 use List::Objects::Types ();
 
-
 # FIXME reverse to also map functions to packages,
 #  export specific funcs??
 #    this won't work without some munging,
@@ -108,6 +107,8 @@ sub import {
   strictures->import::into($target);
 
   my $toimport = hash;
+
+  # : or - prefixed tags are valid, everything else is a func/symbol:
   my (@tags, @funcs);
   for my $item (@items) {
     my $maybe_prefix = substr $item, 0, 1;
@@ -118,11 +119,12 @@ sub import {
     }
   }
 
-  # empty import implies all:
   @tags = $ImportMap->keys->all 
     if grep {; $_ eq 'all' } @tags
+    # empty import implies all:
     or !@tags and !@funcs;
 
+  # groups/tags:
   for my $tag (@tags) {
     my $groups = $ImportMap->get($tag)
       || confess "Import failed; tag '$tag' not exported";
@@ -135,6 +137,7 @@ sub import {
     }
   }
 
+  # individual symbols:
   for my $func (@funcs) {
     my $pkg = $FuncMap->get($func)
       || confess "Import failed; function '$func' not exported";
@@ -184,7 +187,7 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
 This is a small exporter module providing easy inclusion of commonly
 used tools and constants to make life easier on plugin authors.
 
-L<strictures> is also enabled. This will turn on 'strict' and make all
+L<strictures> are also enabled. This will turn on 'strict' and make all
 warnings fatal.
 
 =head2 Exported
@@ -205,9 +208,7 @@ PLUGIN_EAT_ALL (L<Object::Pluggable::Constants>)
 
 =head3 Moo types
 
-All of the L<MooX::Types::MooseLike::Base> types are exported.
-
-See L<MooX::Types::MooseLike::Base> for details.
+All of the L<Types::Standard> and L<List::Objects::Types> types are exported.
 
 =head3 IRC::Utils
 
@@ -264,9 +265,8 @@ See L<Bot::Cobalt::Utils> for details.
 
 =head4 Errors
 
-  confess
   croak
-
+  confess
 
 =head2 Exported tags
 
@@ -306,7 +306,8 @@ L<Bot::Cobalt::Utils>.
 
 =head3 types
 
-Exports the L<Moo> types from L<MooX::Types::MooseLike::Base>.
+Exports all L<Type::Tiny> types from L<List::Objects::Types> and
+L<Types::Standard>.
 
 =head3 validate
 
