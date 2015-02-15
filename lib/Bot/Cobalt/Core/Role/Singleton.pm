@@ -1,7 +1,5 @@
 package Bot::Cobalt::Core::Role::Singleton;
 
-
-
 use Carp 'confess';
 use strictures 1;
 
@@ -20,8 +18,7 @@ sub instance {
 
 sub has_instance {
   my $class = ref $_[0] || $_[0];
-  return unless ${$class.'::_singleton'};
-  1
+  !! ${$class.'::_singleton'};
 }
 
 sub clear_instance {
@@ -31,7 +28,7 @@ sub clear_instance {
 }
 
 sub is_instanced {
-  confess("is_instanced is deprecated; use has_instance")
+  confess "is_instanced is deprecated; use has_instance"
 }
 
 1;

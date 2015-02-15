@@ -1,7 +1,5 @@
 package Bot::Cobalt::Core::Role::IRC;
 
-
-
 use 5.10.1;
 use strictures 1;
 

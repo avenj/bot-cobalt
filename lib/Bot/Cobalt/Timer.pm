@@ -1,14 +1,9 @@
 package Bot::Cobalt::Timer;
 
-
-
 use strictures 1;
-use 5.10.1;
-
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
-
+use Bot::Cobalt::Common ':types';
 
 use Moo;
 
@@ -38,16 +33,16 @@ has id => (
 ## 'at' is set regardless of whether delay()/at() is used
 ## (or 0 if none is ever set)
 has at => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Num,
-  builder => sub { 0 },
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Num,
+  builder   => sub { 0 },
 );
 
 has delay => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Num,
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Num,
   predicate => 'has_delay',
   clearer   => 'clear_delay',
   builder   => sub { 0 },
@@ -58,57 +53,52 @@ has delay => (
 );
 
 has event => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_event',
 );
 
 has args  => (
-  lazy => 1,
-  is  => 'rw',
-  isa => ArrayRef,
-  builder => sub { [] },
+  lazy      => 1,
+  is        => 'rw',
+  isa       => ArrayRef,
+  builder   => sub { [] },
 );
 
 has alias => (
-  is  => 'rw',
-  isa => Str,
-  builder => sub { scalar caller },
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub { scalar caller },
 );
 
 has context => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_context',
   builder   => sub { 'Main' },
 );
 
 has text    => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Str,
-
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_text'
 );
 
 has target  => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
-
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_target'
 );
 
 has type  => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Str,
-
-  builder => sub {
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub {
     my ($self) = @_;
 
     if ($self->has_context && $self->has_target) {
@@ -119,7 +109,6 @@ has type  => (
       return 'event'
     }
   },
-
   coerce => sub {
     $_[0] =~ /message|privmsg/i ? 'msg' : lc($_[0]) ;
   },

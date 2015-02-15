@@ -14,23 +14,23 @@ lang-sharedir:
   * unwind cobalt2-installer
     - should create var/db/ itself
     - should fetch templates from ShareDir
-  * swap to dzil
-    - should use cpanfile
-    - should pass author tests
+  @@ swap to dzil
+    @@ should use cpanfile
+    !! should pass author tests
 
 ## TODO
 
 Core:
 
-  - Drop File::Spec, use Path::Tiny
+  !! Drop File::Spec, use Path::Tiny
 
-  - ::Common refactor, see notes in branch type-tiny
+  @@ ::Common refactor, see notes in branch type-tiny
+   - clean out type-tiny branch
 
   - Stylistic cleanups:
     * has 'foo' -> has foo
     * attrib option indentation consistency
-    * lowercase-only attribs (w/ backwards-compat MooX::Aliases)
-
+    !! lowercase-only attribs (w/ backwards-compat MooX::Aliases)
 
   - Try to make sure coreset plugins are rehash-safe
 

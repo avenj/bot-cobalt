@@ -1,7 +1,6 @@
 package Bot::Cobalt::Core::ContextMeta::Auth;
 
 
-
 use v5.10;
 use strictures 1;
 

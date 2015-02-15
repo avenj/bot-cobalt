@@ -1,22 +1,17 @@
 package Bot::Cobalt::Core::ContextMeta;
 
-
-
 ## Base class for context-specific dynamic hashes
 ## (ignores, auth, .. )
 
-use 5.10.1;
 use strictures 1;
-
 use Carp;
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
 use Scalar::Util 'reftype';
 
 
 use Moo;
-
 
 has _list => (
   is        => 'rw', 

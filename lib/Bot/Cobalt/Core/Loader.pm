@@ -1,7 +1,5 @@
 package Bot::Cobalt::Core::Loader;
 
-
-
 use v5.10;
 use strictures 1;
 

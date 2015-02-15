@@ -6,10 +6,11 @@ use v5.10;
 use strictures 1;
 
 use List::Objects::WithUtils;
+use Path::Tiny;
 
-use Scalar::Util       'blessed', 'reftype';
-use Path::Tiny         'path';
-use File::ShareDir     'dist_dir';
+use Scalar::Util    'blessed', 'reftype';
+use File::ShareDir  'dist_dir';
+
 use Bot::Cobalt::Utils 'rplprintf', 'mkpasswd';
 use Bot::Cobalt::Frontend::Utils ':all';
 use Bot::Cobalt::Frontend::RC    'rc_read', 'rc_write';
