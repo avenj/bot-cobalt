@@ -3,10 +3,11 @@ package Bot::Cobalt::Frontend::RC;
 use strictures 1;
 
 use Carp;
-use Try::Tiny;
 
-use File::Spec;
-use Cwd ();
+use Cwd        ();
+use File::Spec ();
+
+use Try::Tiny;
 
 use Bot::Cobalt::Serializer;
 
@@ -36,7 +37,7 @@ sub rc_read {
     $generic_crappy_err->();
     $rc_err = $_;
     undef
-  } or croak "Could not rc_read(); readfile said $_";
+  } or croak "Could not rc_read(); readfile said $rc_err";
   
   unless ($rc_h && ref $rc_h eq 'HASH') {
     $generic_crappy_err->();
@@ -59,9 +60,6 @@ sub rc_write {
   croak "rc_write needs rc file path and base directory path"
     unless $rcfile and $basepath;
 
-  # FIXME Path::Tiny, and this logic is stupid
-  #  new cobalt2-installer doesn't care
-  #  don't think anything else calls an rc_write
   unless ( File::Spec->file_name_is_absolute($basepath) ) {
     my $homedir = $ENV{HOME} || Cwd::cwd();
     $basepath = File::Spec->catdir( $homedir, $basepath );
