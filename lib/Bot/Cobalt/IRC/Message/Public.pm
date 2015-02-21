@@ -1,42 +1,36 @@
 package Bot::Cobalt::IRC::Message::Public;
 
-
-
-use 5.10.1;
+use v5.10;
+use strictures 1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
+use Scalar::Util 'blessed';
 
 use Moo;
-
-use Scalar::Util qw/blessed/;
-
 extends 'Bot::Cobalt::IRC::Message';
 
-has 'cmd' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Any,
-
+has cmd => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Any,
   predicate => 'has_cmd',
   builder   => '_build_cmd',
 );
 
-has 'highlight' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Bool,
-
+has highlight => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Bool,
   predicate => 'has_highlight',
   builder   => '_build_highlight',
 );
 
-has 'myself' => (
-  lazy => 1,
-  is  => 'rw',
-  isa => Str,
-
-  default => sub {
+has myself => (
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub {
     my ($self) = @_;
 
     require Bot::Cobalt::Core;
@@ -47,7 +41,7 @@ has 'myself' => (
   },
 );
 
-after 'message' => sub {
+after message => sub {
   my ($self, $value) = @_;
 
   if ($self->has_highlight) {

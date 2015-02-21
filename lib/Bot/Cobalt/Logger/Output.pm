@@ -1,46 +1,32 @@
 package Bot::Cobalt::Logger::Output;
 
-
-
 use Carp;
-use Moo;
-
 use strictures 1;
 
 use Bot::Cobalt::Common qw/:types :string/;
-
 use POSIX ();
-
 use Try::Tiny;
 
-## Configurables.
-has 'time_format' => (
-  is  => 'rw',
-  isa => Str,
-  
-  default => sub {
-    ## strftime
-    "%Y-%m-%d %H:%M:%S"
-  },
+use Moo;
+
+has time_format => (
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub { "%Y-%m-%d %H:%M:%S" },  # strftime
 );
 
-has 'log_format' => (
-  is  => 'rw',
-  isa => Str,
-  
-  default => sub {
-    ## rplprintf
-    "%level %time (%pkg%) %msg"
-  },
+has log_format => (
+  is        => 'rw',
+  isa       => Str,
+  builder   => sub { "%level %time (%pkg%) %msg" }, # rplprintf
 );
 
 
 ## Internals.
-has '_outputs' => (
-  is  => 'rwp',
-  isa => HashRef,
-  
-  default => sub { {} },
+has _outputs => (
+  is        => 'rwp',
+  isa       => HashRef,
+  default   => sub { +{} },
 );
 
 
