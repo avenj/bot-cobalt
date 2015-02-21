@@ -52,8 +52,6 @@ sub read_format_write {
   $path
 }
 
-
-
 sub build_dir_skeleton {
   my ($base, $etc, $var) = @_;
   die "Expected a base Path object but got $path"
@@ -125,15 +123,62 @@ sub interactive_rcfile {
 }
 
 sub interactive_cobaltcf {
-  my ($conf_replacements) = @_;
+  my ($conf_repl) = @_;
+  say ">>> 'cobalt.conf'";
+  my $cfvars = $conf_repl->get('cobalt');
+  
+  # CFG_BOT_NICK
+  $cfvars->set( CFG_BOT_NICK =>
+    ask_question( prompt  => 'Nickname', default => 'cobalt2' )
+  );
+
+  # CFG_BOT_USERNAME
+  $cfvars->set( CFG_BOT_USERNAME =>
+    ask_question( prompt => 'Username', default => 'cobalt' )
+  );
+  
+  # CFG_BOT_REALNAME
+  $cfvars->set( CFG_BOT_REALNAME =>
+    ask_question( prompt => 'Realname (GECOS)', default => 'Bot::Cobalt' )
+  );
+
+  # CFG_CMD_CHAR
+  $cfvars->set( CFG_CMD_CHAR =>
+    ask_question( prompt => 'Command prefix character', default => '!' )
+  );
+
+  # CFG_SERVER_ADDR
+  $cfvars->set( CFG_SERVER_ADDR =>
+    ask_question( prompt => 'Server address', default => 'irc.cobaltirc.org' )
+  );
+
+  # CFG_USE_SSL
+  say "If you choose to use SSL, POE::Component::SSLify must be installed.";
+  my $maybe_ssl = ask_yesno(
+    prompt => 'Use SSL for this server?', default => 'n'
+  );
+   # FIXME check for SSLify?
+  $cfvars->set( CFG_USE_SSL => $maybe_ssl );
+
+  # CFG_SERVER_PORT
+  $cfvars->set( CFG_SERVER_PORT =>
+    ask_question(
+      prompt  => 'Server port',
+      default => ( $maybe_ssl ? 6697 : 6667 ),
+    )
+  );
 }
 
 sub interactive_channelscf {
-  my ($conf_replacements) = @_;
+  my ($conf_repl) = @_;
+  say ">>> 'channels.conf'";
+  my $cfvars = $conf_repl->get('channels');
 }
 
 sub interactive_authcf {
-  my ($conf_replacements) = @_;
+  my ($conf_repl) = @_;
+  say ">>> 'auth.conf'";
+  my $cfvars = $conf_repl->get('auth');
 }
 
 
@@ -146,21 +191,24 @@ sub interactive {
     &interactive_authcf,
   );
 
-  my $conf_replacements = hash(
+  my $conf_repl = hash(
     cobalt    => hash,
     channels  => hash,
     auth      => hash,
   );
-  $_->($conf_replacements) for @refs;
+  $_->($conf_repl) for @refs;
 
-  for my $kv ($conf_replacements->kv->all) {
+  # FIXME read back rc written in interactive_rcfile to get basedir
+  #  build $actual paths in loop
+  #  call read_format_write($abspath, $repl_hash)
+  for my $kv ($conf_repl->kv->all) {
     my ($path_prefix, $repl_hash) = @$kv;
-    # FIXME iterate $conf_replacements, call read_format_write
+   
+    # FIXME iterate $conf_repl, call read_format_write
   }
+
+  # FIXME auth needs permissions adjustment (or warn)
 }
-
-
-
 
 
 ## FIXME
