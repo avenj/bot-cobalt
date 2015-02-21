@@ -47,24 +47,13 @@ has etc => (
   is        => 'ro',
   isa       => Path,
   coerce    => 1,
-  builder   => sub {
-    my ($self) = @_;
-    $self->cfg->etc
-  },
+  builder   => sub { shift->cfg->etc },
 );
 
 has log => (
   lazy      => 1,
   is        => 'rw',
-  isa       => sub {
-    unless (blessed $_[0]) {
-      die "log() not passed a blessed object"
-    }
-    for my $meth (qw/debug info warn error/) {
-      die "log() object missing required method $meth"
-        unless $_[0]->can($meth);
-    }
-  },
+  isa       => HasMethods[qw/debug info warn error/],
   builder   => sub {
     my ($self) = @_;
     my %opts = (
@@ -118,10 +107,7 @@ has url => (
 has langset => (
   lazy      => 1,
   is        => 'ro',
-  isa       => sub {
-    die "langset() needs a Bot::Cobalt::Lang"
-      unless blessed $_[0] && $_[0]->isa('Bot::Cobalt::Lang');
-  },
+  isa       => InstanceOf['Bot::Cobalt::Lang'],
   writer    => 'set_langset',
   builder   => sub {
     my ($self) = @_;

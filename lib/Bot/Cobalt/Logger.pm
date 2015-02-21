@@ -1,88 +1,58 @@
 package Bot::Cobalt::Logger;
 
-
-
-use 5.12.1;
 use strictures 1;
-
 use Carp;
-use Moo;
-
-use Scalar::Util 'blessed';
 
 use Bot::Cobalt::Common ':types';
-
 use Bot::Cobalt::Logger::Output;
 
 
+use Moo;
 
 has level => (
-  required => 1,
-
-  is => 'ro',
-  writer => 'set_level',
-
-  isa => sub {
-    my $lev = $_[0];
-    confess "Unknown log level, should be one of: error warn info debug"
-      unless grep { $_ eq $lev } qw/error warn info debug/;
-  },
+  required  => 1,
+  is        => 'ro',
+  writer    => 'set_level',
+  isa       => Enum[qw/error warn info debug/],
 );
 
 ## time_format / log_format are passed to ::Output
 has time_format => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Str,
-
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_time_format',
-
-  trigger => sub {
+  trigger   => sub {
     my ($self, $val) = @_;
-
-    $self->output->time_format($val)
-      if $self->has_output;
+    $self->output->time_format($val) if $self->has_output
   },
 );
 
 has log_format => (
-  lazy => 1,
-
-  is  => 'rw',
-  isa => Str,
-
+  lazy      => 1,
+  is        => 'rw',
+  isa       => Str,
   predicate => 'has_log_format',
-
-  trigger => sub {
+  trigger   => sub {
     my ($self, $val) = @_;
-
-    $self->output->log_format($val)
-      if $self->has_output;
+    $self->output->log_format($val) if $self->has_output
   },
 );
 
 
 has output => (
-  lazy => 1,
-
-  is   => 'rwp',
+  lazy      => 1,
+  is        => 'rwp',
   predicate => 'has_output',
-
-  isa => sub {
-    confess "Not a Bot::Cobalt::Logger::Output subclass"
-      unless blessed $_[0] and $_[0]->isa('Bot::Cobalt::Logger::Output')
-  },
-
-  builder => '_build_output',
+  isa       => InstanceOf['Bot::Cobalt::Logger::Output'],
+  builder   => '_build_output',
 );
 
 has _levmap => (
-  is  => 'ro',
-  isa => HashRef,
-
-  default => sub {
-    {
+  is        => 'ro',
+  isa       => HashRef,
+  builder   => sub {
+    +{
       error => 1,
       warn  => 2,
       info  => 3,

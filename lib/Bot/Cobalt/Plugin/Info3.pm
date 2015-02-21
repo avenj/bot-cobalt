@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Info3;
 
-
-
 use strictures 1;
 use v5.10;
 

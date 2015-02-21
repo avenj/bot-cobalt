@@ -15,11 +15,6 @@ use Object::Pluggable::Constants ();
 use Types::Standard ();
 use List::Objects::Types ();
 
-# FIXME reverse to also map functions to packages,
-#  export specific funcs??
-#    this won't work without some munging,
-#    maybe better to audit docs & plugins & only export by category or all
-#  needs to handle -all / :all
 our $ImportMap = hash(
   string    => hash(
     'Bot::Cobalt::Utils' => array( qw/

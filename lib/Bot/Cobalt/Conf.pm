@@ -66,11 +66,7 @@ has core => (
   is        => 'ro',
   predicate => 'has_core',
   writer    => 'set_core',
-  isa       => sub {
-    my ($obj) = @_;
-    blessed $obj and $obj->isa('Bot::Cobalt::Conf::File::Core')
-      or die "core() should be a Bot::Cobalt::Conf::File::Core"
-  },
+  isa       => InstanceOf['Bot::Cobalt::Conf::File::Core'],
   builder => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Core->new(
@@ -85,11 +81,7 @@ has channels => (
   is        => 'ro',
   predicate => 'has_channels',
   writer    => 'set_channels',
-  isa       => sub {
-    my ($obj) = @_;
-    blessed $obj and $obj->isa('Bot::Cobalt::Conf::File::Channels')
-      or die "channels() should be a Bot::Cobalt::Conf::File:Channels"
-  },
+  isa       => InstanceOf['Bot::Cobalt::Conf::File::Channels'],
   builder   => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Channels->new(
@@ -104,10 +96,7 @@ has plugins => (
   is        => 'ro',
   predicate => 'has_plugins',
   writer    => 'set_plugins',
-  isa       => sub {
-    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf::File::Plugins')
-      or die "plugins() should be a Bot::Cobalt::Conf::File::Plugins"
-  },
+  isa       => InstanceOf['Bot::Cobalt::Conf::File::Plugins'],
   builder   => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Plugins->new(
