@@ -5,22 +5,15 @@ use strictures 1;
 
 use Try::Tiny;
 
-use Scalar::Util qw/blessed/;
-
+use Bot::Cobalt::Common -types;
 use Bot::Cobalt::Serializer;
 
 use Moo::Role;
 
 has '_serializer' => (
-  is  => 'ro',
-  isa => sub {
-    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Serializer')
-      or confess "_serializer needs a Bot::Cobalt::Serializer"
-  },
-  
-  default => sub {
-    Bot::Cobalt::Serializer->new
-  },
+  is        => 'ro',
+  isa       => InstanceOf['Bot::Cobalt::Serializer'],
+  builder   => sub { Bot::Cobalt::Serializer->new },
 );
 
 sub readfile {

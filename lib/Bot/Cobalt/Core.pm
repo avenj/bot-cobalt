@@ -29,10 +29,7 @@ use Moo;
 has cfg => (
   required  => 1,
   is        => 'rw',
-  isa       => sub {
-    blessed $_[0] and $_[0]->isa('Bot::Cobalt::Conf')
-      or die "cfg() attrib should be a Bot::Cobalt::Conf"
-  },
+  isa       => InstanceOf['Bot::Cobalt::Conf'],
 );
 
 has var => (
