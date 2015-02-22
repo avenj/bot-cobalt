@@ -1,8 +1,0 @@
-Cobalt POD docs, converted to plaintext:
-
-[% FOREACH Category IN IndexItems.keys.sort %]
- [% Category %]
- [% FOREACH LinkItem IN IndexItems.$Category.sort %]
-   * [% LinkItem.Link %] - [% LinkItem.Title %]
- [% END %]
-[% END %]
