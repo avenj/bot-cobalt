@@ -1,0 +1,15 @@
+auth.conf
+channels.conf
+langs
+cobalt.conf
+plugins.conf
+plugins
+Manifest
+multiserv.conf
+langs/english.yml
+langs/ebonics.yml
+plugins/relay.conf
+plugins/info3.conf
+plugins/www.conf
+plugins/games.conf
+plugins/rdb.conf
