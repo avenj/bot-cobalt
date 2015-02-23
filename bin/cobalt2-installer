@@ -240,14 +240,15 @@ sub interactive {
   );
   $_->($conf_repl) for @refs;
 
-  # FIXME read back rc written in interactive_rcfile to get basedir
-  #  build $actual paths in loop
-  #  call read_format_write($abspath, $repl_hash)
+  my (undef, $etcdir) = rc_read($Rcfile);
   for my $kv ($conf_repl->kv->all) {
     my ($path_prefix, $repl_hash) = @$kv;
-   
-    # FIXME iterate $conf_repl, call read_format_write
+    my $actual = path( "${etcdir}/${path_prefix}.conf" );
+    say ">>> Writing '$actual'";
+    read_format_write($actual, $repl_hash);
   }
+
+  my $authcf_path = path( "${etcdir}/auth.conf" );
 
   # FIXME auth needs permissions adjustment (or warn)
 }
@@ -257,28 +258,7 @@ sub interactive {
 ##   should be able to install non-interactively (template replacement
 ##   defaults)
 ##
-##   interactive mode needs to cover:
-##    - rcfile placement
-##      * default to $Rcfile
-##      * prompt if overwriting
-##    - cobalt basedir
-##      * default to $HOME/cobalt2
-##      * prompt if exists and populated
-##    - cobalt.conf
-##      * CFG_BOT_NICK, CFG_BOT_USERNAME, CFG_BOT_REALNAME
-##      * CFG_CMD_CHAR
-##      * CFG_SERVER_ADDR
-##      * CFG_USE_SSL
-##      * CFG_SERVER_PORT
-##    - channels.conf
-##      * CHAN
-##      * ??
-##    - auth.conf
-##      * AUTH_USER
-##      * AUTH_PASS  (Termios turn off echo)
-##      * AUTH_MASK
-##      * ability to add more users?
-##
+
 ##   installation should populate:
 ##    - $Rcfile
 ##    - $basedir/etc/ by copying from ShareDir
