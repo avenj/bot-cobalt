@@ -5,10 +5,13 @@ my $VERSION = 2;
 use v5.10;
 use strictures 1;
 
-use List::Objects::WithUtils;
-use Path::Tiny;
+use Scalar::Util 'reftype';
 
-use Scalar::Util    'blessed', 'reftype';
+use List::Objects::WithUtils;
+
+use Path::Tiny;
+use Types::Path::Tiny -all;
+
 use File::ShareDir  'dist_dir';
 
 use Bot::Cobalt::Utils 'rplprintf', 'mkpasswd';
@@ -42,7 +45,7 @@ GetOptions(
 sub read_format_write {
   my ($path, $vars) = @_;
   die "Expected Path::Tiny but got $path"
-    unless blessed $path && $path->isa('Path::Tiny');
+    unless is_Path($path);
   die "Expected HASH of template var replacements but got $vars"
     unless reftype $vars eq 'HASH';
 
@@ -116,10 +119,9 @@ sub interactive_rcfile {
   );
   my $basedir = path($basedir_ans);
 
-
-
+  # FIXME prompt if exists
   # FIXME call rc write
-  # FIXME do skeleton dir prep, copy_base_confs
+  # FIXME call build_dir_skeleton, copy_base_confs
 }
 
 sub interactive_cobaltcf {
@@ -173,12 +175,17 @@ sub interactive_channelscf {
   my ($conf_repl) = @_;
   say ">>> 'channels.conf'";
   my $cfvars = $conf_repl->get('channels');
+  # FIXME audit
 }
 
 sub interactive_authcf {
   my ($conf_repl) = @_;
   say ">>> 'auth.conf'";
   my $cfvars = $conf_repl->get('auth');
+  # AUTH_USER
+  # AUTH_PASS
+  # AUTH_MASK
+  # ability to add more users ??
 }
 
 
