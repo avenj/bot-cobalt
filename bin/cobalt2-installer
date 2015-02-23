@@ -186,7 +186,15 @@ sub interactive_cobaltcf {
   my $maybe_ssl = ask_yesno(
     prompt => 'Use SSL for this server?', default => 'n'
   );
-   # FIXME check for SSLify?
+  if ($maybe_ssl) {
+    local $@;
+    eval {; require POE::Component::SSLify };
+    if (my $err = $@) {
+      say $_ for
+        "! POE::Component::SSLify could not be loaded: $err",
+        "! SSL may fail!";
+    }
+  }
   $cfvars->set( CFG_USE_SSL => $maybe_ssl );
 
   # CFG_SERVER_PORT
