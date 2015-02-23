@@ -57,22 +57,19 @@ sub read_format_write {
 
 sub build_dir_skeleton {
   my ($base, $etc, $var) = @_;
-  die "Expected a base Path object but got $path"
+  die "Expected a base Path object but got '$base'"
     unless is_Path($base);
-
   $etc = path( $base . '/etc' ) unless $etc;
   $var = path( $base . '/var' ) unless $var;
   my $dbpath = path( $var . '/db' );
   $_->mkpath for $etc, $var, $dbpath;
-
-  # FIXME using this..? maybe not?
-  hash( base => $base, etc => $etc, var => $var )->inflate
 }
 
 
 sub copy_base_confs {
   my ($target_etc) = @_;
   die "BUG; expected target etcdir" unless defined $target_etc;
+  $target_etc = path($target_etc) unless is_Path $target_etc;
 
   my $shared_etc = path(
     join '/', dist_dir('Bot-Cobalt'), 'etc'
@@ -100,7 +97,7 @@ sub copy_base_confs {
       $newfile->spew_utf8( $oldfile->slurp_utf8 );
       my $newsum = md5_hex $newfile->slurp_raw;
       unless ($sum_or_dir eq $newsum) {
-        warn "WARNING; checksum mismatch after copy: '$relpath'";
+        warn "WARNING; checksum mismatch after copy: '$relpath'\n";
       }
     }
   }
@@ -132,6 +129,7 @@ sub interactive_rcfile {
     prompt  => 'Enter a different rcfile location?',
     default => 'n',
   );
+  $Rcfile = path($Rcfile);
 
   say "Installing rcfile to $Rcfile";
 
@@ -144,11 +142,25 @@ sub interactive_rcfile {
     prompt  => 'Base directory',
     default => $default_basedir,
   );
-  my $basedir = path($basedir_ans);
 
-  # FIXME prompt if exists
-  # FIXME call rc write
-  # FIXME call build_dir_skeleton, copy_base_confs
+  RCFILE: {
+    if ($Rcfile->exists) {
+      warn "WARNING; rcfile exists at '$Rcfile'\n";
+      my $overwrite = ask_yesno(
+        prompt => 'Overwriting existing rcfile?', default => 'n'
+      );
+      unless ($overwrite) {
+        say "Skipping rcfile write; attempting to use existing rcfile.";
+        last RCFILE
+      }
+    }
+    rc_write($Rcfile, $basedir_ans);
+  }
+
+  # read back new or old rcfile, build_dir_skeleton + copy_base_confs
+  my ($new_base, $new_etc, $new_var) = map {; path($_) } rc_read($Rcfile);
+  build_dir_skeleton($new_base, $new_etc, $new_var);
+  copy_base_confs($new_etc);
 }
 
 sub interactive_cobaltcf {
@@ -253,19 +265,8 @@ sub interactive {
   # FIXME auth needs permissions adjustment (or warn)
 }
 
-
 ## FIXME
 ##   should be able to install non-interactively (template replacement
 ##   defaults)
 ##
-
-##   installation should populate:
-##    - $Rcfile
-##    - $basedir/etc/ by copying from ShareDir
-##    - template replacement for:
-##      * cobalt.conf
-##      * channels.conf
-##      * auth.conf
-##      * write as we go?
-##    - $basedir/var/db [empty]
 
