@@ -58,31 +58,58 @@ sub read_format_write {
 sub build_dir_skeleton {
   my ($base, $etc, $var) = @_;
   die "Expected a base Path object but got $path"
-    unless blessed $path && $path->isa('Path::Tiny');
+    unless is_Path($base);
 
   $etc = path( $base . '/etc' ) unless $etc;
   $var = path( $base . '/var' ) unless $var;
   my $dbpath = path( $var . '/db' );
   $_->mkpath for $etc, $var, $dbpath;
 
+  # FIXME using this..? maybe not?
   hash( base => $base, etc => $etc, var => $var )->inflate
 }
 
 
 sub copy_base_confs {
+  my ($target_etc) = @_;
+  die "BUG; expected target etcdir" unless defined $target_etc;
+
   my $shared_etc = path(
-    dist_dir('Bot-Cobalt') . '/etc'
+    join '/', dist_dir('Bot-Cobalt'), 'etc'
   );
 
-  die "Could not locate ShareDir at $shared_etc"
+  die "Could not locate ShareDir at '$shared_etc'"
     unless $shared_etc->exists;
+  die "ShareDir at '$shared_etc' not a directory"
+    unless $shared_etc->is_dir;
 
-  # FIXME verify & copy from sharedir
+  my $manifest = path(join '/', $shared_etc, 'Manifest');
+  die "Could not locate Manifest at '$manifest'"
+    unless $manifest->exists;
+  my @lines = $manifest->lines_utf8;
+  for my $item (@lines) {
+    my ($relpath, $sum_or_dir) = split ' ^ ', $item;
+    if ($sum_or_dir eq 'DIR') {
+      my $newdir = path(join '/', $target_etc, $relpath);
+      say ">>> Creating directory '$newdir'";
+      $newdir->mkpath
+    } else {
+      my $oldfile = path(join '/', $shared_etc, $relpath);
+      my $newfile = path(join '/', $target_etc, $relpath);
+      say ">>> Copying '$relpath' -> '$newfile'";
+      $newfile->spew_utf8( $oldfile->slurp_utf8 );
+      my $newsum = md5_hex $newfile->slurp_raw;
+      unless ($sum_or_dir eq $newsum) {
+        warn "WARNING; checksum mismatch after copy: '$relpath'";
+      }
+    }
+  }
 }
 
 
 sub non_interactive {
   # FIXME set up some default var replacements
+  # FIXME env or command line opts for rc paths, basics?
 }
 
 
