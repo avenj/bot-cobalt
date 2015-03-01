@@ -1,11 +1,11 @@
 #!perl
-
 my $VERSION = 2;
 
 use v5.10;
 use strictures 1;
 
 use Scalar::Util 'reftype';
+use POSIX ();
 
 use List::Objects::WithUtils;
 
@@ -81,10 +81,9 @@ sub copy_base_confs {
     unless $shared_etc->is_dir;
 
   my $manifest = path(join '/', $shared_etc, 'Manifest');
-  die "Could not locate Manifest at '$manifest'"
-    unless $manifest->exists;
-  my @lines = $manifest->lines_utf8;
-  for my $item (@lines) {
+  die "Could not locate Manifest at '$manifest'" unless $manifest->exists;
+
+  for my $item ($manifest->lines_utf8) {
     my ($relpath, $sum_or_dir) = split ' ^ ', $item;
     if ($sum_or_dir eq 'DIR') {
       my $newdir = path(join '/', $target_etc, $relpath);
@@ -222,17 +221,47 @@ sub interactive_channelscf {
   my ($conf_repl) = @_;
   say ">>> 'channels.conf'";
   my $cfvars = $conf_repl->get('channels');
-  # FIXME audit
+  # FIXME audit this situation
+  #  ability to add more users?
+  #  access to other config opts
+  $cfvars->set( CHAN =>
+    ask_question( prompt => 'Default channel', default => '#eris' )
+  );
 }
 
 sub interactive_authcf {
   my ($conf_repl) = @_;
   say ">>> 'auth.conf'";
   my $cfvars = $conf_repl->get('auth');
+
   # AUTH_USER
+  say $_ for 
+    "You will want at least one SuperUser to control the bot.",
+    "SuperUsers are hard-coded in 'auth.conf'.",
+    "(Other bot users can be added online later.)" ;
+  $cfvars->set( AUTH_USER =>
+    ask_question( prompt => 'Username for your superuser', default => 'MyUser' )
+  );
+
   # AUTH_PASS
+  my $term = POSIX::Termios->new;
+  $term->getattr(0);
+  $term->setlflag( $term->getlflag & ~POSIX::ECHO );
+  $term->setattr(0);
+  $cfvars->set( AUTH_PASS =>
+    ask_question( prompt => 'Password for this superuser', default => '' )
+  );
+  $term->setlflag( $term->getlflag | POSIX::ECHO );
+  $term->setattr(0);
+
   # AUTH_MASK
-  # ability to add more users ??
+  $cfvars->set( AUTH_MASK =>
+    ask_question( 
+      prompt => 'Hostmask for this superuser', default => '*nobody@example.org'
+    )
+  );
+
+  # FIXME ability to add more users ??
 }
 
 
