@@ -1,7 +1,5 @@
 package Bot::Cobalt::Error;
 
-
-
 use v5.10;
 use strictures 1;
 
