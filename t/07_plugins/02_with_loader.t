@@ -1,4 +1,4 @@
-use Test::More tests => 61;
+use Test::More;
 use strict; use warnings;
 
 BEGIN { use_ok('Bot::Cobalt::Core::Loader') }
@@ -22,7 +22,6 @@ my @core = map { $prefix.$_ } qw/
     Extras::Karma
     Extras::Money
     Extras::Relay
-    Extras::Shorten
     Extras::TempConv
     
     OutputFilters::StripColor
@@ -52,3 +51,5 @@ for my $module (@core) {
   }
 
 }
+
+done_testing

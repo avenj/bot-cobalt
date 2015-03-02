@@ -145,8 +145,6 @@ WebServiceX
 
 L<Bot::Cobalt::Plugin::Extras::Relay> -- Cross-network relay
 
-L<Bot::Cobalt::Plugin::Extras::Shorten> -- Shorten URLs via Metamark
-
 L<Bot::Cobalt::Plugin::Extras::TempConv> -- Temperature units conversion 
 
 =head2 Extensions on CPAN

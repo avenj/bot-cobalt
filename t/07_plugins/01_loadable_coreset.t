@@ -1,4 +1,6 @@
-use Test::More tests => 60;
+use Test::More;
+use strict; use warnings;
+
 my @core;
 BEGIN {
   my $prefix = 'Bot::Cobalt::Plugin::';
@@ -20,7 +22,6 @@ BEGIN {
     Extras::Karma
     Extras::Money
     Extras::Relay
-    Extras::Shorten
     Extras::TempConv
     
     OutputFilters::StripColor
@@ -33,6 +34,7 @@ BEGIN {
 new_ok($_) for @core;
 can_ok($_, 'Cobalt_register', 'Cobalt_unregister') for @core;
 
+done_testing
 ## FIXME
 ## instance a Bot::Cobalt::Core w/ tempdir path for var/
 ## issue a plugin_add for each

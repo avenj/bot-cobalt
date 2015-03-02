@@ -1,4 +1,4 @@
-use Test::More tests => 63;
+use Test::More;
 use strict; use warnings;
 
 
@@ -92,3 +92,5 @@ is(
   'Example::Module',
    'module() after install_plugin()' 
 );
+
+done_testing

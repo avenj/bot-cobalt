@@ -341,7 +341,7 @@ B<Opts> directive:
 
 B<PluginMgr> responds to the C<!plugin> command:
 
-  <JoeUser> !plugin reload Shorten
+  <JoeUser> !plugin reload DNS
 
 =head2 list
 
@@ -355,11 +355,11 @@ If the plugin has a C<plugins.conf> directive, the alias can be
 specified by itself; the Module specified in C<plugins.conf> will be 
 used:
 
-  <JoeUser> !plugin load Shorten
+  <JoeUser> !plugin load DNS
 
 Otherwise, a module must be specified:
 
-  <JoeUser> !plugin load Shorten Bot::Cobalt::Plugin::Extras::Shorten
+  <JoeUser> !plugin load DNS Bot::Cobalt::Plugin::Extras::DNS
 
 As of Bot-Cobalt-0.013, '!load' no longer rehashes plugin configuration 
 values; use '!rehash plugins' from L<Bot::Cobalt::Plugin::Rehash> 
