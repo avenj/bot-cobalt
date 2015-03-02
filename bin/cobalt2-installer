@@ -23,9 +23,12 @@ my $Rcfile = path(
   $ENV{HOME} ? $ENV{HOME} . '/.cobalt2rc' : '.cobalt2rc'
 );
 
+my $NonInteractive = 0;
+
 use Getopt::Long;
 GetOptions(
-  'config|rcfile=s' => \$Rcfile,
+  'config|rcfile=s'  => \$Rcfile,
+  'noninteractive|n' => \$NonInteractive,
 
   version => sub {
     say "Bot::Cobalt installer (version $VERSION)";
@@ -34,7 +37,8 @@ GetOptions(
 
   help    => sub {
     print map "$_\n",
-      "  --config / --rcfile=PATH",
+      "  --version",
+      "  --rcfile=PATH",
       "    [default: $Rcfile]"
     ;
     exit 0
@@ -48,7 +52,6 @@ sub read_format_write {
     unless is_Path($path);
   die "Expected HASH of template var replacements but got $vars"
     unless reftype $vars eq 'HASH';
-
   my $in = $path->slurp_utf8;
   my $out = rplprintf($in, $vars);
   $path->spew_utf8($out);
@@ -104,6 +107,7 @@ sub copy_base_confs {
 
 
 sub non_interactive {
+  die "Non-interactive mode doesn't exist yet :(\n"
   # FIXME set up some default var replacements
   # FIXME env or command line opts for rc paths, basics?
 }
@@ -238,7 +242,7 @@ sub interactive_authcf {
   say $_ for 
     "You will want at least one SuperUser to control the bot.",
     "SuperUsers are hard-coded in 'auth.conf'.",
-    "(Other bot users can be added online later.)" ;
+    "(Other levels of user can be added online later.)" ;
   $cfvars->set( AUTH_USER =>
     ask_question( prompt => 'Username for your superuser', default => 'MyUser' )
   );
@@ -248,9 +252,11 @@ sub interactive_authcf {
   $term->getattr(0);
   $term->setlflag( $term->getlflag & ~POSIX::ECHO );
   $term->setattr(0);
-  $cfvars->set( AUTH_PASS =>
-    ask_question( prompt => 'Password for this superuser', default => '' )
+  my $ans = ask_question( 
+    prompt => 'Password for this superuser', default => ''
   );
+  my $crypted = mkpasswd $ans;
+  $cfvars->set( AUTH_PASS => $crypted );
   $term->setlflag( $term->getlflag | POSIX::ECHO );
   $term->setattr(0);
 
@@ -260,20 +266,26 @@ sub interactive_authcf {
       prompt => 'Hostmask for this superuser', default => '*nobody@example.org'
     )
   );
-
-  # FIXME ability to add more users ??
 }
 
 
 sub interactive {
+  # step through interactive configuration;
+  #  $conf_repl is passed to each sub and filled:
+  #    hash(
+  #      cobalt => hash(
+  #         $TEMPLATE_VAR => $ANSWER,
+  #         ...
+  #      ),
+  #      ...
+  #    )
   my @refs = (
     &interactive_intro,
-    &interactive_rcfile,
-    &interactive_cobaltcf,
-    &interactive_channelscf,
-    &interactive_authcf,
+    &interactive_rcfile,       # set up rcfile & dir skel, copy template confs
+    &interactive_cobaltcf,     # configure etc/cobalt.conf
+    &interactive_channelscf,   # configure etc/channels.conf
+    &interactive_authcf,       # configure etc/auth.conf
   );
-
   my $conf_repl = hash(
     cobalt    => hash,
     channels  => hash,
@@ -281,6 +293,8 @@ sub interactive {
   );
   $_->($conf_repl) for @refs;
 
+  # should have a readable rcfile now, load it to verify and get etcdir,
+  # then read/fill/write templates via read_format_write()
   my (undef, $etcdir) = rc_read($Rcfile);
   for my $kv ($conf_repl->kv->all) {
     my ($path_prefix, $repl_hash) = @$kv;
@@ -289,13 +303,12 @@ sub interactive {
     read_format_write($actual, $repl_hash);
   }
 
-  my $authcf_path = path( "${etcdir}/auth.conf" );
-
-  # FIXME auth needs permissions adjustment (or warn)
+  my $authcf_path = path(join '/', $etcdir, 'auth.conf');
+  say ">>> Adjusting permissions for 'auth.conf' (0600) ...";
+  $authcf_path->chmod(0600);
 }
 
-## FIXME
-##   should be able to install non-interactively (template replacement
-##   defaults)
-##
 
+$NonInteractive ? non_interactive() : interactive();
+
+say ">>> Done!";
