@@ -1,7 +1,7 @@
 package Bot::Cobalt::Conf::Role::Reader;
 
 use Carp;
-use strictures 1;
+use strictures 2;
 
 use Try::Tiny;
 

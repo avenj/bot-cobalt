@@ -3,7 +3,7 @@ package Bot::Cobalt::IRC::Message;
 ## Message class. Inherits from Event
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt::Common;
 

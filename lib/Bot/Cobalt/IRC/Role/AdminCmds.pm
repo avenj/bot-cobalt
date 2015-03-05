@@ -8,7 +8,7 @@ use Moo::Role;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
-use strictures 1;
+use strictures 2;
 
 sub Bot_public_cmd_server {
   my ($self, $core) = splice @_, 0, 2;

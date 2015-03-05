@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 use Path::Tiny;
 use Digest::MD5 'md5_hex';
 

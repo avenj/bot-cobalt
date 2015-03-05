@@ -1,6 +1,6 @@
 package Bot::Cobalt::Logger::Output::Term;
 
-use strictures 1;
+use strictures 2;
 
 sub new { bless [], shift }
 

@@ -29,7 +29,7 @@ It's good practice to use strict and warnings explicitly, although
 L<Bot::Cobalt::Common> will import them for you. It's even better to 
 make warnings fatal as well via L<strictures>:
 
-  use strictures 1;
+  use strictures 2;
   use Bot::Cobalt::Common;
 
 We probably also want the syntax sugar exported by L<Bot::Cobalt>. This 
@@ -157,7 +157,7 @@ our retrieved B<DATA> -- this is nice and simple:
   
 
 
-  use strictures 1;
+  use strictures 2;
   use Bot::Cobalt::Common;
   
   use Bot::Cobalt;

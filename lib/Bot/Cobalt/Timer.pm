@@ -1,6 +1,6 @@
 package Bot::Cobalt::Timer;
 
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use Bot::Cobalt::Common ':types';

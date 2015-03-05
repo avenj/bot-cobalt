@@ -2,7 +2,7 @@ package Bot::Cobalt::Plugin::Rehash;
 
 
 
-use strictures 1;
+use strictures 2;
 use v5.10;
 
 use Bot::Cobalt;
@@ -13,7 +13,7 @@ use Bot::Cobalt::Lang;
 use File::Spec;
 use Try::Tiny;
 
-use strictures 1;
+use strictures 2;
 
 
 sub new { bless [], shift }

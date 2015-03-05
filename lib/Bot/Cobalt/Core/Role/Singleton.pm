@@ -1,7 +1,7 @@
 package Bot::Cobalt::Core::Role::Singleton;
 
 use Carp 'confess';
-use strictures 1;
+use strictures 2;
 
 use Moo::Role;
 

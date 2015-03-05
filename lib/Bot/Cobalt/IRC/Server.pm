@@ -3,7 +3,7 @@ package Bot::Cobalt::IRC::Server;
 ## A server context.
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt::Common qw/:types/;
 use IRC::Utils qw/lc_irc uc_irc/;

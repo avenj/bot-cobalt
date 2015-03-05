@@ -1,6 +1,6 @@
 package Bot::Cobalt::Frontend::Utils;
 
-use strictures 1;
+use strictures 2;
 
 use 5.10.1;
 use Carp;

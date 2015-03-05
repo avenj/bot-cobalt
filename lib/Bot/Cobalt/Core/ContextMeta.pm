@@ -3,7 +3,7 @@ package Bot::Cobalt::Core::ContextMeta;
 ## Base class for context-specific dynamic hashes
 ## (ignores, auth, .. )
 
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use Bot::Cobalt::Common ':types';

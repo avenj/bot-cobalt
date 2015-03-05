@@ -4,7 +4,7 @@ package Bot::Cobalt::Plugin::PluginMgr;
 
 ## handles and eats: !plugin
 
-use strictures 1;
+use strictures 2;
 use v5.10;
 
 use Bot::Cobalt;

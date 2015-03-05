@@ -1,7 +1,7 @@
 package Bot::Cobalt::Core::Role::Timers;
 
 use 5.10.1;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt::Timer;
 

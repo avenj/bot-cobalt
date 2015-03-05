@@ -1,6 +1,6 @@
 package Bot::Cobalt::Core::Sugar;
 
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use parent 'Exporter::Tiny';

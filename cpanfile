@@ -1,5 +1,5 @@
 requires "perl"       => "5.12.1";
-requires "strictures" => "1";
+requires "strictures" => "2";
 
 requires "App::bmkpasswd" => "2";
 

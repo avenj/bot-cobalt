@@ -7,7 +7,7 @@ package Bot::Cobalt::Plugin::Extras::TempConv;
 ##  _public_cmd_temp      ( !temp )
 
 use 5.10.1;
-use strictures 1;
+use strictures 2;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 use Bot::Cobalt::Utils qw/ color /;

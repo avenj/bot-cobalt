@@ -2,7 +2,7 @@ package Bot::Cobalt::Plugin::Version;
 
 
 
-use strictures 1;
+use strictures 2;
 
 use 5.10.1;
 

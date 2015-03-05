@@ -48,7 +48,7 @@ use Bot::Cobalt::Common;
 use Bot::Cobalt::Error;
 use Bot::Cobalt::Serializer;
 
-use strictures 1;
+use strictures 2;
 
 use Storable qw/dclone/;
 

@@ -23,7 +23,7 @@ package Bot::Cobalt::Plugin::RDB::Database;
 ## can afford to open / lock / access / unlock / close every call.
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 
 use Carp;
 

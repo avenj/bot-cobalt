@@ -1,7 +1,7 @@
 package Bot::Cobalt::Logger::Output;
 
 use Carp;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt::Common qw/:types :string/;
 use POSIX ();

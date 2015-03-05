@@ -2,7 +2,7 @@ package Bot::Cobalt::Conf::File::PerPlugin;
 
 ## This is in File:: but NOT a subclass of File.pm
 
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use Bot::Cobalt::Common ':types';

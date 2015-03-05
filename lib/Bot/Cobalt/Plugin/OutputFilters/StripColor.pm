@@ -2,7 +2,7 @@ package Bot::Cobalt::Plugin::OutputFilters::StripColor;
 
 
 
-use strictures 1;
+use strictures 2;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 

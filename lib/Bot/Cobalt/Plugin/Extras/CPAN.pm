@@ -3,7 +3,7 @@ package Bot::Cobalt::Plugin::Extras::CPAN;
 
 
 use 5.10.1;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;

@@ -1,6 +1,6 @@
 package Bot::Cobalt::IRC::Event::Kick;
 
-use strictures 1;
+use strictures 2;
 use Bot::Cobalt::Common qw/:types/;
 
 use Moo;

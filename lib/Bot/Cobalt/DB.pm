@@ -3,7 +3,7 @@ package Bot::Cobalt::DB;
 ## Uses proper retie-after-lock technique for locking
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use List::Objects::WithUtils;

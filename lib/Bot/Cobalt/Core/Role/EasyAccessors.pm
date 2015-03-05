@@ -1,6 +1,6 @@
 package Bot::Cobalt::Core::Role::EasyAccessors;
 
-use strictures 1;
+use strictures 2;
 
 use Scalar::Util qw/blessed/;
 use Carp;

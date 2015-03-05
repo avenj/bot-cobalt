@@ -4,7 +4,7 @@ package Bot::Cobalt::Plugin::RDB::AsyncSearch;
 
 use 5.10.1;
 use Carp;
-use strictures 1;
+use strictures 2;
 
 use Config;
 

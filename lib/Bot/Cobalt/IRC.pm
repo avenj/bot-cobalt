@@ -1,7 +1,7 @@
 package Bot::Cobalt::IRC;
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;

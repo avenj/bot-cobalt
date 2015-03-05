@@ -11,7 +11,7 @@ use Bot::Cobalt::Common;
 
 use Moo::Role;
 
-use strictures 1;
+use strictures 2;
 
 requires qw/
   ircobjs

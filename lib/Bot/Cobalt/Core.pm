@@ -2,7 +2,7 @@ package Bot::Cobalt::Core;
 
 ## This is the core Syndicator singleton.
 
-use strictures 1;
+use strictures 2;
 
 use v5.10;
 use Carp;

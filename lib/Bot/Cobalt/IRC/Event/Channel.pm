@@ -2,7 +2,7 @@ package Bot::Cobalt::IRC::Event::Channel;
 
 ## Generic channel events.
 
-use strictures 1;
+use strictures 2;
 use Bot::Cobalt::Common qw/:types/;
 
 use Moo;

@@ -1,7 +1,7 @@
 package Bot::Cobalt::Logger::Output::File;
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 use Carp;
 
 use IO::File ();

@@ -2,7 +2,7 @@ package Bot::Cobalt::Plugin::Alarmclock;
 
 
 
-use strictures 1;
+use strictures 2;
 use v5.10;
 
 use Bot::Cobalt;

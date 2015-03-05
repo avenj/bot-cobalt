@@ -1,6 +1,6 @@
 package Bot::Cobalt::IRC::Event::Mode;
 
-use strictures 1;
+use strictures 2;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common qw/:types/;

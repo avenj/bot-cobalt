@@ -15,7 +15,7 @@ package Bot::Cobalt::Plugin::RDB::SearchCache;
 ## module will become a placeholder.
 
 use 5.10.1;
-use strictures 1;
+use strictures 2;
 
 use Time::HiRes;
 

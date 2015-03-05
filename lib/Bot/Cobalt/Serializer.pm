@@ -1,7 +1,7 @@
 package Bot::Cobalt::Serializer;
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 use Carp;
 
 ## These two must be present anyway:

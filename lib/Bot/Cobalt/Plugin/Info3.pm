@@ -1,6 +1,6 @@
 package Bot::Cobalt::Plugin::Info3;
 
-use strictures 1;
+use strictures 2;
 use v5.10;
 
 ## Handles glob-style "info" response topics

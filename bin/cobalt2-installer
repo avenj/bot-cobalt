@@ -2,7 +2,7 @@
 my $VERSION = 2;
 
 use v5.10;
-use strictures 1;
+use strictures 2;
 
 use Scalar::Util 'reftype';
 use POSIX ();
