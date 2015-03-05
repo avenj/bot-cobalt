@@ -90,12 +90,12 @@ sub copy_base_confs {
     my ($relpath, $sum_or_dir) = split ' ^ ', $item;
     if ($sum_or_dir eq 'DIR') {
       my $newdir = path(join '/', $target_etc, $relpath);
-      say ">>> Creating directory '$newdir'";
+      say " - Creating directory '$newdir'";
       $newdir->mkpath
     } else {
       my $oldfile = path(join '/', $shared_etc, $relpath);
       my $newfile = path(join '/', $target_etc, $relpath);
-      say ">>> Copying '$relpath' -> '$newfile'";
+      say " - Copying '$relpath' -> '$newfile'";
       $newfile->spew_utf8( $oldfile->slurp_utf8 );
       my $newsum = md5_hex $newfile->slurp_raw;
       unless ($sum_or_dir eq $newsum) {
@@ -110,6 +110,8 @@ sub non_interactive {
   die "Non-interactive mode doesn't exist yet :(\n"
   # FIXME set up some default var replacements
   # FIXME env or command line opts for rc paths, basics?
+  # FIXME call rc_write, build_dir_skeleton, copy_base_confs,
+  #  read_format_write, chmod auth.conf
 }
 
 
@@ -126,8 +128,8 @@ sub interactive_intro {
 
 sub interactive_rcfile {
   say $_ for 
-    "The default rcfile location is:",
-    " $Rcfile" ;
+    "The current rcfile location is:",
+    "[$Rcfile]" ;
   $Rcfile = ask_question( prompt => 'Path to rcfile' ) if ask_yesno(
     prompt  => 'Enter a different rcfile location?',
     default => 'n',
@@ -168,7 +170,7 @@ sub interactive_rcfile {
 
 sub interactive_cobaltcf {
   my ($conf_repl) = @_;
-  say ">>> 'cobalt.conf'";
+  say " - 'cobalt.conf'";
   my $cfvars = $conf_repl->get('cobalt');
   
   # CFG_BOT_NICK
@@ -223,7 +225,7 @@ sub interactive_cobaltcf {
 
 sub interactive_channelscf {
   my ($conf_repl) = @_;
-  say ">>> 'channels.conf'";
+  say " - 'channels.conf'";
   my $cfvars = $conf_repl->get('channels');
   # FIXME audit this situation
   #  ability to add more users?
@@ -235,7 +237,7 @@ sub interactive_channelscf {
 
 sub interactive_authcf {
   my ($conf_repl) = @_;
-  say ">>> 'auth.conf'";
+  say " - 'auth.conf'";
   my $cfvars = $conf_repl->get('auth');
 
   # AUTH_USER
@@ -299,16 +301,52 @@ sub interactive {
   for my $kv ($conf_repl->kv->all) {
     my ($path_prefix, $repl_hash) = @$kv;
     my $actual = path( "${etcdir}/${path_prefix}.conf" );
-    say ">>> Writing '$actual'";
+    say " - Writing '$actual'";
     read_format_write($actual, $repl_hash);
   }
 
   my $authcf_path = path(join '/', $etcdir, 'auth.conf');
-  say ">>> Adjusting permissions for 'auth.conf' (0600) ...";
+  say " - Adjusting permissions for 'auth.conf' (0600) ...";
   $authcf_path->chmod(0600);
 }
 
 
 $NonInteractive ? non_interactive() : interactive();
 
-say ">>> Done!";
+# FIXME more informative quit msg
+say $_ for
+  " - Completed, exiting",
+  "Done!";
+
+=pod
+
+=head1 NAME
+
+cobalt2-installer - Initialize a Bot::Cobalt instance
+
+=head1 SYNOPSIS
+
+  cobalt2-installer [ --rcfile=PATH ]
+
+=head1 DESCRIPTION
+
+A simple walk-through installer for fresh L<Bot::Cobalt> instances.
+
+Interactively asks a few questions to prepare a C<rcfile> and associated
+L<Bot::Cobalt> configuration files; language sets and essential skeleton
+directories are also copied to the bot home directory specified during the
+install process.
+
+Every L<Bot::Cobalt> instance has its own C<rcfile> and directory; to
+initialize and run multiple instances, specify a new C<rcfile>:
+
+  # Initialize FredBot:
+  cobalt2-installer --rcfile=${HOME}/cobalts/FredBot.rc
+  # Start the newly-configured instance:
+  cobalt2 --rcfile=${HOME}/cobalts/FredBot.rc
+
+=head1 AUTHOR
+
+Jon Portnoy <avenj@cobaltirc.org>
+
+=cut
