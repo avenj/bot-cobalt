@@ -24,11 +24,14 @@ my $Rcfile = path(
 );
 
 my $NonInteractive = 0;
+my $SharedEtc;   # set to $dist_dir/etc in copy_base_confs if undef
 
 use Getopt::Long;
 GetOptions(
   'config|rcfile=s'  => \$Rcfile,
   'noninteractive|n' => \$NonInteractive,
+
+  'shared-etcdir=s'  => \$SharedEtc,
 
   version => sub {
     say "Bot::Cobalt installer (version $VERSION)";
@@ -42,12 +45,21 @@ GetOptions(
       "Initialize a Bot::Cobalt instance; see 'perldoc cobalt2-installer'",
       "",
       "  --version",
-      "  --rcfile=PATH",
-      "    [default: $Rcfile]"
+      "  --rcfile=PATH           Target rcfile path",
+      "    [default: $Rcfile]",
+      "",
+      "  --shared-etcdir=PATH    Base (distribution) share/etc/ path",
     ;
     exit 0
   },
 );
+
+if (defined $SharedEtc) {
+  # user specified a base etcdir
+  $SharedEtc = path($SharedEtc);
+  die "--shared-etcdir specified but no such directory '$SharedEtc'"
+    unless $SharedEtc->exists;
+}
 
 
 sub read_format_write {
@@ -75,22 +87,20 @@ sub build_dir_skeleton {
   }
 }
 
-
 sub copy_base_confs {
   my ($target_etc) = @_;
   die "BUG; expected target etcdir" unless defined $target_etc;
   $target_etc = path($target_etc) unless is_Path $target_etc;
 
-  my $shared_etc = path(
-    join '/', dist_dir('Bot-Cobalt'), 'etc'
-  );
+  $SharedEtc = path(join '/', dist_dir('Bot-Cobalt'), 'etc')
+    unless defined $SharedEtc;
 
-  die "Could not locate ShareDir at '$shared_etc'"
-    unless $shared_etc->exists;
-  die "ShareDir at '$shared_etc' not a directory"
-    unless $shared_etc->is_dir;
+  die "Could not locate ShareDir at '$SharedEtc'"
+    unless $SharedEtc->exists;
+  die "ShareDir at '$SharedEtc' not a directory"
+    unless $SharedEtc->is_dir;
 
-  my $manifest = path(join '/', $shared_etc, 'Manifest');
+  my $manifest = path(join '/', $SharedEtc, 'Manifest');
   die "Could not locate Manifest at '$manifest'" unless $manifest->exists;
 
   for my $item ($manifest->lines_utf8) {
@@ -100,7 +110,7 @@ sub copy_base_confs {
       say " - Creating directory '$newdir'";
       $newdir->mkpath
     } else {
-      my $oldfile = path(join '/', $shared_etc, $relpath);
+      my $oldfile = path(join '/', $SharedEtc, $relpath);
       my $newfile = path(join '/', $target_etc, $relpath);
       say " - Copying '$relpath' -> '$newfile'";
       $newfile->spew_utf8( $oldfile->slurp_utf8 );
