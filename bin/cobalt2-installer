@@ -37,6 +37,10 @@ GetOptions(
 
   help    => sub {
     print map "$_\n",
+      "$0",
+      "",
+      "Initialize a Bot::Cobalt instance; see 'perldoc cobalt2-installer'",
+      "",
       "  --version",
       "  --rcfile=PATH",
       "    [default: $Rcfile]"
@@ -65,7 +69,10 @@ sub build_dir_skeleton {
   $etc = path( $base . '/etc' ) unless $etc;
   $var = path( $base . '/var' ) unless $var;
   my $dbpath = path( $var . '/db' );
-  $_->mkpath for $etc, $var, $dbpath;
+  for my $path ($etc, $var, $dbpath) {
+    say " - Creating directory '$path'";
+    $path->mkpath
+  }
 }
 
 
@@ -98,9 +105,8 @@ sub copy_base_confs {
       say " - Copying '$relpath' -> '$newfile'";
       $newfile->spew_utf8( $oldfile->slurp_utf8 );
       my $newsum = md5_hex $newfile->slurp_raw;
-      unless ($sum_or_dir eq $newsum) {
-        warn "WARNING; checksum mismatch after copy: '$relpath'\n";
-      }
+      warn "WARNING; checksum mismatch after copy: '$relpath'\n"
+        unless $sum_or_dir eq $newsum;
     }
   }
 }
@@ -282,11 +288,11 @@ sub interactive {
   #      ...
   #    )
   my @refs = (
-    &interactive_intro,
-    &interactive_rcfile,       # set up rcfile & dir skel, copy template confs
-    &interactive_cobaltcf,     # configure etc/cobalt.conf
-    &interactive_channelscf,   # configure etc/channels.conf
-    &interactive_authcf,       # configure etc/auth.conf
+    \&interactive_intro,
+    \&interactive_rcfile,       # set up rcfile & dir skel, copy template confs
+    \&interactive_cobaltcf,     # configure etc/cobalt.conf
+    \&interactive_channelscf,   # configure etc/channels.conf
+    \&interactive_authcf,       # configure etc/auth.conf
   );
   my $conf_repl = hash(
     cobalt    => hash,
@@ -311,9 +317,9 @@ sub interactive {
 }
 
 
-$NonInteractive ? non_interactive() : interactive();
+$NonInteractive ? non_interactive : interactive;
 
-# FIXME more informative quit msg
+# FIXME more informative quit msg? paths etc
 say $_ for
   " - Completed, exiting",
   "Done!";
