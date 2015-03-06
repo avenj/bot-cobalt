@@ -26,7 +26,8 @@ has new_nick => (
 has channels => (
   required  => 1,
   is        => 'rw',
-  isa       => ArrayRef,
+  isa       => ArrayObj,
+  coerce    => 1,
   trigger   => sub {
     my ($self, $value) = @_;
     $self->_set_common($value) if $self->has_common;
@@ -97,8 +98,9 @@ Returns the previous nickname, prior to the nick change.
 
 =head2 channels
 
-Returns an arrayref containing the list of channels we share with the
-user that changed nicks (at the time of the nickname change).
+Returns a L<List::Objects::WithUtils::Array> containing the list of channels
+we share with the user that changed nicks (at the time of the nickname
+change).
 
 =head2 equal
 

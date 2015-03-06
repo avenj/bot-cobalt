@@ -49,7 +49,8 @@ has NON_RELOADABLE => (
 has ircobjs => (
   lazy      => 1,
   is        => 'rw',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   default   => sub { {} },
 );
 

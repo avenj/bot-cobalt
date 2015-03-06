@@ -75,7 +75,8 @@ has use_core_only => (
 has _core_set => (
   lazy      => 1,
   is        => 'ro',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   builder   => sub {
     my ($self) = @_;
     my $cset_path = dist_dir('Bot-Cobalt') .'/etc/langs/english.yml';
@@ -89,7 +90,8 @@ has _core_set => (
 has rpls => (
   lazy      => 1,  
   is        => 'rwp',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   builder   => sub {
     ## FIXME ? at least cleanups, certainly
     my ($self) = @_;
@@ -227,9 +229,10 @@ If the load fails, an exception is thrown.
 
 =head2 rpls
 
-The B<rpls> attribute accesses the loaded RPL hash:
+The B<rpls> attribute accesses the loaded RPL
+L<List::Objects::WithUtils::Hash>:
 
-  my $this_str = $language->rpls->{$rpl} // "Missing RPL $rpl";
+  my $this_str = $language->rpls->get($rpl) // "Missing RPL $rpl";
 
 =head2 spec
 

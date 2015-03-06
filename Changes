@@ -4,8 +4,8 @@ Revision history for Perl module Bot::Cobalt
 
   - Deprecate most uppercase and camel-case methods/attributes
 
-  - Export Type::Tiny types from Types::Standard and List::Objects::Types from
-    Bot::Cobalt::Common and drop MooX::Types::MooseLike
+  - Export types from Types::Standard and List::Objects::Types from
+    Bot::Cobalt::Common, drop MooX::Types::MooseLike
 
   - Import 'strictures' without arguments to importers of Bot::Cobalt::Common;
     'use strictures 2' internally for saner fatal warnings behavior

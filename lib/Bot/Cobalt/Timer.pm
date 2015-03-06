@@ -62,7 +62,8 @@ has event => (
 has args  => (
   lazy      => 1,
   is        => 'rw',
-  isa       => ArrayRef,
+  isa       => ArrayObj,
+  coerce    => 1,
   builder   => sub { [] },
 );
 
@@ -225,7 +226,8 @@ timer is executed.
 
 =head3 args
 
-An array reference containing any arguments attached to the L</event>.
+A L<List::Objects::WithUtils::Array> containing any arguments attached to the
+L</event>.
 
 =head3 id
 

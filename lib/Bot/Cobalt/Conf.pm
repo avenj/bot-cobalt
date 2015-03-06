@@ -67,7 +67,7 @@ has core => (
   predicate => 'has_core',
   writer    => 'set_core',
   isa       => InstanceOf['Bot::Cobalt::Conf::File::Core'],
-  builder => sub {
+  builder   => sub {
     my ($self) = @_;
     Bot::Cobalt::Conf::File::Core->new(
       debug     => $self->debug,

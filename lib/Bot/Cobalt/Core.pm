@@ -119,7 +119,8 @@ has langset => (
 has lang => (
   lazy      => 1,
   is        => 'ro',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   writer    => 'set_lang',
   builder   => sub {
     my ($self) = @_;
@@ -131,7 +132,8 @@ has State => (
   lazy      => 1,
   ## global 'heap' of sorts
   is        => 'ro',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   builder   => sub {
     {
       HEAP => { },
@@ -150,7 +152,8 @@ has PluginObjects => (
   lazy      => 1,
   ## alias -> object mapping
   is        => 'rw',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   builder   => sub { {} },
 );
 
@@ -159,7 +162,8 @@ has Provided => (
   ## Some plugins provide optional functionality.
   ## This hash lets other plugins see if an event is available.
   is        => 'ro',
-  isa       => HashRef,
+  isa       => HashObj,
+  coerce    => 1,
   builder   => sub { {} },
 );
 

@@ -1,6 +1,8 @@
 use Test::More tests => 11;
 use strict; use warnings;
 
+use Scalar::Util 'reftype';
+
 BEGIN{
   use_ok('Bot::Cobalt::IRC::Event::Mode');
 }
@@ -23,6 +25,6 @@ ok( $ev->src_nick eq 'yomomma', 'src_nick()' );
 ok( $ev->src_user eq 'your', 'src_user()' );
 ok( $ev->src_host eq 'mother.org', 'src_host()' );
 
-ok( ref $ev->hash eq 'HASH', 'hash()' );
+ok( reftype $ev->hash eq 'HASH', 'hash()' );
 
 is_deeply( $ev->args, ['key'], 'args()' );

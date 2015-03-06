@@ -8,21 +8,18 @@ use Moo;
 extends 'Bot::Cobalt::IRC::Event';
 
 has reason => ( 
-  lazy => 1, 
-
-  is  => 'rw', 
-  isa => Str, 
-
-  default => sub {''},
+  lazy      => 1, 
+  is        => 'rw', 
+  isa       => Str, 
+  default   => sub {''},
 );
 
 has common => ( 
-  lazy => 1,
-
-  is  => 'rw', 
-  isa => ArrayRef,
-
-  default => sub {[]},
+  lazy      => 1,
+  is        => 'rw', 
+  isa       => ArrayObj,
+  coerce    => 1,
+  default   => sub {[]},
 );
 
 1;
@@ -49,8 +46,8 @@ Returns the displayed reason for the quit.
 
 =head2 common
 
-Returns an arrayref containing the list of channels previously shared 
-with the user.
+Returns a L<List::Objects::WithUtils::Array> containing the list of channels
+previously shared with the user.
 
 =head1 AUTHOR
 

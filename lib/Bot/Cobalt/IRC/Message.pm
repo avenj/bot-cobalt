@@ -30,7 +30,8 @@ has message => (
 has targets => (
   required  => 1,
   is        => 'rw',
-  isa       => ArrayRef,
+  isa       => ArrayObj,
+  coerce    => 1,
   trigger   => sub {
     my ($self, $value) = @_;
     $self->_set_target($value->[0]) if $self->has_target;
@@ -69,7 +70,8 @@ has stripped => (
 has message_array => (
   lazy      => 1,
   is        => 'rw',
-  isa       => ArrayRef,
+  isa       => ArrayObj,
+  coerce    => 1,
   predicate => 'has_message_array',
   default   => sub { [ split ' ', $_[0]->stripped ] },
   trigger   => sub {
@@ -85,7 +87,8 @@ has message_array => (
 has message_array_sp => (
   lazy      => 1,
   is        => 'rwp',
-  isa       => ArrayRef,
+  isa       => ArrayObj,
+  coerce    => 1,
   predicate => 'has_message_array_sp',
   default   => sub { [ split / /, $_[0]->stripped ] },
 );
@@ -150,7 +153,8 @@ May be undefined if the message was "odd."
 
 =head2 targets
 
-An array reference containing any seen destinations for this message.
+A L<List::Objects::WithUtils::Array> containing any seen destinations for this
+message.
 
 =head2 target
 
@@ -173,7 +177,8 @@ The color and formatting stripped L</message>.
 
 =head2 message_array
 
-An array reference containing the message string split on white space.
+A L<List::Objects::WithUtils::Array> containing the message string split on
+white space.
 
 "Extra" spaces are not preserved; see L</message_array_sp>.
 
