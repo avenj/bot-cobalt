@@ -4,6 +4,8 @@ use v5.10;
 use strictures 2;
 use Carp;
 
+use Scalar::Util 'reftype';
+
 use App::bmkpasswd ();
 
 use parent 'Exporter::Tiny';
@@ -89,7 +91,7 @@ sub rplprintf {
     my %args = @_;
     %vars = ( %default_fmt_vars, %args );
   } else {
-    if (ref $_[0] eq 'HASH') {
+    if (reftype $_[0] eq 'HASH') {
       %vars = ( %default_fmt_vars, %{$_[0]} );
     } else {
       confess "rplprintf() expects a hash"
