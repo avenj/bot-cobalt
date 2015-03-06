@@ -12,6 +12,7 @@ use List::Objects::WithUtils;
 use Path::Tiny;
 use Types::Path::Tiny -all;
 
+use Digest::MD5     'md5_hex';
 use File::ShareDir  'dist_dir';
 
 use Bot::Cobalt::Utils 'rplprintf', 'mkpasswd';
@@ -45,10 +46,10 @@ GetOptions(
       "Initialize a Bot::Cobalt instance; see 'perldoc cobalt2-installer'",
       "",
       "  --version",
-      "  --rcfile=PATH           Target rcfile path",
+      "  --rcfile=PATH          Target rcfile path",
       "    [default: $Rcfile]",
       "",
-      "  --shared-etcdir=PATH    Base (distribution) share/etc/ path",
+      "  --shared-etcdir=DIR    Base (distribution) share/etc/ path",
     ;
     exit 0
   },
@@ -103,22 +104,28 @@ sub copy_base_confs {
   my $manifest = path(join '/', $SharedEtc, 'Manifest');
   die "Could not locate Manifest at '$manifest'" unless $manifest->exists;
 
-  for my $item ($manifest->lines_utf8) {
-    my ($relpath, $sum_or_dir) = split ' ^ ', $item;
+  MANIFEST: for my $item ($manifest->lines_utf8) {
+    chomp $item;
+    next MANIFEST unless length $item;
+    my ($relpath, $sum_or_dir) = split / \^ /, $item;
     if ($sum_or_dir eq 'DIR') {
       my $newdir = path(join '/', $target_etc, $relpath);
       say " - Creating directory '$newdir'";
+      die "Path '$newdir' already exists and is not a directory\n"
+       if $newdir->exists and not $newdir->is_dir;
       $newdir->mkpath
     } else {
       my $oldfile = path(join '/', $SharedEtc, $relpath);
       my $newfile = path(join '/', $target_etc, $relpath);
       say " - Copying '$relpath' -> '$newfile'";
+      die "Could not copy '$relpath'; destination '$newfile' already exists\n"
+        if $newfile->exists;
       $newfile->spew_utf8( $oldfile->slurp_utf8 );
       my $newsum = md5_hex $newfile->slurp_raw;
       warn "WARNING; checksum mismatch after copy: '$relpath'\n"
         unless $sum_or_dir eq $newsum;
     }
-  }
+  } # MANIFEST
 }
 
 
@@ -277,6 +284,7 @@ sub interactive_authcf {
   $cfvars->set( AUTH_PASS => $crypted );
   $term->setlflag( $term->getlflag | POSIX::ECHO );
   $term->setattr(0);
+  print "\n";
 
   # AUTH_MASK
   $cfvars->set( AUTH_MASK =>
@@ -332,7 +340,10 @@ $NonInteractive ? non_interactive : interactive;
 # FIXME more informative quit msg? paths etc
 say $_ for
   " - Completed, exiting",
-  "Done!";
+  "Done!",
+  "(You should check over the files mentioned above manually to verify",
+  " correctness and tune other options.)",
+;
 
 =pod
 
