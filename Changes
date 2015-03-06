@@ -1,5 +1,40 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017001 2015-03-05
+
+  - Deprecate most uppercase and camel-case methods/attributes
+
+  - Export Type::Tiny types from Types::Standard and List::Objects::Types from
+    Bot::Cobalt::Common and drop MooX::Types::MooseLike
+
+  - Import 'strictures' without arguments to importers of Bot::Cobalt::Common;
+    'use strictures 2' internally for saner fatal warnings behavior
+
+  - Remove deprecated 'Extras::Shorten' plugin (sadly metamark is no more)
+
+  - Refactor Bot::Cobalt::Common to use a custom import method
+
+  - Use JSON::MaybeXS with 'utf8 => 1' for JSON serialization
+  
+  - Use ShareDir for base 'etc/' files
+
+  - Refactor cobalt2-installer to be cleaner/saner and use new ShareDir
+
+  - Refactor Bot::Cobalt::Lang to use ShareDir, drop inlined language set
+
+  - Begin deploying List::Objects::Types / List::Objects::WithUtils across
+    codebase
+
+  - Begin deploying Path::Tiny across codebase
+
+  - Switch to Exporter::Tiny in exporting modules
+
+  - Switch to dist.ini + cpanfile packaging
+
+  - Deprecate old 'tools/'
+
+  - Various other more minor cleanups, fixes, and optimizations
+
 0.016003 2014-05-25
 
   - Fix hi-res time support in ::IRC::FloodChk
