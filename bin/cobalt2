@@ -253,11 +253,6 @@ Cobalt instance.
 See C<cobalt2-installer> for more on getting started. The installer can 
 set up directories and example configuration files for a fresh instance.
 
-See L</SYNOPSIS> for usage information.
-
-See L<http://www.cobaltirc.org/dev/bots> for more information on 
-Cobalt and the complete documentation.
-
 =head1 SEE ALSO
 
 L<Bot::Cobalt>
