@@ -83,7 +83,7 @@ say "Output path: $output_path";
 say "Pushing $count topics to Info3 DB";
 
 my $cdb = Bot::Cobalt::DB->new(
-  File => $output_path,
+  file => $output_path,
 );
 my $timer0 = [gettimeofday];
 $cdb->dbopen || die "failed to open db\n";

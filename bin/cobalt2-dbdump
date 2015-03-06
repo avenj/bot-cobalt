@@ -55,7 +55,7 @@ if (-f $outpath) {
 }
 
 my $db = Bot::Cobalt::DB->new(
-  File => $dbpath,
+  file => $dbpath,
 );
 
 $db->dbopen(ro => 1) or die "dbopen failure";

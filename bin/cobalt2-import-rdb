@@ -120,7 +120,7 @@ for my $rdb (keys %$rdbref) {
   say "Creating $dbfile";
 
   my $cdb = Bot::Cobalt::DB->new(
-    File => $dbfile,
+    file => $dbfile,
   );
 
   unless ( $cdb->dbopen ) {
