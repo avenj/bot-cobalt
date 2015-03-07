@@ -5,6 +5,8 @@ requires "App::bmkpasswd" => "2";
 
 requires "DB_File" => "0";
 
+requires "Devel::StackTrace" => "0";
+
 requires "Digest::MD5" => "0";
 
 requires "Exporter::Tiny" => "0";
