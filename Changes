@@ -1,5 +1,9 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017002 2015-03-06
+
+  - Missing dependency 'Devel::StackTrace'
+
 0.017001 2015-03-05
 
   - Deprecate most uppercase and camel-case methods/attributes
