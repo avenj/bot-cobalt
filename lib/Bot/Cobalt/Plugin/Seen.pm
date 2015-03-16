@@ -51,21 +51,23 @@ sub Cobalt_register {
     
   my $pcfg = $core->get_plugin_cfg($self);
   my $seendb_path = path(
-    $core->var .'/'. $pcfg->{SeenDB} || "seen.db"
+    $core->var .'/'. ($pcfg->{SeenDB} || "seen.db")
   );
   
-  logger->debug("Opening SeenDB at $seendb_path");
+  logger->info("Opening SeenDB at $seendb_path");
 
   $self->{Buf} = { };
   
   $self->{SDB} = Bot::Cobalt::DB->new(
-    File => $seendb_path,
+    file => $seendb_path,
   );
   
   my $rc = $self->{SDB}->dbopen;
   $self->{SDB}->dbclose;
-  die "Unable to open SeenDB at $seendb_path"
-    unless $rc;
+  unless ($rc) {
+    logger->warn("Failed to open SeenDB at $seendb_path");
+    die "Unable to open SeenDB at $seendb_path"
+  }
 
   register( $self, 'SERVER', 
     qw/
