@@ -182,7 +182,7 @@ Bot::Cobalt::Common - Import commonly-used tools and constants
 This is a small exporter module providing easy inclusion of commonly
 used tools and constants to make life easier on plugin authors.
 
-L<strictures> are also enabled. This will turn on 'strict' and make all
+L<strictures> are also enabled. This will turn on 'strict' and make (most)
 warnings fatal.
 
 =head2 Exported

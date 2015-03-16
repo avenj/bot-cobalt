@@ -66,11 +66,8 @@ sub _build_output {
 
   my %opts;
 
-  $opts{log_format} = $self->log_format
-    if $self->has_log_format;
-
-  $opts{time_format} = $self->time_format
-    if $self->has_time_format;
+  $opts{log_format}  = $self->log_format  if $self->has_log_format;
+  $opts{time_format} = $self->time_format if $self->has_time_format;
 
   Bot::Cobalt::Logger::Output->new(
     %opts
@@ -108,7 +105,6 @@ sub warn  { shift->_log_to_level( 'warn', @_ )  }
 sub error { shift->_log_to_level( 'error', @_ ) }
 
 1;
-__END__
 
 =pod
 
