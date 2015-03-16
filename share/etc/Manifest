@@ -2,7 +2,7 @@ auth.conf ^ 4d9ab9705de53ae4c83392837f321983
 channels.conf ^ 15960084e4337e8779efeba3defa6862
 langs ^ DIR
 cobalt.conf ^ 18191c17d044bfbf0a7471d9edad24ef
-plugins.conf ^ 689646492be06fbc9e4865bb56342e81
+plugins.conf ^ 69c3e0024652c379852469bfba3acd2b
 plugins ^ DIR
 multiserv.conf ^ 88009eb03debb08713386b64603b1d0b
 langs/english.yml ^ b7d3b3f3f5cb7b974884086f9b6ca4e2

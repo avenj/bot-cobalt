@@ -1,5 +1,9 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017003 2015-03-15
+
+  - Fix ::Plugin::Seen
+
 0.017002 2015-03-06
 
   - Missing dependency 'Devel::StackTrace'
