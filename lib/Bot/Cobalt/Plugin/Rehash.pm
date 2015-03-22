@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Rehash;
 
-
-
 use strictures 2;
 use v5.10;
 
@@ -148,8 +146,8 @@ sub _rehash_plugins_cf {
   require Bot::Cobalt::Conf::File::Plugins;
 
   my $new_cfg_obj = Bot::Cobalt::Conf::File::Plugins->new(
-      etcdir => core()->etc,
-      path   => core()->cfg->plugins->path,
+    etcdir => core()->etc,
+    cfg_path   => core()->cfg->plugins->cfg_path,
   );
 
   core()->cfg->set_plugins( $new_cfg_obj );
@@ -165,7 +163,7 @@ sub _rehash_channels_cf {
   require Bot::Cobalt::Conf::File::Channels;
     
   my $new_cfg_obj = Bot::Cobalt::Conf::File::Channels->new(
-      path => core()->cfg->channels->path,
+    cfg_path => core()->cfg->channels->cfg_path,
   );
 
   core()->cfg->set_channels( $new_cfg_obj );
@@ -181,7 +179,7 @@ sub _rehash_core_cf {
   require Bot::Cobalt::Conf::File::Core;
     
   my $new_cfg_obj = Bot::Cobalt::Conf::File::Core->new(
-      path => core()->cfg->core->path,
+    cfg_path => core()->cfg->core->cfg_path,
   );
 
   core()->cfg->set_core( $new_cfg_obj );
