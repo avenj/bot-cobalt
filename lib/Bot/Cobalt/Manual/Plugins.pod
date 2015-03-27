@@ -22,11 +22,6 @@ Plugin authors likely want to at least read the L<Bot::Cobalt::IRC> POD.
 
   package Bot::Cobalt::Plugin::User::MyPlugin;
   
-
-
-  use strict;
-  use warnings;
-
   ## Import some helpful sugar:
   use Bot::Cobalt;
 
