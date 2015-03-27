@@ -1,33 +1,25 @@
 package Bot::Cobalt::Plugin::Alarmclock;
 
-
-
 use strictures 2;
 use v5.10;
 
 use Bot::Cobalt;
+use Bot::Cobalt::Utils 'timestr_to_secs';
 
-use Bot::Cobalt::Utils qw/ timestr_to_secs /;
+use Object::Pluggable::Constants ':ALL';
 
-use Object::Pluggable::Constants qw/ :ALL /;
-
-## Commands:
-##  !alarmclock
-
-sub new { bless {}, shift }
+# $self->{$timerid} = [ $context, $username ]
+sub new { bless +{}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  ## {Active}->{$timerid} = [ $context, $username ]
-  $self->{Active} = {};
-
-  register($self, 'SERVER',
-    'public_cmd_alarmclock',
-    'public_cmd_alarmdelete',
-    'public_cmd_alarmdel',
-    'executed_timer',
-  );
+  register( $self, SERVER => qw/
+    public_cmd_alarmclock
+    public_cmd_alarmdelete
+    public_cmd_alarmdel
+    executed_timer
+  / );
 
   logger->info("Loaded alarm clock");
 
@@ -51,12 +43,12 @@ sub Bot_executed_timer {
   my $timerid = ${$_[0]};
 
   return PLUGIN_EAT_NONE
-    unless exists $self->{Active}->{$timerid};
+    unless exists $self->{$timerid};
 
   logger->debug("clearing timer state for $timerid")
     if core->debug > 1;
 
-  delete $self->{Active}->{$timerid};
+  delete $self->{$timerid};
 
   return PLUGIN_EAT_NONE
 }
@@ -78,7 +70,7 @@ sub Bot_public_cmd_alarmdel {
 
   my $channel = $msg->channel;
 
-  unless (exists $self->{Active}->{$timerid}) {
+  unless (exists $self->{$timerid}) {
     broadcast( 'message', $context, $channel,
       core->rpl( q{ALARMCLOCK_NOSUCH},
         nick    => $nick,
@@ -89,7 +81,7 @@ sub Bot_public_cmd_alarmdel {
     return PLUGIN_EAT_ALL
   }
 
-  my $thistimer = $self->{Active}->{$timerid};
+  my $thistimer = $self->{$timerid};
 
   my ($ctxt_set, $ctxt_by) = @$thistimer;
 
@@ -111,7 +103,7 @@ sub Bot_public_cmd_alarmdel {
   }
 
   core->timer_del($timerid);
-  delete $self->{Active}->{$timerid};
+  delete $self->{$timerid};
 
   broadcast( 'message', $context, $channel,
     core->rpl( q{ALARMCLOCK_DELETED},
@@ -166,7 +158,7 @@ sub Bot_public_cmd_alarmclock {
 
   my $resp;
   if ($id) {
-    $self->{Active}->{$id} = [ $context, $auth_usr ];
+    $self->{$id} = [ $context, $auth_usr ];
     $resp = core->rpl( q{ALARMCLOCK_SET},
         nick => $setter,
         secs => $secs,
