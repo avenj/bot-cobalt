@@ -122,9 +122,9 @@ sub push_pending {
   return unless @{ $heap->{Pending} };
 
   my $running = keys %{ $heap->{Wheels}->{PID} };
-  
   if ($running >= $heap->{MaxWorkers} ) {
     $kernel->alarm('push_pending', time + 1);
+    return
   }
   
   ## try to spawn a new wheel
