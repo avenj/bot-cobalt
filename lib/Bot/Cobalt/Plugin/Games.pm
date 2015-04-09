@@ -1,16 +1,14 @@
 package Bot::Cobalt::Plugin::Games;
 
-
-
 use strictures 2;
-use 5.10.1;
 
 use Bot::Cobalt;
-use Object::Pluggable::Constants qw/ :ALL /;
-
 use Bot::Cobalt::Core::Loader;
 
-sub new { bless {}, shift }
+use Object::Pluggable::Constants ':ALL';
+
+
+sub new { bless +{}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;

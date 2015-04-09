@@ -1,9 +1,7 @@
 package Bot::Cobalt::Plugin::WWW;
 
-
-
+use v5.10;
 use strictures 2;
-use 5.10.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;

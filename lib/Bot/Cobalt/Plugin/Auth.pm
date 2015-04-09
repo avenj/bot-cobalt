@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Auth;
 
-
-
 ## "Standard" Auth module
 ##
 ## Commands:

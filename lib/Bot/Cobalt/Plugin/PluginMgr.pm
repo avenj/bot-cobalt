@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::PluginMgr;
 
-
-
 ## handles and eats: !plugin
 
 use strictures 2;

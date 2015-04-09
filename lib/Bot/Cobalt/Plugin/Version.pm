@@ -1,16 +1,13 @@
 package Bot::Cobalt::Plugin::Version;
 
-
-
+use v5.10;
 use strictures 2;
 
-use 5.10.1;
-
 use Bot::Cobalt;
+use Bot::Cobalt::Utils 'secs_to_str';
 
-use Object::Pluggable::Constants qw/ :ALL /;
+use Object::Pluggable::Constants ':ALL';
 
-use Bot::Cobalt::Utils qw/ secs_to_str /;
 
 sub new { bless [], shift  }
 
