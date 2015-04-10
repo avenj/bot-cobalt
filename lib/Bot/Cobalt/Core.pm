@@ -230,7 +230,10 @@ sub init {
      },
   );
 
-  unless ($self->detached) {
+  if ($self->detached) {
+    open STDERR, '>>', $logfile;
+    open STDOUT, '>>', $logfile;
+  } else {
     $self->log->output->add(
       'screen' => {
         type => 'Term',
