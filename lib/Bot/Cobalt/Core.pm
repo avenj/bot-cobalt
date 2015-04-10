@@ -231,8 +231,9 @@ sub init {
   );
 
   if ($self->detached) {
-    open STDERR, '>>', $logfile;
-    open STDOUT, '>>', $logfile;
+    # Presumably our frontend closed these
+    open STDERR, '>>', $logfile or die $!;
+    open STDOUT, '>>', $logfile or die $!;
   } else {
     $self->log->output->add(
       'screen' => {
