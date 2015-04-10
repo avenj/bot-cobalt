@@ -1,9 +1,11 @@
 package Bot::Cobalt::Plugin::RDB;
 
-
-
-use strictures 2;
 use v5.10;
+use strictures 2;
+
+use File::Spec;
+use List::Util 'shuffle';
+use POSIX ();
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -11,13 +13,8 @@ use Bot::Cobalt::Plugin::RDB::Database;
 
 use POE;
 
-use File::Spec;
-
-use List::Util   qw/shuffle/;
-
 use Try::Tiny;
 
-use POSIX ();
 
 
 sub new {
