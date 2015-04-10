@@ -1,5 +1,13 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017005 2015-04-09
+
+  - Fix Plugin::RDB::AsyncSearch MaxWorkers limiter
+
+  - Fix busted stderr redirection when daemonizing
+
+  - Various minor cleanups & POD fixes
+
 0.017004 2015-03-22
 
   - Fix ::Plugin::Rehash (broken in 0.017)
