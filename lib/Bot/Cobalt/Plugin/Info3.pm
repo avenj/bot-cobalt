@@ -69,8 +69,7 @@ sub Cobalt_register {
   while (my ($glob, $ref) = each %{ $self->{DB}->Tied }) {
     ++$core->Provided->{info_topics};
     my $regex = $ref->{Regex};
-    my $compiled_re = qr/$regex/i;
-    $self->{Globs}->{$glob} = $compiled_re;
+    $self->{Globs}->{$glob} = my $compiled_re = qr/$regex/i;
     $self->{Regexes}->{$compiled_re} = $glob;
   }
   $self->{DB}->dbclose;
