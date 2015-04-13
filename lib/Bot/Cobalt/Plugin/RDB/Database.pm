@@ -446,7 +446,7 @@ sub search {
   
   $db->dbclose;
 
-  ## WANTONE but we didn't find any, return
+  ## WANTONE but we didn't find any, return undef
   return undef if $wantone;
   
   ## push back to cache

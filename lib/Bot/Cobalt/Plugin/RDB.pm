@@ -392,6 +392,8 @@ sub _cmd_randq {
     $rpl = $self->{RPL_MAP}->{$_};
   };
 
+  return "No matches found for $str" if not defined $match;
+
   return core->rpl( $rpl,
     nick => $msg->src_nick,
     rdb  => $rdb,
