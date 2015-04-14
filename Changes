@@ -1,5 +1,16 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017006 2015-04-13
+
+  - Fix Plugin::RDB blocking search; a blocking search that returned no
+    matches would previously fail to DTRT and potentially leave an open shared
+    read lock on the searched RDB
+
+  - Ensure STDERR/STDOUT are reopened before Logger is initialized when
+    daemonizing
+
+  - Minor Info3 optimization
+
 0.017005 2015-04-09
 
   - Fix Plugin::RDB::AsyncSearch MaxWorkers limiter
