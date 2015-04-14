@@ -223,12 +223,6 @@ sub init {
 
   my $logfile  = $self->cfg->core->paths->{Logfile}
                 // path( $self->var .'/cobalt.log' );
-  $self->log->output->add(
-    'logfile' => {
-       type => 'File',
-       file => $logfile,
-     },
-  );
 
   if ($self->detached) {
     # Presumably our frontend closed these
@@ -241,6 +235,13 @@ sub init {
       },
     );
   }
+
+  $self->log->output->add(
+    'logfile' => {
+       type => 'File',
+       file => $logfile,
+     },
+  );
 
   ## Language set check. Force attrib fill.
   $self->lang;
