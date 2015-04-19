@@ -285,9 +285,7 @@ sub get {
   confess "attempted 'get' on unopened db"
     unless $self->is_open;
 
-  return unless exists $self->Tied->{$key};
-
-  $self->tied->{$key}
+  exists $self->Tied->{$key} ? $self->tied->{$key} : ()
 }
 
 sub put {
