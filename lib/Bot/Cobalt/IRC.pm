@@ -640,7 +640,6 @@ sub irc_mode {
   );
 
   if ( $mode_obj->is_umode ) {
-    ## our umode changed
     broadcast( 'umode_changed', $mode_obj );
     return
   }

@@ -10,7 +10,7 @@ use Bot::Cobalt::Serializer;
 
 use Moo::Role;
 
-has '_serializer' => (
+has _serializer => (
   is        => 'ro',
   isa       => InstanceOf['Bot::Cobalt::Serializer'],
   builder   => sub { Bot::Cobalt::Serializer->new },
@@ -26,9 +26,9 @@ sub readfile {
   my $thawed_cf = try {
     $self->_serializer->readfile( $path )
   } catch {
-    $err = $_;
-    ()
+    $err = $_
   };
+
   confess "Serializer readfile() failed for $path; $err"
     if defined $err;
 
