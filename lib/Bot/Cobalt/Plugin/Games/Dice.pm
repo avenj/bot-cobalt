@@ -1,12 +1,9 @@
 package Bot::Cobalt::Plugin::Games::Dice;
 
+use v5.10;
+use strictures 2;
 
-
-use 5.10.1;
-use strict;
-use warnings;
-
-use Bot::Cobalt::Utils qw/ color /;
+use Bot::Cobalt::Utils 'color';
 
 sub new { bless [], shift }
 
@@ -17,59 +14,59 @@ sub execute {
   my ($dice, $modifier, $modify_by) = split ' ', $str;
 
   if ($dice =~ /^(\d+)?d(\d+)?$/i) {  ## Xd / dY / XdY syntax
-      my $n_dice = $1 || 1;
-      my $sides  = $2 || 6;
+    my $n_dice = $1 || 1;
+    my $sides  = $2 || 6;
 
-      my @rolls;
+    my @rolls;
 
-      $n_dice = 10    if $n_dice > 10;
-      $sides  = 10000 if $sides > 10000;
+    $n_dice = 10    if $n_dice > 10;
+    $sides  = 10000 if $sides > 10000;
 
-      for (my $i = $n_dice; $i >= 1; $i--) {
-        push(@rolls, (int rand $sides) + 1 );
+    for (my $i = $n_dice; $i >= 1; $i--) {
+      push @rolls, (int rand $sides) + 1;
+    }
+    my $total;
+    $total += $_ for @rolls;
+
+    $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
+    if ($modifier) {
+      if      ($modifier eq '+') {
+        $total += $modify_by;
+      } elsif ($modifier eq '-') {
+        $total -= $modify_by;
       }
-      my $total;
-      $total += $_ for @rolls;
+    }
 
-      $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
-      if ($modifier) {
-        if      ($modifier eq '+') {
-          $total += $modify_by;
-        } elsif ($modifier eq '-') {
-          $total -= $modify_by;
-        }
-      }
+    my $potential = $n_dice * $sides;
 
-      my $potential = $n_dice * $sides;
+    my $resp = "Rolled "
+               .color('bold', $n_dice)
+               .($sides > 1 ? ' dice of ' : ' die of ')
+               .color('bold', $sides)
+               ." sides: " ;
 
-      my $resp = "Rolled "
-                 .color('bold', $n_dice)
-                 .($sides > 1 ? ' dice of ' : ' die of ')
-                 .color('bold', $sides)
-                 ." sides: " ;
+    $resp .= join ' ', @rolls;
 
-      $resp .= join ' ', @rolls;
+    $resp .= " [total: ".color('bold', $total)." / $potential]";
 
-      $resp .= " [total: ".color('bold', $total)." / $potential]";
-
-      return $resp
+    return $resp
   }
 
   if ($dice =~ /^\d+$/) {
-      my $rolled = (int rand $dice) + 1;
-      $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
-      if ($modifier) {
-        if      ($modifier eq '+') {
-          $rolled += $modify_by;
-        } elsif ($modifier eq '-') {
-          $rolled -= $modify_by;
-        }
+    my $rolled = (int rand $dice) + 1;
+    $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
+    if ($modifier) {
+      if      ($modifier eq '+') {
+        $rolled += $modify_by;
+      } elsif ($modifier eq '-') {
+        $rolled -= $modify_by;
       }
-      my $resp =  "Rolled single die of "
-                  .color('bold', $dice)
-                  ." sides: "
-                  .color('bold', $rolled) ;
-      return $resp
+    }
+    my $resp =  "Rolled single die of "
+                .color('bold', $dice)
+                ." sides: "
+                .color('bold', $rolled) ;
+    return $resp
   }
 
   return "Syntax: roll XdY  [ +/- <modifier> ]"

@@ -1,10 +1,7 @@
 package Bot::Cobalt::Plugin::Games::RockPaperScissors;
 
-
-
-use 5.10.1;
-use strict;
-use warnings;
+use v5.10;
+use strict; use warnings;
 
 sub new { bless [], shift }
 
@@ -15,7 +12,7 @@ sub execute {
 
   if      (! $rps) {
     return "What did you want to throw, ${nick}?"
-  } elsif ( ! grep { $_ eq $rps } qw/rock paper scissors/ ) {
+  } elsif ( ! grep {; $_ eq $rps } qw/rock paper scissors/ ) {
     return "${nick}: You gotta throw rock, paper, or scissors!"
   }
 

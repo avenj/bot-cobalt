@@ -1,22 +1,19 @@
 package Bot::Cobalt::Plugin::Games::Magic8;
 
-
-
-use 5.10.1;
-use strict;
-use warnings;
-
-my @responses;
+use v5.10;
+use strict; use warnings;
 
 sub new { bless [], shift }
 
 sub execute {
   my ($self, $msg) = @_;
-  my $nick = $msg->src_nick//'' if ref $msg;
-  @responses = <DATA> unless @responses;
-  my $selected = $responses[rand @responses];
-  chomp($selected);
-  return $nick.': '.$selected
+
+  state $responses = [ <DATA> ];
+  my $selected = $responses->[rand @$responses];
+  chomp $selected;
+
+  my $nick = ref $msg ? $msg->src_nick : '';
+  ($nick // '') . ': ' . $selected
 }
 
 1;

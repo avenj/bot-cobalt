@@ -1,15 +1,12 @@
 package Bot::Cobalt::Plugin::Games::Roulette;
 
-
-
-use 5.10.1;
-use strict;
-use warnings;
+use v5.10;
+use strict; use warnings;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Utils qw/color/;
 
-sub new { bless {}, shift }
+sub new { bless +{}, shift }
 
 sub execute {
   my ($self, $msg, $str) = @_;
@@ -22,16 +19,16 @@ sub execute {
 
   if ( $str && index(lc($str), 'spin') == 0 ) {
     ## clear loaded
-    delete $self->{Cylinder}->{$context}->{$nick};
+    delete $self->{$context}->{$nick};
     return "Spun cylinders for ${nick}."
   }
 
-  my $loaded = $self->{Cylinder}->{$context}->{$nick}->{Loaded}
+  my $loaded = $self->{$context}->{$nick}->{Loaded}
                //= int rand($cyls);
-  $self->{Cylinder}->{$context}->{$nick}->{TS} //= time;
+  $self->{$context}->{$nick}->{TS} //= time;
 
   if ($loaded == 0) {
-    delete $self->{Cylinder}->{$context}->{$nick};
+    delete $self->{$context}->{$nick};
     
     my $irc  = core->get_irc_obj($context);
     my $bot  = $irc->nick_name;
@@ -48,16 +45,16 @@ sub execute {
   }
 
 
-  --$self->{Cylinder}->{$context}->{$nick}->{Loaded};
+  --$self->{$context}->{$nick}->{Loaded};
   return 'Click . . .'
 }
 
 sub expire {
   my ($self) = @_;
-  for my $context (keys %{ $self->{Cylinder} }) {
-    for my $nick (keys %{ $self->{Cylinder}->{$context} }) {
-      delete $self->{Cylinder}->{$context}->{$nick}
-        if (time - $self->{Cylinder}->{$context}->{$nick}->{TS}) >= 900;
+  for my $context (keys %$self) {
+    for my $nick (keys %{ $self->{$context} }) {
+      delete $self->{$context}->{$nick}
+        if (time - $self->{$context}->{$nick}->{TS}) >= 600;
     }
   }
 }
