@@ -43,7 +43,7 @@ sub retrieve {
     $db->dbclose;
   }
 
-  return $ref if defined $ref and ref $ref
+  ref $ref ? $ref : ()
 }
 
 sub Cobalt_register {
