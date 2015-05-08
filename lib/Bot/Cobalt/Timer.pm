@@ -101,14 +101,8 @@ has type  => (
   isa       => Str,
   builder   => sub {
     my ($self) = @_;
-
-    if ($self->has_context && $self->has_target) {
-      ## Guessing we're a message.
-      return 'msg'
-    } else {
-      ## Guessing we're an event.
-      return 'event'
-    }
+    # best guess:
+    $self->has_context && $self->has_target ? 'msg' : 'event'
   },
   coerce => sub {
     $_[0] =~ /message|privmsg/i ? 'msg' : lc($_[0]) ;
@@ -119,9 +113,9 @@ has type  => (
 sub _process_type {
   my ($self) = @_;
   ## If this is a special type, set up event and args.
-  my $type = lc($self->type);
+  my $type = lc $self->type;
 
-  if (grep { $_ eq $type } qw/msg message privmsg action/) {
+  if (grep {; $_ eq $type } qw/msg message privmsg action/) {
     my $ev_name = $type eq 'action' ?
           'action' : 'message' ;
     $self->event( $ev_name );
@@ -130,13 +124,12 @@ sub _process_type {
     $self->args( \@ev_args );
   }
 
-  return 1
+  1
 }
 
 sub is_ready {
   my ($self) = @_;
-  return 1 if $self->at <= time;
-  return
+  $self->at <= time ? 1 : ()
 }
 
 sub execute {
@@ -155,14 +148,13 @@ sub execute {
 
   my $args = $self->args;
   $self->core->send_event( $self->event, @$args );
-  return 1
+  1
 }
 
 sub execute_if_ready { execute_ready(@_) }
 sub execute_ready {
   my ($self) = @_;
-  return $self->execute if $self->is_ready;
-  return
+  $self->is_ready ? $self->execute : ()
 }
 
 
