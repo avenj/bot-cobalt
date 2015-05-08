@@ -2,36 +2,45 @@ package Bot::Cobalt::Plugin::Games;
 
 use strictures 2;
 
+use List::Objects::WithUtils 2;
+
 use Bot::Cobalt;
 use Bot::Cobalt::Core::Loader;
 
 use Object::Pluggable::Constants ':ALL';
 
+sub MODULES () { 0 }
+sub CMDS    () { 1 }
+sub OBJS    () { 2 }
 
-sub new { bless +{}, shift }
+
+sub new { 
+  bless [
+    [],     # MODULES
+    +{},    # CMDS
+    +{},    # OBJS
+  ], shift
+}
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
   my $count = $self->_load_games();
-
   $core->log->info("Loaded - $count games");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
 
   $core->log->debug("Cleaning up our games...");
-
-  for my $module (@{ $self->{ModuleNames}//[] }) {
+  for my $module (@{ $self->[MODULES] }) {
     Bot::Cobalt::Core::Loader->unload($module);
   }
-
   $core->log->info("Unloaded");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub _handle_auto {
@@ -43,11 +52,8 @@ sub _handle_auto {
 
   my $cmd = $msg->cmd;
 
-  return PLUGIN_EAT_NONE
-    unless defined $self->{Dispatch}->{$cmd};
-
-  my $game = $self->{Dispatch}->{$cmd};
-  my $obj  = $self->{Objects}->{$game};
+  my $game = $self->[CMDS]->{$cmd} // return PLUGIN_EAT_NONE;
+  my $obj  = $self->[OBJS]->{$game};
 
   my $msgarr = $msg->message_array;
   my $str = join ' ', @$msgarr;
@@ -55,13 +61,13 @@ sub _handle_auto {
   my $resp = '';
   $resp = $obj->execute($msg, $str) if $obj->can('execute');
 
-  broadcast( 'message',
+  broadcast( message =>
     $context,
     $msg->target,
     $resp
   ) if $resp;
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub _load_games {
@@ -72,7 +78,7 @@ sub _load_games {
 
   logger->debug("Loading games");
 
-  my $count;
+  my $count = 0;
   for my $game (keys %$games) {
     my $module = $games->{$game}->{Module} // next;
     next unless ref $games->{$game}->{Cmds} eq 'ARRAY';
@@ -90,35 +96,26 @@ sub _load_games {
       }
     }
 
-    push(@{ $self->{ModuleNames} }, $module);
+    push @{ $self->[MODULES] }, $module;
 
-    my $obj = $module->new;
-    $self->{Objects}->{$game} = $obj;
+    my $obj = $self->[OBJS]->{$game} = $module->new;
 
     for my $cmd (@{ $games->{$game}->{Cmds} }) {
-
-      $self->{Dispatch}->{$cmd} = $game;
-
+      $self->[CMDS]->{$cmd} = $game;
       ## install a cmd handler and register for it
-      my $handler = sub {
-            my $this_self = shift;
-            $this_self->_handle_auto(@_)
-      };
-
+      my $handler = sub { $_[0]->_handle_auto(@_[1 .. $#_]) };
       { no strict 'refs';
-          *{__PACKAGE__.'::Bot_public_cmd_'.$cmd} = $handler;
+        *{ __PACKAGE__.'::Bot_public_cmd_'.$cmd } = $handler;
       }
 
-      register( $self, 'SERVER',
-        [ 'public_cmd_'.$cmd ],
-      );
+      register( $self, SERVER => [ 'public_cmd_'.$cmd ] );
     }
 
     ++$count;
     logger->debug("Game loaded: $game");
   }
 
-  return $count
+  $count
 }
 
 
