@@ -23,9 +23,7 @@ sub __new_trace {
 
 sub new {
   my $class = shift;
-
   my $trace = $class->__new_trace;
-
   bless [
     $trace,    ## TRACE
     [ @_ ],    ## ARRAY
@@ -45,13 +43,11 @@ sub _set_trace {
 
 sub throw {
   my ($self) = @_;
-  $self->_set_trace( $self->__new_trace );
-  die $self
+  die $self->_set_trace( $self->__new_trace )
 }
 
 sub string {
-  my ($self) = @_;
-  join '', map { "$_" } @{ $self->[ARRAY] }
+  join '', map { "$_" } @{ $_[0]->[ARRAY] }
 }
 
 sub push {
@@ -73,8 +69,7 @@ sub slice {
 
 sub join {
   my ($self, $delim) = @_;
-  $delim //= ' ';
-  $self->new( join($delim, map { "$_" } @{ $self->[ARRAY] }) )
+  $self->new( join($delim //= ' ', map { "$_" } @{ $self->[ARRAY] }) )
 }
 
 
