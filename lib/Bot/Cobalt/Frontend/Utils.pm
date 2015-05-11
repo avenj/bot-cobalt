@@ -1,8 +1,8 @@
 package Bot::Cobalt::Frontend::Utils;
 
+use v5.10;
 use strictures 2;
 
-use 5.10.1;
 use Carp;
 
 use parent 'Exporter::Tiny';
@@ -11,13 +11,9 @@ our @EXPORT_OK = qw/
   ask_yesno
   ask_question
 /;
-
 our %EXPORT_TAGS;
+{ my %s; push @{$EXPORT_TAGS{all}}, grep {!$s{$_}++} @EXPORT_OK }
 
-{
-  my %seen;
-  push @{$EXPORT_TAGS{all}}, grep {!$seen{$_}++} @EXPORT_OK
-}
 
 sub ask_question {
   my %args = @_;
@@ -34,27 +30,14 @@ sub ask_question {
 
   select(STDOUT); $|++;
 
-  my $input;
-
   my $print_and_grab = sub {
-    print "$question ";
-
-    if (defined $default) {
-      print "[$default] ";
-    } else {
-      print "> ";
-    }
-
-    $input = <STDIN>;
-
-    chomp($input);
-
-    $input = $default if defined $default and $input eq '';
-    $input
+    print "$question ", defined $default ? "[$default] " : "> ";
+    my $ret = <STDIN>;  chomp($ret);
+    $ret = $default if defined $default and $ret eq '';
+    $ret
   };
 
-  $print_and_grab->();
-
+  my $input = $print_and_grab->();
   until ($input) {
     print "No input specified.\n";
     $print_and_grab->();
@@ -63,13 +46,9 @@ sub ask_question {
   VALID: {
     if ($validate_sub) {
       my $invalid = $validate_sub->($input);
-
       last VALID unless defined $invalid;
-
-      if ( $args{die_if_invalid} || $args{die_unless_valid} ) {
-        die "Invalid input; $invalid\n";
-      }
-
+      die "Invalid input; $invalid\n"
+        if $args{die_if_invalid} or $args{die_unless_valid};
       until (not defined $invalid) {
         print "Invalid input; $invalid\n";
         $print_and_grab->();
@@ -83,7 +62,6 @@ sub ask_question {
 
 sub ask_yesno {
   my %args = @_;
-
   my $question = $args{prompt} || croak "No prompt => specified";
 
   my $default  = lc(
@@ -98,27 +76,19 @@ sub ask_yesno {
   select(STDOUT); $|++;
 
   my $input;
-
   my $print_and_grab = sub {
     print "$question  [$yn] ";
-
-    $input = <STDIN>;
-
-    chomp($input);
-
+    $input = <STDIN>;  chomp($input);
     $input = $default if $input eq '';
-
-    lc(substr $input, 0, 1)
+    lc substr $input eq '' ? $default : $input, 0, 1
   };
-
   $print_and_grab->();
-
   until ($input && $input eq 'y' || $input eq 'n') {
     print "Invalid input; should be either Y or N\n";
     $print_and_grab->();
   }
 
-  return $input eq 'y' ? 1 : 0
+  $input eq 'y' ? 1 : 0
 }
 
 1;
