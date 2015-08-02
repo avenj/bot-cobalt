@@ -807,7 +807,7 @@ sub _info_varhelp {
   my ($self, $msg) = @_;
 
   my $help =
-     ' !~ = CmdChar, B~ = BotNick, C = Channel, H = UserHost, N = Nick,'
+     ' !~ = CmdChar, B~ = BotNick, C~ = Channel, H~ = UserHost, N~ = Nick,'
     .' P~ = Port, Q~ = Question, R~ = RandomNick, S~ = Server'
     .' t~ = unixtime, T~ = localtime, V~ = Version, W~ = Website'
   ;
