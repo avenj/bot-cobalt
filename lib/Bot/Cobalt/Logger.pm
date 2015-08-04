@@ -88,13 +88,11 @@ sub _should_log {
 sub _log_to_level {
   my ($self, $level) = splice @_, 0, 2;
 
-  return 1 unless $self->_should_log($level);
-
   $self->output->_write(
     $level,
     [ caller(1) ],
     @_
-  );
+  ) if $self->_should_log($level);
 
   1
 }
