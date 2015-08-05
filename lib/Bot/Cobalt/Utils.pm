@@ -1,9 +1,7 @@
 package Bot::Cobalt::Utils;
 
-use v5.10;
 use strictures 2;
 use Carp;
-
 use Scalar::Util 'reftype';
 
 use App::bmkpasswd ();

@@ -1,14 +1,10 @@
 package Bot::Cobalt::Core::Loader;
 
-use v5.10;
 use strictures 2;
-
 use Carp;
-
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
 
 use Try::Tiny;
-
 
 sub new { bless [], shift }
 
