@@ -1,18 +1,17 @@
 package Bot::Cobalt::IRC::Role::AdminCmds;
 
-
-
-use 5.12.1;
-use Moo::Role;
+use strictures 2;
+use Scalar::Util 'reftype';
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
-use strictures 2;
+
+use Moo::Role;
+
 
 sub Bot_public_cmd_server {
   my ($self, $core) = splice @_, 0, 2;
-  
   my $msg = ${ $_[0] };
   
   my $context  = $msg->context;
@@ -23,29 +22,23 @@ sub Bot_public_cmd_server {
   return PLUGIN_EAT_ALL unless $auth_flags->{SUPERUSER};
   
   my $cmd = lc($msg->message_array->[0] || 'list');
-  
   my $meth = '_cmd_'.$cmd;
-  
   unless ( $self->can($meth) ) {
     broadcast( 'message',
       $msg->context,
       $msg->channel,
       "Unknown command; try one of: list, current, connect, disconnect"
     );
-  
     return PLUGIN_EAT_ALL
   }
   
   logger->debug("Dispatching $cmd for $src_nick");
-  
   $self->$meth($msg)
 }
 
 sub _cmd_list {
   my ($self, $msg) = @_;
-  
   my @contexts = keys %{ core->Servers };
-  
   my $pcfg = plugin_cfg($self);
   ## FIXME look for contexts that are conf'd but not active
   
@@ -75,7 +68,7 @@ sub _cmd_connect {
   
   my $pcfg = plugin_cfg($self);
   
-  unless (ref $pcfg eq 'HASH' && keys %$pcfg) {
+  unless (ref $pcfg && reftype $pcfg eq 'HASH' && keys %$pcfg) {
     broadcast( 'message',
       "Could not locate any network configuration."
     );
