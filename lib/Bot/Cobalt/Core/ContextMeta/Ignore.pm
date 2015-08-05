@@ -1,19 +1,17 @@
 package Bot::Cobalt::Core::ContextMeta::Ignore;
 
-
-use v5.10;
 use strictures 2;
-
 use Carp;
 
-use IRC::Utils qw/normalize_mask/;
-use Bot::Cobalt::Common qw/:types/;
+use IRC::Utils 'normalize_mask';
+use Bot::Cobalt::Common ':types';
 
 
 use Moo;
 extends 'Bot::Cobalt::Core::ContextMeta';
 
-around 'add' => sub {
+
+around add => sub {
   my $orig = shift;
   my ($self, $context, $mask, $reason, $addedby) = @_;
   
@@ -45,6 +43,7 @@ sub reason {
 
 sub addedby {
   my ($self, $context, $mask) = @_;
+
   return unless exists $self->_list->{$context}
             and exists $self->_list->{$context}->{$mask};
   
