@@ -2,7 +2,7 @@ package Bot::Cobalt::Core::Role::EasyAccessors;
 
 use strictures 2;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed', 'reftype';
 use Carp;
 
 use Moo::Role;
@@ -24,7 +24,9 @@ sub get_channels_cfg {
   
   for my $channel (keys %$chcfg) {
     ## Might be an empty string:
-    $chcfg->{$channel} = {} unless ref $chcfg->{$channel} eq 'HASH';
+    $chcfg->{$channel} = +{}
+      unless ref $chcfg->{$channel}
+      and reftype $chcfg->{$channel} eq 'HASH'
   }
   
   $chcfg

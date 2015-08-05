@@ -1,7 +1,7 @@
 package Bot::Cobalt::Plugin::WWW;
 
-use v5.10;
 use strictures 2;
+use Scalar::Util 'reftype';
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -14,7 +14,7 @@ use POE qw/
 
 sub opts {
   my $opts = core->get_plugin_cfg($_[0])->{Opts};
-  return {} unless $opts and ref $opts eq 'HASH';
+  return +{} unless ref $opts and reftype $opts eq 'HASH';
   $opts
 }
 

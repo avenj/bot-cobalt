@@ -100,7 +100,8 @@ sub flags {
 
   return +{} unless exists $self->_list->{$context}
          and ref $self->_list->{$context}->{$nickname}
-         and ref $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
+         and ref $self->_list->{$context}->{$nickname}->{Flags}
+         and reftype $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
 
   $self->_list->{$context}->{$nickname}->{Flags}
 }

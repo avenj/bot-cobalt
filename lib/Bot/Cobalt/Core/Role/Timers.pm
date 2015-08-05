@@ -68,10 +68,9 @@ sub timer_set_hashref {
   my $d_line = "$caller_pkg line $caller_line";
   
   unless (ref $ev eq 'HASH') {
-  
     if (ref $ev) {
       $self->log->warn(
-        "timer_set_hashref not called with hashref; $d_line"
+        "timer_set_hashref expected HASH but got $ev; $d_line"
       );
       return
     } else {

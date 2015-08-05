@@ -1,7 +1,7 @@
 package Bot::Cobalt::IRC;
 
-use v5.10;
 use strictures 2;
+use Scalar::Util 'reftype';
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
@@ -30,7 +30,7 @@ use POE qw/
 /;
 
 ## Bot::Cobalt::Common pulls the rest of these:
-use IRC::Utils qw/ parse_mode_line /;
+use IRC::Utils 'parse_mode_line';
 
 
 use Moo;
@@ -173,7 +173,7 @@ sub Bot_ircplug_connect {
   my $pcfg    = core->cfg->plugins->plugin( plugin_alias($self) );
   my $thiscfg = $pcfg->opts->{Networks}->{$context};
 
-  unless (ref $thiscfg eq 'HASH' && keys %$thiscfg) {
+  unless (ref $thiscfg && reftype $thiscfg eq 'HASH' && keys %$thiscfg) {
     logger->error("Connect issued for context without valid cfg ($context)");
     return PLUGIN_EAT_ALL
   }
@@ -530,7 +530,7 @@ sub irc_chan_sync {
   ## check if we have a specific setting for this channel (override):
   $notify = $chan_h->{$chan}->{notify_on_sync}
     if exists $chan_h->{$chan}
-    and ref $chan_h->{$chan} eq 'HASH'
+    and reftype $chan_h->{$chan} eq 'HASH'
     and exists $chan_h->{$chan}->{notify_on_sync};
 
   $irc->yield(privmsg => $chan => $resp) if $notify;

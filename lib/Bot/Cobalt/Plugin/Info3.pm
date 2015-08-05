@@ -743,7 +743,6 @@ sub _info_exec_dsearch {
 
   for my $glob (keys %{ $self->{Globs} }) {
     my $ref = $self->{DB}->get($glob);
-
     unless (ref $ref eq 'HASH') {
       logger->error(
         "Inconsistent Info3? $glob appears to have no value.",

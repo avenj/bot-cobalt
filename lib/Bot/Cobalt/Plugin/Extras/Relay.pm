@@ -1,14 +1,12 @@
 package Bot::Cobalt::Plugin::Extras::Relay;
 
-
-
 ## Simplistic relaybot plugin
-use 5.10.1;
+use Scalar::Util 'reftype';
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
-sub new { bless {}, shift }
+sub new { bless +{}, shift }
 
 sub get_relays {
   my ($self, $context, $channel) = @_;
@@ -61,7 +59,7 @@ sub Cobalt_register {
 
   my $pcfg = $core->get_plugin_cfg($self);
   my $relays = $pcfg->{Relays};
-  unless ($relays and ref $relays eq 'ARRAY') {
+  unless (ref $relays and reftype $relays eq 'ARRAY') {
     $core->log->warn("'Relays' conf directive not valid, should be a list");
   } else {
     for my $ref (@$relays) {

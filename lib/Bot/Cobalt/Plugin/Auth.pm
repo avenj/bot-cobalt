@@ -1,5 +1,7 @@
 package Bot::Cobalt::Plugin::Auth;
 
+use strictures 2;
+
 ## "Standard" Auth module
 ##
 ## Commands:
@@ -39,20 +41,19 @@ package Bot::Cobalt::Plugin::Auth;
 ##
 ## Also see Bot::Cobalt::Core::ContextMeta::Auth
 
-use 5.12.1;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::Error;
 use Bot::Cobalt::Serializer;
 
-use strictures 2;
-
-use Storable qw/dclone/;
+use Scalar::Util 'reftype';
+use Storable 'dclone';
 
 use Try::Tiny;
 
 use File::Spec;
+
 
 ### Constants, mostly for internal retvals:
 sub ACCESS_LIST() { 0 }
@@ -61,7 +62,7 @@ sub DB_PATH()     { 1 }
 
 sub new {
   bless [
-    {}, ## ACCESS_LIST
+    +{}, ## ACCESS_LIST
     '', ## DB_PATH
   ], shift
 }
@@ -131,14 +132,12 @@ sub Cobalt_unregister {
 
 sub _init_superusers {
   my ($self) = @_;
-
   my $p_cfg = plugin_cfg($self);
 
   ## Read in configured superusers to AccessList
   ## These will override existing usernames
   my $superusers = $p_cfg->{SuperUsers};
-
-  unless (ref $superusers eq 'HASH') {
+  unless (ref $superusers && reftype $superusers eq 'HASH') {
     logger->error("Configuration may be broken . . .");
     logger->error("SuperUsers directive is not a hash, skipping");
     return
@@ -147,14 +146,14 @@ sub _init_superusers {
   my %su = %$superusers;
 
   SERVER: for my $context (keys %su) {
-
-    unless (ref $su{$context} eq 'HASH') {
+    unless (ref $su{$context} && reftype $su{$context} eq 'HASH') {
       logger->error("Skipping $context; configuration is not a hash");
       next SERVER
     }
 
     USER: for my $user (keys %{$su{$context}}) {
-      unless (ref $su{$context}->{$user} eq 'HASH') {
+      unless (ref $su{$context}->{$user} 
+              && reftype $su{$context}->{$user} eq 'HASH') {
         logger->error("Skipping $user; configuration is not a hash");
         next USER
       }
@@ -164,9 +163,10 @@ sub _init_superusers {
       ## (we probably don't even know the server's CASEMAPPING= yet)
       my $lc_user = lc_irc($user);
 
-      my $flags = ref $su{$context}->{$user}->{Flags} eq 'HASH' ?
+      my $flags = ref $su{$context}->{$user}->{Flags}
+                  && reftype $su{$context}->{$user}->{Flags} eq 'HASH' ?
         $su{$context}->{$user}->{Flags}
-        : { } ;
+        : +{} ;
 
       $flags->{SUPERUSER} = 1;
 
@@ -1343,7 +1343,8 @@ sub AccessList {
 
   if (defined $alist) {
     confess "AccessList is not a hashref"
-      unless ref $alist eq 'HASH';
+      unless ref $alist 
+      and reftype $alist eq 'HASH';
 
     return $self->[ACCESS_LIST] = $alist
   }

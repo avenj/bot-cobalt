@@ -2,6 +2,7 @@ package Bot::Cobalt::Serializer;
 
 use strictures 2;
 use Carp;
+use Scalar::Util 'reftype';
 
 ## These two must be present anyway:
 use YAML::XS ();
@@ -194,7 +195,7 @@ sub _read_serialized {
   return unless defined $path;
 
   my $lock = 1;
-  if (defined $opts && ref $opts eq 'HASH') {
+  if (defined $opts && ref $opts && reftype $opts eq 'HASH') {
     $lock = $opts->{Locking} if defined $opts->{Locking};
   }
 
@@ -227,7 +228,7 @@ sub _write_serialized {
   my $lock    = 1;
   my $timeout = 2;
 
-  if (defined $opts && ref $opts eq 'HASH') {
+  if (defined $opts && ref $opts && reftype $opts eq 'HASH') {
     $lock    = $opts->{Locking} if defined $opts->{Locking};
     $timeout = $opts->{Timeout} if $opts->{Timeout};
   }
