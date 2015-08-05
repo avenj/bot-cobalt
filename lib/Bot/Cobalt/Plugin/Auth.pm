@@ -186,12 +186,18 @@ sub _init_superusers {
       }
 
       ## the Mask specification in cfg may be an array or a string:
-      if (ref $su{$context}->{$user}->{Mask} eq 'ARRAY') {
-          $self->AccessList->{$context}->{$lc_user}->{Masks} = [
-            ## normalize masks into full, matchable masks:
-            map {; normalize_mask($_) }
-              @{ $su{$context}->{$user}->{Mask} }
-          ];
+      if (ref $su{$context}->{$user}->{Mask}) {
+        unless (reftype $su{$context}->{$user}->{Mask} eq 'ARRAY') {
+          logger->error(
+            "Expected a string or list of masks in 'Mask:' for $user"
+          );
+          # FIXME currently leaves user with no Masks ...
+          next USER
+        }
+        $self->AccessList->{$context}->{$lc_user}->{Masks} = [
+          ## normalize masks into full, matchable masks:
+          map {; normalize_mask($_) } @{ $su{$context}->{$user}->{Mask} }
+        ];
       } else {
           $self->AccessList->{$context}->{$lc_user}->{Masks} = [
             normalize_mask( $su{$context}->{$user}->{Mask} )
