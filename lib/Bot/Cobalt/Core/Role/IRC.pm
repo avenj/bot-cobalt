@@ -2,39 +2,39 @@ package Bot::Cobalt::Core::Role::IRC;
 
 use 5.10.1;
 use strictures 2;
+no warnings 'once';
 
-use Bot::Cobalt::Common qw/:types/;
+use Bot::Cobalt::Common ':types';
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util 'blessed';
+
 
 use Moo::Role;
+requires qw/ log debug /;
 
-requires qw/
-  log
-  debug
-/;
 
 has 'Servers' => (
-  is => 'rw', isa => HashRef,
-  default => sub { {} },
+  is      => 'rw', 
+  isa     => HashRef,
+  default => sub { +{} },
 );
+
 
 sub is_connected {
   my ($self, $context) = @_;
   return unless $context and exists $self->Servers->{$context};
-  return $self->Servers->{$context}->connected;
+  $self->Servers->{$context}->connected
 }
 
-sub get_irc_server  { get_irc_context(@_) }
+*get_irc_server = *get_irc_context;
 sub get_irc_context {
   my ($self, $context) = @_;
   return unless defined $context and exists $self->Servers->{$context};
-  return $self->Servers->{$context}
+  $self->Servers->{$context}
 }
 
-sub get_irc_object { get_irc_obj(@_) }
+*get_irc_object = *get_irc_obj;
 sub get_irc_obj {
-  ## retrieve our POE::Component::IRC obj for $context
   my ($self, $context) = @_;
   if (! $context) {
     $self->log->warn(
@@ -52,9 +52,8 @@ sub get_irc_obj {
     );
     return
   }
-
-  my $irc = $c_obj->irc // return;
-  return blessed $irc ? $irc : ();
+  
+  blessed $c_obj->irc ? $c_obj->irc : ()
 }
 
 sub get_irc_casemap {
@@ -76,7 +75,7 @@ sub get_irc_casemap {
     return
   }
 
-  return $c_obj->casemap
+  $c_obj->casemap
 }
 
 
