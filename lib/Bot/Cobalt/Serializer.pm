@@ -1,6 +1,5 @@
 package Bot::Cobalt::Serializer;
 
-use v5.10;
 use strictures 2;
 use Carp;
 
@@ -8,13 +7,11 @@ use Carp;
 use YAML::XS ();
 use JSON::MaybeXS ();
 
-use Fcntl qw/:flock/;
-
-use Bot::Cobalt::Common qw/:types/;
-
-use Time::HiRes qw/sleep/;
-
+use Fcntl ':flock';
+use Time::HiRes  'sleep';
 use Scalar::Util 'blessed';
+
+use Bot::Cobalt::Common ':types';
 
 use Moo;
 

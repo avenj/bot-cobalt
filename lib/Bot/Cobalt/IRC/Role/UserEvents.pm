@@ -1,7 +1,5 @@
 package Bot::Cobalt::IRC::Role::UserEvents;
 
-
-
 ## POD lives in Bot::Cobalt::IRC for now ...
 
 use 5.12.1;
