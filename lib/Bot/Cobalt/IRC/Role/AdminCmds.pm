@@ -6,6 +6,7 @@ use Scalar::Util 'reftype';
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
+use Try::Tiny;
 
 use Moo::Role;
 
@@ -13,27 +14,49 @@ use Moo::Role;
 sub Bot_public_cmd_server {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
-  
   my $context  = $msg->context;
   my $src_nick = $msg->src_nick;
-  
-  my $auth_flags = $core->auth->flags($context, $src_nick);
-  
-  return PLUGIN_EAT_ALL unless $auth_flags->{SUPERUSER};
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
   
   my $cmd = lc($msg->message_array->[0] || 'list');
   my $meth = '_cmd_'.$cmd;
   unless ( $self->can($meth) ) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "Unknown command; try one of: list, current, connect, disconnect"
-    );
+    broadcast message => $msg->context, $msg->channel,
+      "Unknown command; try one of: list, current, connect, disconnect";
     return PLUGIN_EAT_ALL
   }
   
   logger->debug("Dispatching $cmd for $src_nick");
   $self->$meth($msg)
+}
+
+sub Bot_public_cmd_heapdump {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
+  try {
+    require Devel::MAT::Dumper; 1
+  } catch {
+    my $err = "Attempted to dump heap but Devel::MAT could not be loaded: $_";
+    logger->error($err);
+    broadcast message => $msg->context, $msg->channel, $err;
+    undef
+  } or return PLUGIN_EAT_ALL;
+
+  my $fname = $core->var . '/dump.' . time . '.pmat' ;
+  logger->info("Dumping heap to '$fname'");
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping heap file to 'var' dir . . .";
+  Devel::MAT::Dumper::dump( $fname );
+
+  PLUGIN_EAT_ALL
 }
 
 sub _cmd_list {
@@ -42,25 +65,19 @@ sub _cmd_list {
   my $pcfg = plugin_cfg($self);
   ## FIXME look for contexts that are conf'd but not active
   
-  broadcast( 'message',
-    $msg->context,
-    $msg->channel,
-    "Active contexts: ".join ' ', @contexts
-  );
+  broadcast message => $msg->context, $msg->channel,
+    "Active contexts: " . join ' ', @contexts ;
   
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub _cmd_current {
   my ($self, $msg) = @_;
 
-  broadcast( 'message',
-    $msg->context,
-    $msg->channel,
-    "Currently on context ".$msg->context
-  );
+  broadcast message => $msg->context, $msg->channel,
+    "Currently on context ".$msg->context;
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub _cmd_connect {
@@ -249,6 +266,9 @@ Bot::Cobalt::IRC::Role::AdminCmds - IRC-specific admin commands
   
   ## Issue a disconnect:
   !server disconnect Alpha
+
+  ## Dump memory state for inspection (requires Devel::MAT):
+  !heapdump
 
 =head1 DESCRIPTION
 
