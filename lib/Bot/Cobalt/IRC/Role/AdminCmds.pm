@@ -11,27 +11,6 @@ use Try::Tiny;
 use Moo::Role;
 
 
-sub Bot_public_cmd_server {
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
-  my $context  = $msg->context;
-  my $src_nick = $msg->src_nick;
-
-  return PLUGIN_EAT_ALL unless
-    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
-  
-  my $cmd = lc($msg->message_array->[0] || 'list');
-  my $meth = '_cmd_'.$cmd;
-  unless ( $self->can($meth) ) {
-    broadcast message => $msg->context, $msg->channel,
-      "Unknown command; try one of: list, current, connect, disconnect";
-    return PLUGIN_EAT_ALL
-  }
-  
-  logger->debug("Dispatching $cmd for $src_nick");
-  $self->$meth($msg)
-}
-
 sub Bot_public_cmd_heapdump {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
@@ -57,6 +36,28 @@ sub Bot_public_cmd_heapdump {
   Devel::MAT::Dumper::dump( $fname );
 
   PLUGIN_EAT_ALL
+}
+
+
+sub Bot_public_cmd_server {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+  
+  my $cmd = lc($msg->message_array->[0] || 'list');
+  my $meth = '_cmd_'.$cmd;
+  unless ( $self->can($meth) ) {
+    broadcast message => $msg->context, $msg->channel,
+      "Unknown command; try one of: list, current, connect, disconnect";
+    return PLUGIN_EAT_ALL
+  }
+  
+  logger->debug("Dispatching $cmd for $src_nick");
+  $self->$meth($msg)
 }
 
 sub _cmd_list {
