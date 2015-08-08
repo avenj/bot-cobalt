@@ -113,8 +113,8 @@ has rpls => (
       ## croak() by default.
       ## If this is a core set load, return empty hash.
       if ( !$self->use_core ) {
-        $croakable = "readfile() failure for ". $self->lang().
-          "(". $self->_full_lang_path(). "): ".
+        $croakable = "readfile() failure for " . $self->lang .
+          "(" . $self->_full_lang_path . "): " .
           $_ ;
         undef
       } else {

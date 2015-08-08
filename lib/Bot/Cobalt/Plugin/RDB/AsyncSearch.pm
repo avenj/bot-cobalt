@@ -1,14 +1,14 @@
 package Bot::Cobalt::Plugin::RDB::AsyncSearch;
 
-
-
-use 5.10.1;
 use Carp;
 use strictures 2;
 
 use Config;
 
-use POE qw/Wheel::Run Filter::Reference/;
+use POE qw/
+  Wheel::Run
+  Filter::Reference
+/;
 
 sub new { bless [], shift }
 

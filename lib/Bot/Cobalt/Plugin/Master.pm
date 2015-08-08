@@ -1,8 +1,5 @@
 package Bot::Cobalt::Plugin::Master;
 
-
-
-use 5.10.1;
 use strictures 2;
 
 use Bot::Cobalt;
@@ -42,8 +39,6 @@ sub Cobalt_unregister {
   return PLUGIN_EAT_NONE
 }
 
-
-### JOIN / PART / CYCLE
 
 sub Bot_public_cmd_cycle {
   my ($self, $core) = splice @_, 0, 2;
