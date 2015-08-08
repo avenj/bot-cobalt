@@ -86,68 +86,41 @@ sub _cmd_connect {
   my $pcfg = plugin_cfg($self);
   
   unless (ref $pcfg && reftype $pcfg eq 'HASH' && keys %$pcfg) {
-    broadcast( 'message',
-      "Could not locate any network configuration."
-    );
-    
+    broadcast message => $msg->context, $msg->channel,
+      "Could not locate any network configuration.";
     logger->error("_cmd_connect could not find an IRC network cfg");
-    
     return PLUGIN_EAT_ALL
   }
   
   my $target_ctxt = $msg->message_array->[1];
-  
   unless (defined $target_ctxt) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "No context specified."
-    );
-    
+    broadcast message => $msg->context, $msg->channel,
+      "No context specified.";
     return PLUGIN_EAT_ALL
   }
   
   unless ($pcfg->{Networks}->{$target_ctxt}) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "Could not locate configuration for context $target_ctxt"
-    );
-  
+    broadcast message => $msg->context, $msg->channel,
+      "Could not locate configuration for context $target_ctxt";
     return PLUGIN_EAT_ALL
   }
   
   ## Do we already have this context?
   if (my $ctxt_obj = irc_context($target_ctxt) ) {
-
     if ($ctxt_obj->connected) {
-      broadcast( 'message',
-        $msg->context,
-        $msg->channel,
-        "Attempting reconnect for context $target_ctxt"
-      );
+      broadcast message => $msg->context, $msg->channel,
+        "Attempting reconnect for context $target_ctxt";
     }
-
     logger->info("Attempting reconnect for context $target_ctxt");
-
-    broadcast( 'ircplug_disconnect', $target_ctxt );
-    broadcast( 'ircplug_connect', $target_ctxt );
-      
-    broadcast( 'ircplug_timer_serv_retry',
-        {
-          context => $target_ctxt,
-          delay   => 300,
-        },
-      );
-      
+    broadcast ircplug_disconnect => $target_ctxt;
+    broadcast ircplug_connect => $target_ctxt;
+    broadcast ircplug_timer_serv_retry =>
+      +{ context => $target_ctxt, delay => 300 } ;
     return PLUGIN_EAT_ALL
   }
 
-  broadcast( 'message',
-    $msg->context,
-    $msg->channel,
-    "Issuing connect for context $target_ctxt"
-  );
+  broadcast message => $msg->context, $msg->channel,
+    "Issuing connect for context $target_ctxt";
   
   my $src_nick = $msg->src_nick;
   my $auth_usr = core->auth->username($msg->context, $src_nick);
@@ -157,52 +130,36 @@ sub _cmd_connect {
    "(Issued by $src_nick [$auth_usr])"
   );
     
-  broadcast( 'ircplug_connect', $target_ctxt );
+  broadcast ircplug_connect => $target_ctxt;
   
-  return PLUGIN_EAT_ALL  
+  return PLUGIN_EAT_ALL 
 }
 
 sub _cmd_disconnect {
   my ($self, $msg) = @_;
-  
   my $target_ctxt = $msg->message_array->[1];
   
   unless (defined $target_ctxt) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "No context specified."
-    );
-  
+    broadcast message => $msg->context, $msg->channel,
+      "No context specified.";
     return PLUGIN_EAT_ALL
   }
   
   my $ctxt_obj;
   unless ($ctxt_obj = irc_context($target_ctxt) ) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "Could not find context object for $target_ctxt"
-    );
-  
+    broadcast message => $msg->context, $msg->channel,
+      "Could not find context object for $target_ctxt";
     return PLUGIN_EAT_ALL
   }
 
   unless (keys %{ core->Servers } > 1) {
-    broadcast( 'message',
-      $msg->context,
-      $msg->channel,
-      "Refusing disconnect; have no other active contexts."
-    );
-  
+    broadcast message => $msg->context, $msg->channel,
+      "Refusing disconnect; have no other active contexts.";
     return PLUGIN_EAT_ALL
   }
   
-  broadcast( 'message',
-    $msg->context,
-    $msg->channel,
-    "Attempting to disconnect from $target_ctxt"
-  );
+  broadcast message => $msg->context, $msg->channel,
+    "Attempting to disconnect from $target_ctxt";
 
   my $src_nick = $msg->src_nick;
   my $auth_usr = core->auth->username($msg->context, $src_nick);
@@ -211,8 +168,8 @@ sub _cmd_disconnect {
    "Issuing disconnect for context $target_ctxt",
    "(Issued by $src_nick [$auth_usr])"
   );
-  
-  broadcast( 'ircplug_disconnect', $target_ctxt );
+
+  broadcast ircplug_disconnect => $target_ctxt;
   
   return PLUGIN_EAT_ALL
 }
@@ -226,17 +183,14 @@ sub Bot_ircplug_timer_serv_retry {
   my $delay   = $hints->{delay} || 300;
 
   logger->debug("ircplug_timer_serv_retry called for $context");
-
   my $ctxt_obj;
   unless ($ctxt_obj = irc_context($context) && $ctxt_obj->connected) {
     logger->info("Attempting reconnect to $context . . .");
-    
-    broadcast( 'ircplug_connect', $context );
-    
+    broadcast ircplug_connect => $context;
     core->timer_set( $delay,
-      {
+      +{
         Event => 'ircplug_timer_serv_retry',
-        Args  => [ { context => $context, delay => $delay } ],
+        Args  => [ +{ context => $context, delay => $delay } ],
       },
     );
   }
