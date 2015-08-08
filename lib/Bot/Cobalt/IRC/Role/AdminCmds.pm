@@ -237,7 +237,8 @@ attempt a reconnection (note that it's possible to 'lose' bots this way,
 particularly if the configuration or the remote server has changed in 
 some way).
 
-See the L</SYNOPSIS> for basic usage information.
+See the L</SYNOPSIS> for basic usage information; all commands require
+SUPERUSER access.
 
 =head1 AUTHOR
 
