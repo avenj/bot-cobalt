@@ -78,21 +78,21 @@ our $ImportMap = hash(
 
 my $FuncMap = 
   $ImportMap
-  ->values
-  ->map(sub {
-      my @func_pkg_pairs;
-      my $iter = $_->iter;
-      while (my ($pkg, $opts) = $iter->()) {
-        $opts->visit(sub {
-          my $maybe_prefix = substr $_, 0, 1;
-          push @func_pkg_pairs, ($_ => $pkg)
-            unless $maybe_prefix eq ':'
-            or     $maybe_prefix eq '-'
-        })
-      }
-      @func_pkg_pairs
-    })
-  ->inflate;
+    ->values
+    ->map(sub {
+        my @func_pkg_pairs;
+        my $iter = $_->iter;
+        while (my ($pkg, $opts) = $iter->()) {
+          $opts->visit(sub {
+            my $maybe_prefix = substr $_, 0, 1;
+            push @func_pkg_pairs, ($_ => $pkg)
+              unless $maybe_prefix eq ':'
+              or     $maybe_prefix eq '-'
+          })
+        }
+        @func_pkg_pairs
+      })
+    ->inflate;
 
 sub import {
   my (undef, @items) = @_;
