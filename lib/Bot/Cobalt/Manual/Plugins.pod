@@ -1080,7 +1080,7 @@ too expensive.
 
   # new object for this db, creating it if it doesn't exist:
   $db = Bot::Cobalt::DB->new(
-    File => $some_db_path,
+    file => $some_db_path,
   );
 
   # open and lock the db:
