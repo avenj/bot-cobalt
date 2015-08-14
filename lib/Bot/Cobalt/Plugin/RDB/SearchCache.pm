@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::RDB::SearchCache;
 
-
-
 ## This is a fairly generic in-memory cache object.
 ##
 ## It's intended for use with Plugin::RDB, but will likely work for 
@@ -17,34 +15,31 @@ package Bot::Cobalt::Plugin::RDB::SearchCache;
 use 5.10.1;
 use strictures 2;
 
-use Time::HiRes;
+use Time::HiRes ();
 
 sub new {
-  my $self = {};
+  my $self = +{ Cache => +{} };
   my $class = shift;
   bless $self, $class;
-  
-  $self->{Cache} = { };
-    
-  my %opts = @_;
 
+  my %opts = @_;
   $self->MaxKeys($opts{MaxKeys} || 30);
-  
+ 
   $self
 }
 
 sub cache {
   my ($self, $ckey, $match, $resultset) = @_;
   ## should be passed rdb, search str, and array of matching indices
-  
+
   return unless defined $ckey and defined $match;
-  $resultset = [ ] unless $resultset and ref $resultset eq 'ARRAY';
+  $resultset = [] unless ref $resultset eq 'ARRAY';
 
   ## _shrink will do the right thing depending on size of cache
   ## (MaxKeys can be used to adjust cachesize per-rdb 'on the fly')
   $self->_shrink($ckey);
   
-  $self->{Cache}->{$ckey}->{$match} = {
+  $self->{Cache}->{$ckey}->{$match} = +{
     TS => Time::HiRes::time(),
     Results => $resultset,
   };
@@ -53,16 +48,14 @@ sub cache {
 sub fetch {
   my ($self, $ckey, $match) = @_;
   
-  return unless defined $ckey and defined $match;
-
-  return unless exists $self->{Cache}->{$ckey} 
-         and $self->{Cache}->{$ckey}->{$match};
+  return
+    unless defined $ckey
+    and defined $match
+    and exists $self->{Cache}->{$ckey} 
+    and $self->{Cache}->{$ckey}->{$match};
 
   my $ref = $self->{Cache}->{$ckey}->{$match};
-
-  return wantarray ? 
-      @{ $ref->{Results} } 
-    : $ref->{Results}
+  wantarray ? @{ $ref->{Results} } : $ref->{Results}
 }
 
 sub MaxKeys {
@@ -77,7 +70,7 @@ sub invalidate {
 
   unless (defined $ckey) {
     ## invalidate all by not passing an arg
-    $self->{Cache} = { };
+    $self->{Cache} = +{};
     return
   }
 
