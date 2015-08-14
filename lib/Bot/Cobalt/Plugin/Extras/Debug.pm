@@ -1,7 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::Debug;
 
-
-
 ## Simple 'dump to stdout' debug functions
 ##
 ## IMPORTANT: NO ACCESS CONTROLS!
@@ -15,9 +13,7 @@ package Bot::Cobalt::Plugin::Extras::Debug;
 ##  !dumptimers
 ##  !dumpservers
 ##  !dumplangset
-use 5.10.1;
-use strict;
-use warnings;
+use strictures 2;
 
 use Data::Dumper;
 

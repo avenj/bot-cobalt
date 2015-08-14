@@ -1,12 +1,8 @@
 package Bot::Cobalt::Plugin::Extras::Karma;
 
-
-
 ## simple karma++/-- tracking
 
-use 5.10.1;
-use strict;
-use warnings;
+use strictures 2;
 
 use Object::Pluggable::Constants qw/ :ALL /;
 

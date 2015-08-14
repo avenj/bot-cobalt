@@ -1,9 +1,5 @@
 package Bot::Cobalt::Plugin::Extras::DNS;
 
-
-
-use 5.10.1;
-
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
