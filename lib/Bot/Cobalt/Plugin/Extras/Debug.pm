@@ -58,6 +58,8 @@ sub Bot_public_cmd_dumpcfg {
   return PLUGIN_EAT_ALL unless
     $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
 
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping configuration hash to log . . .";
   $core->log->warn("dumpcfg called (debugger)");
   $core->log->warn(Dumper $core->cfg);
 
@@ -73,6 +75,8 @@ sub Bot_public_cmd_dumpstate {
   return PLUGIN_EAT_ALL unless
     $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
 
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping state hash to log . . .";
   $core->log->warn("dumpstate called (debugger)");
   $core->log->warn(Dumper $core->State);
   PLUGIN_EAT_NONE
@@ -87,6 +91,8 @@ sub Bot_public_cmd_dumptimers {
   return PLUGIN_EAT_ALL unless
     $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
 
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping timer pool to log . . .";
   $core->log->warn("dumptimers called (debugger)");
   $core->log->warn(Dumper $core->TimerPool);
   PLUGIN_EAT_NONE
@@ -101,6 +107,8 @@ sub Bot_public_cmd_dumpservers {
   return PLUGIN_EAT_ALL unless
     $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
 
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping Servers hash to log . . .";
   $core->log->warn("dumpservers called (debugger)");
   $core->log->warn(Dumper $core->Servers);
   PLUGIN_EAT_NONE
@@ -115,6 +123,8 @@ sub Bot_public_cmd_dumplangset {
   return PLUGIN_EAT_ALL unless
     $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
 
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping core language set to log . . .";
   $core->log->warn("dumplangset called (debugger)");
   $core->log->warn(Dumper $core->lang);
   PLUGIN_EAT_NONE
