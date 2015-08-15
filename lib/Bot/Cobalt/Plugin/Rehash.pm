@@ -9,10 +9,8 @@ use Bot::Cobalt::Conf;
 use Bot::Cobalt::Lang;
 
 use File::Spec;
-use Try::Tiny;
 
 use strictures 2;
-
 
 sub new { bless [], shift }
 

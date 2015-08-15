@@ -11,6 +11,7 @@ use Import::Into;
 use Bot::Cobalt::Utils ();
 use IRC::Utils ();
 use Object::Pluggable::Constants ();
+use Try::Tiny ();
 
 use Types::Standard ();
 use List::Objects::Types ();
@@ -100,6 +101,7 @@ sub import {
 
   feature->import( ':5.10' );
   strictures->import::into($target);
+  Try::Tiny->import::into($target);
 
   my $toimport = hash;
 
@@ -184,6 +186,8 @@ used tools and constants to make life easier on plugin authors.
 
 L<strictures> are also enabled. This will turn on 'strict' and make (most)
 warnings fatal.
+
+L<Try::Tiny> is always imported.
 
 =head2 Exported
 

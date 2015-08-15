@@ -13,10 +13,6 @@ use Bot::Cobalt::Plugin::RDB::Database;
 
 use POE;
 
-use Try::Tiny;
-
-
-
 sub new {
   bless {
 

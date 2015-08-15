@@ -12,8 +12,6 @@ use Bot::Cobalt::Core::Loader;
 
 use Scalar::Util qw/blessed/;
 
-use Try::Tiny;
-
 
 sub new { bless [], shift }
 

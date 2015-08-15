@@ -15,8 +15,6 @@ package Bot::Cobalt::Plugin::Extras::Debug;
 ##  !dumplangset
 use strictures 2;
 
-use Try::Tiny;
-
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Data::Dumper;
