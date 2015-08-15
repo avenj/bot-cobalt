@@ -1,5 +1,17 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017007 2015-08-15
+
+  - Make Plugin::Extras::Debug safe to load persistently
+
+  - Devel::MAT dump command for Plugin::Extras::Debug
+
+  - Fix a bug in '!server connect' error reporting
+
+  - Improved error reporting in configuration handling
+
+  - Various optimizations
+
 0.017006 2015-04-13
 
   - Fix Plugin::RDB blocking search; a blocking search that returned no

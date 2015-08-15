@@ -48,16 +48,14 @@ requires "URI::Escape" => "0";
 
 requires "YAML::XS" => "0.34";
 
-recommends "POE::Component::SSLify" => 1.006;
+recommends "POE::Component::SSLify" => "1.006";
 
 on 'test' => sub {
-  requires "Test::More"           => 0.88;
-  requires "Capture::Tiny"        => 0;
-  requires "Test::File::ShareDir" => 0;
+  requires "Test::More"           => "0.88";
+  requires "Capture::Tiny"        => "0";
+  requires "Test::File::ShareDir" => "0";
 };
 
 on 'develop' => sub {
-  recommends "Devel::MAT"         => 0;
+  recommends "Devel::MAT" => "0";
 };
-
-on 
