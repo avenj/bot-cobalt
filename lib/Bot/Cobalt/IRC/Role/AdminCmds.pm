@@ -11,34 +11,6 @@ use Try::Tiny;
 use Moo::Role;
 
 
-sub Bot_public_cmd_heapdump {
-  my ($self, $core) = splice @_, 0, 2;
-  my $msg = ${ $_[0] };
-  my $context  = $msg->context;
-  my $src_nick = $msg->src_nick;
-
-  return PLUGIN_EAT_ALL unless
-    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
-
-  try {
-    require Devel::MAT::Dumper; 1
-  } catch {
-    my $err = "Attempted to dump heap but Devel::MAT could not be loaded: $_";
-    logger->error($err);
-    broadcast message => $msg->context, $msg->channel, $err;
-    undef
-  } or return PLUGIN_EAT_ALL;
-
-  my $fname = $core->var . '/dump.' . time . '.pmat' ;
-  logger->info("Dumping heap to '$fname'");
-  broadcast message => $msg->context, $msg->channel,
-    "Dumping heap file to 'var' dir . . .";
-  Devel::MAT::Dumper::dump( $fname );
-
-  PLUGIN_EAT_ALL
-}
-
-
 sub Bot_public_cmd_server {
   my ($self, $core) = splice @_, 0, 2;
   my $msg = ${ $_[0] };
@@ -221,9 +193,6 @@ Bot::Cobalt::IRC::Role::AdminCmds - IRC-specific admin commands
   
   ## Issue a disconnect:
   !server disconnect Alpha
-
-  ## Dump memory state for inspection (requires Devel::MAT):
-  !heapdump
 
 =head1 DESCRIPTION
 

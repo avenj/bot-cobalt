@@ -15,6 +15,10 @@ package Bot::Cobalt::Plugin::Extras::Debug;
 ##  !dumplangset
 use strictures 2;
 
+use Try::Tiny;
+
+use Bot::Cobalt;
+use Bot::Cobalt::Common;
 use Data::Dumper;
 
 use Object::Pluggable::Constants qw/ PLUGIN_EAT_NONE /;
@@ -31,61 +35,118 @@ sub Cobalt_register {
       dumptimers 
       dumpservers
       dumplangset
+      dumpheap
     / ;
 
-  register( $self, 'SERVER',
-    [ @events ] 
-  );
+  register $self, SERVER => [ @events ];
 
-  $core->log->info("Loaded DEBUG");
+  $core->log->info("Loaded Debug");
 
-  $core->log->warn(
-    "THIS PLUGIN IS FOR DEVELOPMENT PURPOSES",
-    "You do not want to run this plugin on a live bot;",
-    "it has no access controls!"
-  );
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $core->log->info("Unloaded DEBUG");
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpcfg {
   my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
   $core->log->warn("dumpcfg called (debugger)");
   $core->log->warn(Dumper $core->cfg);
-  return PLUGIN_EAT_NONE
+
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpstate {
   my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
   $core->log->warn("dumpstate called (debugger)");
   $core->log->warn(Dumper $core->State);
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumptimers {
   my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
   $core->log->warn("dumptimers called (debugger)");
   $core->log->warn(Dumper $core->TimerPool);
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumpservers {
   my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
   $core->log->warn("dumpservers called (debugger)");
   $core->log->warn(Dumper $core->Servers);
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_dumplangset {
   my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
   $core->log->warn("dumplangset called (debugger)");
   $core->log->warn(Dumper $core->lang);
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
+}
+
+sub Bot_public_cmd_dumpheap {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+  my $context  = $msg->context;
+  my $src_nick = $msg->src_nick;
+
+  return PLUGIN_EAT_ALL unless
+    $core->auth->has_flag($context, $src_nick, 'SUPERUSER');
+
+  try {
+    require Devel::MAT::Dumper; 1
+  } catch {
+    my $err = "Attempted to dump heap but Devel::MAT could not be loaded: $_";
+    logger->error($err);
+    broadcast message => $msg->context, $msg->channel, $err;
+    undef
+  } or return PLUGIN_EAT_ALL;
+
+  my $fname = $core->var . '/dump.' . time . '.pmat' ;
+  logger->info("Dumping heap to '$fname'");
+  broadcast message => $msg->context, $msg->channel,
+    "Dumping heap file to 'var' dir . . .";
+  Devel::MAT::Dumper::dump( $fname );
+
+  PLUGIN_EAT_ALL
 }
 
 1;
@@ -99,26 +160,35 @@ Bot::Cobalt::Plugin::Extras::Debug - Dump internal state information
 =head1 SYNOPSIS
 
   !plugin load Bot::Cobalt::Plugin::Extras::Debug
+
+  # Dump full config hash to log:
   !dumpcfg
+
+  # Dump langset to log:
   !dumplangset
-  !dumpservers  
+
+  # Dump server state to log:
+  !dumpservers
+
+  # Dump miscellaneous state (core->State) to log:
   !dumpstate
+
+  # Dump current timer pool to log:
   !dumptimers
 
-=head1 IMPORTANT
-
-B<This plugin has no access controls!>
-
-It is intended to be used strictly for debugging during development.
-
-If it is loaded, anyone can flood STDOUT using the dump commands.
+  # Dump memory state for inspection (requires Devel::MAT):
+  !dumpheap
 
 =head1 DESCRIPTION
 
 This is a simple development tool allowing developers to dump the 
 current contents of various core attributes to STDOUT for inspection.
 
+All commands are restricted to superusers.
+
 References are displayed using L<Data::Dumper>.
+
+Dumping memory state requires L<Devel::MAT>.
 
 =head1 AUTHOR
 
