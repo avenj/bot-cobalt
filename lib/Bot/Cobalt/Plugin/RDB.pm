@@ -1133,8 +1133,9 @@ sub _start {
 
   $kernel->alias_set('sess_'. core->get_plugin_alias($self) );
 
+  # if you change the default (5) adjust default etc/plugins/rdb.conf ->
   my $maxworkers = core()->get_plugin_cfg($self)->{Opts}->{AsyncSearch};
-  $maxworkers = 5 unless $maxworkers > 1;
+  $maxworkers = 5 unless $maxworkers =~ /^[0-9]+$/ and $maxworkers > 1;
 
   ## spawn asyncsearch sess
   require Bot::Cobalt::Plugin::RDB::AsyncSearch;
