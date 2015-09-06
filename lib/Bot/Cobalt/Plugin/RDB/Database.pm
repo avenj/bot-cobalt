@@ -482,7 +482,7 @@ sub _gen_unique_key {
   $newkey .= $v[rand @v] while exists $db->Tied->{$newkey};
 
   ## regen 0000 keys:
-  return $newkey || $self->_gen_unique_key
+  $newkey =~ /^0+$/ ? $self->_gen_unique_key : $newkey
 }
 
 sub _rdb_switch {

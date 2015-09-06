@@ -41,7 +41,9 @@ for my $item (@randstuff_ini) {
   my @v = ( 'a' .. 'f', 0 .. 9 );
   my $idx = join '', map { $v[rand @v] } 1 .. 4;
   ## regen 0000 keys:
-  $idx ||= join '', map { $v[rand @v] } 1 .. 4;
+  until ($idx ne '0000') {
+    $idx = join '', map { $v[rand @v] } 1 .. 4;
+  }
   $idx .= $v[rand @v] while exists $rdbref->{main}->{$idx};
 
   $rdbref->{main}->{$idx} = [ $item, time(), '-Imported' ];
