@@ -4,7 +4,7 @@ use v5.10;
 use strictures 2;
 
 use File::Spec;
-use List::Util 'shuffle';
+use List::Util 'shuffle', 'first';
 use POSIX ();
 
 use Bot::Cobalt;
@@ -179,7 +179,7 @@ sub Bot_public_msg {
   $cmd = lc($cmd||'');
 
   ## ..if it's not @handled we don't care:
-  return PLUGIN_EAT_NONE unless $cmd and grep { $_ eq $cmd } @handled;
+  return PLUGIN_EAT_NONE unless $cmd and first {; $_ eq $cmd } @handled;
 
   logger->debug("dispatching $cmd");
 
@@ -210,7 +210,7 @@ sub Bot_public_msg {
     broadcast( 'message', $context, $channel, $resp );
   }
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 
@@ -454,7 +454,7 @@ sub _cmd_rdb {
   $cmd = 'del' if $cmd eq 'delete';
 
   my @handled = keys %access_levs;
-  unless ($cmd && grep { $_ eq $cmd } @handled) {
+  unless ($cmd && first {; $_ eq $cmd } @handled) {
     return "Commands: add <rdb> <item> ; del <rdb> <idx>, info <rdb> <idx> ; "
            ."get <rdb> <idx> ; search(idx) <rdb> <str> ; count <rdb> <str> ; "
            ."dbadd <rdb> ; dbdel <rdb>";
