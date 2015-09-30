@@ -3,6 +3,7 @@ package Bot::Cobalt::IRC::Event::Nick;
 use strictures 2;
 
 use Bot::Cobalt::Common qw/:types/;
+require Bot::Cobalt::Core;
 
 use IRC::Utils qw/eq_irc/;
 
@@ -54,7 +55,6 @@ sub equal {
   my ($self) = @_;
 
   my $casemap;
-  require Bot::Cobalt::Core;
   if (Bot::Cobalt::Core->has_instance) {
     $casemap = core->get_irc_casemap($self->context) || 'rfc1459';
   } else {
