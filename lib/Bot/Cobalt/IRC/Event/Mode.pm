@@ -30,8 +30,7 @@ has is_umode => (
     my ($self)  = @_;
     my $casemap = core->get_irc_casemap( $self->context );
     my $irc_obj = core->get_irc_object( $self->context );
-    my $me = $irc_obj->nick_name;
-    eq_irc($me, $self->target) ? 1 : 0
+    eq_irc($irc_obj->nick_name, $self->target)
   },
 );
 
