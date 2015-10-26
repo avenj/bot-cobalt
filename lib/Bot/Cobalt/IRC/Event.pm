@@ -2,7 +2,6 @@ package Bot::Cobalt::IRC::Event;
 
 ## Base class for IRC events.
 
-use v5.10;
 use Bot::Cobalt::Common;
 
 use Moo;
