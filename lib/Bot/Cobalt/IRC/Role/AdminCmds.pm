@@ -53,6 +53,7 @@ sub _cmd_current {
   PLUGIN_EAT_ALL
 }
 
+{ no warnings 'once'; *_cmd_reconnect = *_cmd_connect; }
 sub _cmd_connect {
   my ($self, $msg) = @_;
   
