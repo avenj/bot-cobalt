@@ -2,7 +2,7 @@ package Bot::Cobalt::Plugin::Games;
 
 use strictures 2;
 
-use List::Objects::WithUtils 2;
+use List::Objects::WithUtils;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Core::Loader;
