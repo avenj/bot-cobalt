@@ -442,7 +442,7 @@ Like L</secs_to_str>, but includes year calculation and returns time formatted
 as: C<< <Y> years, <D> days, <H>:<M>:<S> >> B<if> there are more than 365
 days; otherwise the same format as L</secs_to_str> is returned.
 
-(Added in C<v0.18.1>
+(Added in C<v0.18.1>)
 
 =head2 String Formatting
 
