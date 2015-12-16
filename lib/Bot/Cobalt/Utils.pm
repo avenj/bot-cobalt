@@ -10,6 +10,7 @@ use parent 'Exporter::Tiny';
 
 our @EXPORT_OK = qw/
   secs_to_str
+  secs_to_str_y
   secs_to_timestr
   timestr_to_secs
 
@@ -310,12 +311,21 @@ sub secs_to_str ($) {
   ## turn seconds into a string like '0 days, 00:00:00'
   my ($diff) = @_;
   return unless defined $diff;
-
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
+  sprintf "%d days, %2.2d:%2.2d:%2.2d", $days, $hours, $mins, $sec
+}
 
-  return sprintf("%d days, %2.2d:%2.2d:%2.2d",
-    $days, $hours, $mins, $sec
-  );
+sub secs_to_str_y {
+  my ($diff) = @_;
+  return unless defined $diff;
+  my ($days, $hrs, $mins, $sec) = _time_breakdown($diff);
+  my $yrs = int $days / 365;   $days %= 365;
+  my $plural = $yrs > 1 ? 'years' : 'year';
+  $yrs ?
+    sprintf
+      "%d $plural, %d days, %2.2d:%2.2d:%2.2d",
+      $yrs, $days, $hrs, $mins, $sec
+    : sprintf "%d days, %2.2d:%2.2d:%2.2d", $days, $hrs, $mins, $sec
 }
 
 
@@ -427,7 +437,15 @@ Useful for uptime reporting, for example:
   my $delta = time() - $your_start_TS;
   my $uptime_str = secs_to_str $delta;
 
+Returns time formatted as: C<< <D> days, <H>:<M>:<S> >>
 
+=head3 secs_to_str_y
+
+Like L</secs_to_str>, but includes year calculation and returns time formatted
+as: C<< <Y> years, <D> days, <H>:<M>:<S> >> B<if> there are more than 365
+days; otherwise the same format as L</secs_to_str> is returned.
+
+(Added in C<v0.18.1>
 
 =head2 String Formatting
 
