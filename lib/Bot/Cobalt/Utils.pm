@@ -234,7 +234,7 @@ sub color ($;$) {
     unless $selected;
 
   return $selected . $str . $COLORS{NORMAL} if $str;
-  return $selected || $COLORS{NORMAL};
+  $selected || $COLORS{NORMAL};
 }
 
 
@@ -287,7 +287,7 @@ sub _time_breakdown ($) {
   my $hours  = int $sec / 3600;  $sec   %= 3600;
   my $mins   = int $sec / 60;    $sec   %= 60;
 
-  return($days, $hours, $mins, $sec)
+  ($days, $hours, $mins, $sec)
 }
 
 sub secs_to_timestr ($) {
@@ -319,10 +319,10 @@ sub secs_to_str_y {
   my $yrs = int $days / 365;   $days %= 365;
   my $plural = $yrs > 1 ? 'years' : 'year';
   $yrs ?
-    sprintf
-      "%d $plural, %d days, %2.2d:%2.2d:%2.2d",
+    sprintf "%d $plural, %d days, %2.2d:%2.2d:%2.2d",
       $yrs, $days, $hrs, $mins, $sec
-    : sprintf "%d days, %2.2d:%2.2d:%2.2d", $days, $hrs, $mins, $sec
+    : sprintf "%d days, %2.2d:%2.2d:%2.2d",
+        $days, $hrs, $mins, $sec
 }
 
 
