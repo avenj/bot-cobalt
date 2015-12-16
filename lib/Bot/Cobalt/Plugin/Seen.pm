@@ -312,7 +312,7 @@ sub Bot_public_cmd_seen {
   my $meta = $ref->{Meta} // {};
 
   my $ts_delta = time - $last_ts ;
-  my $ts_str   = secs_to_str($ts_delta);
+  my $ts_str   = secs_to_str_y($ts_delta);
 
   my $resp;
   ACTION: {
