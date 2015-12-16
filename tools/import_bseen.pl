@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+# Cheap tool for merging eggdrop bseen data to a Bot::Cobalt::Plugin::Seen DB
+
 use feature 'say';
 use strictures 2;
 
@@ -59,4 +61,4 @@ LINE: while (my $line = readline $inputfh) {
 
 $seendb->dbclose;
 close $inputfh or warn "close: $!";
-say "Done! (merged $count)";
+say "Done! (merged $count, skipped $skip)";
