@@ -1,15 +1,9 @@
-use Test::More tests => 10;
+use Test::More;
 use strict; use warnings;
 
 ## Bot::Cobalt::Utils tests
 
-BEGIN {
-  use_ok( 'Bot::Cobalt::Utils', qw/
-    timestr_to_secs
-    secs_to_timestr
-    secs_to_str
-  / );
-}
+use Bot::Cobalt::Utils -ALL;
 
 is( timestr_to_secs('120s'), 120, 'timestr_to_secs (120s)' );
 
@@ -28,3 +22,9 @@ is( secs_to_timestr(820), '13m40s', 'secs_to_timestr (820)' );
 is( secs_to_str(600), '0 days, 00:10:00', 'secs_to_str (600)' );
 
 is( secs_to_str(7808), '0 days, 02:10:08', 'secs_to_str (7808)' );
+
+is( secs_to_str_y(24*60*60*900), '2 years, 170 days, 00:00:00' );
+
+is( secs_to_str_y(24*60*60*500), '1 year, 135 days, 00:00:00' );
+
+done_testing
