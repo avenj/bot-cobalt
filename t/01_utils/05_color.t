@@ -1,5 +1,5 @@
-use Test::More tests => 4;
-
+use Test::More;
+use strict; use warnings;
 
 BEGIN {
   use_ok( 'Bot::Cobalt::Utils', qw/
@@ -21,3 +21,5 @@ ok(
 
 ok( has_formatting($format), "color() string has formatting" );
 ok( has_color($format), "color() string has color" );
+
+ok $Bot::Cobalt::Utils::COLORS{RED}, 'COLORS hash accessible';

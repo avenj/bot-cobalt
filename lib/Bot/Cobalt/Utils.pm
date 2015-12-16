@@ -472,6 +472,12 @@ string, terminated by NORMAL:
 
   my $formatted = color('red', "red text") . "normal text";
 
+If you need to retrieve (or alter via C<local>, for example) the actual
+control characters themselves, they are accessible via the C<<
+%Bot::Cobalt::Utils::COLORS >> hash:
+
+  my $red = $Bot::Cobalt::Utils::COLORS{RED}
+
 =head3 glob_to_re_str
 
 glob_to_re_str() converts Cobalt-style globs to regex strings.
