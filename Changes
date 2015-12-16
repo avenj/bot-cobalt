@@ -1,5 +1,14 @@
 Revision history for Perl module Bot::Cobalt
 
+0.018001 2015-12-16
+
+  - Remove stale documentation regarding deprecated '%COLORS' hash
+    (no longer exported)
+
+  - Adjust Seen plugin to report years + days
+
+  - Add 'secs_to_timestr_y' to Utils
+
 0.017008 2015-12-16
 
   - Add '!server reconnect' (alias to connect)
