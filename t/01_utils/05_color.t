@@ -23,3 +23,5 @@ ok( has_formatting($format), "color() string has formatting" );
 ok( has_color($format), "color() string has color" );
 
 ok $Bot::Cobalt::Utils::COLORS{RED}, 'COLORS hash accessible';
+
+done_testing
