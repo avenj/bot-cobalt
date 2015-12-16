@@ -305,7 +305,7 @@ sub Bot_public_cmd_seen {
   }
   
   my $last_ts   = $ref->{TS};
-  my $last_act  = $ref->{Action};
+  my $last_act  = $ref->{Action}  // '';
   my $last_chan = $ref->{Channel};
   my $last_user = $ref->{Username};
   my $last_host = $ref->{Host};
@@ -350,13 +350,16 @@ sub Bot_public_cmd_seen {
         $resp = "$targetnick was last seen changing nicknames to "
           . $meta->{To} .
           " $ts_str ago";
+      } else {
+        logger->warn("BUG; no To/From recorded for nick change");
+        $resp = 'Something weird happened; check log file for details.';
       }
 
       last ACTION
     }
 
-    logger->warn("BUG; Fell thru in ACTION handler");
-    $resp = 'Something weird happened; file a bug report.';
+    logger->warn("BUG; unknown action '$last_act'");
+    $resp = 'Something weird happened; check log file for details.';
   }  
 
   broadcast( 'message', 
