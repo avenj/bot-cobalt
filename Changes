@@ -1,5 +1,21 @@
 Revision history for Perl module Bot::Cobalt
 
+0.017008 2015-12-16
+
+  - Add '!server reconnect' (alias to connect)
+
+  - Add import/merge tool for eggdrop bseen DBs -> Plugin::Seen DBs
+
+  - Fix a possible bug regarding all-zero RDB IDs
+
+  - Improved RDB configuration validation
+
+  - Handle broken SeenDBs more gracefully
+
+  - Various minor optimizations
+
+  - Stale documentation cleanup
+
 0.017007 2015-08-15
 
   - Make Plugin::Extras::Debug safe to load persistently
