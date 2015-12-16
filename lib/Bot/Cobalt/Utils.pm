@@ -23,8 +23,6 @@ our @EXPORT_OK = qw/
   glob_to_re
   glob_to_re_str
   rplprintf
-
-  %COLORS
 /;
 
 our %EXPORT_TAGS = (
@@ -295,7 +293,6 @@ sub _time_breakdown ($) {
 sub secs_to_timestr ($) {
   my ($diff) = @_;
   return unless defined $diff;
-
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
 
   my $str;
@@ -474,10 +471,6 @@ If passed a color or format name and a string, returns the formatted
 string, terminated by NORMAL:
 
   my $formatted = color('red', "red text") . "normal text";
-
-The hash B<%COLORS> is exported as part of I<:ALL>. Its keys are the 
-same as the formatting/color names listed above. You should really use 
-C<color()> instead.
 
 =head3 glob_to_re_str
 
