@@ -38,7 +38,7 @@ my ($count, $skip) = (0,0);
 LINE: while (my $line = readline $inputfh) {
   chomp $line;
   next LINE if index($line, '#') == 0;
-  my ($nick, $host, $ts, $action, $chan) = split $line, ' ';
+  my ($nick, $host, $ts, $action, $chan) = split ' ', $line;
   $nick = lc_irc $nick, $casemap;
   my $tag = join '%', $ctxt, $nick;
   if ( $seendb->get($tag) ) {
@@ -59,4 +59,4 @@ LINE: while (my $line = readline $inputfh) {
 
 $seendb->dbclose;
 close $inputfh or warn "close: $!";
-say "Done!";
+say "Done! (merged $count)";
