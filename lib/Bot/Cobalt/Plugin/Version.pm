@@ -1,6 +1,5 @@
 package Bot::Cobalt::Plugin::Version;
 
-use v5.10;
 use strictures 2;
 
 use Bot::Cobalt;
@@ -8,35 +7,25 @@ use Bot::Cobalt::Utils 'secs_to_str';
 
 use Object::Pluggable::Constants ':ALL';
 
-
 sub new { bless [], shift  }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
-
-  register($self, 'SERVER',
-    'public_msg',
-  );
-
-  logger->info("Registered");
-
-  return PLUGIN_EAT_NONE
+  register $self, SERVER => 'public_msg';
+  logger->info("Loaded");
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
-  logger->info("Unregistering core IRC plugin");
-
-  return PLUGIN_EAT_NONE
+  logger->info("Unloaded");
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
-
-  my $msg     = ${$_[0]};      ## our msg object
-  my $context = $msg->context; ## our server context
-
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
   return PLUGIN_EAT_NONE unless $msg->highlight;
 
   my $resp;
@@ -85,7 +74,7 @@ sub Bot_public_msg {
   broadcast('message', $context, $msg->channel, $resp)
     if defined $resp;
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 1;
