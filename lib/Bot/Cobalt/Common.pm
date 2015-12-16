@@ -49,6 +49,7 @@ our $ImportMap = hash(
       timestr_to_secs
       secs_to_timestr
       secs_to_str
+      secs_to_str_y
     / ),
   ),
 
@@ -255,6 +256,7 @@ See L<Bot::Cobalt::Utils> for details.
   timestr_to_secs
   secs_to_timestr
   secs_to_str
+  secs_to_str_y
 
 =head3 Carp
 
@@ -300,7 +302,7 @@ strip_color, strip_formatting
 
 =head3 time
 
-Exports timestr_to_secs, secs_to_timestr, and secs_to_str from
+Exports timestr_to_secs, secs_to_timestr, secs_to_str, and secs_to_str_y from
 L<Bot::Cobalt::Utils>.
 
 =head3 types
