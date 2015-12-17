@@ -284,8 +284,10 @@ sub _time_breakdown ($) {
 
   my $days   = int $diff / 86400;
   my $sec    = $diff % 86400;
-  my $hours  = int $sec / 3600;  $sec   %= 3600;
-  my $mins   = int $sec / 60;    $sec   %= 60;
+  my $hours  = int $sec / 3600;
+  $sec %= 3600;
+  my $mins   = int $sec / 60;
+  $sec %= 60;
 
   ($days, $hours, $mins, $sec)
 }
@@ -317,13 +319,14 @@ sub secs_to_str_y {
   my ($diff) = @_;
   return unless defined $diff;
   my ($days, $hrs, $mins, $sec) = _time_breakdown($diff);
-  my $yrs = int $days / 365;   $days %= 365;
-  my $pluraly = $yrs > 1 ? 'years' : 'year';
-  my $plurald = $days == 1 ? 'day' : 'days';
+  my $yrs = int $days / 365;
+  $days %= 365;
+  my $plural_y = $yrs > 1 ? 'years' : 'year';
+  my $plural_d = $days == 1 ? 'day' : 'days';
   $yrs ?
-    sprintf "%d $pluraly, %d $plurald, %2.2d:%2.2d:%2.2d",
+    sprintf "%d $plural_y, %d $plural_d, %2.2d:%2.2d:%2.2d",
       $yrs, $days, $hrs, $mins, $sec
-    : sprintf "%d $plurald, %2.2d:%2.2d:%2.2d",
+    : sprintf "%d $plural_d, %2.2d:%2.2d:%2.2d",
         $days, $hrs, $mins, $sec
 }
 
