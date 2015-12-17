@@ -309,7 +309,8 @@ sub secs_to_str ($) {
   my ($diff) = @_;
   return unless defined $diff;
   my ($days, $hours, $mins, $sec) = _time_breakdown($diff);
-  sprintf "%d days, %2.2d:%2.2d:%2.2d", $days, $hours, $mins, $sec
+  my $plural = $days == 1 ? 'day' : 'days';
+  sprintf "%d $plural, %2.2d:%2.2d:%2.2d", $days, $hours, $mins, $sec
 }
 
 sub secs_to_str_y {
@@ -317,11 +318,12 @@ sub secs_to_str_y {
   return unless defined $diff;
   my ($days, $hrs, $mins, $sec) = _time_breakdown($diff);
   my $yrs = int $days / 365;   $days %= 365;
-  my $plural = $yrs > 1 ? 'years' : 'year';
+  my $pluraly = $yrs > 1 ? 'years' : 'year';
+  my $plurald = $days == 1 ? 'day' : 'days';
   $yrs ?
-    sprintf "%d $plural, %d days, %2.2d:%2.2d:%2.2d",
+    sprintf "%d $pluraly, %d $plurald, %2.2d:%2.2d:%2.2d",
       $yrs, $days, $hrs, $mins, $sec
-    : sprintf "%d days, %2.2d:%2.2d:%2.2d",
+    : sprintf "%d $plurald, %2.2d:%2.2d:%2.2d",
         $days, $hrs, $mins, $sec
 }
 
@@ -434,12 +436,12 @@ Useful for uptime reporting, for example:
   my $delta = time() - $your_start_TS;
   my $uptime_str = secs_to_str $delta;
 
-Returns time formatted as: C<< <D> days, <H>:<M>:<S> >>
+Returns time formatted as: C<< <D> day(s), <H>:<M>:<S> >>
 
 =head3 secs_to_str_y
 
 Like L</secs_to_str>, but includes year calculation and returns time formatted
-as: C<< <Y> years, <D> days, <H>:<M>:<S> >> B<if> there are more than 365
+as: C<< <Y> year(s), <D> day(s), <H>:<M>:<S> >> B<if> there are more than 365
 days; otherwise the same format as L</secs_to_str> is returned.
 
 (Added in C<v0.18.1>)

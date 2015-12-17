@@ -23,6 +23,8 @@ is( secs_to_str(600), '0 days, 00:10:00', 'secs_to_str (600)' );
 
 is( secs_to_str(7808), '0 days, 02:10:08', 'secs_to_str (7808)' );
 
+is( secs_to_str(86400), '1 day, 00:00:00', 'secs_to_str (86400)' );
+
 is( secs_to_str_y(24*60*60*900), '2 years, 170 days, 00:00:00' );
 
 is( secs_to_str_y(24*60*60*500), '1 year, 135 days, 00:00:00' );
