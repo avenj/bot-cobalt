@@ -92,16 +92,18 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
+  $self->Bot_seendb_update($core, \1);
   $core->log->info("Unloaded");
   return PLUGIN_EAT_NONE
 }
 
 sub Bot_seendb_update {
   my ($self, $core) = splice @_, 0, 2;
+  my $force_flush = @_ ? ${ $_[0] } : 0;
 
   my $buf = $self->{Buf};
   unless (keys %$buf) {
-    $core->timer_set( 3, +{ Event => 'seendb_update' } );
+    $core->timer_set( 2, +{ Event => 'seendb_update' } );
     return PLUGIN_EAT_ALL
   }
 
@@ -110,19 +112,19 @@ sub Bot_seendb_update {
   CONTEXT: for my $context (keys %$buf) {
     unless ($db->dbopen) {
       logger->warn("dbopen failed in update; cannot update SeenDB");
-      $core->timer_set( 3, +{ Event => 'seendb_update' } );
+      # FIXME exponential back-off?
+      $core->timer_set( 6, +{ Event => 'seendb_update' } );
       return PLUGIN_EAT_ALL
     }
 
     my $writes;
     NICK: for my $nickname (keys %{ $buf->{$context} }) {
-      ## if we've done a lot of writes, yield back.
-      if ($writes && $writes % 50 == 0) {
+      ## if we've done a lot of writes, yield back (unless we're cleaning up)
+      if (!$force_flush && $writes && $writes % 50 == 0) {
         $db->dbclose;
         broadcast( 'seendb_update' );
         return PLUGIN_EAT_ALL
       }
-    
       ## .. else flush this item to disk
       my $thisbuf = delete $buf->{$context}->{$nickname};
       my $thiskey = $context .'%'. $nickname;
@@ -135,7 +137,7 @@ sub Bot_seendb_update {
   
   } ## CONTEXT
   
-  $core->timer_set( 3, +{ Event => 'seendb_update' } );  
+  $core->timer_set( 2, +{ Event => 'seendb_update' } );  
 
   return PLUGIN_EAT_ALL
 }
