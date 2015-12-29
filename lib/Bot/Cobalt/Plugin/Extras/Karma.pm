@@ -32,6 +32,7 @@ sub Cobalt_register {
     qw/
       public_msg
       public_cmd_karma
+      public_cmd_topkarma
       public_cmd_resetkarma
       
       karmaplug_sync_db
@@ -196,6 +197,15 @@ sub Bot_public_cmd_karma {
   broadcast( 'message', $context, $channel, $resp );
 
   return PLUGIN_EAT_ALL
+}
+
+sub Bot_public_cmd_topkarma {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg     = ${ $_[0] };
+  my $context = $msg->context;
+  my $channel = $msg->target;
+  # FIXME merge $self->{Cached} into retrieved DB hash and sort by values
+  PLUGIN_EAT_ALL
 }
 
 
