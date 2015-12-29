@@ -208,7 +208,7 @@ sub Bot_public_cmd_topkarma {
   #   [ $ts, $top5_arr, $bottom5_arr ]
   # FIXME merge $self->{Cached} into retrieved DB hash and sort by values:
   #  ->dbopen
-  #  my $hs = hash(%{$db->tied});
+  #  my $hs = hash(%{ $db->dbdump('HASH') });
   #  ->dbclose
   #  $hs->set(%$cached);
   #  my $sorted = $hs->kv_sort(sub { $hs->get($a) <=> $hs->get($b) });
