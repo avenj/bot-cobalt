@@ -204,7 +204,16 @@ sub Bot_public_cmd_topkarma {
   my $msg     = ${ $_[0] };
   my $context = $msg->context;
   my $channel = $msg->target;
-  # FIXME merge $self->{Cached} into retrieved DB hash and sort by values
+  # FIXME retrieve $self->{cached_top} & use that unless $ts_delta > 600
+  #
+  # FIXME merge $self->{Cached} into retrieved DB hash and sort by values:
+  # FIXME needs a ::DB method to export the full hash
+  #  my $hs = hash(%{$db->export})->set(%$cached);
+  #  my $sorted = 
+  #    $hs->kv_sort(sub { $hs->get($a) <=> $hs->get($b) });
+  #  my $bottom = $hs->sliced(0..4);
+  #  my $top    = $hs->sliced( ($hs->end - 4) .. $hs->end);
+  #  store to $self->{cached_top} = [ $ts, $top5_arr, $bottom5_arr ]
   PLUGIN_EAT_ALL
 }
 
