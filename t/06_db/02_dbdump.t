@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 use Fcntl qw/ :flock /;
 use File::Spec;
@@ -43,6 +43,11 @@ my $ref;
 ok( $ref = $serializer->thaw($yaml), 'YAML thaw' );
 ok( $ref->{testkey}->{Deep}->{Hash}, 'dbdump deserialized match' );
 undef $ref;
+
+$db->dbopen;
+$ref = $db->dbdump('HASH');
+$db->dbclose;
+ok( $ref->{testkey}->{Deep}->{Hash}, 'dbdump hash export match' );
 
 sub _newtemp {
     my ($fh, $filename) = tempfile( 'tmpdbXXXXX', 

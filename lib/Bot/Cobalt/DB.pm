@@ -316,6 +316,7 @@ sub dbdump {
 
   ## shallow copy to drop tied()
   my %copy = %{ $self->tied };
+  return \%copy if lc($format) eq 'hash';
 
   my $dumper = Bot::Cobalt::Serializer->new( Format => $format );
 
@@ -481,6 +482,8 @@ of keys in the database in scalar context.
 
 You can serialize/export the entirety of the DB via B<dbdump>.
 
+  ## Export to a HASH
+  my $dbcopy = $db->dbdump('HASH');
   ## YAML::Syck
   my $yamlified = $db->dbdump('YAML');
   ## YAML::XS
