@@ -1,5 +1,18 @@
 Revision history for Perl module Bot::Cobalt
 
+0.019001 2015-12-29
+
+  - Add '!topkarma' command to Plugin::Extras::Karma
+
+  - Fix caching behavior in Plugin::Extras::Karma to play nicely with external
+    modifications (or shared Karma DBs)
+
+  - Fix Plugin::Seen to force a database sync when unregistering
+
+  - Fix day(s)/year(s) pluralization in secs_to_str/secs_to_str_y
+
+  - Support Bot::Cobalt::DB->dbdump('HASH') for exporting a data structure
+
 0.018001 2015-12-16
 
   - Remove stale documentation regarding deprecated '%COLORS' hash
