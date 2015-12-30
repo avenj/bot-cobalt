@@ -269,9 +269,12 @@ Bot::Cobalt::Plugin::Extras::Karma - Simple karma bot plugin
   ## Add or subtract karma:
   <JoeUser> someone++
   <JoeUser> someone--
+
+  ## See highest and lowest scores:
+  !topkarma
   
   ## Superusers can clear karma:
-  <JoeUser> !resetkarma someone
+  !resetkarma foo
 
 =head1 DESCRIPTION
 
