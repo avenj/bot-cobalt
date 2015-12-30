@@ -20,7 +20,7 @@ sub new { bless +{}, shift }
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   
-  $self->{Cache} = {};
+  $self->{Cache} = +{};
 
   my $dbpath = File::Spec->catfile( $core->var, 'karma.db' );
   
@@ -94,7 +94,7 @@ sub _get {
   my $current = $db->get($karma_for) || 0;
   $db->dbclose;
 
-  $self->{Cache}->{$karma_for} = $current 
+  $current 
 }
 
 sub Bot_karmaplug_sync_db {
