@@ -211,8 +211,10 @@ sub Bot_public_cmd_topkarma {
   # some common junk data:
   $karma->delete('<', '-', '<-', '<--');
   my $sorted = $karma->kv_sort(sub { $karma->get($a) <=> $karma->get($b) });
-  my $bottom = $sorted->sliced(0..4);
-  my $top    = $sorted->sliced( ($sorted->end - 4) .. $sorted->end );
+  my $bottom = $sorted->sliced(0..4)->grep(sub { defined });
+  my $top    = $sorted
+                ->sliced( ($sorted->end - 4) .. $sorted->end )
+                ->grep(sub { defined });
 
   my $str = '[top: ';
   for my $pair ($top->reverse->all) {
