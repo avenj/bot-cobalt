@@ -35,6 +35,7 @@ sub Cobalt_register {
       public_msg
       public_cmd_karma
       public_cmd_topkarma
+      public_cmd_resetkarma
       
       karmaplug_sync_db
     /
@@ -133,6 +134,39 @@ sub Bot_public_msg {
   PLUGIN_EAT_NONE
 }
 
+sub Bot_public_cmd_resetkarma {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg     = ${$_[0]};
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
+  my $usr_lev = $core->auth->level($context, $nick)
+                || return PLUGIN_EAT_ALL;
+
+  my $pcfg = $core->get_plugin_cfg($self);
+  my $req_lev = $pcfg->{LevelRequired} || 9999;
+  return PLUGIN_EAT_ALL unless $usr_lev >= $req_lev;
+
+  my $channel = $msg->target;
+
+  my $karma_for = lc($msg->message_array->[0] || return PLUGIN_EAT_ALL);
+  $karma_for = decode_irc($karma_for);
+
+  unless ( $self->_get($karma_for) ) {
+    broadcast( 'message', $context, $channel,
+      "That user has no karma to clear.",
+    );
+    return PLUGIN_EAT_ALL
+  }
+  
+  $self->{Cached}->{$karma_for} = 0;
+  
+  broadcast( 'message', $context, $channel,
+    "Cleared karma for $karma_for",
+  );
+  
+  PLUGIN_EAT_ALL
+}
+
 sub Bot_public_cmd_karma {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
@@ -144,7 +178,7 @@ sub Bot_public_cmd_karma {
   $karma_for = decode_irc($karma_for);
 
   my $resp;
-  if (my $karma = $self->_get($karma_for)) {
+  if ( my $karma = $self->_get($karma_for) ) {
     $resp = "Karma for $karma_for: $karma";
   } else {
     $resp = "$karma_for currently has no karma, good or bad.";
@@ -224,6 +258,9 @@ Bot::Cobalt::Plugin::Extras::Karma - Simple karma bot plugin
   ## See highest and lowest scores (updates every 5 minutes):
   !topkarma
   
+  ## Superusers can clear karma:
+  !resetkarma foo
+
 =head1 DESCRIPTION
 
 A simple 'karma bot' plugin for Cobalt.
