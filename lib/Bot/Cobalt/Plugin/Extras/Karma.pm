@@ -66,7 +66,7 @@ sub _sync {
   my ($self) = @_;
   return unless keys %{ $self->_cache };
   
-  my $db   = $self->{karmadb};
+  my $db = $self->{karmadb};
   unless ($db->dbopen) {
     logger->error("dbopen failure for karmadb in _sync");
     return
@@ -74,7 +74,9 @@ sub _sync {
   
   for my $karma_for (keys %{ $self->_cache }) {
     my $current = $self->_cache->{$karma_for};
-    $db->put($karma_for, $current);
+    $current ?
+        $db->put($karma_for, $current)
+      : $db->del($karma_for);
     delete $self->_cache->{$karma_for};
   }
 
@@ -160,15 +162,9 @@ sub Bot_public_cmd_resetkarma {
     return PLUGIN_EAT_ALL
   }
   
-  delete $self->_cache->{$karma_for};
-  my $db = $self->{karmadb};
-  unless ($db->dbopen) {
-    logger->error("dbopen failure for karmadb in cmd_resetkarma");
-    broadcast( 'message', $context, $channel, 'karmadb open failure' );
-    return PLUGIN_EAT_ALL
-  }
-  $db->del($karma_for);
-  $db->dbclose;
+  $self->_cache->{$karma_for} = 0;
+  logger->debug("Calling explicit _sync for cmd_resetkarma");
+  $self->_sync;
 
   logger->info("Cleared karma for '$karma_for' per '$nick' on $context");
   broadcast( 'message', $context, $channel, "Cleared karma for $karma_for" );
