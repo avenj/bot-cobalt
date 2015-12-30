@@ -65,7 +65,7 @@ sub _sync {
   
   my $db   = $self->{karmadb};
   unless ($db->dbopen) {
-    logger->warn("dbopen failure for karmadb in _sync");
+    logger->error("dbopen failure for karmadb in _sync");
     return
   }
   
@@ -87,7 +87,7 @@ sub _get {
   
   my $db = $self->{karmadb};
   unless ($db->dbopen) {
-    logger->warn("dbopen failure for karmadb in _get");
+    logger->error("dbopen failure for karmadb in _get");
     return
   }
   my $current = $db->get($karma_for) || 0;
@@ -168,7 +168,7 @@ sub Bot_public_cmd_topkarma {
 
   my $db = $self->{karmadb};
   unless ($db->dbopen) {
-    logger->warn("dbopen failure for karmadb in cmd_topkarma");
+    logger->error("dbopen failure for karmadb in cmd_topkarma");
     broadcast( 'message', $context, $channel, 'karmadb open failure' );
     return PLUGIN_EAT_ALL
   }
