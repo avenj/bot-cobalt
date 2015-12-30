@@ -15,7 +15,7 @@ use File::Spec;
 
 use IRC::Utils qw/decode_irc/;
 
-sub new { bless {}, shift }
+sub new { bless +{}, shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -48,28 +48,23 @@ sub Cobalt_register {
 
   logger->info("Registered");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
   logger->debug("Calling _sync");
-
   $self->_sync();
-  
   logger->info("Unregistered");
-
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 
 sub _sync {
   my ($self) = @_;
-  my $db   = $self->{karmadb};
-  
   return unless keys %{ $self->{Cache} };
   
+  my $db   = $self->{karmadb};
   unless ($db->dbopen) {
     logger->warn("dbopen failure for karmadb in _sync");
     return
@@ -81,39 +76,36 @@ sub _sync {
   }
   
   $db->dbclose;
-  return 1
+  1
 }
 
 sub _get {
   my ($self, $karma_for) = @_;
-  my $db = $self->{karmadb};
   
   return $self->{Cache}->{$karma_for}
     if exists $self->{Cache}->{$karma_for};
   
+  my $db = $self->{karmadb};
   unless ($db->dbopen) {
     logger->warn("dbopen failure for karmadb in _get");
     return
   }
-  
   my $current = $db->get($karma_for) || 0;
   $db->dbclose;
 
-  $self->{Cache}->{$karma_for} = $current;  
-  
-  return $current
+  $self->{Cache}->{$karma_for} = $current 
 }
 
 sub Bot_karmaplug_sync_db {
   my ($self, $core) = splice @_, 0, 2;
   
   $self->_sync();
-
   $core->timer_set( 5,
     { Event => 'karmaplug_sync_db' },
     'KARMAPLUG_SYNC_DB',
   );
-  return PLUGIN_EAT_NONE  
+
+  PLUGIN_EAT_NONE  
 }
 
 sub Bot_public_msg {
@@ -127,11 +119,8 @@ sub Bot_public_msg {
   $first_word = decode_irc($first_word);
 
   if ($first_word =~ $self->{karma_regex}) {
-    
     my ($karma_for, $karma) = (lc($1), $2);
-
     my $current = $self->_get($karma_for);
-
     if      ($karma eq '--') {
       --$current;
     } elsif ($karma eq '++') {
@@ -141,16 +130,14 @@ sub Bot_public_msg {
     $self->{Cache}->{$karma_for} = $current;
   }
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_resetkarma {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
   my $context = $msg->context;
-  
   my $nick    = $msg->src_nick;
-  
   my $usr_lev = $core->auth->level($context, $nick)
                 || return PLUGIN_EAT_ALL;
 
@@ -176,21 +163,20 @@ sub Bot_public_cmd_resetkarma {
     "Cleared karma for $karma_for",
   );
   
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub Bot_public_cmd_karma {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
   my $context = $msg->context;
-
   my $channel = $msg->target;
+
   my $karma_for = $msg->message_array->[0];
   $karma_for = lc($karma_for || $msg->src_nick);
   $karma_for = decode_irc($karma_for);
 
   my $resp;
-
   if ( my $karma = $self->_get($karma_for) ) {
     $resp = "Karma for $karma_for: $karma";
   } else {
@@ -199,7 +185,7 @@ sub Bot_public_cmd_karma {
 
   broadcast( 'message', $context, $channel, $resp );
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub Bot_public_cmd_topkarma {
@@ -266,7 +252,7 @@ Bot::Cobalt::Plugin::Extras::Karma - Simple karma bot plugin
   <JoeUser> someone++
   <JoeUser> someone--
 
-  ## See highest and lowest scores:
+  ## See highest and lowest scores (updates every 5 minutes):
   !topkarma
   
   ## Superusers can clear karma:
