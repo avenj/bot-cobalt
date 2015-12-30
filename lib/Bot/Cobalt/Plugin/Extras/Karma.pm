@@ -169,10 +169,9 @@ sub Bot_public_cmd_resetkarma {
   }
   $db->del($karma_for);
   $db->dbclose;
-  
-  broadcast( 'message', $context, $channel,
-    "Cleared karma for $karma_for",
-  );
+
+  logger->info("Cleared karma for '$karma_for' per '$nick' on $context");
+  broadcast( 'message', $context, $channel, "Cleared karma for $karma_for" );
   
   PLUGIN_EAT_ALL
 }
