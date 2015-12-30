@@ -15,13 +15,13 @@ use File::Spec;
 
 use IRC::Utils qw/decode_irc/;
 
-sub new { bless +{}, shift }
+sub new { bless +{ Cache => hash }, shift }
+
+sub _cache { $self->{Cache} }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
   
-  $self->{Cache} = +{};
-
   my $dbpath = File::Spec->catfile( $core->var, 'karma.db' );
   
   $self->{karmadb} = Bot::Cobalt::DB->new(
@@ -62,7 +62,7 @@ sub Cobalt_unregister {
 
 sub _sync {
   my ($self) = @_;
-  return unless keys %{ $self->{Cache} };
+  return unless keys %{ $self->_cache };
   
   my $db   = $self->{karmadb};
   unless ($db->dbopen) {
@@ -70,10 +70,10 @@ sub _sync {
     return
   }
   
-  for my $karma_for (keys %{ $self->{Cache} }) {
-    my $current = $self->{Cache}->{$karma_for};
+  for my $karma_for (keys %{ $self->_cache }) {
+    my $current = $self->_cache->{$karma_for};
     $db->put($karma_for, $current);
-    delete $self->{Cache}->{$karma_for};
+    delete $self->_cache->{$karma_for};
   }
 
   $db->dbclose;
@@ -83,8 +83,8 @@ sub _sync {
 sub _get {
   my ($self, $karma_for) = @_;
   
-  return $self->{Cache}->{$karma_for}
-    if exists $self->{Cache}->{$karma_for};
+  return $self->_cache->{$karma_for}
+    if exists $self->_cache->{$karma_for};
   
   my $db = $self->{karmadb};
   unless ($db->dbopen) {
@@ -128,7 +128,7 @@ sub Bot_public_msg {
       ++$current;
     }
 
-    $self->{Cache}->{$karma_for} = $current;
+    $self->_cache->{$karma_for} = $current;
   }
 
   PLUGIN_EAT_NONE
@@ -158,7 +158,7 @@ sub Bot_public_cmd_resetkarma {
     return PLUGIN_EAT_ALL
   }
   
-  delete $self->{Cached}->{$karma_for};
+  delete $self->_cache->{$karma_for};
   my $db = $self->{karmadb};
   unless ($db->dbopen) {
     logger->error("dbopen failure for karmadb in cmd_resetkarma");
@@ -216,7 +216,7 @@ sub Bot_public_cmd_topkarma {
   }
   my $karma = hash(%{ $db->dbdump('HASH') });
   $db->dbclose;
-  $karma->set(%{ $self->{Cache} }) if keys %{ $self->{Cache} };
+  $karma->set(%{ $self->_cache }) if keys %{ $self->_cache };
   # some common junk data:
   $karma->delete('<', '-', '<-', '<--');
   my $sorted = $karma->kv_sort(sub { $karma->get($a) <=> $karma->get($b) });
