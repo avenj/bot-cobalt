@@ -153,12 +153,20 @@ sub Bot_public_cmd_resetkarma {
 
   unless ( $self->_get($karma_for) ) {
     broadcast( 'message', $context, $channel,
-      "That user has no karma to clear.",
+      "${nick}: that item has no karma to clear",
     );
     return PLUGIN_EAT_ALL
   }
   
-  $self->{Cached}->{$karma_for} = 0;
+  delete $self->{Cached}->{$karma_for};
+  my $db = $self->{karmadb};
+  unless ($db->dbopen) {
+    logger->error("dbopen failure for karmadb in cmd_resetkarma");
+    broadcast( 'message', $context, $channel, 'karmadb open failure' );
+    return PLUGIN_EAT_ALL
+  }
+  $db->del($karma_for);
+  $db->dbclose;
   
   broadcast( 'message', $context, $channel,
     "Cleared karma for $karma_for",
