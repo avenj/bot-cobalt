@@ -208,10 +208,6 @@ sub Bot_public_cmd_topkarma {
   my $context = $msg->context;
   my $channel = $msg->target;
 
-  # [ $ts, $top5_arr, $bottom5_arr ]
-  #   $top5_arr = [
-  #     [ $key, $karma ]
-  #   ]
   if ($self->{cached_top} && time - $self->{cached_top}->[0] < 300) {
     broadcast( 'message', $context, $channel, $self->{cached_top}->[1] );
     return PLUGIN_EAT_NONE
