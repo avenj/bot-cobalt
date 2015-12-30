@@ -2,6 +2,7 @@ package Bot::Cobalt::Plugin::Extras::Karma;
 
 ## simple karma++/-- tracking
 
+use Carp;
 use strictures 2;
 
 use Object::Pluggable::Constants qw/ :ALL /;
@@ -17,7 +18,8 @@ use IRC::Utils qw/decode_irc/;
 
 sub new { bless +{ Cache => hash }, shift }
 
-sub _cache { $self->{Cache} }
+sub _cache { shift->{Cache} }
+sub _set_cache { $_[0]->{Cache} = ($_[1] || confess "Expected a param") }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
