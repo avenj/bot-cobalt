@@ -73,8 +73,9 @@ sub _sync {
   for my $karma_for (keys %{ $self->{Cache} }) {
     my $current = $self->{Cache}->{$karma_for};
     $db->put($karma_for, $current);
+    delete $self->{Cache}->{$karma_for};
   }
-  
+
   $db->dbclose;
   1
 }
