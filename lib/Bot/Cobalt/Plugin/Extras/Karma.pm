@@ -9,6 +9,8 @@ use Object::Pluggable::Constants qw/ :ALL /;
 use Bot::Cobalt;
 use Bot::Cobalt::DB;
 
+use List::Objects::WithUtils;
+
 use File::Spec;
 
 use IRC::Utils qw/decode_irc/;
@@ -95,8 +97,9 @@ sub _get {
   }
   
   my $current = $db->get($karma_for) || 0;
-  $self->{Cache}->{$karma_for} = $current;  
   $db->dbclose;
+
+  $self->{Cache}->{$karma_for} = $current;  
   
   return $current
 }
@@ -204,17 +207,46 @@ sub Bot_public_cmd_topkarma {
   my $msg     = ${ $_[0] };
   my $context = $msg->context;
   my $channel = $msg->target;
-  # FIXME retrieve $self->{cached_top} & use that unless $ts_delta > 600
-  #   [ $ts, $top5_arr, $bottom5_arr ]
-  # FIXME merge $self->{Cached} into retrieved DB hash and sort by values:
-  #  ->dbopen
-  #  my $hs = hash(%{ $db->dbdump('HASH') });
-  #  ->dbclose
-  #  $hs->set(%$cached);
-  #  my $sorted = $hs->kv_sort(sub { $hs->get($a) <=> $hs->get($b) });
-  #  my $bottom = $hs->sliced(0..4);
-  #  my $top    = $hs->sliced( ($hs->end - 4) .. $hs->end);
-  #  store to $self->{cached_top} = [ $ts, $top5_arr, $bottom5_arr ]
+
+  # [ $ts, $top5_arr, $bottom5_arr ]
+  #   $top5_arr = [
+  #     [ $key, $karma ]
+  #   ]
+  if ($self->{cached_top} && time - $self->{cached_top}->[0] < 300) {
+    broadcast( 'message', $context, $channel, $self->{cached_top}->[1] );
+    return PLUGIN_EAT_NONE
+  }
+
+  my $db = $self->{karmadb};
+  unless ($db->dbopen) {
+    logger->warn("dbopen failure for karmadb in cmd_topkarma");
+    broadcast( 'message', $context, $channel, 'karmadb open failure' );
+    return PLUGIN_EAT_ALL
+  }
+  my $karma = hash(%{ $db->dbdump('HASH') });
+  $db->dbclose;
+  $karma->set(%{ $self->{Cache} }) if keys %{ $self->{Cache} };
+  # some common junk data:
+  $karma->delete('<', '-', '<-', '<--');
+  my $sorted = $karma->kv_sort(sub { $karma->get($a) <=> $karma->get($b) });
+  my $bottom = $sorted->sliced(0..4);
+  my $top    = $sorted->sliced( ($sorted->end - 4) .. $sorted->end );
+
+  my $str = '[top: ';
+  for my $pair ($top->reverse->all) {
+    my ($item, $karma) = @$pair;
+    $str .= "'${item}':${karma} ";
+  }
+  $str .= ']; [bottom: ';
+  for my $pair ($bottom->all) {
+    my ($item, $karma) = @$pair;
+    $str .= "'${item}':${karma} ";
+  }
+  $str .= ']';
+
+  $self->{cached_top} = [ time, $str ];
+
+  broadcast( 'message', $context, $channel, $str );
   PLUGIN_EAT_ALL
 }
 
