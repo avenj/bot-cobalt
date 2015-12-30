@@ -222,12 +222,12 @@ sub Bot_public_cmd_topkarma {
                 ->sliced( ($sorted->end - 4) .. $sorted->end )
                 ->grep(sub { defined });
 
-  my $str = '[top: ';
+  my $str = '[ top -> ';
   for my $pair ($top->reverse->all) {
     my ($item, $karma) = @$pair;
     $str .= "'${item}':${karma} ";
   }
-  $str .= ']; [bottom: ';
+  $str .= ']; [ bottom -> ';
   for my $pair ($bottom->all) {
     my ($item, $karma) = @$pair;
     $str .= "'${item}':${karma} ";
