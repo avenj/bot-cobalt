@@ -45,6 +45,7 @@ LINE: while (my $line = readline $inputfh) {
   my $tag = join '%', $ctxt, $nick;
 
   if ( $seendb->get($tag) ) {
+    # FIXME keep whichever is most recent perhaps?
     ++$skip;
     next LINE
   }
