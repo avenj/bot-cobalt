@@ -39,7 +39,6 @@ requires "POE::Component::IRC" => "6.78";
 requires "POE::Component::Syndicator" => "0.06";
 requires "Proc::PID::File" => "1.26";
 
-requires "Term::ReadKey" => "0";
 requires "Try::Tiny" => "0";
 requires "Type::Tiny" => "0.04";
 requires "Types::Path::Tiny" => "0.005";
