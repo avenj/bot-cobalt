@@ -20,8 +20,10 @@ ok( $mask eq '*!avenj@cobaltirc.org', 'Mask normalization' );
 ok( $cmeta->fetch('Context', $mask), 'fetch()' );
 
 ok( $cmeta->reason('Context', $mask) eq 'TESTING', 'reason()' );
+ok !$cmeta->reason(Context => 123), 'reason for unknown mask returns';
 
 ok( $cmeta->addedby('Context', $mask) eq 'MyPackage', 'addedby()' );
+ok !$cmeta->addedby(Context => 123), 'addedby for unknown mask returns';
 
 ok( $cmeta->del('Context', $mask), 'del()' );
 
@@ -29,5 +31,10 @@ eval {; $cmeta->add };
 like $@, qr/argument/, 'add with zero args dies';
 eval {; $cmeta->add('foo') };
 like $@, qr/argument/, 'add with one arg dies';
+
+eval {; $cmeta->reason(foo => 123) };
+like $@, qr/context/, 'reason for unknown context dies';
+eval {; $cmeta->addedby(foo => 123) };
+like $@, qr/context/, 'addedby for unknown context dies';
 
 done_testing

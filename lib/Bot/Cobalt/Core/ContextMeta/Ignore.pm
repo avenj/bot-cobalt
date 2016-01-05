@@ -34,18 +34,18 @@ around add => sub {
 
 sub reason {
   my ($self, $context, $mask) = @_;
-  
-  return unless exists $self->_list->{$context}
-            and exists $self->_list->{$context}->{$mask};
+  confess "Unknown context '$context'"
+    unless exists $self->_list->{$context};
+  return unless exists $self->_list->{$context}->{$mask};
 
   $self->_list->{$context}->{$mask}->{Reason}
 }
 
 sub addedby {
   my ($self, $context, $mask) = @_;
-
-  return unless exists $self->_list->{$context}
-            and exists $self->_list->{$context}->{$mask};
+  confess "Unknown context '$context'"
+    unless exists $self->_list->{$context};
+  return unless exists $self->_list->{$context}->{$mask};
   
   $self->_list->{$context}->{$mask}->{AddedBy}
 }
