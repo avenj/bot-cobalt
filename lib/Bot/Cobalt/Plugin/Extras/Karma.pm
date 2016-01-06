@@ -116,9 +116,9 @@ sub Bot_karmaplug_sync_db {
 sub Bot_public_msg {
   my ($self, $core) = splice @_, 0, 2;
   my $msg     = ${$_[0]};
-  my $context = $msg->context;
   return PLUGIN_EAT_NONE if $msg->highlight
                          or $msg->cmd;
+  my $context = $msg->context;
 
   my $first_word = $msg->message_array->[0] // return PLUGIN_EAT_NONE;
   $first_word = decode_irc($first_word);
