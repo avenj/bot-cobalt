@@ -38,7 +38,7 @@ sub ask_question {
   };
 
   my $input = $print_and_grab->();
-  until ($input) {
+  until (length $input) {
     print "No input specified.\n";
     $print_and_grab->();
   }
