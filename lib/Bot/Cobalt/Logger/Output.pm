@@ -22,7 +22,6 @@ has log_format => (
 );
 
 
-## Internals.
 has _outputs => (
   is        => 'rwp',
   isa       => HashRef,
@@ -30,7 +29,6 @@ has _outputs => (
 );
 
 
-## Public.
 sub add {
   my ($self, @args) = @_;
   
@@ -101,7 +99,6 @@ sub _format {
 
     time => POSIX::strftime( $self->time_format, localtime ),
 
-    ## Caller details, split out.
     pkg  => $caller->[0],
     file => $caller->[1],
     line => $caller->[2],
