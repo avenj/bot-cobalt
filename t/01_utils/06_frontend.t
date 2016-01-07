@@ -5,7 +5,7 @@ BEGIN {
   use_ok( 'Bot::Cobalt::Frontend::Utils', qw/:all/ )
 }
 subtest 'yesno' => sub {
-  plan tests => 4,
+  plan tests => 4;
 
   open my $stdin, '<', \"y\n" or die "open stdin: $!";
   local *STDIN = $stdin;
@@ -50,7 +50,7 @@ subtest 'yesno' => sub {
 
 
 subtest 'question' => sub {
-  plan tests => 1,
+  plan tests => 1;
 
   open my $stdin, '<', \"A string\n" or die "open stdin: $!";
   local *STDIN = $stdin;
