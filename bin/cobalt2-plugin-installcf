@@ -3,8 +3,7 @@
 use 5.10.1;
 use strictures 2;
 
-use File::Copy;
-use File::Spec;
+use Path::Tiny;
 
 use Bot::Cobalt::Frontend::RC   'rc_read';
 use Bot::Cobalt::Frontend::Utils 'ask_yesno', 'ask_question';
@@ -37,7 +36,6 @@ unless ($this_plugin) {
   $this_plugin = $ARGV[0] || die "No plugin specified.\n"
 }
 
-## set up path_dest
 unless ($path_dest) {
   my ($base, $etc) = rc_read($path_rcfile);
 
@@ -50,6 +48,7 @@ unless ($path_dest) {
   );
 }
 
+$path_dest = path($path_dest);
 write_conf( try_load_cf($this_plugin) );
 print(
   "Config for $this_plugin\n",
@@ -57,10 +56,8 @@ print(
 );
 
 
-
 sub try_load_cf {
   my ($plugin) = @_;
-
   my $plugincf = $plugin . '::Conf' ;
 
   { local $@;
@@ -71,8 +68,8 @@ sub try_load_cf {
   die "No conf() method found for $plugincf\n"
     unless $plugincf->can('conf');
 
-  return $plugincf->conf() 
-   || die "$plugincf did not return a true value"
+  $plugincf->conf
+    or die "'conf' method for $plugincf did not return a true value"
 }
 
 sub write_conf {
@@ -93,11 +90,8 @@ sub write_conf {
       unless $overwrite;
   }
 
-  open my $fh, '>', $path_dest
-    or die "open: $path_dest: $!";
-  print $fh $thiscf;
-  close $fh;
-  return 1
+  $path_dest->spew_utf8($thiscf);
+  1
 }
 
 
