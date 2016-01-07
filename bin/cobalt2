@@ -17,6 +17,8 @@ my $opt_detach = 1;
 my $loglevel   = 'info';
 my ($etcdir, $vardir, $basedir);
 
+# FIXME switch to Daemon::Control? drops Proc::PID::File
+# and all the custom double-forkness
 use Proc::PID::File;
 
 use Bot::Cobalt::Frontend::RC qw/rc_read/;
