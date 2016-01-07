@@ -2,10 +2,12 @@ package Bot::Cobalt::IRC::Message::Public;
 
 use v5.10;
 use strictures 2;
+use Scalar::Util 'blessed';
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
-use Scalar::Util 'blessed';
+
+require Bot::Cobalt::Core;
 
 use Moo;
 extends 'Bot::Cobalt::IRC::Message';
@@ -32,18 +34,18 @@ has myself => (
   isa       => Str,
   builder   => sub {
     my ($self) = @_;
-
-    require Bot::Cobalt::Core;
-    return '' unless Bot::Cobalt::Core->has_instance;
-
-    my $irc = irc_object( $self->context ) || return '';
-    blessed $irc ? $irc->nick_name : '';
+    my $irc;
+    return ''
+      unless Bot::Cobalt::Core->has_instance
+      and $irc = irc_object($self->context);
+    $irc->nick_name || ''
   },
 );
 
 after message => sub {
   my ($self, $value) = @_;
-
+  return unless defined $value;
+  
   if ($self->has_highlight) {
     $self->highlight( $self->_build_highlight );
   }
@@ -63,23 +65,15 @@ sub _build_highlight {
 sub _build_cmd {
   my ($self) = @_;
 
-  my $cmdchar;
+  my $cmdchar = Bot::Cobalt::Core->has_instance ?
+    (core->get_core_cfg->opts->{CmdChar} // '!') : '!'
+  ;
 
-  require Bot::Cobalt::Core;
-  if ( Bot::Cobalt::Core->has_instance ) {
-    my $cf_core = core->get_core_cfg;
-    $cmdchar = $cf_core->opts->{CmdChar} // '!' ;
-  } else {
-    $cmdchar = '!';
-  }
-
-  my $txt = $self->stripped;
-
-  if ($txt =~ /^${cmdchar}([^\s]+)/) {
+  if ($self->stripped =~ /^${cmdchar}([^\s]+)/) {
     my $message = $self->message_array;
     shift @$message;
+    # shift above modifies the ref, but intentionally hit trigger:
     $self->message_array($message);
-
     return lc($1)
   }
   undef

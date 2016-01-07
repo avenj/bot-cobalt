@@ -75,8 +75,6 @@ has message_array => (
   predicate => 'has_message_array',
   default   => sub { [ split ' ', $_[0]->stripped ] },
   trigger   => sub {
-    ## Generally shouldn't be modified except internally ..
-    ## .. but hey, enough rope to hang yourself never hurt anyone
     my ($self) = @_;
     if ($self->has_message_array_sp) {
       $self->_set_message_array_sp([ split / /, $self->stripped ]);
