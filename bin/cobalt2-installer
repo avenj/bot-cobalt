@@ -343,6 +343,7 @@ say $_ for
   "Done!",
   "(You should check over the files mentioned above manually to verify",
   " correctness and tune other options.)",
+  "See 'cobalt2 --help' for help on starting the bot."
 ;
 
 =pod
