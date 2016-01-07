@@ -94,18 +94,18 @@ sub _rc_check {
 }
 
 sub _check_dirs {
-  unless (-e $etcdir) {
-    say ">! etcdir $etcdir doesn't appear to exist.";
-    say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! Perhaps try `cobalt2-installer`";
-    die "etcdir not a directory"
-  }
-
-  unless (-e $vardir) {
-    say ">! vardir $vardir doesn't appear to exist.";
-    say ">! Your rcfile ($rcfile) may be broken.";
-    say ">! Perhaps try `cobalt2-installer`";
-    die "vardir not a directory"
+  my %paths = (
+    etcdir => $etcdir,
+    vardir => $vardir,
+  );
+  for my $thisname (keys %paths) {
+    my $thispath = $paths{$thisname};
+    unless (-e $thispath) {
+      say ">! $thisname ($thispath) doesn't appear to exist.";
+      say ">! Your rcfile ($rcfile) may be broken.";
+      say ">! Perhaps try `cobalt2-installer`";
+      die "$thisname not a directory"
+    }
   }
 }
 
