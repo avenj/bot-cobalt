@@ -6,11 +6,8 @@ use strictures 2;
 use File::Copy;
 use File::Spec;
 
-use Bot::Cobalt::Frontend::RC qw/rc_read/;
-use Bot::Cobalt::Frontend::Utils qw/
-  ask_yesno
-  ask_question
-/;
+use Bot::Cobalt::Frontend::RC   'rc_read';
+use Bot::Cobalt::Frontend::Utils 'ask_yesno', 'ask_question';
 
 my($path_dest, $this_plugin);
 my $path_rcfile = $ENV{HOME} ?
@@ -32,15 +29,12 @@ GetOptions(
   },
   
   'plugin=s'   => \$this_plugin,
-  
   'rcfile=s'   => \$path_rcfile,
-
-  'dest=s' => \$path_dest,
+  'dest=s'     => \$path_dest,
 );
 
-$this_plugin = $ARGV[0] unless $this_plugin;
 unless ($this_plugin) {
-  die "No plugin specified.\n";
+  $this_plugin = $ARGV[0] || die "No plugin specified.\n"
 }
 
 ## set up path_dest
@@ -52,7 +46,7 @@ unless ($path_dest) {
         "Attempting to write one under etcdir\n";
   
   $path_dest = ask_question(
-    prompt => "Write file (under etc/plugins/)",
+    prompt => "Write file (under \$etcdir/plugins/)",
   );
 }
 
@@ -69,8 +63,10 @@ sub try_load_cf {
 
   my $plugincf = $plugin . '::Conf' ;
 
-  eval "require $plugincf";
-  return if $@;
+  { local $@;
+    eval "require $plugincf";
+    die "Could not load Conf module: $@\n" if $@;
+  }
 
   die "No conf() method found for $plugincf\n"
     unless $plugincf->can('conf');
