@@ -40,7 +40,7 @@ sub ask_question {
   my $input = $print_and_grab->();
   until (length $input) {
     print "No input specified.\n";
-    $print_and_grab->();
+    $input = $print_and_grab->()
   }
 
   VALID: {
