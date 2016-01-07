@@ -1,4 +1,7 @@
 #!perl
+
+# Cheap importer tool for darkbot6/cobalt1 RDB files.
+
 my $VERSION = '0.23';
 
 use 5.10.1;
