@@ -95,15 +95,9 @@ sub Cobalt_register {
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
   logger->info("Unregistering and dropping servers.");
-
-  for my $context ( keys %{ $self->ircobjs } ) {
-    $self->_clear_context($context);
-  }
-
+  $self->_clear_context($_) for keys %{ $self->ircobjs };
   logger->debug("Clean unload");
-
   PLUGIN_EAT_NONE
 }
 
@@ -122,24 +116,21 @@ sub Bot_initialize_irc {
     delete $p_cfg->opts->{Networks}->{'-ALL'}
   }
 
-  my $active_contexts;
+  my $active_contexts = 0;
   for my $context (keys %{ $p_cfg->opts->{Networks} } ) {
-    ## Counter is solely to provide an informative error if cfg is fubar:
     ++$active_contexts;
-
     next if defined $p_cfg->opts->{Networks}->{$context}->{Enabled}
          and $p_cfg->opts->{Networks}->{$context}->{Enabled} == 0;
-
     logger->debug("Found configured context $context");
-
     broadcast( 'ircplug_connect', $context );
   }
 
   unless ($active_contexts) {
     logger->error("No contexts configured/enabled!");
   }
-
-  return PLUGIN_EAT_ALL
+  logger->info("Connecting to $active_contexts contexts");
+  
+  PLUGIN_EAT_ALL
 }
 
 sub Bot_ircplug_connect {
@@ -293,14 +284,10 @@ sub Bot_ircplug_disconnect {
 
 sub _clear_context {
   my ($self, $context) = @_;
-  ## Method called out of both _unregister and ircplug_disconnect
-  ## Handles actual shutdown/cleanup for a particular context
 
   logger->debug("_clear_context called for $context");
 
-  ## clear auths for this context
   core->auth->clear($context);
-  ## and ignores:
   core->ignore->clear($context);
 
   core->Servers->{$context}->clear_irc;
@@ -518,15 +505,11 @@ sub irc_chan_sync {
     { 'chan' => $chan }
   );
 
-  ## issue Bot_chan_sync
   broadcast( 'chan_sync', $context, $chan );
 
-  ## on if cobalt.conf->Opts->NotifyOnSync is true or not specified:
   my $cf_core = core->get_core_cfg();
   my $notify  = ($cf_core->opts->{NotifyOnSync} //= 1) ? 1 : 0 ;
-
   my $chan_h = core->cfg->channels->context( $context ) || {};
-
   ## check if we have a specific setting for this channel (override):
   $notify = $chan_h->{$chan}->{notify_on_sync}
     if exists $chan_h->{$chan}
