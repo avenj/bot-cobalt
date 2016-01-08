@@ -1,5 +1,10 @@
 Revision history for Perl module Bot::Cobalt
 
+0.019003 2016-01-08
+
+  - Fix an interactive prompter bug that would fail to capture after
+    re-asking due to bad input (busted in v0.17.7)
+
 0.019002 2016-01-07
 
   - Message-related optimizations
