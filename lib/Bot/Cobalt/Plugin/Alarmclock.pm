@@ -3,7 +3,10 @@ package Bot::Cobalt::Plugin::Alarmclock;
 use strictures 2;
 use v5.10;
 
+use File::Spec ();
+
 use Bot::Cobalt;
+use Bot::Cobalt::DB;
 use Bot::Cobalt::Utils 'timestr_to_secs';
 
 use Object::Pluggable::Constants ':ALL';
@@ -28,9 +31,53 @@ sub new {
 sub timers        { shift->{_timers} }
 sub clear_timers  { shift->{_timers} = +{} }
 
+sub _check_expire_stale {
+  my ($self) = @_;
+  my $db = $self->{_db};
+  unless ($db->dbopen) {
+    logger->error("dbopen failure for alarmclock db in _check_expire_stale");
+    logger->error("persistent alarms may be broken!");
+    return
+  }
+  ID: for my $id ($db->dbkeys) {
+    my $alarm = $db->get($id);
+    unless ($alarm) {
+      logger->warn(
+        "Could not retrieve alarm '$id'; alarmclock db may be broken"
+      );
+      next ID
+    }
+    # FIXME drop if expired, set again if not
+  } # ID
+  $db->dbclose;
+  1
+}
+
+sub _delete_alarm {
+  my ($self, $id) = @_;
+  my $db = $self->{_db};
+  unless ($db->dbopen) {
+    logger->error("dbopen failure for alarmclock db in _delete_alarm");
+    logger->error("persistent alarms may be broken!");
+  }
+  my $ret = $db->del($id);
+  unless ($ret) {
+    logger->warn("attempted to delete nonexistant alarm ID '$id'");
+  }
+  $db->dbclose;
+  $ret
+}
+
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
+
+  # FIXME config option for persistent alarms
+  my $dbpath = File::Spec->catfile( $core->var, 'alarmclock.db' );
+  $self->{_db} = Bot::Cobalt::DB->new(
+    file => $dbpath,
+  );
+  $self->_check_expire_stale;
 
   register( $self, SERVER => qw/
     public_cmd_alarmclock
@@ -67,7 +114,7 @@ sub Bot_executed_timer {
   delete $self->timers->{$timerid};
   # FIXME also delete from db
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_alarmdelete { Bot_public_cmd_alarmdel(@_) }
@@ -129,7 +176,7 @@ sub Bot_public_cmd_alarmdel {
     )
   );
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 
@@ -190,7 +237,7 @@ sub Bot_public_cmd_alarmclock {
     broadcast( 'message', $context, $channel, $resp );
   }
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 1;
