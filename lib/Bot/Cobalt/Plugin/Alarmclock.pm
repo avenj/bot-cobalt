@@ -23,26 +23,41 @@ sub new {
 sub timers        { shift->{_timers} }
 sub clear_timers  { shift->{_timers} = +{} }
 
-sub _check_expire_stale {
+sub _init_from_db {
   my ($self) = @_;
   my $db = $self->{_db};
   unless ($db->dbopen) {
-    logger->error("dbopen failure for alarmclock db in _check_expire_stale");
+    logger->error("dbopen failure for alarmclock db in _init_from_db");
     logger->error("persistent alarms may be broken!");
     return
   }
   ID: for my $id ($db->dbkeys) {
     my $alarm = $db->get($id);
-    unless ($alarm) {
+    unless ($alarm && ref $alarm eq 'HASH') {
       logger->warn(
-        "Could not retrieve alarm '$id'; alarmclock db may be broken"
+        defined $alarm ? 
+            "Alarm '$id' not a HASH; alarmclock db may be broken!"
+          : "Could not retrieve alarm '$id'; alarmclock db may be broken!"
       );
       next ID
     }
-    # FIXME drop if expired, set again if not
-    #  when resetting, drop/readd keyed as new timer ID from timer_set
-    #  (method for this)
-  } # ID
+    my $expires_at = $alarm->{At};
+    unless ($expires_at) {
+      logger->warn("No 'At' expiry for timer id '$id', removing");
+      $db->del($id);
+      next ID
+    }
+    if ($expires_at <= time) {
+      logger->debug("Expiring stale alarmclock '$id'");
+      $db->del($id);
+      next ID
+    }
+    $alarm->{Alias} = plugin_alias($self);
+    my $secs = $expires_at - time;
+    my $new_id = core->timer_set( $secs, $alarm );
+    $db->set($new_id => $alarm);
+    $db->del($id);
+  }
   $db->dbclose;
   1
 }
@@ -66,12 +81,12 @@ sub _delete_alarm {
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  # FIXME config option for persistent alarms
+  # FIXME config option for persistent alarms?
   my $dbpath = File::Spec->catfile( $core->var, 'alarmclock.db' );
   $self->{_db} = Bot::Cobalt::DB->new(
     file => $dbpath,
   );
-  $self->_check_expire_stale;
+  $self->_init_from_db;
 
   register( $self, SERVER => qw/
     public_cmd_alarmclock
@@ -223,7 +238,13 @@ sub Bot_public_cmd_alarmclock {
         timerid => $id,
         timestr => $timestr,
     );
-    # FIXME call to save $alarm in db
+    my $db = $self->{_db};
+    if ($db->dbopen) {
+      $db->set($id => $alarm);
+      $db->dbclose;
+    } else {
+      logger->error("dbopen failure for alarmclock db during add");
+    }
   } else {
     $resp = core->rpl( q{RPL_TIMER_ERR} );
   }
@@ -246,6 +267,7 @@ Bot::Cobalt::Plugin::Alarmclock - Timed IRC highlights
 
 =head1 SYNOPSIS
 
+  # On IRC:
   !alarmclock 20m go do some something
   !alarmclock 1h30m stop staring at irc
 
@@ -264,7 +286,7 @@ For example:
 
 (Accuracy down to the second is not guaranteed. Plus, this is IRC. Sorry.)
 
-Mimics B<darkbot6> behavior, but with vaguely sane time string grammar.
+As of C<v0.20.1>, alarmclocks will persist between bot runs.
 
 =head1 AUTHOR
 
