@@ -27,7 +27,7 @@ sub Cobalt_register {
   my $dbpath = File::Spec->catfile( $core->var, 'karma.db' );
   
   $self->{karmadb} = Bot::Cobalt::DB->new(
-    File => $dbpath,
+    file => $dbpath,
   );
 
   $self->{karma_regex} = qr/^(\S+)(\+{2}|\-{2})$/;
