@@ -48,6 +48,8 @@ sub _check_expire_stale {
       next ID
     }
     # FIXME drop if expired, set again if not
+    #  when resetting, drop/readd keyed as new timer ID from timer_set
+    #  (method for this)
   } # ID
   $db->dbclose;
   1
@@ -112,7 +114,7 @@ sub Bot_executed_timer {
     if core->debug > 1;
 
   delete $self->timers->{$timerid};
-  # FIXME also delete from db
+  $self->_delete_alarm($timerid);
 
   PLUGIN_EAT_NONE
 }
@@ -167,7 +169,7 @@ sub Bot_public_cmd_alarmdel {
 
   core->timer_del($timerid);
   delete $self->timers->{$timerid};
-  # FIXME also delete from db
+  $self->_delete_alarm($timerid);
 
   broadcast( 'message', $context, $channel,
     core->rpl( q{ALARMCLOCK_DELETED},
