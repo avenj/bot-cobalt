@@ -157,10 +157,10 @@ sub Bot_public_cmd_alarmdel {
   my $thistimer = $self->timers->{$timerid};
   my ($ctxt_set, $ctxt_by) = @$thistimer;
 
-  ## ... did this user set this timer?
-  unless ($ctxt_set eq $context && $auth_usr eq $ctxt_by) {
+  ## did this user set this timer?
+  ## original user may've been undef if LevelRequired == 0
+  unless ($ctxt_set eq $context && defined $ctxt_by && $auth_usr eq $ctxt_by) {
     my $auth_lev = core->auth->level($context, $nick);
-
     ## superusers can override:
     unless ($auth_lev == 9999) {
       broadcast( 'message', $context, $channel,
@@ -169,7 +169,6 @@ sub Bot_public_cmd_alarmdel {
           timerid => $timerid,
         )
       );
-
       return PLUGIN_EAT_ALL
     }
   }
@@ -203,7 +202,8 @@ sub Bot_public_cmd_alarmclock {
   ## quietly do nothing for unauthorized users
   return PLUGIN_EAT_NONE
     unless core->auth->level($context, $setter) >= $minlevel;
-
+  
+  ## undef if $minlevel == 0
   my $auth_usr = core->auth->username($context, $setter);
 
   ## This is the array of (format-stripped) args to the _public_cmd_
@@ -220,7 +220,8 @@ sub Bot_public_cmd_alarmclock {
   my $channel = $msg->channel;
 
   my $alarm = +{
-    Type => 'msg',
+    Type    => 'msg',
+    User    => $auth_usr,
     Context => $context,
     Target  => $channel,
     Text    => $txtstr,
