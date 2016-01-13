@@ -8,6 +8,15 @@ use Bot::Cobalt::Utils 'timestr_to_secs';
 
 use Object::Pluggable::Constants ':ALL';
 
+## FIXME persistent alarmclock support ..
+##  - timerids currently in $self move to $self->{timers}
+##  - alarmclockdb
+##  - on _register check/clear stale timers
+##    then readd timers
+##  - on timer add, add to db
+##  - on executed_timer, remove from db
+
+
 # $self->{$timerid} = [ $context, $username ]
 sub new { bless +{}, shift }
 
