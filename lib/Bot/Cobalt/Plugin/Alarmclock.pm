@@ -17,8 +17,17 @@ use Object::Pluggable::Constants ':ALL';
 ##  - on executed_timer, remove from db
 
 
-# $self->{$timerid} = [ $context, $username ]
-sub new { bless +{}, shift }
+sub new { 
+  bless +{ 
+    # $self->timers->{$timerid} = [ $context, $username ]
+    _timers => +{},
+    _db     => undef,
+  }, shift
+}
+
+sub timers        { shift->{_timers} }
+sub clear_timers  { shift->{_timers} = +{} }
+
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
@@ -32,17 +41,15 @@ sub Cobalt_register {
 
   logger->info("Loaded alarm clock");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
   logger->info("Unregistering core IRC plugin");
-
   core->timer_del_alias( core->get_plugin_alias($self) );
-
-  return PLUGIN_EAT_NONE
+  $self->clear_timers;
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_deleted_timer { Bot_executed_timer(@_) }
@@ -52,12 +59,13 @@ sub Bot_executed_timer {
   my $timerid = ${$_[0]};
 
   return PLUGIN_EAT_NONE
-    unless exists $self->{$timerid};
+    unless exists $self->timers->{$timerid};
 
   logger->debug("clearing timer state for $timerid")
     if core->debug > 1;
 
-  delete $self->{$timerid};
+  delete $self->timers->{$timerid};
+  # FIXME also delete from db
 
   return PLUGIN_EAT_NONE
 }
@@ -79,7 +87,7 @@ sub Bot_public_cmd_alarmdel {
 
   my $channel = $msg->channel;
 
-  unless (exists $self->{$timerid}) {
+  unless (exists $self->timers->{$timerid}) {
     broadcast( 'message', $context, $channel,
       core->rpl( q{ALARMCLOCK_NOSUCH},
         nick    => $nick,
@@ -90,8 +98,7 @@ sub Bot_public_cmd_alarmdel {
     return PLUGIN_EAT_ALL
   }
 
-  my $thistimer = $self->{$timerid};
-
+  my $thistimer = $self->timers->{$timerid};
   my ($ctxt_set, $ctxt_by) = @$thistimer;
 
   ## ... did this user set this timer?
@@ -112,7 +119,8 @@ sub Bot_public_cmd_alarmdel {
   }
 
   core->timer_del($timerid);
-  delete $self->{$timerid};
+  delete $self->timers->{$timerid};
+  # FIXME also delete from db
 
   broadcast( 'message', $context, $channel,
     core->rpl( q{ALARMCLOCK_DELETED},
@@ -155,25 +163,25 @@ sub Bot_public_cmd_alarmclock {
   my $secs = timestr_to_secs($timestr) || 1;
   my $channel = $msg->channel;
 
-  my $id = core->timer_set( $secs,
-    {
-      Type => 'msg',
-      Context => $context,
-      Target => $channel,
-      Text   => $txtstr,
-      Alias  => plugin_alias($self),
-    }
-  );
+  my $alarm = +{
+    Type => 'msg',
+    Context => $context,
+    Target => $channel,
+    Text   => $txtstr,
+    Alias  => plugin_alias($self),
+  };
+  my $id = core->timer_set( $secs, $alarm );
 
   my $resp;
   if ($id) {
-    $self->{$id} = [ $context, $auth_usr ];
+    $self->timers->{$id} = [ $context, $auth_usr ];
     $resp = core->rpl( q{ALARMCLOCK_SET},
         nick => $setter,
         secs => $secs,
         timerid => $id,
         timestr => $timestr,
     );
+    # FIXME call to save $alarm in db
   } else {
     $resp = core->rpl( q{RPL_TIMER_ERR} );
   }
