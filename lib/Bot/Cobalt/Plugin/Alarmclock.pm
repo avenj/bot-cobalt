@@ -55,7 +55,8 @@ sub _init_from_db {
     $alarm->{Alias} = plugin_alias($self);
     my $secs = $expires_at - time;
     my $new_id = core->timer_set( $secs, $alarm );
-    $db->set($new_id => $alarm);
+    $self->timers->{$new_id} = [ $alarm->{Context}, $alarm->{User} ];
+    $db->put($new_id => $alarm);
     $db->del($id);
   }
   $db->dbclose;
@@ -241,7 +242,7 @@ sub Bot_public_cmd_alarmclock {
     );
     my $db = $self->{_db};
     if ($db->dbopen) {
-      $db->set($id => $alarm);
+      $db->put($id => $alarm);
       $db->dbclose;
     } else {
       logger->error("dbopen failure for alarmclock db during add");
