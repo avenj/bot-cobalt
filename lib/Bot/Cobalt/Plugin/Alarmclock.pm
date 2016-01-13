@@ -11,14 +11,6 @@ use Bot::Cobalt::Utils 'timestr_to_secs';
 
 use Object::Pluggable::Constants ':ALL';
 
-## FIXME persistent alarmclock support ..
-##  - timerids currently in $self move to $self->{timers}
-##  - alarmclockdb
-##  - on _register check/clear stale timers
-##    then readd timers
-##  - on timer add, add to db
-##  - on executed_timer, remove from db
-
 
 sub new { 
   bless +{ 
@@ -215,9 +207,10 @@ sub Bot_public_cmd_alarmclock {
   my $alarm = +{
     Type => 'msg',
     Context => $context,
-    Target => $channel,
-    Text   => $txtstr,
-    Alias  => plugin_alias($self),
+    Target  => $channel,
+    Text    => $txtstr,
+    Alias   => plugin_alias($self),
+    At      => time + $secs,
   };
   my $id = core->timer_set( $secs, $alarm );
 
