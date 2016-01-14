@@ -31,6 +31,7 @@ sub _init_from_db {
     logger->error("persistent alarms may be broken!");
     return
   }
+  my $count = 0;
   ID: for my $id ($db->dbkeys) {
     my $alarm = $db->get($id);
     unless ($alarm && ref $alarm eq 'HASH') {
@@ -55,12 +56,17 @@ sub _init_from_db {
     $alarm->{Alias} = plugin_alias($self);
     my $secs = $expires_at - time;
     my $new_id = core->timer_set( $secs, $alarm );
-    $self->timers->{$new_id} = [ $alarm->{Context}, $alarm->{User} ];
-    $db->put($new_id => $alarm);
-    $db->del($id);
+    if ($new_id) {
+      $self->timers->{$new_id} = [ $alarm->{Context}, $alarm->{User} ];
+      $db->put($new_id => $alarm);
+      $db->del($id);
+      ++$count
+    } else {
+      logger->warn("Failed to readd alarmclock timer '$id'");
+    }
   }
   $db->dbclose;
-  1
+  $count
 }
 
 sub _delete_alarm {
@@ -87,7 +93,7 @@ sub Cobalt_register {
   $self->{_db} = Bot::Cobalt::DB->new(
     file => $dbpath,
   );
-  $self->_init_from_db;
+  my $count = $self->_init_from_db;
 
   register( $self, SERVER => qw/
     public_cmd_alarmclock
@@ -96,7 +102,7 @@ sub Cobalt_register {
     executed_timer
   / );
 
-  logger->info("Loaded alarm clock");
+  logger->info("Loaded alarm clock ($count existing alarms loaded)");
 
   PLUGIN_EAT_NONE
 }
