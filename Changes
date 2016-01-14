@@ -1,5 +1,11 @@
 Revision history for Perl module Bot::Cobalt
 
+0.020001 2016-01-14
+
+  - Alarmclocks are now persistent between runs
+
+  - Revert ContextMeta changes (poorly considered; too much breakage)
+
 0.019003 2016-01-08
 
   - Fix an interactive prompter bug that would fail to capture after
