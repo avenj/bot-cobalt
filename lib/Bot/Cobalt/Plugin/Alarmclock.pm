@@ -157,7 +157,6 @@ sub Bot_public_cmd_alarmdel {
 
   my $thistimer = $self->timers->{$timerid};
   my ($ctxt_set, $ctxt_by) = @$thistimer;
-
   ## did this user set this timer?
   ## original user may've been undef if LevelRequired == 0
   unless ($ctxt_set eq $context && defined $ctxt_by && $auth_usr eq $ctxt_by) {
@@ -201,8 +200,12 @@ sub Bot_public_cmd_alarmclock {
   my $minlevel = $cfg->{LevelRequired} // 1;
 
   ## quietly do nothing for unauthorized users
-  return PLUGIN_EAT_NONE
-    unless core->auth->level($context, $setter) >= $minlevel;
+  unless (core->auth->level($context, $setter) >= $minlevel) {
+    logger->debug(
+      "ignoring unauthorized alarmclock from '$setter' on '$context'"
+    );
+    return PLUGIN_EAT_NONE
+  }
   
   ## undef if $minlevel == 0
   my $auth_usr = core->auth->username($context, $setter);
