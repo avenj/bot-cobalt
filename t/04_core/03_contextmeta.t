@@ -69,7 +69,7 @@ ok( !$cmeta->fetch('Context2', 'Key'), 'Key really deleted' );
 
 ok( $cmeta->clear('Context'), 'Clear context' );
 
-ok( !$cmeta->list('Context'), 'Context really cleared' );
+ok( !keys %{ $cmeta->list('Context') }, 'Context really cleared' );
 
 eval {; $cmeta->del('foo') };
 like $@, qr/context/, 'del with one arg dies';

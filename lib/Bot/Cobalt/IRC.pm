@@ -154,7 +154,7 @@ sub Bot_ircplug_connect {
       $core->Servers->{$context}->clear_irc;
     }
 
-    ## Just in case ...
+    # Clear / reinit ContextMeta
     $core->auth->clear($context);
     $core->ignore->clear($context);
   }

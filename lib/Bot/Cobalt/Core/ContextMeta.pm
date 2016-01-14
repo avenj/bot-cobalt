@@ -43,7 +43,7 @@ sub clear {
 
   $self->_list({}) unless defined $context;
 
-  delete $self->_list->{$context}  
+  $self->_list->{$context} = +{}
 }
 
 sub del {
