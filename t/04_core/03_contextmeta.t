@@ -1,4 +1,4 @@
-use Test::More;
+use Test::More tests => 14;
 use strict; use warnings;
 
 BEGIN{
@@ -69,17 +69,4 @@ ok( !$cmeta->fetch('Context2', 'Key'), 'Key really deleted' );
 
 ok( $cmeta->clear('Context'), 'Clear context' );
 
-
-done_testing
-
 ok( !$cmeta->list('Context'), 'Context really cleared' );
-
-
-eval {; $cmeta->del('foo') };
-like $@, qr/context/, 'del with one arg dies';
-
-eval {; $cmeta->fetch('foo') };
-like $@, qr/context/, 'fetch with one arg dies';
-
-
-done_testing
