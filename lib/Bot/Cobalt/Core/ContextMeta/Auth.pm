@@ -3,24 +3,12 @@ package Bot::Cobalt::Core::ContextMeta::Auth;
 use strictures 2;
 use Carp;
 
-use Scalar::Util 'reftype';
-
 use Bot::Cobalt::Common ':types';
 
 
 use Moo;
 extends 'Bot::Cobalt::Core::ContextMeta';
 
-sub _context_check {
-  my ($self, $context, $nickname) = @_;
-  confess "No such context '$context'"
-    unless exists $self->_list->{$context};
-  if (defined $nickname) {
-    confess "No known user '$nickname' for '$context'"
-      unless exists $self->_list->{$context}->{$nickname}
-  }
-  1
-}
 
 around add => sub {
   my ($orig, $self) = splice @_, 0, 2;
@@ -58,52 +46,62 @@ around add => sub {
 
 sub level {
   my ($self, $context, $nickname) = @_;
-  confess "Expected a context and nickname"
-    unless defined $context and defined $nickname;
-  $self->_context_check($context);
 
-  return 0 unless ref $self->_list->{$context}->{$nickname};
+  return 0
+    unless defined $context
+    and defined $nickname
+    and exists $self->_list->{$context}
+    and ref $self->_list->{$context}->{$nickname};
+  
   $self->_list->{$context}->{$nickname}->{Level} // 0
 }
 
 sub set_flag {
   my ($self, $context, $nickname, $flag) = @_;
-  confess "Expected a context, nickname, and flag"
-    unless defined $context and defined $nickname and defined $flag;
-  $self->_context_check($context, $nickname);
+
+  return
+    unless defined $context
+    and defined $nickname
+    and $flag
+    and exists $self->_list->{$context} 
+    and exists $self->_list->{$context}->{$nickname};
   
   $self->_list->{$context}->{$nickname}->{Flags}->{$flag} = 1
 }
 
-
-
 sub drop_flag {
   my ($self, $context, $nickname, $flag) = @_;
-  confess "Expected a context, nickname, and flag"
-    unless defined $context and defined $nickname and defined $flag;
-  $self->_context_check($context, $nickname);
+
+  return
+    unless defined $context 
+    and defined $nickname 
+    and $flag
+    and exists $self->_list->{$context} 
+    and exists $self->_list->{$context}->{$nickname};
 
   delete $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
 }
 
 sub has_flag {
   my ($self, $context, $nickname, $flag) = @_;
-  confess "Expected a context, nickname, and flag"
-    unless defined $context and defined $nickname and defined $flag;
 
-  $self->_context_check($context);
+  return
+    unless defined $context 
+    and defined $nickname 
+    and $flag
+    and exists $self->_list->{$context} 
+    and exists $self->_list->{$context}->{$nickname};
+
   $self->_list->{$context}->{$nickname}->{Flags}->{$flag}
 }
 
 sub flags {
   my ($self, $context, $nickname) = @_;
-  confess "Expected a context and nickname"
-    unless defined $context and defined $nickname;
-  $self->_context_check($context);
 
-  return +{}
-    unless ref $self->_list->{$context}->{$nickname}->{Flags}
-    and reftype $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
+  return +{} unless exists $self->_list->{$context}
+         and ref $self->_list->{$context}->{$nickname}
+         and ref $self->_list->{$context}->{$nickname}->{Flags}
+         and reftype $self->_list->{$context}->{$nickname}->{Flags} eq 'HASH';
 
   $self->_list->{$context}->{$nickname}->{Flags}
 }
@@ -111,30 +109,36 @@ sub flags {
 { no warnings 'once'; *user = *username }
 sub username {
   my ($self, $context, $nickname) = @_;
-  confess "Expected a context and nickname"
-    unless defined $context and defined $nickname;
-  $self->_context_check($context);
-  return unless ref $self->_list->{$context}->{$nickname};
+  
+  return
+    unless defined $context
+    and defined $nickname
+    and exists $self->_list->{$context}
+    and ref $self->_list->{$context}->{$nickname};
 
   $self->_list->{$context}->{$nickname}->{Username}
 }
 
 sub host {
   my ($self, $context, $nickname) = @_;
-  confess "Expected a context and nickname"
-    unless defined $context and defined $nickname;
-  $self->_context_check($context);
-  return unless ref $self->_list->{$context}->{$nickname};
+  
+  return
+    unless defined $context 
+    and defined $nickname
+    and exists $self->_list->{$context}
+    and ref $self->_list->{$context}->{$nickname};
 
   $self->_list->{$context}->{$nickname}->{Host}
 }
 
 sub alias {
   my ($self, $context, $nickname) = @_;
-  confess "Expected a context and nickname"
-    unless defined $context and defined $nickname;
-  $self->_context_check($context);
-  return unless ref $self->_list->{$context}->{$nickname};
+
+  return
+    unless defined $context 
+    and defined $nickname
+    and exists $self->_list->{$context}
+    and ref $self->_list->{$context}->{$nickname};
 
   $self->_list->{$context}->{$nickname}->{Alias}
 }
@@ -142,11 +146,8 @@ sub alias {
 sub move {
   my ($self, $context, $old, $new) = @_;
   ## User changed nicks, f.ex
-  confess "Expected context, old nickname, and new nickname"
-    unless defined $context and defined $old and defined $new;
-  $self->_context_check($context);
-  confess "Cannot move nonexistant nickname '$old' for '$context'"
-    unless exists $self->_list->{$context}->{$old};
+  
+  return unless exists $self->_list->{$context}->{$old};
   
   $self->_list->{$context}->{$new}
     = delete $self->_list->{$context}->{$old}
