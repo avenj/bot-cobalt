@@ -2,6 +2,8 @@ package Bot::Cobalt::Plugin::Seen;
 
 use 5.10.1;
 
+use strictures 2;
+
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;

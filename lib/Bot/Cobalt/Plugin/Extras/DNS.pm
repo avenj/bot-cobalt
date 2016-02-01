@@ -1,5 +1,7 @@
 package Bot::Cobalt::Plugin::Extras::DNS;
 
+use strictures 2;
+
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 
