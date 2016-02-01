@@ -1,5 +1,7 @@
 package Bot::Cobalt::Plugin::Extras::Relay;
 
+use strictures 2;
+
 ## Simplistic relaybot plugin
 use Scalar::Util 'reftype';
 
