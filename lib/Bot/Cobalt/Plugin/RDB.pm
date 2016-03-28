@@ -1363,6 +1363,12 @@ The RDB must already exist; see L</"rdb dbadd">
 
 =head2 rdb
 
+=head3 rdb get
+
+  rdb get <rdb> <itemID>
+
+Retrieves the specified item from the specified RDB.
+
 =head3 rdb info
 
   rdb info <rdb>
