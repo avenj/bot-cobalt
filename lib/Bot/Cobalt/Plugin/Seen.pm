@@ -1,7 +1,6 @@
 package Bot::Cobalt::Plugin::Seen;
 
-use 5.10.1;
-
+use v5.10;
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
 use Bot::Cobalt::DB;
@@ -23,7 +22,7 @@ sub retrieve {
   my ($self, $context, $nickname) = @_;
   $nickname = $self->parse_nick($context, $nickname);
 
-  my $thisbuf = $self->{Buf}->{$context} // {};
+  my $thisbuf = $self->{Buf}->{$context} // +{};
 
   my $ref = $thisbuf->{$nickname};
   unless (defined $ref) {
@@ -87,14 +86,14 @@ sub Cobalt_register {
   
   logger->info("Loaded");
   
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
   $self->Bot_seendb_update($core, \1);
   $core->log->info("Unloaded");
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_seendb_update {
@@ -161,7 +160,7 @@ sub Bot_user_joined {
     Host     => $host,
   };
   
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_chan_sync {
@@ -171,7 +170,7 @@ sub Bot_chan_sync {
 
   broadcast( 'seenplug_deferred_list', $context, $channel );
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_seenplug_deferred_list {
@@ -214,7 +213,7 @@ sub Bot_user_left {
     Host     => $host,
   };
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_user_quit {
@@ -236,7 +235,7 @@ sub Bot_user_quit {
     Host     => $host,
   };
   
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_nick_changed {
@@ -272,7 +271,7 @@ sub Bot_nick_changed {
     Meta     => { From => $old },
   };
   
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_seen {
@@ -370,7 +369,7 @@ sub Bot_public_cmd_seen {
     $resp
   );  
   
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 1;
