@@ -7,7 +7,15 @@ use Bot::Cobalt::DB;
 
 use Path::Tiny;
 
-sub new { bless +{}, shift }
+sub SDB () { 0 }
+sub BUF () { 1 }
+
+sub new { 
+  bless [
+    undef, # SDB
+    +{},   # BUF
+  ], shift
+}
 
 sub parse_nick {
   my ($self, $context, $nickname) = @_;
@@ -22,11 +30,11 @@ sub retrieve {
   my ($self, $context, $nickname) = @_;
   $nickname = $self->parse_nick($context, $nickname);
 
-  my $thisbuf = $self->{Buf}->{$context} // +{};
+  my $thisbuf = $self->[BUF]->{$context} // +{};
 
   my $ref = $thisbuf->{$nickname};
   unless (defined $ref) {
-    my $db = $self->{SDB};
+    my $db = $self->[SDB];
     unless ($db->dbopen) {
       logger->warn("dbopen failed in retrieve; cannot open SeenDB");
       return
@@ -50,12 +58,11 @@ sub Cobalt_register {
   
   logger->info("Opening SeenDB at $seendb_path");
 
-  $self->{Buf} = +{};
+  $self->[BUF] = +{};
+  $self->[SDB] = Bot::Cobalt::DB->new(file => $seendb_path);
   
-  $self->{SDB} = Bot::Cobalt::DB->new(file => $seendb_path);
-  
-  my $rc = $self->{SDB}->dbopen;
-  $self->{SDB}->dbclose;
+  my $rc = $self->[SDB]->dbopen;
+  $self->[SDB]->dbclose;
   unless ($rc) {
     logger->warn("Failed to open SeenDB at $seendb_path");
     die "Unable to open SeenDB at $seendb_path"
@@ -100,13 +107,13 @@ sub Bot_seendb_update {
   my ($self, $core) = splice @_, 0, 2;
   my $force_flush = @_ ? ${ $_[0] } : 0;
 
-  my $buf = $self->{Buf};
+  my $buf = $self->[BUF];
   unless (keys %$buf) {
     $core->timer_set( 2, +{ Event => 'seendb_update' } );
     return PLUGIN_EAT_ALL
   }
 
-  my $db  = $self->{SDB};
+  my $db  = $self->[SDB];
 
   CONTEXT: for my $context (keys %$buf) {
     unless ($db->dbopen) {
@@ -152,7 +159,7 @@ sub Bot_user_joined {
   my $chan = $join->channel;
 
   $nick = $self->parse_nick($context, $nick);
-  $self->{Buf}->{$context}->{$nick} = +{
+  $self->[BUF]->{$context}->{$nick} = +{
     TS       => time(),
     Action   => 'join',
     Channel  => $chan,
@@ -182,7 +189,7 @@ sub Bot_seenplug_deferred_list {
   my @nicks = $irc->channel_list($channel);
   for my $nick (@nicks) {
     $nick = $self->parse_nick($context, $nick);
-    $self->{Buf}->{$context}->{$nick} = {
+    $self->[BUF]->{$context}->{$nick} = +{
       TS       => time(),
       Action   => 'present',
       Channel  => $channel,
@@ -205,7 +212,7 @@ sub Bot_user_left {
   my $chan = $part->channel;
 
   $nick = $self->parse_nick($context, $nick);
-  $self->{Buf}->{$context}->{$nick} = {
+  $self->[BUF]->{$context}->{$nick} = +{
     TS => time(),
     Action   => 'part',
     Channel  => $chan,
@@ -227,7 +234,7 @@ sub Bot_user_quit {
   my $common = $quit->common;
 
   $nick = $self->parse_nick($context, $nick);
-  $self->{Buf}->{$context}->{$nick} = {
+  $self->[BUF]->{$context}->{$nick} = +{
     TS => time(),
     Action   => 'quit',
     Channel  => $common->[0],
@@ -253,7 +260,7 @@ sub Bot_nick_changed {
   
   my $first_common = $nchange->channels->[0];
 
-  $self->{Buf}->{$context}->{$old} = {
+  $self->[BUF]->{$context}->{$old} = +{
     TS => time(),
     Action   => 'nchange',
     Channel  => $first_common,
@@ -262,7 +269,7 @@ sub Bot_nick_changed {
     Meta     => { To => $new },
   };
   
-  $self->{Buf}->{$context}->{$new} = {
+  $self->[BUF]->{$context}->{$new} = +{
     TS => time(),
     Action   => 'nchange',
     Channel  => $first_common,
