@@ -17,10 +17,9 @@ sub new {
   ], shift
 }
 
-sub parse_nick {
-  my ($self, $context, $nickname) = @_;
-  my $casemap = core->get_irc_casemap($context) || 'rfc1459';
-  lc_irc($nickname, $casemap)
+sub _parse_nick {
+  my ($context, $nickname) = @_;
+  lc_irc $nickname, (core->get_irc_casemap($context) || 'rfc1459')
 }
 
 ## FIXME method to retrieve users w/ similar hosts
@@ -28,7 +27,7 @@ sub parse_nick {
 
 sub retrieve {
   my ($self, $context, $nickname) = @_;
-  $nickname = $self->parse_nick($context, $nickname);
+  $nickname = _parse_nick($context, $nickname);
 
   my $thisbuf = $self->[BUF]->{$context} // +{};
 
@@ -158,7 +157,7 @@ sub Bot_user_joined {
   my $host = $join->src_host;
   my $chan = $join->channel;
 
-  $nick = $self->parse_nick($context, $nick);
+  $nick = _parse_nick($context, $nick);
   $self->[BUF]->{$context}->{$nick} = +{
     TS       => time(),
     Action   => 'join',
@@ -188,7 +187,7 @@ sub Bot_seenplug_deferred_list {
   my $irc   = $core->get_irc_object($context);
   my @nicks = $irc->channel_list($channel);
   for my $nick (@nicks) {
-    $nick = $self->parse_nick($context, $nick);
+    $nick = _parse_nick($context, $nick);
     $self->[BUF]->{$context}->{$nick} = +{
       TS       => time(),
       Action   => 'present',
@@ -211,7 +210,7 @@ sub Bot_user_left {
   my $host = $part->src_host;
   my $chan = $part->channel;
 
-  $nick = $self->parse_nick($context, $nick);
+  $nick = _parse_nick($context, $nick);
   $self->[BUF]->{$context}->{$nick} = +{
     TS => time(),
     Action   => 'part',
@@ -233,7 +232,7 @@ sub Bot_user_quit {
   my $host = $quit->src_host;
   my $common = $quit->common;
 
-  $nick = $self->parse_nick($context, $nick);
+  $nick = _parse_nick($context, $nick);
   $self->[BUF]->{$context}->{$nick} = +{
     TS => time(),
     Action   => 'quit',
