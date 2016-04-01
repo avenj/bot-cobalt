@@ -29,8 +29,7 @@ sub retrieve {
   my ($self, $context, $nickname) = @_;
   $nickname = _parse_nick($context, $nickname);
 
-  my $thisbuf = $self->[BUF]->{$context} // +{};
-  my $ref = $thisbuf->{$nickname};
+  my $ref = $self->[BUF]->{$context}->{$nickname}; # intentional autoviv
   unless (defined $ref) {
     my $db = $self->[SDB];
     unless ($db->dbopen) {
@@ -195,7 +194,7 @@ sub Bot_seenplug_deferred_list {
     };
   }
   
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub Bot_user_left {
