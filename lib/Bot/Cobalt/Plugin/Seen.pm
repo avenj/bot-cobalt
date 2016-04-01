@@ -30,7 +30,6 @@ sub retrieve {
   $nickname = _parse_nick($context, $nickname);
 
   my $thisbuf = $self->[BUF]->{$context} // +{};
-
   my $ref = $thisbuf->{$nickname};
   unless (defined $ref) {
     my $db = $self->[SDB];
@@ -38,7 +37,6 @@ sub retrieve {
       logger->warn("dbopen failed in retrieve; cannot open SeenDB");
       return
     }
-
     my $thiskey = $context .'%'. $nickname;
     $ref = $db->get($thiskey);
     $db->dbclose;
@@ -127,7 +125,7 @@ sub Bot_seendb_update {
       ## if we've done a lot of writes, yield back (unless we're cleaning up)
       if (!$force_flush && $writes && $writes % 50 == 0) {
         $db->dbclose;
-        broadcast( 'seendb_update' );
+        broadcast 'seendb_update';
         return PLUGIN_EAT_ALL
       }
       ## .. else flush this item to disk
@@ -174,7 +172,7 @@ sub Bot_chan_sync {
   my $context = ${$_[0]};
   my $channel = ${$_[1]};
 
-  broadcast( 'seenplug_deferred_list', $context, $channel );
+  broadcast seenplug_deferred_list => $context, $channel;
 
   PLUGIN_EAT_NONE
 }
@@ -291,22 +289,16 @@ sub Bot_public_cmd_seen {
   my $targetnick = $msg->message_array->[0];
   
   unless ($targetnick) {
-    broadcast( 'message', 
-      $context,
-      $channel,
-      "Need a nickname to look for, $nick"
-    );
+    broadcast message => $context, $channel,
+      "Need a nickname to look for, $nick";
     return PLUGIN_EAT_NONE
   }
   
   my $ref = $self->retrieve($context, $targetnick);
   
   unless ($ref) {
-    broadcast( 'message',
-      $context,
-      $channel,
-      "${nick}: I don't know anything about $targetnick"
-    );
+    broadcast message => $context, $channel,
+      "${nick}: I don't know anything about $targetnick";
 
     return PLUGIN_EAT_NONE
   }
@@ -369,11 +361,7 @@ sub Bot_public_cmd_seen {
     $resp = 'Something weird happened; check log file for details.';
   }  
 
-  broadcast( 'message', 
-    $context,
-    $channel,
-    $resp
-  );  
+  broadcast message => $context, $channel, $resp;  
   
   PLUGIN_EAT_NONE
 }
