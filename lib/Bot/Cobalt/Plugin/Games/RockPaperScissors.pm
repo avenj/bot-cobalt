@@ -10,27 +10,23 @@ sub execute {
   my $nick = $msg->src_nick // '';
   $rps = lc($rps // '');
 
-  if      (! $rps) {
-    return "What did you want to throw, ${nick}?"
-  } elsif ( ! grep {; $_ eq $rps } qw/rock paper scissors/ ) {
-    return "${nick}: You gotta throw rock, paper, or scissors!"
-  }
-
-  state $beats = {
+  state $beats = +{
     scissors => 'paper',
     paper    => 'rock',
     rock     => 'scissors',
   };
 
+  if (! $rps) {
+    return "What did you want to throw, ${nick}?"
+  } elsif (! exists $beats->{$rps}) {
+    return "${nick}: You gotta throw rock, paper, or scissors!"
+  }
+
   my $throw = (keys %$beats)[rand(keys %$beats)];
 
-  if      ($throw eq $rps) {
-    return "$nick threw $rps, I threw $throw -- it's a tie!";
-  } elsif ($beats->{$throw} eq $rps) {
-    return "$nick threw $rps, I threw $throw -- I win!";
-  } else {
-    return "$nick threw $rps, I threw $throw -- you win :(";
-  }
+  $throw eq $rps ? "$nick threw $rps, I threw $throw -- it's a tie!"
+    : $beats->{$throw} eq $rps ? "$nick threw $rps, I threw $throw -- I win!"
+    : "$nick threw $rps, I threw $throw -- you win :("
 }
 
 1;
