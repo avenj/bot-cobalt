@@ -12,7 +12,7 @@ use Moo;
 has core  => (
   lazy      => 1,
   is        => 'rw',
-  isa       => Object,
+  isa       => HasMethods['send_event'],
   builder   => sub {
     require Bot::Cobalt::Core;
     Bot::Cobalt::Core->instance 
@@ -141,11 +141,6 @@ sub execute {
     return
   }
 
-  unless ( $self->core->can('send_event') ) {
-    carp "timer execute called but specified core can't send_event";
-    return
-  }
-
   my $args = $self->args;
   $self->core->send_event( $self->event, @$args );
   1
@@ -186,11 +181,10 @@ A B<Bot::Cobalt::Timer> instance represents a single timed event.
 These are usually constructed for use by the L<Bot::Cobalt::Core> TimerPool; 
 also see L<Bot::Cobalt::Core::Role::Timers/timer_set>.
 
-  my $timer = Bot::Cobalt::Timer->new;
-
 By default, timers that are executed will fire against the 
-L<Bot::Cobalt::Core> singleton; you can pass in a different 'core =>' 
-specification if needed.
+L<Bot::Cobalt::Core> singleton. You can pass in a different 'core =>' 
+object; it simply needs to provide a C<send_event> method that is passed the
+L</event> and L</args> when the timer fires (see L</Execution>).
 
 =head1 METHODS
 
@@ -274,9 +268,8 @@ See L</type>
 
 =head2 Execution
 
-A timer object can be instructed to execute as long as it was provided a 
-proper B<core> object at construction time -- this is normally 
-L<Bot::Cobalt::Core>, but any class that can B<send_event> will do.
+A timer object can be instructed to execute as long as it was provided a
+proper B<core> object at construction time (normally L<Bot::Cobalt::Core>).
 
 =head3 is_ready
 
