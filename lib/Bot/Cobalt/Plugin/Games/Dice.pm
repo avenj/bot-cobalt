@@ -18,11 +18,10 @@ sub execute {
     my $sides  = $2 || 6;
 
     my @rolls;
-
     $n_dice = 10    if $n_dice > 10;
     $sides  = 10000 if $sides > 10000;
 
-    for (my $i = $n_dice; $i >= 1; $i--) {
+    until (@rolls == $n_dice) {
       push @rolls, (int rand $sides) + 1;
     }
     my $total;
@@ -30,46 +29,38 @@ sub execute {
 
     $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
     if ($modifier) {
-      if      ($modifier eq '+') {
-        $total += $modify_by;
-      } elsif ($modifier eq '-') {
-        $total -= $modify_by;
-      }
+        $modifier eq '+' ? $total += $modify_by
+      : $modifier eq '-' ? $total -= $modify_by
+      : ()
     }
 
-    my $potential = $n_dice * $sides;
 
     my $resp = "Rolled "
                .color('bold', $n_dice)
                .($sides > 1 ? ' dice of ' : ' die of ')
                .color('bold', $sides)
-               ." sides: " ;
-
-    $resp .= join ' ', @rolls;
-
+               ." sides: " . join ' ', @rolls;
+    my $potential = $n_dice * $sides;
     $resp .= " [total: ".color('bold', $total)." / $potential]";
-
     return $resp
   }
 
   if ($dice =~ /^\d+$/) {
-    my $rolled = (int rand $dice) + 1;
+    my $total = (int rand $dice) + 1;
     $modifier = undef unless $modify_by and $modify_by =~ /^\d+$/;
     if ($modifier) {
-      if      ($modifier eq '+') {
-        $rolled += $modify_by;
-      } elsif ($modifier eq '-') {
-        $rolled -= $modify_by;
-      }
+        $modifier eq '+' ? $total += $modify_by
+      : $modifier eq '-' ? $total -= $modify_by
+      : ()
     }
     my $resp =  "Rolled single die of "
                 .color('bold', $dice)
                 ." sides: "
-                .color('bold', $rolled) ;
+                .color('bold', $total) ;
     return $resp
   }
 
-  return "Syntax: roll XdY  [ +/- <modifier> ]"
+  "Syntax: roll XdY  [ +/- <modifier> ]"
 }
 
 1;
