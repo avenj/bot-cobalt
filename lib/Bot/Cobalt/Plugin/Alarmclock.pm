@@ -145,18 +145,32 @@ sub Bot_public_cmd_alarmclear {
   return PLUGIN_EAT_NONE unless $auth_usr
     and core->auth->has_flag($context, $nick, 'SUPERUSER');
 
-  logger->info("Clearing all alarms per $nick ($auth_usr)");
-  
-  for my $timerid (keys %{ $self->timers }) {
+  my $target_ctxt = $msg->message_array->[0];
+
+  logger->info(
+    "Clearing all alarms"
+    . ($target_ctxt ? " for context $target_ctxt" : "")
+    . " per $nick ($auth_usr)"
+  );
+
+  my $count = 0;
+  DELETE: for my $timerid (keys %{ $self->timers }) {
+    if ($target_ctxt) {
+      my $ctxt_set = $self->timers->{$timerid}->[0];
+      next DELETE unless $target_ctxt eq $ctxt_set;
+    }
     core->timer_del($timerid);
     delete $self->timers->{$timerid};
     $self->_delete_alarm($timerid);
+    ++$count
   }
 
   broadcast( 'message', $context, $msg->channel,
     core->rpl( q{ALARMCLOCK_DELETED},
       nick    => $nick,
-      timerid => 'ALL',
+      timerid => (
+        $target_ctxt ? "ALL [$target_ctxt] ($count)" : "ALL ($count)"
+      ),
     )
   );
 
@@ -315,8 +329,10 @@ Bot::Cobalt::Plugin::Alarmclock - Timed IRC highlights
   # Remove alarms by timer ID:
   > !alarmdel a1b2c
 
-  # Superusers can remove all alarms:
+  # Superusers can remove all alarms (version 0.21.1+):
   > !alarmclear
+  # ... or all alarms for a specific context:
+  > !alarmclear Main
 
 =head1 DESCRIPTION
 
