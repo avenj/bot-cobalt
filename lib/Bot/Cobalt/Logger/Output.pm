@@ -34,7 +34,7 @@ sub add {
   
   unless (@args && @args % 2 == 0) {
     confess "add() expects an even number of arguments, ",
-         "mapping an Output class to constructor arguments"
+         "mapping an Output class to a HASH of constructor arguments"
   }
   
   my $prefix = 'Bot::Cobalt::Logger::Output::' ;
