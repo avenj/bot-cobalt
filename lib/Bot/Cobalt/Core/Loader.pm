@@ -52,7 +52,7 @@ sub load {
     undef
   } or confess $err;
 
-  $obj // ()
+  $obj
 }
 
 sub unload {
