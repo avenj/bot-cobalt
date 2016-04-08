@@ -99,6 +99,7 @@ sub Cobalt_register {
     public_cmd_alarmclock
     public_cmd_alarmdelete
     public_cmd_alarmdel
+    public_cmd_alarmclear
     executed_timer
   / );
 
@@ -131,6 +132,35 @@ sub Bot_executed_timer {
   $self->_delete_alarm($timerid);
 
   PLUGIN_EAT_NONE
+}
+
+sub Bot_public_cmd_alarmclear {
+  my ($self, $core) = splice @_, 0, 2;
+  my $msg = ${ $_[0] };
+
+  my $context = $msg->context;
+  my $nick    = $msg->src_nick;
+
+  my $auth_usr = core->auth->username($context, $nick);
+  return PLUGIN_EAT_NONE unless $auth_usr
+    and core->auth->has_flag($context, $nick, 'SUPERUSER');
+
+  logger->info("Clearing all alarms per $nick ($auth_usr)");
+  
+  for my $timerid (keys %{ $self->timers }) {
+    core->timer_del($timerid);
+    delete $self->timers->{$timerid};
+    $self->_delete_alarm($timerid);
+  }
+
+  broadcast( 'message', $context, $msg->channel,
+    core->rpl( q{ALARMCLOCK_DELETED},
+      nick    => $nick,
+      timerid => 'ALL',
+    )
+  );
+
+  PLUGIN_EAT_ALL
 }
 
 sub Bot_public_cmd_alarmdelete { Bot_public_cmd_alarmdel(@_) }
@@ -278,9 +308,15 @@ Bot::Cobalt::Plugin::Alarmclock - Timed IRC highlights
 
 =head1 SYNOPSIS
 
-  # On IRC:
-  !alarmclock 20m go do some something
-  !alarmclock 1h30m stop staring at irc
+  # Set alarms:
+  > !alarmclock 20m go do some something
+  > !alarmclock 1h30m stop staring at irc
+
+  # Remove alarms by timer ID:
+  > !alarmdel a1b2c
+
+  # Superusers can remove all alarms:
+  > !alarmclear
 
 =head1 DESCRIPTION
 
