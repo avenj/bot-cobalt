@@ -4,8 +4,13 @@ use v5.10;
 use strictures 2;
 use Carp;
 
+use Time::HiRes 'sleep';
 use IO::File ();
 use Fcntl qw/:DEFAULT :flock/;
+
+# ... after which we fall back to warning on stderr with message included:
+sub FLOCK_TIMEOUT () { 0.5 }
+
 
 sub PATH   () { 0 }
 sub HANDLE () { 1 }
@@ -145,10 +150,14 @@ sub _write {
   }
 
   ## FIXME if flock fails, buffer and try next _write up to X items ?
-  ## FIXME maybe we should just fail silently (and document same)?
-  unless ( flock($self->[HANDLE], LOCK_EX | LOCK_NB) ) {
-    warn "flock failure for ".$self->file;
-    return
+  my $timer = 0;
+  until ( flock($self->[HANDLE], LOCK_EX | LOCK_NB) ) {
+    if ($timer > FLOCK_TIMEOUT) {
+      warn "flock failure for '@{[$self->file]}' ('$str')";
+      return
+    }
+    sleep 0.01;
+    $timer += 0.01;
   }
 
   print { $self->[HANDLE] } $str;
@@ -205,7 +214,8 @@ on Windows, which has no concept of inodes; an open-write-close cycle
 will be executed for each logged message on systems without useful inode 
 details, in order to ensure messages are going to the expected file.
 
-Attempts to lock the file for every write.
+Attempts to lock the file for every write; if a lock cannot be obtained after
+half a second, falls back to C<warn>ing with the log message included.
 
 Expects UTF-8.
 
