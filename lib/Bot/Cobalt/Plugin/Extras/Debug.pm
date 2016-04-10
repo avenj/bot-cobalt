@@ -1,25 +1,11 @@
 package Bot::Cobalt::Plugin::Extras::Debug;
 
-## Simple 'dump to stdout' debug functions
-##
-## IMPORTANT: NO ACCESS CONTROLS!
-## Intended for debugging, you don't want to load on a live bot.
-##
-## Dumps to STDOUT, there is no IRC output.
-##
-## Commands:
-##  !dumpcfg
-##  !dumpstate
-##  !dumptimers
-##  !dumpservers
-##  !dumplangset
 use strictures 2;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
-use Data::Dumper;
 
-use Object::Pluggable::Constants qw/ PLUGIN_EAT_NONE /;
+use Data::Dumper;
 
 sub new { bless [], shift }
 
