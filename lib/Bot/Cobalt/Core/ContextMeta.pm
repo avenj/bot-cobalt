@@ -41,7 +41,7 @@ sub add {
 sub clear {
   my ($self, $context) = @_;
 
-  $self->_list({}) unless defined $context;
+  $self->_list(+{}) unless defined $context;
 
   delete $self->_list->{$context}  
 }
@@ -70,19 +70,12 @@ sub fetch {
 
 sub list {
   my $self = shift;
-
   wantarray ? $self->list_as_array(@_) : $self->list_as_ref(@_)
 }
 
 ## Less ambiguous list methods.
 
-sub list_as_array {
-  my $self = shift;
-
-  my $listref = $self->list_as_ref(@_);
-
-  keys %$listref
-}
+sub list_as_array { keys %{ shift->list_as_ref(@_) || () } }
 
 sub list_as_ref {
   my ($self, $context) = @_;
