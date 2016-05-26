@@ -18,6 +18,7 @@ ok( $cache->invalidate('Cache'), 'invalidate()');
 cmp_ok( $cache->MaxKeys('5'), '==', 5, 'MaxKeys(5)' );
 
 my $i;
+diag "This test will sleep for 6 seconds." if $^O eq 'MSWin32';
 for (0 .. 6) {
   ++$i;
   
