@@ -8,22 +8,19 @@ use Import::Into;
 use Bot::Cobalt::Core::Sugar ();
 
 sub import {
-  shift;
-  my $target = caller;
-  Bot::Cobalt::Core::Sugar->import::into(scalar caller, @_)
+  Bot::Cobalt::Core::Sugar->import::into(scalar caller, @_[1 .. $#_])
 }
 
 sub instance {
   require Bot::Cobalt::Core;
   shift;
   if (@_) {
-    ## Someone tried to create a new instance, but they really 
+    ## Someone tried to create a fresh instance, but they really 
     ## wanted a Bot::Cobalt::Core.
     ## Behavior may change.
     return Bot::Cobalt::Core->instance(@_)
   }
 
-  ## Be polite and offer up our Bot::Cobalt::Core if we have one
   unless (Bot::Cobalt::Core->has_instance) {
     carp "Tried to retrieve instance but no active Bot::Cobalt::Core found";
     return
