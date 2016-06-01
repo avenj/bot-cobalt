@@ -13,30 +13,27 @@ use Module::CoreList;
 use Try::Tiny;
 
 ## FIXME cachedb?
-sub CACHE () { 0 }
 
-sub new { bless [undef], shift }
+sub new { bless [], shift }
 
 sub Cobalt_register {
   my ($self, $core) = splice @_, 0, 2;
 
-  register( $self, 'SERVER',
-    'public_cmd_cpan',
-    'public_cmd_corelist',
-    'mcpan_plug_resp_recv',
-  );
+  register $self, SERVER => qw/
+    public_cmd_cpan
+    public_cmd_corelist
+    mcpan_plug_resp_recv
+  /;
 
   logger->info("Loaded: !cpan");
 
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Cobalt_unregister {
   my ($self, $core) = splice @_, 0, 2;
-
   logger->info("Bye!");
-
-  return PLUGIN_EAT_NONE
+  PLUGIN_EAT_NONE
 }
 
 sub Bot_public_cmd_corelist {
@@ -54,12 +51,8 @@ sub Bot_public_cmd_corelist {
   }
 
   my $resp;
-
   my $vers = $msg->message_array->[1];
-
-  my $first = Module::CoreList->first_release($dist, $vers);
-
-  if ($first) {
+  if (my $first = Module::CoreList->first_release($dist, $vers)) {
     $resp = $vers ?
             "$dist ($vers) was released with $first"
             : "$dist was released with $first"
@@ -94,9 +87,7 @@ sub Bot_public_cmd_cpan {
   }
 
   $cmd = lc $cmd;
-
   $dist =~ s/::/-/g unless $cmd eq "belongs";
-
   my $url = "/release/$dist";
 
   my $hints = {
@@ -144,10 +135,9 @@ sub Bot_public_cmd_cpan {
     );
   }
 
-  $self->_request($url, $hints)
-    if defined $hints->{Type};
+  $self->_request($url, $hints) if defined $hints->{Type};
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 sub _request {
@@ -158,9 +148,7 @@ sub _request {
 
   logger->debug("metacpan request: $this_url");
 
-  my $request = HTTP::Request->new(
-    'GET', $this_url
-  );
+  my $request = HTTP::Request->new(GET => $this_url);
 
   broadcast( 'www_request',
     $request,
@@ -180,7 +168,6 @@ sub Bot_mcpan_plug_resp_recv {
 
   unless ($response->is_success) {
     my $status = $response->code;
-
     if ($status == 404) {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
@@ -192,12 +179,10 @@ sub Bot_mcpan_plug_resp_recv {
         "Could not get release info for $dist ($status)"
       );
     }
-
     return PLUGIN_EAT_ALL
   }
 
   my $json = $response->content;
-
   unless ($json) {
     broadcast('message',
       $hints->{Context}, $hints->{Channel},
@@ -207,31 +192,26 @@ sub Bot_mcpan_plug_resp_recv {
   }
 
   my $ser = Bot::Cobalt::Serializer->new('JSON');
-
-  my $d_hash;
-  {
-    try {
-      $d_hash = $ser->thaw($json)
-    } catch {
+  my $d_hash = 
+    try { $ser->thaw($json) } 
+    catch {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
-        "Decoder failure; err: $_",
+        "thaw failure; err: $_",
       );
-      return PLUGIN_EAT_ALL
-    };
-  }
+      undef
+    } or return PLUGIN_EAT_ALL;
 
   unless ($d_hash && ref $d_hash eq 'HASH') {
     broadcast( 'message',
       $hints->{Context}, $hints->{Channel},
-      "Odd; no hash received after decode for $dist"
+      "thaw failure for $dist; expected a HASH but got '$d_hash'"
     );
     return PLUGIN_EAT_ALL
   }
 
   my $resp;
-
-  my $prefix = color('bold', 'mCPAN');
+  my $prefix = color bold => 'mCPAN';
 
   TYPE: {
 
@@ -293,7 +273,7 @@ sub Bot_mcpan_plug_resp_recv {
     $resp
   ) if $resp;
 
-  return PLUGIN_EAT_ALL
+  PLUGIN_EAT_ALL
 }
 
 1;
