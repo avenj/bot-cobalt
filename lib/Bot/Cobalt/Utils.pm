@@ -160,11 +160,9 @@ sub glob_to_re_str ($) {
       }
       $first = 0;
     ## So is trailing $ (end):
-    } elsif ($last) {
-      if ($ch eq '$') {
-        $re .= '$' ;
-        last
-      }
+    } elsif ($last && $ch eq '$') {
+      $re .= '$' ;
+      last
     }
 
     ## Escape metas:
