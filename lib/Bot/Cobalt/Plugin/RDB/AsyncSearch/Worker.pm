@@ -1,11 +1,8 @@
 package Bot::Cobalt::Plugin::RDB::AsyncSearch::Worker;
 
+use strict; use warnings;
 
-
-use strict;
-use warnings;
-
-use Storable qw/nfreeze thaw/;
+use Storable ();
 
 use bytes;
 
@@ -24,41 +21,26 @@ sub worker {
   while (1) {
     if (defined $read_bytes) {
       if (length $buf >= $read_bytes) {
-        my $input = thaw( substr($buf, 0, $read_bytes, '') );
+        my $input = Storable::thaw( substr($buf, 0, $read_bytes, '') );
         $read_bytes = undef;
-        
-        ## Get:
-        ##  - DB path
-        ##  - Unique ID
-        ##  - Regex (compiled)
         my ($dbpath, $tag, $regex) = @$input;
-        
+
         my $db = Bot::Cobalt::DB->new($dbpath);
 
-        for (qw/INT TERM QUIT HUP/) {
-          $SIG{$_} = sub {
-            $db->dbclose if $db->is_open;
-            die "Terminal signal, closed cleanly"
-          };
-        }
+        $SIG{$_} = sub {
+          $db->dbclose if $db->is_open;
+          die "Terminal signal, closed cleanly"
+        } for qw/INT TERM QUIT HUP/;
 
-        unless ( $db->dbopen(ro => 1, timeout => 30) ) {
-          die "Failed database open"
-        }
-                
-        my @matches;
-        
+        die "Failed database open" 
+          unless $db->dbopen(ro => 1, timeout => 30);
+
         $regex = qr/$regex/i;
-
-        my $i;
+        my @matches;
         KEY: while (my ($dbkey, $ref) = each %{ $db->Tied }) {
           next KEY unless $ref;
-          
           my $str = ref $ref eq 'HASH' ? $ref->{String} : $ref->[0] ;
-          
-          if ($str =~ $regex) {
-            push(@matches, $dbkey);
-          }
+          push @matches, $dbkey if $str =~ $regex;
         }
         
         $db->dbclose;
@@ -66,9 +48,8 @@ sub worker {
         ## Return:
         ##  - DB path
         ##  - Unique ID
-        ##  - Array of matching item IDs
-        my $frozen = nfreeze( [ $dbpath, $tag, @matches ] );
-        
+        ##  - List of matching item IDs
+        my $frozen = Storable::nfreeze( [ $dbpath, $tag, @matches ] );
         my $stream  = length($frozen) . chr(0) . $frozen ;
         my $written = syswrite(STDOUT, $stream);
         die $! unless $written == length $stream;
@@ -78,7 +59,7 @@ sub worker {
       $read_bytes = $1;
       next
     }
-    
+
     my $readb = sysread(STDIN, $buf, 4096, length $buf);
     last unless $readb;
   }
