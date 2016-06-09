@@ -4,7 +4,9 @@ use strictures 2;
 
 use Bot::Cobalt;
 use Bot::Cobalt::Common;
+
 use Bot::Cobalt::Serializer;
+our $Serializer = Bot::Cobalt::Serializer->new('JSON');
 
 use HTTP::Request;
 
@@ -75,13 +77,14 @@ sub Bot_public_cmd_cpan {
   unless ($cmd) {
     broadcast( 'message',
       $msg->context, $msg->channel,
-      "No command; try: dist, latest, tests, abstract, license",
+      "No command; " .
+      "try: dist, latest, tests, abstract, changes, belongs, license"
     );
     return PLUGIN_EAT_ALL
   }
 
   unless ($dist) {
-    ## assume 'abstract' if only one arg
+    # assume 'abstract' if only one arg
     $dist = $cmd;
     $cmd  = 'abstract';
   }
@@ -90,12 +93,12 @@ sub Bot_public_cmd_cpan {
   $dist =~ s/::/-/g unless $cmd eq "belongs";
   my $url = "/release/$dist";
 
-  my $hints = {
+  my $hints = +{
     Context => $msg->context,
     Channel => $msg->channel,
     Nick    => $msg->src_nick,
     Dist    => $dist,
-    Link    => 'http://www.metacpan.org'.$url,
+    Link    => "http://www.metacpan.org${url}",
   };
 
   CMD: {
@@ -130,8 +133,15 @@ sub Bot_public_cmd_cpan {
       last CMD
     }
 
+    if ($cmd eq 'changes' || $cmd eq 'changelog') {
+      $hints->{Type} = 'changes';
+      $url = "/module/$dist";
+      last CMD
+    }
+
     broadcast( 'message', $msg->context, $msg->channel,
-      "Unknown query; try: dist, latest, tests, abstract, license, belongs"
+      "Unknown query; ".
+      "try: dist, latest, tests, abstract, license, belongs, changes"
     );
   }
 
@@ -191,9 +201,8 @@ sub Bot_mcpan_plug_resp_recv {
     return PLUGIN_EAT_ALL
   }
 
-  my $ser = Bot::Cobalt::Serializer->new('JSON');
   my $d_hash = 
-    try { $ser->thaw($json) } 
+    try { $Serializer->thaw($json) } 
     catch {
       broadcast( 'message',
         $hints->{Context}, $hints->{Channel},
@@ -262,6 +271,14 @@ sub Bot_mcpan_plug_resp_recv {
     if ($type eq 'belongs') {
       my $release = $d_hash->{release};
       $resp = "$prefix: $dist belongs to release $release";
+      last TYPE
+    }
+
+    if ($type eq 'changes') {
+      my $release = $d_hash->{release};
+      my $actuald = substr $release, 0, rindex $release, '-';
+      my $link = "https://www.metacpan.org/changes/distribution/$actuald";
+      $resp = "$prefix: Changes for $release: $link";
       last TYPE
     }
 
