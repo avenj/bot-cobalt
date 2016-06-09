@@ -14,6 +14,9 @@ use Module::CoreList;
 
 use Try::Tiny;
 
+our $HelpText
+  = 'try: dist, latest, tests, abstract, changes, belongs, license';
+
 ## FIXME cachedb?
 
 sub new { bless [], shift }
@@ -77,8 +80,7 @@ sub Bot_public_cmd_cpan {
   unless ($cmd) {
     broadcast( 'message',
       $msg->context, $msg->channel,
-      "No command; " .
-      "try: dist, latest, tests, abstract, changes, belongs, license"
+      "No command; $HelpText"
     );
     return PLUGIN_EAT_ALL
   }
@@ -140,8 +142,7 @@ sub Bot_public_cmd_cpan {
     }
 
     broadcast( 'message', $msg->context, $msg->channel,
-      "Unknown query; ".
-      "try: dist, latest, tests, abstract, license, belongs, changes"
+      "Unknown query; $HelpText"
     );
   }
 
