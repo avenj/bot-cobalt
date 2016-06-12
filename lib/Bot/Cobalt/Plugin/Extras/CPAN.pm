@@ -306,20 +306,26 @@ Bot::Cobalt::Plugin::Extras::CPAN - Query MetaCPAN API from IRC
 =head1 SYNOPSIS
 
   ## Retrieve dist abstract:
-  > !cpan Some::Dist
-  > !cpan abstract Some::Dist
+  > !cpan Moo
+  > !cpan abstract Bot::Cobalt
 
   ## Retrieve latest version:
-  > !cpan latest Some::Dist
+  > !cpan latest POE
 
   ## Test summary:
-  > !cpan tests Some::Dist
-
-  ## License info:
-  > !cpan license Some::Dist
+  > !cpan tests POE::Component::IRC
 
   ## Download link:
-  > !cpan dist Some::Dist
+  > !cpan dist App::bmkpasswd
+
+  ## Find out what distribution a module belongs to:
+  > !cpan belongs Lowu
+
+  ## Get ChangeLog link:
+  > !cpan changes Moo
+
+  ## License info:
+  > !cpan license Text::ZPL
 
   ## Query Module::CoreList:
   > !corelist Some::Dist
