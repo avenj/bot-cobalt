@@ -136,7 +136,7 @@ Consult their documentation for all the gory details.
 
 # AUTHOR
 
-Jon Portnoy <avenj@cobaltirc.org>
+Jon Portnoy &lt;avenj@cobaltirc.org>
 
 [http://www.cobaltirc.org](http://www.cobaltirc.org)
 

@@ -1,5 +1,22 @@
 Revision history for Perl module Bot::Cobalt
 
+0.021001 2016-06-16
+
+  - Fix ContextMeta->list_as_array
+
+  - Add '!alarmclear' command to Plugin::Alarmclock
+
+  - Add '!cpan changes' command to Plugin::Extras::CPAN
+
+  - Logger-related fixes
+
+  - Minor Plugin::RDB::AsyncSearch worker optimizations
+
+  - Various Plugin cleanups and minor optimizations;
+    Plugin::Seen, Plugin::Debug, Plugin::Extras::CPAN, Plugin::Games::
+
+  - POD improvements
+
 0.020001 2016-01-14
 
   - Alarmclocks are now persistent between runs
