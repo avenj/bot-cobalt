@@ -75,7 +75,7 @@ sub list {
 
 ## Less ambiguous list methods.
 
-sub list_as_array { keys %{ shift->list_as_ref(@_) || () } }
+sub list_as_array { keys %{ shift->list_as_ref(@_) || +{} } }
 
 sub list_as_ref {
   my ($self, $context) = @_;
