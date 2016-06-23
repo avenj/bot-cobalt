@@ -46,7 +46,7 @@ sub execute {
 
 
   --$self->{$context}->{$nick}->{Loaded};
-  return 'Click . . .'
+  return "${nick}: Click . . ."
 }
 
 sub expire {
