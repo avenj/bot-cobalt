@@ -1,5 +1,9 @@
 Revision history for Perl module Bot::Cobalt
 
+0.021002 2016-06-23
+
+  - Fix '!cpan changes' (Plugin::Extras::CPAN)
+
 0.021001 2016-06-16
 
   - Fix ContextMeta->list_as_array
