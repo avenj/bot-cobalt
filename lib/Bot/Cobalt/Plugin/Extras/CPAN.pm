@@ -92,7 +92,9 @@ sub Bot_public_cmd_cpan {
   }
 
   $cmd = lc $cmd;
-  $dist =~ s/::/-/g unless $cmd eq "belongs";
+  $dist =~ s/::/-/g
+    unless $cmd eq "belongs"
+    or     $cmd eq "changes";
   my $url = "/release/$dist";
 
   my $hints = +{
@@ -135,7 +137,7 @@ sub Bot_public_cmd_cpan {
       last CMD
     }
 
-    if ($cmd eq 'changes' || $cmd eq 'changelog') {
+    if ($cmd eq 'changes') {
       $hints->{Type} = 'changes';
       $url = "/module/$dist";
       last CMD
