@@ -20,7 +20,6 @@ BEGIN {
     Extras::CPAN
     Extras::DNS
     Extras::Karma
-    Extras::Money
     Extras::Relay
     Extras::TempConv
     

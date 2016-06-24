@@ -137,9 +137,6 @@ L<Bot::Cobalt::Plugin::Extras::DNS> -- DNS lookups
 
 L<Bot::Cobalt::Plugin::Extras::Karma> -- Karma bot
 
-L<Bot::Cobalt::Plugin::Extras::Money> -- Currency conversion via 
-WebServiceX
-
 L<Bot::Cobalt::Plugin::Extras::Relay> -- Cross-network relay
 
 L<Bot::Cobalt::Plugin::Extras::TempConv> -- Temperature units conversion 

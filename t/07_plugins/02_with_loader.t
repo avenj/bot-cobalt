@@ -20,7 +20,6 @@ my @core = map { $prefix.$_ } qw/
     Extras::CPAN
     Extras::DNS
     Extras::Karma
-    Extras::Money
     Extras::Relay
     Extras::TempConv
     
