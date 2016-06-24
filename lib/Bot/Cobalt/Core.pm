@@ -271,9 +271,9 @@ sub init {
 sub syndicator_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
-  $kernel->sig('INT'  => 'shutdown');
-  $kernel->sig('TERM' => 'shutdown');
-  $kernel->sig('HUP'  => 'sighup');
+  $kernel->sig(INT  => 'shutdown');
+  $kernel->sig(TERM => 'shutdown');
+  $kernel->sig(HUP  => 'sighup');
 
   $self->log->info(__PACKAGE__.' '.$self->version);
 
@@ -286,42 +286,34 @@ sub syndicator_started {
     $self->cfg->plugins->plugin($a)->priority
   } @{ $self->cfg->plugins->list_plugins };
 
-  PLUGIN: for my $plugin (@plugins)
-  {
+  PLUGIN: for my $plugin (@plugins) {
     my $this_plug_cf = $self->cfg->plugins->plugin($plugin);
-
     my $module = $this_plug_cf->module;
 
     unless ( $this_plug_cf->autoload ) {
       $self->log->debug("Skipping $plugin - NoAutoLoad is true");
-
       next PLUGIN
     }
 
     my $obj;
     try {
       $obj = Bot::Cobalt::Core::Loader->load($module);
-
       unless ( Bot::Cobalt::Core::Loader->is_reloadable($obj) ) {
         $self->State->{NonReloadable}->{$plugin} = 1;
         $self->log->debug("$plugin marked non-reloadable");
       }
     } catch {
       $self->log->error("Load failure; $_");
-
       next PLUGIN
     };
 
-    ## save stringified object -> plugin mapping:
+    ## save stringified object -> plugin mapping before we plugin_add
     $self->PluginObjects->{$obj} = $plugin;
 
     unless ( $self->plugin_add($plugin, $obj) ) {
       $self->log->error("plugin_add failure for $plugin");
-
       delete $self->PluginObjects->{$obj};
-
       Bot::Cobalt::Core::Loader->unload($module);
-
       next PLUGIN
     }
 
@@ -503,11 +495,11 @@ A configuration object is an instanced L<Bot::Cobalt::Conf>:
     etc => $path_to_etc_dir,
   );
 
-. . . then passed to Bot::Cobalt::Core before the POE kernel is started:
+Which is passed to Bot::Cobalt::Core before the POE kernel is started:
 
   ## Instance a Bot::Cobalt::Core singleton
   ## Further instance() calls will return the singleton
-  Bot::Cobalt::Core->instance(
+  my $core = Bot::Cobalt::Core->instance(
     cfg => $conf_obj,
     var => $path_to_var_dir,
 
@@ -521,6 +513,8 @@ A configuration object is an instanced L<Bot::Cobalt::Conf>:
     ## (Changes behavior of logging and signals)
     detached => $detached,
   )->init;
+  
+  POE::Kernel->run;
 
 Frontends have to worry about daemonization on their own.
 
