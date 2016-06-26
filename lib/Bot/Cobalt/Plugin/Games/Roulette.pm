@@ -8,6 +8,17 @@ use Bot::Cobalt::Utils qw/color/;
 
 sub new { bless +{}, shift }
 
+sub _suicide {
+  my ($nick) = @_;
+  my @ded = (
+    "$nick did themselves in!",
+    "$nick ended it all!",
+    "$nick splattered the wall!",
+    "$nick bit the big one!",
+  );
+  $ded[rand @ded]
+}
+
 sub execute {
   my ($self, $msg, $str) = @_;
   my $cyls = 6;
@@ -38,10 +49,9 @@ sub execute {
          || $irc->is_channel_admin($chan, $bot)
          || $irc->is_channel_owner($chan, $bot) ) {
       broadcast( 'kick', $context, $chan, $nick, "BANG!" );
-      return color('bold', "$nick did themselves in!")
     }
 
-    return color('bold', 'BANG!')." -- seeya $nick!"
+    return color bold => 'BANG! ' . _suicide($nick)
   }
 
 
