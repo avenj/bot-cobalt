@@ -33,6 +33,9 @@ sub load {
 
   my $modpath = $class->module_path($module);
 
+  local @INC = @INC;
+  pop @INC if $INC[-1] eq '.';
+
   my $orig_err;
   unless (try { require $modpath;1 } catch { $orig_err = $_;0 }) {
     ## die informatively
