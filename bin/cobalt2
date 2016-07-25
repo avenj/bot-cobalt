@@ -5,6 +5,10 @@ use 5.10.1;
 use strict;
 use warnings;
 
+BEGIN {
+  pop @INC if $INC[-1] eq '.';
+}
+
 use File::Spec;
 
 ## Default rcfile location.
