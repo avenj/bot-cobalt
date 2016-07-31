@@ -96,9 +96,6 @@ or randomized chatter on a timer
 
 [Bot::Cobalt::Plugin::Extras::Karma](https://metacpan.org/pod/Bot::Cobalt::Plugin::Extras::Karma) -- Karma bot
 
-[Bot::Cobalt::Plugin::Extras::Money](https://metacpan.org/pod/Bot::Cobalt::Plugin::Extras::Money) -- Currency conversion via 
-WebServiceX
-
 [Bot::Cobalt::Plugin::Extras::Relay](https://metacpan.org/pod/Bot::Cobalt::Plugin::Extras::Relay) -- Cross-network relay
 
 [Bot::Cobalt::Plugin::Extras::TempConv](https://metacpan.org/pod/Bot::Cobalt::Plugin::Extras::TempConv) -- Temperature units conversion 
@@ -136,7 +133,7 @@ Consult their documentation for all the gory details.
 
 # AUTHOR
 
-Jon Portnoy &lt;avenj@cobaltirc.org>
+Jon Portnoy <avenj@cobaltirc.org>
 
 [http://www.cobaltirc.org](http://www.cobaltirc.org)
 

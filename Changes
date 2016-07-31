@@ -1,5 +1,18 @@
 Revision history for Perl module Bot::Cobalt
 
+0.021003 2016-07-31
+
+  - Cwd-in-@INC security improvements
+    
+    Drop "." from @INC when running 'cobalt2'
+    Ignore "." in @INC when Bot::Cobalt::Core::Loader->load is called
+
+  - Removed deprecated Plugin::Extras::Money (broken for some time)
+
+  - Randomize Plugin::Games::Roulette output
+
+  - POD improvements
+
 0.021002 2016-06-23
 
   - Fix '!cpan changes' (Plugin::Extras::CPAN)
