@@ -1,4 +1,7 @@
 #!perl
+
+BEGIN { pop @INC if $INC[-1] eq '.' }
+
 my $VERSION = 2;
 
 use v5.10;
