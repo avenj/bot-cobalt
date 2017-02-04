@@ -79,7 +79,15 @@ has _core_set => (
   coerce    => 1,
   builder   => sub {
     my ($self) = @_;
-    my $cset_path = dist_dir('Bot-Cobalt') .'/etc/langs/english.yml';
+    my $english_yml = '/etc/langs/english.yml';
+    my $cset_path   = eval { dist_dir('Bot-Cobalt') . $english_yml };
+
+    if ( ! $cset_path ) { # running Bot::Cobalt from 'git clone' dir or similar
+      my $bot_cobalt_pm = $INC{'Bot/Cobalt.pm'};
+      (my $base_dir     = $bot_cobalt_pm) =~ s|\Q/lib/Bot/Cobalt.pm\E$||;
+      $cset_path        = $base_dir . '/share' . $english_yml;
+    }
+
     my $core_set_yaml = path($cset_path)->slurp_utf8;
     confess "Failed to read core set at $cset_path"
       unless $core_set_yaml;
